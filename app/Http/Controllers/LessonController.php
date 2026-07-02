@@ -9,6 +9,8 @@ use App\Models\Enrollment;
 use App\Models\LessonProgress;
 use App\Models\Certificate;
 use App\Models\AIRecommendation;
+use App\Models\Quiz;
+use App\Models\QuizResult;
 
 class LessonController extends Controller
 {
@@ -184,42 +186,59 @@ class LessonController extends Controller
             ]);
 
             if ($progressPercentage >= 100) {
-                $enrollment->update([
-                    'status' => 'completed',
-                    'completed_at' => now(),
-                ]);
 
-                Certificate::firstOrCreate(
-                    [
-                        'student_id' => $studentId,
-                        'course_id' => $course->id,
-                    ],
-                    [
-                        'certificate_number' => 'PW-' . now()->format('Y') . '-' . str_pad($studentId . $course->id, 5, '0', STR_PAD_LEFT),
-                        'issued_date' => now()->toDateString(),
-                        'status' => 'issued',
-                    ]
-                );
+                // Determine whether the student has PASSED the course's quiz.
+                // A certificate should only be issued when the learner both
+                // finished all lessons AND passed the assessment.
+                $courseQuizIds = $course->quizzes()->pluck('id');
 
-                $recommendedCourses = Course::where('category_id', $course->category_id)
-                    ->where('id', '!=', $course->id)
-                    ->where('status', 'published')
-                    ->take(3)
-                    ->get();
+                $hasQuiz = $courseQuizIds->isNotEmpty();
 
-                foreach ($recommendedCourses as $recommendedCourse) {
-                    AIRecommendation::firstOrCreate(
+                $hasPassed = false;
+
+                if ($hasQuiz) {
+                    // Look at the student's best attempt on any of the course quizzes.
+                    $bestResult = QuizResult::where('student_id', $studentId)
+                        ->whereIn('quiz_id', $courseQuizIds)
+                        ->orderByDesc('percentage')
+                        ->first();
+
+                    if ($bestResult) {
+                        $quiz = Quiz::find($bestResult->quiz_id);
+                        $passingScore = $quiz->passing_score ?? 75;
+
+                        $hasPassed = $bestResult->percentage >= $passingScore;
+                    }
+                }
+
+                // Certificate rule:
+                // - If the course HAS a quiz, the student must PASS it.
+                // - If the course has NO quiz, lesson completion alone is enough.
+                $eligibleForCertificate = $hasQuiz ? $hasPassed : true;
+
+                if ($eligibleForCertificate) {
+                    $enrollment->update([
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                    ]);
+
+                    Certificate::firstOrCreate(
                         [
                             'student_id' => $studentId,
-                            'course_id' => $recommendedCourse->id,
+                            'course_id' => $course->id,
                         ],
                         [
-                            'recommendation_score' => 95,
-                            'reason' => 'Recommended because you completed a related course in ' . ($course->category->name ?? 'this category') . '.',
-                            'is_viewed' => false,
+                            'certificate_number' => 'PW-' . now()->format('Y') . '-' . str_pad($studentId . $course->id, 5, '0', STR_PAD_LEFT),
+                            'issued_date' => now()->toDateString(),
+                            'status' => 'issued',
                         ]
                     );
                 }
+
+                // NOTE: Course recommendations are intentionally NOT generated here.
+                // PATHWISE generates recommendations only from quiz performance
+                // (see QuizController::submit -> RecommendationService), which is the
+                // AI-driven, score-based logic.
             }
         }
 

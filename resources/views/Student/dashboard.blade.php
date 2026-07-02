@@ -409,11 +409,21 @@
 </div>
 
 @if(count($chartScores) > 0)
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const quizTrendCtx = document.getElementById('quizTrendChart');
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        new Chart(quizTrendCtx, {
+<script>
+    function initQuizTrendChart() {
+
+        const canvas = document.getElementById('quizTrendChart');
+
+        if (!canvas) return;
+
+        // Destroy existing chart if naa
+        if (window.quizTrendChart instanceof Chart) {
+            window.quizTrendChart.destroy();
+        }
+
+        window.quizTrendChart = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: {
                 labels: @json($chartLabels),
@@ -434,24 +444,41 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        labels: { color: '#d1d5db' }
+                        labels: {
+                            color: '#d1d5db'
+                        }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 100,
-                        ticks: { color: '#9ca3af' },
-                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                        ticks: {
+                            color: '#9ca3af'
+                        },
+                        grid: {
+                            color: 'rgba(156, 163, 175, 0.2)'
+                        }
                     },
                     x: {
-                        ticks: { color: '#9ca3af' },
-                        grid: { color: 'rgba(156, 163, 175, 0.1)' }
+                        ticks: {
+                            color: '#9ca3af'
+                        },
+                        grid: {
+                            color: 'rgba(156, 163, 175, 0.1)'
+                        }
                     }
                 }
             }
         });
-    </script>
+    }
+
+    // Initial page load
+    document.addEventListener('DOMContentLoaded', initQuizTrendChart);
+
+    // Flux / Livewire navigation
+    document.addEventListener('livewire:navigated', initQuizTrendChart);
+</script>
 @endif
 
 </x-layouts::app>

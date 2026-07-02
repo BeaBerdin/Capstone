@@ -3,11 +3,11 @@
 <div class="space-y-6">
 
     <div>
-        <h1 class="text-3xl font-bold text-white">
+        <h1 class="text-3xl font-bold text-black">
             My Courses
         </h1>
 
-        <p class="text-gray-400">
+        <p class="text-black">
             Continue your learning journey with PathWise.
         </p>
     </div>
@@ -59,7 +59,7 @@
                         class="h-3 rounded-full transition-all
                             {{ $isCompleted
                                 ? 'bg-green-500'
-                                : 'bg-gradient-to-r from-purple-500 to-indigo-500' }}"
+                                : 'bg-linear-to-r from-purple-500 to-indigo-500' }}"
                         style="width: {{ $progress }}%">
                     </div>
 
@@ -83,7 +83,7 @@
                     </a>
                 @else
                     <a href="{{ route('student.learn.course', $enrollment->course) }}"
-                       class="inline-block rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
+                       class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
                         Continue Learning
                     </a>
                 @endif
@@ -105,7 +105,7 @@
             </p>
 
             <a href="{{ route('student.marketplace') }}"
-               class="inline-block mt-4 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-5 py-2 text-white transition hover:opacity-90">
+               class="inline-block mt-4 rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-5 py-2 text-white transition hover:opacity-90">
                 Browse Courses
             </a>
 

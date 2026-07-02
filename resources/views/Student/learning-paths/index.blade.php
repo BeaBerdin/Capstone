@@ -19,7 +19,7 @@
             @csrf
 
             <button type="submit"
-                    class="rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
+                    class="rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
                 Generate AI Learning Path
             </button>
         </form>
@@ -76,7 +76,7 @@
                 @endif
 
                 <a href="{{ route('student.learning-paths.show', $path) }}"
-                   class="inline-block mt-4 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
+                   class="inline-block mt-4 rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
                     View Learning Path
                 </a>
 

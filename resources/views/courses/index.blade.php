@@ -158,7 +158,7 @@
                             <tr>
                                 <td colspan="6" class="px-6 py-16 text-center">
                                     <h3 class="text-lg font-semibold text-white">No courses found</h3>
-                                    <p class="mt-1 text-sm text-zinc-400">
+                                    <p class="mt-1 text-sm text-black">
                                         Courses will appear here once created.
                                     </p>
                                 </td>

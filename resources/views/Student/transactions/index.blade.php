@@ -26,9 +26,9 @@
             <h2 class="mt-2 text-3xl font-bold text-white">{{ $totalTransactions }}</h2>
         </div>
 
-        <div class="rounded-2xl border border-green-500/40 bg-green-500/10 p-5">
-            <p class="text-sm text-black">Approved</p>
-            <h2 class="mt-2 text-3xl font-bold text-black">{{ $approvedTransactions }}</h2>
+        <div class="rounded-2xl border border-green-500/40 bg-green-400/10 p-5">
+            <p class="text-sm text-white">Approved</p>
+            <h2 class="mt-2 text-3xl font-bold text-white">{{ $approvedTransactions }}</h2>
         </div>
 
         <div class="rounded-2xl border border-yellow-500/40 bg-yellow-500/10 p-5">

@@ -62,7 +62,7 @@
         </div>
 
         <div class="h-3 w-full rounded bg-gray-300 dark:bg-neutral-800">
-            <div class="h-3 rounded bg-gradient-to-r from-purple-500 to-indigo-500"
+            <div class="h-3 rounded bg-linear-to-r from-purple-500 to-indigo-500"
                  style="width: {{ $pathProgress }}%">
             </div>
         </div>
@@ -136,12 +136,12 @@
                         </a>
                     @elseif($isActive)
                         <a href="{{ route('student.learn.course', $course) }}"
-                           class="inline-block rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
+                           class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
                             Continue Learning
                         </a>
                     @else
                         <a href="{{ route('student.course.show', $course) }}"
-                           class="inline-block rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
+                           class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
                             View Course
                         </a>
                     @endif

@@ -3,16 +3,16 @@
 <div class="space-y-6">
 
     <div>
-        <h1 class="text-3xl font-bold text-white">
+        <h1 class="text-3xl font-bold text-black">
             {{ $course->title }}
         </h1>
 
-        <p class="text-gray-400">
+        <p class="text-black">
             Enrolled Students
         </p>
     </div>
 
-    <div class="bg-neutral-900 border border-neutral-700 rounded-xl overflow-hidden">
+    <div class="bg-neutral-400 border border-neutral-700 rounded-xl overflow-hidden">
 
         <table class="w-full">
 
