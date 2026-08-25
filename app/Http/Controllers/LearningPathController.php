@@ -20,7 +20,7 @@ class LearningPathController extends Controller
 
     public function create()
     {
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::where('is_free', false)->orderBy('title')->get();
 
         return view('learning-paths.create', compact('courses'));
     }
@@ -59,7 +59,7 @@ class LearningPathController extends Controller
 
     public function edit(LearningPath $learningPath)
     {
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::where('is_free', false)->orderBy('title')->get();
 
         $selectedCourses = $learningPath->courses()
             ->pluck('courses.id')
@@ -112,6 +112,9 @@ class LearningPathController extends Controller
 
         $bestQuizResult = QuizResult::with('quiz.course.category')
             ->where('student_id', $studentId)
+            ->whereHas('quiz.course', function ($query) {
+                $query->where('is_free', false);
+            })
             ->orderByDesc('percentage')
             ->first();
 
@@ -121,7 +124,16 @@ class LearningPathController extends Controller
                 ->with('error', 'No quiz results found. Complete a quiz first to generate your AI learning path.');
         }
 
+        if ($bestQuizResult->quiz->course->is_free) {
+            return redirect()
+                ->route('student.learning-paths')
+                ->with('info', 'Free courses are not included in AI learning paths.');
+        }
+
         $averageScore = QuizResult::where('student_id', $studentId)
+            ->whereHas('quiz.course', function ($query) {
+                $query->where('is_free', false);
+            })
             ->avg('percentage') ?? 0;
 
         if ($averageScore >= 85) {
@@ -172,6 +184,7 @@ class LearningPathController extends Controller
 
         $courses = Course::where('category_id', $bestQuizResult->quiz->course->category_id)
             ->where('status', 'published')
+            ->where('is_free', false)
             ->has('lessons')
             ->has('quizzes')
             ->orderByRaw("
@@ -186,6 +199,7 @@ class LearningPathController extends Controller
 
         if ($courses->count() < 3) {
             $additionalCourses = Course::where('status', 'published')
+                ->where('is_free', false)
                 ->whereNotIn('id', $courses->pluck('id'))
                 ->has('lessons')
                 ->has('quizzes')
@@ -218,7 +232,9 @@ class LearningPathController extends Controller
 
     public function studentIndex()
     {
-        $learningPaths = LearningPath::with('courses')
+        $learningPaths = LearningPath::with(['courses' => function ($query) {
+            $query->where('is_free', false);
+        }])
             ->where(function ($query) {
                 $query->whereNull('student_id')
                     ->orWhere('student_id', auth()->id());
@@ -235,7 +251,12 @@ class LearningPathController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $learningPath->load('courses.category');
+        $learningPath->load([
+            'courses' => function ($query) {
+                $query->where('is_free', false);
+            },
+            'courses.category'
+        ]);
 
         return view('student.learning-paths.show', compact('learningPath'));
     }

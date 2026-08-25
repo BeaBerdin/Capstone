@@ -28,6 +28,35 @@ class DashboardController extends Controller
         ));
     }
 
+    public function superAdmin()
+{
+    $totalUsers = User::count();
+
+    $totalStudents = User::whereHas('roles', function ($query) {
+        $query->where('name', 'student');
+    })->count();
+
+    $totalTeachers = User::whereHas('roles', function ($query) {
+        $query->where('name', 'teacher');
+    })->count();
+
+    $totalAdmins = User::whereHas('roles', function ($query) {
+        $query->where('name', 'admin');
+    })->count();
+
+    $totalCourses = Course::count();
+
+    $totalEnrollments = Enrollment::count();
+
+    return view('super-admin.dashboard', compact(
+        'totalUsers',
+        'totalStudents',
+        'totalTeachers',
+        'totalAdmins',
+        'totalCourses',
+        'totalEnrollments'
+    ));
+}
     public function student()
     {
         $studentId = auth()->id();

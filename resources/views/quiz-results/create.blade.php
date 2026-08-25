@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-4xl space-y-6">
 
         <div>
-            <h1 class="text-3xl font-bold text-white">Create Quiz Result</h1>
+            <h1 class="text-3xl font-bold text-black">Create Quiz Result</h1>
             <p class="mt-1 text-sm text-zinc-400">
                 Manually record a student quiz score and assessment outcome.
             </p>

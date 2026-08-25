@@ -2,14 +2,14 @@
     <div class="mx-auto max-w-4xl space-y-6">
 
         <div>
-            <h1 class="text-3xl font-bold text-white">Edit Quiz Result</h1>
+            <h1 class="text-3xl font-bold text-black">Edit Quiz Result</h1>
             <p class="mt-1 text-sm text-zinc-400">
                 Update the student’s quiz score and attempt details.
             </p>
         </div>
 
         <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-lg shadow-purple-950/10">
-            <form action="{{ route('quiz-results.update', $quiz_result) }}" method="POST" class="space-y-6">
+            <form action="{{ route('teacher.quiz-results.update', $quiz_result) }}" method="POST" class="space-y-6">
                 @csrf
                 @method('PUT')
 

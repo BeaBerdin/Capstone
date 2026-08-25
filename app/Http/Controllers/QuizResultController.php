@@ -49,7 +49,7 @@ class QuizResultController extends Controller
         ]);
 
         return redirect()
-            ->route('quiz-results.index')
+            ->route('teacher.quiz-results.index')
             ->with('success', 'Quiz result recorded successfully.');
     }
 
@@ -86,7 +86,7 @@ class QuizResultController extends Controller
         ]);
 
         return redirect()
-            ->route('quiz-results.index')
+            ->route('teacher.quiz-results.index')
             ->with('success', 'Quiz result updated successfully.');
     }
 
@@ -95,7 +95,7 @@ class QuizResultController extends Controller
         $quiz_result->delete();
 
         return redirect()
-            ->route('quiz-results.index')
+            ->route('teacher.quiz-results.index')
             ->with('success', 'Quiz result deleted successfully.');
     }
 }

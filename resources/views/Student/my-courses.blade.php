@@ -6,14 +6,13 @@
         <h1 class="text-3xl font-bold text-black">
             My Courses
         </h1>
-
-        <p class="text-black">
+        <p class="text-sm text-gray-400">
             Continue your learning journey with PathWise.
         </p>
     </div>
 
     @if(session('success'))
-        <div class="rounded-lg bg-green-600 text-white p-4">
+        <div class="rounded-xl border border-green-700/40 bg-green-950/40 px-4 py-3 text-green-300">
             {{ session('success') }}
         </div>
     @endif
@@ -25,18 +24,18 @@
             $isCompleted = $progress >= 100;
         @endphp
 
-        <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
+        <div class="rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-lg shadow-purple-950/10">
 
             <div class="flex justify-between items-start">
 
                 <div>
-                    <h2 class="text-xl font-bold">
+                    <h2 class="text-xl font-bold text-white">
                         {{ $enrollment->course->title }}
                     </h2>
 
-                    <p class="text-sm text-gray-500 mt-1">
+                    <p class="text-sm text-gray-400 mt-1">
                         Status:
-                        <span class="font-semibold">
+                        <span class="font-semibold text-gray-300">
                             {{ ucfirst($enrollment->status) }}
                         </span>
                     </p>
@@ -52,9 +51,7 @@
             </div>
 
             <div class="mt-4">
-
-                <div class="w-full bg-neutral-200 dark:bg-neutral-800 rounded-full h-3">
-
+                <div class="w-full bg-neutral-700 rounded-full h-3">
                     <div
                         class="h-3 rounded-full transition-all
                             {{ $isCompleted
@@ -62,51 +59,49 @@
                                 : 'bg-linear-to-r from-purple-500 to-indigo-500' }}"
                         style="width: {{ $progress }}%">
                     </div>
-
                 </div>
-
             </div>
 
             <div class="mt-4 text-sm text-gray-400">
-
                 Enrolled:
                 {{ optional($enrollment->enrolled_at)->format('M d, Y') ?? 'N/A' }}
-
             </div>
 
             <div class="mt-5">
-
                 @if($isCompleted)
                     <a href="{{ route('student.learn.course', $enrollment->course) }}"
-                       class="inline-block rounded-lg bg-green-600 px-4 py-2 text-white transition hover:bg-green-700">
+                       class="inline-block rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
                         Review Course
                     </a>
                 @else
                     <a href="{{ route('student.learn.course', $enrollment->course) }}"
-                       class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
-                        Continue Learning
+                       class="inline-block rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+                        Continue Learning →
                     </a>
                 @endif
-
             </div>
 
         </div>
 
     @empty
 
-        <div class="rounded-xl border p-8 text-center dark:border-neutral-700">
+        <div class="rounded-2xl border border-neutral-700 bg-neutral-900 p-8 text-center">
 
-            <h2 class="text-xl font-semibold">
+            <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-600/20 text-2xl mx-auto">
+                📚
+            </div>
+
+            <h2 class="text-xl font-semibold text-white">
                 No Enrolled Courses Yet
             </h2>
 
-            <p class="text-gray-500 mt-2">
+            <p class="text-gray-400 mt-2">
                 Browse the marketplace and enroll in your first course.
             </p>
 
             <a href="{{ route('student.marketplace') }}"
-               class="inline-block mt-4 rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-5 py-2 text-white transition hover:opacity-90">
-                Browse Courses
+               class="inline-block mt-4 rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+                Browse Courses →
             </a>
 
         </div>

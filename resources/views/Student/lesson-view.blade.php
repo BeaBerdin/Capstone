@@ -23,6 +23,12 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="rounded-lg bg-red-100 p-4 text-red-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
 
         <div class="mb-5 flex flex-wrap gap-3 text-sm text-gray-500">

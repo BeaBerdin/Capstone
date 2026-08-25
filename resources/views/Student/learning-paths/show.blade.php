@@ -34,48 +34,48 @@
     <x-back-button :href="route('student.learning-paths')" label="Back to Learning Paths" />
 
     <div>
-        <h1 class="text-3xl font-bold">
+        <h1 class="text-3xl font-bold text-black">
             {{ $learningPath->name }}
         </h1>
 
-        <p class="text-gray-500">
+        <p class="text-sm text-gray-400">
             {{ $learningPath->description }}
         </p>
 
         @if($learningPath->is_generated)
-            <span class="mt-3 inline-block rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+            <span class="mt-3 inline-block rounded-full bg-purple-500/15 px-3 py-1 text-sm font-semibold text-purple-500">
                 AI Generated Learning Path
             </span>
         @endif
     </div>
 
-    <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
+    <div class="rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-lg shadow-purple-950/10">
 
         <div class="flex justify-between items-center mb-3">
-            <h2 class="text-xl font-bold">
+            <h2 class="text-xl font-bold text-white">
                 Path Progress
             </h2>
 
-            <span class="text-sm font-semibold">
+            <span class="text-sm font-semibold text-white">
                 {{ $pathProgress }}%
             </span>
         </div>
 
-        <div class="h-3 w-full rounded bg-gray-300 dark:bg-neutral-800">
-            <div class="h-3 rounded bg-linear-to-r from-purple-500 to-indigo-500"
+        <div class="h-3 w-full rounded-full bg-neutral-700">
+            <div class="h-3 rounded-full bg-linear-to-r from-purple-500 to-indigo-500"
                  style="width: {{ $pathProgress }}%">
             </div>
         </div>
 
-        <p class="mt-2 text-sm text-gray-500">
+        <p class="mt-2 text-sm text-gray-400">
             Completed {{ $completedCount }} out of {{ $totalCourses }} courses.
         </p>
 
     </div>
 
-    <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
+    <div class="rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-lg shadow-purple-950/10">
 
-        <h2 class="text-xl font-bold mb-4">
+        <h2 class="text-xl font-bold text-white mb-4">
             Recommended Learning Sequence
         </h2>
 
@@ -86,27 +86,27 @@
                 $isActive = in_array($course->id, $activeCourseIds);
 
                 $statusLabel = 'Not Started';
-                $statusClass = 'bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-300';
+                $statusClass = 'bg-gray-500/15 text-gray-400';
 
                 if ($isCompleted) {
                     $statusLabel = 'Completed';
-                    $statusClass = 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400';
+                    $statusClass = 'bg-green-500/15 text-green-400';
                 } elseif ($isActive) {
                     $statusLabel = 'In Progress';
-                    $statusClass = 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300';
+                    $statusClass = 'bg-purple-500/15 text-purple-300';
                 }
             @endphp
 
-            <div class="rounded-lg bg-neutral-100 p-5 mb-4 dark:bg-neutral-800">
+            <div class="rounded-xl border border-neutral-700 bg-neutral-800 p-5 mb-4">
 
                 <div class="flex justify-between items-start gap-4">
 
                     <div>
-                        <div class="text-sm text-purple-500 mb-2">
+                        <div class="text-sm text-purple-400 mb-2">
                             Step {{ $index + 1 }}
                         </div>
 
-                        <h3 class="text-lg font-bold">
+                        <h3 class="text-lg font-bold text-white">
                             {{ $course->title }}
                         </h3>
 
@@ -117,13 +117,13 @@
                         </p>
                     </div>
 
-                    <span class="rounded-full px-3 py-1 text-sm {{ $statusClass }}">
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
                         {{ $statusLabel }}
                     </span>
 
                 </div>
 
-                <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                <p class="mt-3 text-sm text-gray-400">
                     {{ $course->description }}
                 </p>
 
@@ -131,18 +131,18 @@
 
                     @if($isCompleted)
                         <a href="{{ route('student.course.show', $course) }}"
-                           class="inline-block rounded-lg bg-green-600 px-4 py-2 text-white transition hover:bg-green-700">
+                           class="inline-block rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
                             Review Course
                         </a>
                     @elseif($isActive)
                         <a href="{{ route('student.learn.course', $course) }}"
-                           class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
-                            Continue Learning
+                           class="inline-block rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+                            Continue Learning →
                         </a>
                     @else
                         <a href="{{ route('student.course.show', $course) }}"
-                           class="inline-block rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-white transition hover:opacity-90">
-                            View Course
+                           class="inline-block rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+                            View Course →
                         </a>
                     @endif
 
@@ -152,9 +152,11 @@
 
         @empty
 
-            <p class="text-gray-500">
-                No courses assigned.
-            </p>
+            <div class="rounded-xl border border-neutral-700 bg-neutral-800 p-8 text-center">
+                <p class="text-gray-400">
+                    No courses assigned.
+                </p>
+            </div>
 
         @endforelse
 

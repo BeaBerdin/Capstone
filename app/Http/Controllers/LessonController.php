@@ -115,36 +115,36 @@ class LessonController extends Controller
         return view('student.learn-course', compact('course', 'lessons'));
     }
 
-   public function studentLesson(Lesson $lesson)
-{
-    $progress = LessonProgress::firstOrCreate(
-        [
-            'student_id' => auth()->id(),
-            'lesson_id' => $lesson->id,
-        ],
-        [
-            'status' => 'in_progress',
-            'started_at' => now(),
-        ]
-    );
+    public function studentLesson(Lesson $lesson)
+    {
+        $progress = LessonProgress::firstOrCreate(
+            [
+                'student_id' => auth()->id(),
+                'lesson_id' => $lesson->id,
+            ],
+            [
+                'status' => 'in_progress',
+                'started_at' => now(),
+            ]
+        );
 
-    $previousLesson = Lesson::where('course_id', $lesson->course_id)
-        ->where('lesson_order', '<', $lesson->lesson_order)
-        ->orderByDesc('lesson_order')
-        ->first();
+        $previousLesson = Lesson::where('course_id', $lesson->course_id)
+            ->where('lesson_order', '<', $lesson->lesson_order)
+            ->orderByDesc('lesson_order')
+            ->first();
 
-    $nextLesson = Lesson::where('course_id', $lesson->course_id)
-        ->where('lesson_order', '>', $lesson->lesson_order)
-        ->orderBy('lesson_order')
-        ->first();
+        $nextLesson = Lesson::where('course_id', $lesson->course_id)
+            ->where('lesson_order', '>', $lesson->lesson_order)
+            ->orderBy('lesson_order')
+            ->first();
 
-    return view('student.lesson-view', compact(
-        'lesson',
-        'progress',
-        'previousLesson',
-        'nextLesson'
-    ));
-}
+        return view('student.lesson-view', compact(
+            'lesson',
+            'progress',
+            'previousLesson',
+            'nextLesson'
+        ));
+    }
 
     public function markComplete(Lesson $lesson)
     {
@@ -187,17 +187,11 @@ class LessonController extends Controller
 
             if ($progressPercentage >= 100) {
 
-                // Determine whether the student has PASSED the course's quiz.
-                // A certificate should only be issued when the learner both
-                // finished all lessons AND passed the assessment.
                 $courseQuizIds = $course->quizzes()->pluck('id');
-
                 $hasQuiz = $courseQuizIds->isNotEmpty();
-
                 $hasPassed = false;
 
                 if ($hasQuiz) {
-                    // Look at the student's best attempt on any of the course quizzes.
                     $bestResult = QuizResult::where('student_id', $studentId)
                         ->whereIn('quiz_id', $courseQuizIds)
                         ->orderByDesc('percentage')
@@ -211,9 +205,6 @@ class LessonController extends Controller
                     }
                 }
 
-                // Certificate rule:
-                // - If the course HAS a quiz, the student must PASS it.
-                // - If the course has NO quiz, lesson completion alone is enough.
                 $eligibleForCertificate = $hasQuiz ? $hasPassed : true;
 
                 if ($eligibleForCertificate) {
@@ -222,30 +213,19 @@ class LessonController extends Controller
                         'completed_at' => now(),
                     ]);
 
-                    Certificate::firstOrCreate(
-                        [
-                            'student_id' => $studentId,
-                            'course_id' => $course->id,
-                        ],
-                        [
-                            'certificate_number' => 'PW-' . now()->format('Y') . '-' . str_pad($studentId . $course->id, 5, '0', STR_PAD_LEFT),
-                            'issued_date' => now()->toDateString(),
-                            'status' => 'issued',
-                        ]
-                    );
+                    Certificate::firstOrCreate([
+                        'student_id' => $studentId,
+                        'course_id' => $course->id,
+                    ], [
+                        'certificate_number' => 'PW-' . now()->format('Y') . '-' . str_pad($studentId . $course->id, 5, '0', STR_PAD_LEFT),
+                        'issued_date' => now()->toDateString(),
+                        'status' => 'issued',
+                    ]);
                 }
-
-                // NOTE: Course recommendations are intentionally NOT generated here.
-                // PATHWISE generates recommendations only from quiz performance
-                // (see QuizController::submit -> RecommendationService), which is the
-                // AI-driven, score-based logic.
             }
         }
 
-        return back()->with(
-            'success',
-            'Lesson marked as completed.'
-        );
+        return back()->with('success', 'Lesson marked as completed.');
     }
 
     public function teacherLessons(Course $course)
@@ -258,7 +238,13 @@ class LessonController extends Controller
             ->orderBy('lesson_order')
             ->get();
 
-        return view('teacher.lessons', compact('course', 'lessons'));
+        $enrollments = Enrollment::where('course_id', $course->id)->get();
+
+        return view('teacher.lessons', compact(
+            'course',
+            'lessons',
+            'enrollments'
+        ));
     }
 
     public function teacherCreateLesson(Course $course)
@@ -363,11 +349,11 @@ class LessonController extends Controller
 
     public function teacherAllLessons()
     {
-    $courses = \App\Models\Course::with('lessons')
-        ->where('teacher_id', auth()->id())
-        ->latest()
-        ->get();
+        $courses = Course::with('lessons')
+            ->where('teacher_id', auth()->id())
+            ->latest()
+            ->get();
 
-    return view('teacher.lessons-index', compact('courses'));
+        return view('teacher.lessons-index', compact('courses'));
     }
 }

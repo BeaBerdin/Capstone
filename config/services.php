@@ -40,4 +40,9 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
     ],
 
+   
+'paymongo' => [
+    'secret_key' => env('PAYMONGO_SECRET_KEY'),
+    'public_key' => env('PAYMONGO_PUBLIC_KEY'),
+],
 ];
