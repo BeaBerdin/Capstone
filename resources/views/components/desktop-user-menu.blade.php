@@ -5,11 +5,13 @@
 <div {{ $attributes->merge(['class' => 'px-3 pb-4']) }}>
     <flux:dropdown position="top" align="start">
 
+        <!-- Changed background to purple gradient matching the logo, tweaked text/borders, and updated hover transitions -->
         <button
             type="button"
-            class="flex w-full items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4 text-left transition hover:border-purple-700/50 hover:bg-purple-950/30"
+            class="flex w-full items-center gap-3 rounded-2xl border border-purple-700/50 bg-gradient-to-br from-purple-600 to-indigo-600 px-4 py-4 text-left transition hover:from-purple-500 hover:to-indigo-500"
         >
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-sm font-bold text-white">
+            <!-- INVERTED AVATAR: White background, text is matching purple using text-purple-600 -->
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-bold text-purple-600 shadow-sm">
                 {{ auth()->user()->initials() }}
             </div>
 
@@ -18,13 +20,15 @@
                     {{ $name }}
                 </p>
 
-                <p class="truncate text-[11px] text-zinc-500">
+                <!-- Changed from text-zinc-500 to text-purple-200 for better visibility on a purple background -->
+                <p class="truncate text-[11px] text-purple-200">
                     {{ auth()->user()->email }}
                 </p>
             </div>
 
+            <!-- Changed arrow color to text-purple-200 to pop nicely against the new purple background -->
             <svg
-                class="h-4 w-4 text-zinc-500"
+                class="h-4 w-4 text-purple-200"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

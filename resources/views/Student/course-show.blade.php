@@ -1,173 +1,2257 @@
 <x-layouts::app :title="$course->title">
 
 @php
-    $isEnrolled = \App\Models\Enrollment::where('student_id', auth()->id())
-        ->where('course_id', $course->id)
-        ->exists();
+    /*
+    |--------------------------------------------------------------------------
+    | STUDENT / ENROLLMENT
+    |--------------------------------------------------------------------------
+    */
 
-    $pendingTransaction = \App\Models\Transaction::where('student_id', auth()->id())
-        ->where('course_id', $course->id)
-        ->where('status', 'pending')
+    $enrollment = \App\Models\Enrollment::where(
+            'student_id',
+            auth()->id()
+        )
+        ->where(
+            'course_id',
+            $course->id
+        )
+        ->first();
+
+    $isEnrolled = (bool) $enrollment;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PENDING TRANSACTION
+    |--------------------------------------------------------------------------
+    */
+
+    $pendingTransaction = \App\Models\Transaction::where(
+            'student_id',
+            auth()->id()
+        )
+        ->where(
+            'course_id',
+            $course->id
+        )
+        ->where(
+            'status',
+            'pending'
+        )
         ->latest()
         ->first();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COURSE DATA
+    |--------------------------------------------------------------------------
+    */
+
+    $lessons = $course
+        ->lessons()
+        ->orderBy('lesson_order')
+        ->get();
+
+    $totalLessons = $lessons->count();
+
+    $previewLessons = $lessons
+        ->where('is_preview', true)
+        ->count();
+
+    $totalMinutes = $lessons->sum(
+        fn ($lesson) =>
+            (int) ($lesson->duration_minutes ?? 0)
+    );
+
+    $price = (float) ($course->price ?? 0);
+
+    $isFree = $price <= 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | THUMBNAIL
+    |--------------------------------------------------------------------------
+    */
+
+    $thumbnail = $course->thumbnail ?? null;
+
+    $thumbnailUrl = null;
+
+    if ($thumbnail) {
+
+        if (
+            \Illuminate\Support\Str::startsWith(
+                $thumbnail,
+                [
+                    'http://',
+                    'https://',
+                ]
+            )
+        ) {
+            $thumbnailUrl = $thumbnail;
+        } else {
+
+            $thumbnailUrl = asset(
+                'storage/' .
+                ltrim(
+                    $thumbnail,
+                    '/'
+                )
+            );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | INSTRUCTOR
+    |--------------------------------------------------------------------------
+    */
+
+    $teacherName =
+        $course->teacher?->name
+        ?? 'PathWise Instructor';
+
+    $teacherInitials = collect(
+        preg_split(
+            '/\s+/',
+            trim($teacherName)
+        )
+    )
+        ->filter()
+        ->take(2)
+        ->map(
+            fn ($part) =>
+                strtoupper(
+                    substr(
+                        $part,
+                        0,
+                        1
+                    )
+                )
+        )
+        ->implode('');
+
+    if (!$teacherInitials) {
+        $teacherInitials = 'PW';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROGRESS
+    |--------------------------------------------------------------------------
+    */
+
+    $courseProgress = $enrollment
+        ? (float) ($enrollment->progress_percentage ?? 0)
+        : 0;
+
+    $courseProgress = min(
+        max(
+            $courseProgress,
+            0
+        ),
+        100
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LESSON TYPE LABELS
+    |--------------------------------------------------------------------------
+    */
+
+    $typeLabels = [
+        'video' => 'Video',
+        'text' => 'Reading',
+        'document' => 'Document',
+        'quiz' => 'Quiz',
+    ];
 @endphp
 
-<div class="min-h-screen bg-black p-6">
 
-    <div class="mx-auto max-w-7xl space-y-6">
+<style>
+    .pw-card {
+        background: #ffffff;
+        border: 1px solid #e7e9ef;
+        border-radius: 20px;
+        box-shadow:
+            0 1px 3px
+            rgba(15, 23, 42, 0.035);
+    }
 
-        {{-- Back Button --}}
-        <div class="flex items-center gap-2">
-            <a href="{{ route('student.marketplace') }}"
-               class="inline-flex items-center gap-2 rounded-xl border border-purple-500/20 bg-zinc-950 px-4 py-2 text-sm font-semibold text-purple-300 transition hover:bg-purple-500/10">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to Marketplace
-            </a>
-        </div>
+    .pw-soft-card {
+        background: #f8fafc;
+        border: 1px solid #eef0f4;
+        border-radius: 14px;
+    }
+</style>
 
-        {{-- Course Info Card --}}
-        <div class="rounded-2xl border border-purple-500/20 bg-zinc-950 p-6 shadow-xl">
 
-            {{-- Category Badge --}}
-            <span class="inline-flex rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-400 border border-purple-500/20">
-                {{ $course->category->name ?? 'No Category' }}
-            </span>
+<div class="min-h-screen bg-[#f8f9fc]">
 
-            <h1 class="mt-3 text-3xl font-bold text-white">
-                {{ $course->title }}
-            </h1>
+    <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-            <p class="mt-4 text-gray-400 leading-relaxed">
-                {{ $course->description }}
-            </p>
+        <div class="mx-auto max-w-[1500px]">
 
-            {{-- Meta Grid --}}
-            <div class="mt-5 grid gap-4 sm:grid-cols-3">
-                <div class="rounded-xl border border-purple-500/10 bg-[#111111] p-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        <span class="text-xs uppercase tracking-wider text-gray-400">Level</span>
-                    </div>
-                    <p class="mt-1 text-lg font-semibold text-white">{{ ucfirst($course->difficulty_level) }}</p>
-                </div>
 
-                <div class="rounded-xl border border-purple-500/10 bg-[#111111] p-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="text-xs uppercase tracking-wider text-gray-400">Hours</span>
-                    </div>
-                    <p class="mt-1 text-lg font-semibold text-white">{{ $course->estimated_hours ?? 'N/A' }}</p>
-                </div>
+            {{-- =====================================================
+                BREADCRUMB
+            ====================================================== --}}
 
-                <div class="rounded-xl border border-purple-500/10 bg-[#111111] p-4">
-                    <div class="flex items-center gap-2">
-                        <svg class="h-4 w-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="text-xs uppercase tracking-wider text-gray-400">Price</span>
-                    </div>
-                    <p class="mt-1 text-lg font-semibold text-white">₱{{ number_format($course->price, 2) }}</p>
-                </div>
-            </div>
+            <div
+                class="mb-5 flex flex-wrap
+                       items-center gap-2
+                       text-xs text-slate-400"
+            >
 
-            {{-- Status / Action Area --}}
-            @if($isEnrolled)
-
-                <div class="mt-6 flex items-center gap-3 rounded-xl border border-green-500/30 bg-green-500/10 p-4 text-green-400">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>You are already enrolled in this course.</span>
-                </div>
-
-                <a href="{{ route('student.learn.course', $course) }}"
-                   class="mt-4 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-purple-700">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Continue Learning
+                <a
+                    href="{{ route('student.marketplace') }}"
+                    class="font-medium transition
+                           hover:text-violet-600"
+                >
+                    Marketplace
                 </a>
 
-            @elseif($pendingTransaction)
+                <span>
+                    ›
+                </span>
 
-                <div class="mt-6 flex items-center gap-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-400">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>You already have a pending payment for this course.</span>
-                </div>
+                <span>
+                    {{ $course->category?->name ?? 'Course' }}
+                </span>
 
-                <a href="{{ route('student.transactions.show', $pendingTransaction) }}"
-                   class="mt-4 inline-flex items-center gap-2 rounded-xl bg-yellow-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-700">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                    View Pending Transaction
-                </a>
+                <span>
+                    ›
+                </span>
 
-            @elseif($course->price > 0)
+                <span
+                    class="font-semibold
+                           text-slate-600"
+                >
+                    {{ $course->title }}
+                </span>
 
-                <div class="mt-6 flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <span>This is a paid course. Please purchase the course and upload your proof of payment for admin verification.</span>
-                </div>
-
-                <form action="{{ route('student.transactions.store', $course) }}"
-                      method="POST"
-                      class="mt-4">
-                    @csrf
-                    <button class="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-purple-700">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                        Purchase Course
-                    </button>
-                </form>
-
-            @else
-
-                <form action="{{ route('student.enroll', $course) }}"
-                      method="POST"
-                      class="mt-6">
-                    @csrf
-                    <button class="inline-flex items-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-700">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Enroll for Free
-                    </button>
-                </form>
-
-            @endif
-
-        </div>
-
-        {{-- Course Lessons --}}
-        <div class="rounded-2xl border border-purple-500/20 bg-zinc-950 p-6 shadow-xl">
-
-            <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/20">
-                    <svg class="h-5 w-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                </div>
-                <h2 class="text-xl font-bold text-white">Course Lessons</h2>
             </div>
 
-            @forelse($course->lessons as $lesson)
-                <div class="mb-3 flex items-center justify-between rounded-xl border border-neutral-800 bg-[#111111] p-4 transition hover:border-purple-500/20 hover:bg-[#1a1a1a]">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20 text-sm font-bold text-purple-400">
-                            {{ $lesson->lesson_order }}
+
+
+            {{-- =====================================================
+                HEADER
+            ====================================================== --}}
+
+            <div
+                class="flex flex-col gap-5
+                       lg:flex-row
+                       lg:items-end
+                       lg:justify-between"
+            >
+
+                <div>
+
+                    <p
+                        class="text-xs font-bold
+                               uppercase
+                               tracking-[.12em]
+                               text-violet-600"
+                    >
+                        Course Details
+                    </p>
+
+
+                    <h1
+                        class="mt-2 max-w-4xl
+                               text-3xl font-bold
+                               tracking-tight
+                               text-slate-950"
+                    >
+                        {{ $course->title }}
+                    </h1>
+
+
+                    <p
+                        class="mt-2 max-w-3xl
+                               text-sm leading-6
+                               text-slate-500"
+                    >
+                        Review the course information,
+                        curriculum, instructor, and
+                        enrollment options.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ route('student.marketplace') }}"
+                    class="inline-flex h-11
+                           self-start items-center
+                           justify-center gap-2
+                           rounded-xl
+                           border border-slate-200
+                           bg-white px-4
+                           text-sm font-semibold
+                           text-slate-600
+                           transition
+                           hover:border-violet-200
+                           hover:text-violet-700"
+                >
+
+                    <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M19 12H5"></path>
+                        <path d="m12 19-7-7 7-7"></path>
+                    </svg>
+
+                    Back to Marketplace
+                </a>
+
+            </div>
+
+
+
+            {{-- =====================================================
+                MAIN COURSE HERO
+            ====================================================== --}}
+
+            <div
+                class="mt-7 grid grid-cols-1
+                       gap-6
+                       xl:grid-cols-[minmax(0,1fr)_380px]"
+            >
+
+
+                {{-- =================================================
+                    COURSE OVERVIEW
+                ================================================== --}}
+
+                <section class="pw-card overflow-hidden">
+
+
+                    {{-- IMAGE --}}
+                    <div
+                        class="relative h-[280px]
+                               overflow-hidden
+                               bg-slate-100
+                               sm:h-[360px]"
+                    >
+
+                        @if($thumbnailUrl)
+
+                            <img
+                                src="{{ $thumbnailUrl }}"
+                                alt="{{ $course->title }}"
+                                class="h-full w-full
+                                       object-cover"
+                            >
+
+                            <div
+                                class="absolute inset-0
+                                       bg-gradient-to-t
+                                       from-slate-950/50
+                                       via-transparent
+                                       to-transparent"
+                            ></div>
+
+                        @else
+
+                            <div
+                                class="flex h-full w-full
+                                       items-center
+                                       justify-center
+                                       bg-gradient-to-br
+                                       from-violet-500
+                                       via-indigo-500
+                                       to-blue-500"
+                            >
+
+                                <svg
+                                    class="h-20 w-20
+                                           text-white/70"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.2"
+                                >
+                                    <path
+                                        d="M4 19.5A2.5 2.5
+                                           0 016.5 17H20"
+                                    ></path>
+
+                                    <path
+                                        d="M6.5 2H20v20H6.5
+                                           A2.5 2.5 0 014
+                                           19.5v-15A2.5 2.5
+                                           0 016.5 2z"
+                                    ></path>
+                                </svg>
+
+                            </div>
+
+                        @endif
+
+
+
+                        {{-- CATEGORY --}}
+                        <div
+                            class="absolute left-5 top-5
+                                   flex flex-wrap gap-2"
+                        >
+
+                            <span
+                                class="rounded-full
+                                       bg-white/95
+                                       px-3 py-1.5
+                                       text-[10px]
+                                       font-bold uppercase
+                                       tracking-[.08em]
+                                       text-violet-700
+                                       shadow-sm
+                                       backdrop-blur"
+                            >
+                                {{
+                                    $course->category?->name
+                                    ?? 'General'
+                                }}
+                            </span>
+
+
+                            <span
+                                class="rounded-full
+                                       bg-slate-950/70
+                                       px-3 py-1.5
+                                       text-[10px]
+                                       font-semibold
+                                       text-white
+                                       backdrop-blur"
+                            >
+                                {{
+                                    ucfirst(
+                                        $course->difficulty_level
+                                        ?? 'beginner'
+                                    )
+                                }}
+                            </span>
+
                         </div>
-                        <span class="font-medium text-white">
-                            {{ $lesson->title }}
-                        </span>
+
+
+
+                        {{-- PRICE --}}
+                        <div
+                            class="absolute
+                                   bottom-5 right-5"
+                        >
+
+                            @if($isFree)
+
+                                <span
+                                    class="rounded-full
+                                           bg-emerald-500
+                                           px-4 py-2
+                                           text-xs font-bold
+                                           text-white shadow"
+                                >
+                                    FREE COURSE
+                                </span>
+
+                            @else
+
+                                <span
+                                    class="rounded-full
+                                           bg-white/95
+                                           px-4 py-2
+                                           text-sm font-bold
+                                           text-slate-900
+                                           shadow backdrop-blur"
+                                >
+                                    ₱{{ number_format($price, 2) }}
+                                </span>
+
+                            @endif
+
+                        </div>
+
                     </div>
 
-                    @if($lesson->is_preview)
-                        <span class="rounded-full bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-400 border border-purple-500/20">
-                            Preview
-                        </span>
-                    @endif
-                </div>
-            @empty
-                <div class="rounded-xl border border-dashed border-purple-500/20 bg-[#111111] p-8 text-center">
-                    <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/20 mx-auto">
-                        <svg class="h-8 w-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+
+
+                    {{-- COURSE DETAILS --}}
+                    <div class="p-5 sm:p-7">
+
+                        <div
+                            class="flex flex-col gap-5
+                                   lg:flex-row
+                                   lg:items-start
+                                   lg:justify-between"
+                        >
+
+                            <div class="max-w-3xl">
+
+                                <p
+                                    class="text-xs font-bold
+                                           uppercase
+                                           tracking-[.1em]
+                                           text-violet-500"
+                                >
+                                    About this course
+                                </p>
+
+
+                                <h2
+                                    class="mt-2
+                                           text-2xl font-bold
+                                           text-slate-900"
+                                >
+                                    {{ $course->title }}
+                                </h2>
+
+
+                                <p
+                                    class="mt-4
+                                           whitespace-pre-line
+                                           text-sm leading-7
+                                           text-slate-500"
+                                >
+                                    {{
+                                        $course->description
+                                        ?: 'No course description is currently available.'
+                                    }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+
+                        {{-- INSTRUCTOR --}}
+                        <div
+                            class="mt-6 flex
+                                   items-center gap-3
+                                   border-t
+                                   border-slate-100
+                                   pt-5"
+                        >
+
+                            <div
+                                class="flex h-11 w-11
+                                       shrink-0 items-center
+                                       justify-center
+                                       rounded-full
+                                       bg-violet-100
+                                       text-xs font-bold
+                                       text-violet-700"
+                            >
+                                {{ $teacherInitials }}
+                            </div>
+
+
+                            <div>
+
+                                <p
+                                    class="text-[10px]
+                                           font-semibold
+                                           uppercase
+                                           tracking-[.08em]
+                                           text-slate-400"
+                                >
+                                    Instructor
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm
+                                           font-bold
+                                           text-slate-800"
+                                >
+                                    {{ $teacherName }}
+                                </p>
+
+                            </div>
+
+                        </div>
+
                     </div>
-                    <p class="text-lg font-semibold text-white">No lessons added yet</p>
-                    <p class="text-sm text-gray-400">Lessons will appear here once added.</p>
+
+                </section>
+
+
+
+                {{-- =================================================
+                    ENROLLMENT CARD
+                ================================================== --}}
+
+                <aside>
+
+                    <section
+                        class="pw-card
+                               overflow-hidden
+                               xl:sticky xl:top-6"
+                    >
+
+                        <div
+                            class="border-b
+                                   border-slate-100
+                                   p-5"
+                        >
+
+                            <p
+                                class="text-xs font-bold
+                                       uppercase
+                                       tracking-[.1em]
+                                       text-violet-500"
+                            >
+                                Enrollment
+                            </p>
+
+
+                            @if($isFree)
+
+                                <p
+                                    class="mt-2
+                                           text-3xl font-bold
+                                           text-emerald-600"
+                                >
+                                    Free
+                                </p>
+
+                                <p
+                                    class="mt-1 text-xs
+                                           text-slate-400"
+                                >
+                                    No payment required
+                                </p>
+
+                            @else
+
+                                <p
+                                    class="mt-2
+                                           text-3xl font-bold
+                                           text-slate-900"
+                                >
+                                    ₱{{ number_format($price, 2) }}
+                                </p>
+
+                                <p
+                                    class="mt-1 text-xs
+                                           text-slate-400"
+                                >
+                                    One-time course purchase
+                                </p>
+
+                            @endif
+
+                        </div>
+
+
+
+                        {{-- COURSE INFO --}}
+                        <div class="p-5">
+
+                            <div class="space-y-4">
+
+
+                                {{-- LEVEL --}}
+                                <div
+                                    class="flex items-center
+                                           justify-between"
+                                >
+
+                                    <div
+                                        class="flex items-center
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-9 w-9
+                                                   items-center
+                                                   justify-center
+                                                   rounded-xl
+                                                   bg-violet-50
+                                                   text-violet-600"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path
+                                                    d="M13 10V3L4 14
+                                                       h7v7l9-11h-7z"
+                                                ></path>
+                                            </svg>
+                                        </div>
+
+
+                                        <span
+                                            class="text-xs
+                                                   text-slate-500"
+                                        >
+                                            Difficulty
+                                        </span>
+
+                                    </div>
+
+
+                                    <span
+                                        class="text-xs
+                                               font-bold
+                                               text-slate-700"
+                                    >
+                                        {{
+                                            ucfirst(
+                                                $course->difficulty_level
+                                                ?? 'Beginner'
+                                            )
+                                        }}
+                                    </span>
+
+                                </div>
+
+
+
+                                {{-- HOURS --}}
+                                <div
+                                    class="flex items-center
+                                           justify-between"
+                                >
+
+                                    <div
+                                        class="flex items-center
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-9 w-9
+                                                   items-center
+                                                   justify-center
+                                                   rounded-xl
+                                                   bg-blue-50
+                                                   text-blue-600"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <circle
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="9"
+                                                ></circle>
+
+                                                <path
+                                                    d="M12 7v5l3 2"
+                                                ></path>
+                                            </svg>
+                                        </div>
+
+
+                                        <span
+                                            class="text-xs
+                                                   text-slate-500"
+                                        >
+                                            Estimated time
+                                        </span>
+
+                                    </div>
+
+
+                                    <span
+                                        class="text-xs
+                                               font-bold
+                                               text-slate-700"
+                                    >
+                                        @if($course->estimated_hours)
+
+                                            {{
+                                                $course->estimated_hours
+                                            }}
+                                            hrs
+
+                                        @else
+
+                                            Flexible
+
+                                        @endif
+                                    </span>
+
+                                </div>
+
+
+
+                                {{-- LESSONS --}}
+                                <div
+                                    class="flex items-center
+                                           justify-between"
+                                >
+
+                                    <div
+                                        class="flex items-center
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-9 w-9
+                                                   items-center
+                                                   justify-center
+                                                   rounded-xl
+                                                   bg-emerald-50
+                                                   text-emerald-600"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path
+                                                    d="M4 19.5A2.5
+                                                       2.5 0 016.5
+                                                       17H20"
+                                                ></path>
+
+                                                <path
+                                                    d="M6.5 2H20v20H6.5
+                                                       A2.5 2.5 0 014
+                                                       19.5v-15A2.5 2.5
+                                                       0 016.5 2z"
+                                                ></path>
+                                            </svg>
+                                        </div>
+
+
+                                        <span
+                                            class="text-xs
+                                                   text-slate-500"
+                                        >
+                                            Lessons
+                                        </span>
+
+                                    </div>
+
+
+                                    <span
+                                        class="text-xs
+                                               font-bold
+                                               text-slate-700"
+                                    >
+                                        {{ $totalLessons }}
+                                    </span>
+
+                                </div>
+
+
+
+                                {{-- CERTIFICATE --}}
+                                <div
+                                    class="flex items-center
+                                           justify-between"
+                                >
+
+                                    <div
+                                        class="flex items-center
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-9 w-9
+                                                   items-center
+                                                   justify-center
+                                                   rounded-xl
+                                                   bg-orange-50
+                                                   text-orange-500"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <circle
+                                                    cx="12"
+                                                    cy="8"
+                                                    r="5"
+                                                ></circle>
+
+                                                <path
+                                                    d="M8.5 12.5
+                                                       7 22l5-3
+                                                       5 3-1.5-9.5"
+                                                ></path>
+                                            </svg>
+                                        </div>
+
+
+                                        <span
+                                            class="text-xs
+                                                   text-slate-500"
+                                        >
+                                            Certificate
+                                        </span>
+
+                                    </div>
+
+
+                                    <span
+                                        class="text-xs
+                                               font-bold
+                                               {{
+                                                   $course->certificate_available
+                                                   ? 'text-emerald-600'
+                                                   : 'text-slate-500'
+                                               }}"
+                                    >
+                                        {{
+                                            $course->certificate_available
+                                            ? 'Available'
+                                            : 'Not included'
+                                        }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+
+                            {{-- =========================================
+                                ACTION
+                            ========================================== --}}
+
+                            @if($isEnrolled)
+
+                                <div
+                                    class="mt-6
+                                           rounded-2xl
+                                           border
+                                           border-emerald-100
+                                           bg-emerald-50
+                                           p-4"
+                                >
+
+                                    <div
+                                        class="flex items-start
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-8 w-8
+                                                   shrink-0
+                                                   items-center
+                                                   justify-center
+                                                   rounded-full
+                                                   bg-emerald-100
+                                                   font-bold
+                                                   text-emerald-600"
+                                        >
+                                            ✓
+                                        </div>
+
+
+                                        <div>
+
+                                            <p
+                                                class="text-xs
+                                                       font-bold
+                                                       text-emerald-800"
+                                            >
+                                                You're enrolled
+                                            </p>
+
+                                            <p
+                                                class="mt-1
+                                                       text-[11px]
+                                                       leading-5
+                                                       text-emerald-700"
+                                            >
+                                                Continue your course
+                                                whenever you're ready.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                {{-- PROGRESS --}}
+                                <div class="mt-4">
+
+                                    <div
+                                        class="flex items-center
+                                               justify-between"
+                                    >
+
+                                        <span
+                                            class="text-xs
+                                                   font-semibold
+                                                   text-slate-500"
+                                        >
+                                            Your progress
+                                        </span>
+
+
+                                        <span
+                                            class="text-xs
+                                                   font-bold
+                                                   text-violet-600"
+                                        >
+                                            {{
+                                                number_format(
+                                                    $courseProgress,
+                                                    0
+                                                )
+                                            }}%
+                                        </span>
+
+                                    </div>
+
+
+                                    <div
+                                        class="mt-2 h-2
+                                               overflow-hidden
+                                               rounded-full
+                                               bg-slate-100"
+                                    >
+
+                                        <div
+                                            class="h-full
+                                                   rounded-full
+                                                   {{
+                                                       $courseProgress >= 100
+                                                       ? 'bg-emerald-500'
+                                                       : 'bg-violet-600'
+                                                   }}"
+                                            style="
+                                                width:
+                                                {{ $courseProgress }}%;
+                                            "
+                                        ></div>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <a
+                                    href="{{ route('student.learn.course', $course) }}"
+                                    class="mt-5
+                                           inline-flex h-11
+                                           w-full items-center
+                                           justify-center gap-2
+                                           rounded-xl
+                                           bg-violet-600
+                                           text-sm font-semibold
+                                           text-white
+                                           transition
+                                           hover:bg-violet-700"
+                                >
+                                    <svg
+                                        class="h-4 w-4"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="9"
+                                        ></circle>
+
+                                        <path
+                                            d="m10 8
+                                               6 4-6 4z"
+                                        ></path>
+                                    </svg>
+
+                                    Continue Learning
+                                </a>
+
+
+
+                            @elseif($pendingTransaction)
+
+                                <div
+                                    class="mt-6
+                                           rounded-2xl
+                                           border
+                                           border-orange-100
+                                           bg-orange-50
+                                           p-4"
+                                >
+
+                                    <div
+                                        class="flex items-start
+                                               gap-3"
+                                    >
+
+                                        <div
+                                            class="flex h-8 w-8
+                                                   shrink-0
+                                                   items-center
+                                                   justify-center
+                                                   rounded-full
+                                                   bg-orange-100
+                                                   text-orange-600"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <circle
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="9"
+                                                ></circle>
+
+                                                <path
+                                                    d="M12 7v5l3 2"
+                                                ></path>
+                                            </svg>
+                                        </div>
+
+
+                                        <div>
+
+                                            <p
+                                                class="text-xs
+                                                       font-bold
+                                                       text-orange-800"
+                                            >
+                                                Payment pending
+                                            </p>
+
+                                            <p
+                                                class="mt-1
+                                                       text-[11px]
+                                                       leading-5
+                                                       text-orange-700"
+                                            >
+                                                Your payment transaction
+                                                is currently being processed.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <a
+                                    href="{{ route('student.transactions.show', $pendingTransaction) }}"
+                                    class="mt-4
+                                           inline-flex h-11
+                                           w-full items-center
+                                           justify-center
+                                           rounded-xl
+                                           bg-orange-500
+                                           text-sm font-semibold
+                                           text-white
+                                           transition
+                                           hover:bg-orange-600"
+                                >
+                                    View Transaction
+                                </a>
+
+
+
+                            @elseif(!$isFree)
+
+                                <div
+                                    class="mt-6
+                                           rounded-2xl
+                                           border
+                                           border-blue-100
+                                           bg-blue-50
+                                           p-4"
+                                >
+
+                                    <p
+                                        class="text-xs
+                                               font-bold
+                                               text-blue-800"
+                                    >
+                                        Premium course
+                                    </p>
+
+                                    <p
+                                        class="mt-1
+                                               text-[11px]
+                                               leading-5
+                                               text-blue-700"
+                                    >
+                                        Purchase this course
+                                        to unlock its full
+                                        learning content.
+                                    </p>
+
+                                </div>
+
+
+
+                                <form
+                                    action="{{ route('student.transactions.store', $course) }}"
+                                    method="POST"
+                                    class="mt-4"
+                                >
+                                    @csrf
+
+                                    <button
+                                        type="submit"
+                                        class="inline-flex
+                                               h-11 w-full
+                                               items-center
+                                               justify-center gap-2
+                                               rounded-xl
+                                               bg-violet-600
+                                               text-sm font-semibold
+                                               text-white
+                                               transition
+                                               hover:bg-violet-700"
+                                    >
+
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <rect
+                                                x="3"
+                                                y="5"
+                                                width="18"
+                                                height="14"
+                                                rx="2"
+                                            ></rect>
+
+                                            <path d="M3 10h18"></path>
+                                        </svg>
+
+                                        Purchase Course
+                                    </button>
+
+                                </form>
+
+
+
+                            @else
+
+                                <div
+                                    class="mt-6
+                                           rounded-2xl
+                                           border
+                                           border-emerald-100
+                                           bg-emerald-50
+                                           p-4"
+                                >
+
+                                    <p
+                                        class="text-xs
+                                               font-bold
+                                               text-emerald-800"
+                                    >
+                                        Free enrollment
+                                    </p>
+
+                                    <p
+                                        class="mt-1
+                                               text-[11px]
+                                               leading-5
+                                               text-emerald-700"
+                                    >
+                                        Enroll now and get
+                                        immediate access to
+                                        the course.
+                                    </p>
+
+                                </div>
+
+
+
+                                <form
+                                    action="{{ route('student.enroll', $course) }}"
+                                    method="POST"
+                                    class="mt-4"
+                                >
+                                    @csrf
+
+                                    <button
+                                        type="submit"
+                                        class="inline-flex
+                                               h-11 w-full
+                                               items-center
+                                               justify-center gap-2
+                                               rounded-xl
+                                               bg-violet-600
+                                               text-sm font-semibold
+                                               text-white
+                                               transition
+                                               hover:bg-violet-700"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <path
+                                                d="M9 11l3 3
+                                                   L22 4"
+                                            ></path>
+
+                                            <path
+                                                d="M21 12v7
+                                                   a2 2 0 01-2 2
+                                                   H5a2 2 0 01-2-2
+                                                   V5a2 2 0 012-2h11"
+                                            ></path>
+                                        </svg>
+
+                                        Enroll for Free
+                                    </button>
+
+                                </form>
+
+                            @endif
+
+
+
+                            {{-- INTRO VIDEO --}}
+                            @if($course->intro_video)
+
+                                <a
+                                    href="{{ $course->intro_video }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="mt-3
+                                           inline-flex h-10
+                                           w-full items-center
+                                           justify-center gap-2
+                                           rounded-xl
+                                           border
+                                           border-slate-200
+                                           bg-white
+                                           text-xs font-semibold
+                                           text-slate-600
+                                           transition
+                                           hover:border-violet-200
+                                           hover:text-violet-700"
+                                >
+                                    <svg
+                                        class="h-4 w-4"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="9"
+                                        ></circle>
+
+                                        <path
+                                            d="m10 8
+                                               6 4-6 4z"
+                                        ></path>
+                                    </svg>
+
+                                    Watch Course Introduction
+                                </a>
+
+                            @endif
+
+                        </div>
+
+                    </section>
+
+                </aside>
+
+            </div>
+
+
+
+            {{-- =====================================================
+                COURSE STATS
+            ====================================================== --}}
+
+            <section
+                class="mt-6 grid
+                       grid-cols-2 gap-4
+                       lg:grid-cols-4"
+            >
+
+
+                {{-- LESSONS --}}
+                <div class="pw-card p-5">
+
+                    <p
+                        class="text-xs
+                               font-semibold
+                               text-slate-500"
+                    >
+                        Lessons
+                    </p>
+
+
+                    <div
+                        class="mt-2 flex
+                               items-end
+                               justify-between"
+                    >
+
+                        <p
+                            class="text-3xl font-bold
+                                   text-slate-900"
+                        >
+                            {{ $totalLessons }}
+                        </p>
+
+
+                        <div
+                            class="flex h-9 w-9
+                                   items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-violet-50
+                                   text-violet-600"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M4 19.5A2.5
+                                       2.5 0 016.5
+                                       17H20"
+                                ></path>
+
+                                <path
+                                    d="M6.5 2H20v20H6.5
+                                       A2.5 2.5 0 014
+                                       19.5v-15A2.5 2.5
+                                       0 016.5 2z"
+                                ></path>
+                            </svg>
+                        </div>
+
+                    </div>
+
                 </div>
-            @endforelse
+
+
+
+                {{-- DURATION --}}
+                <div class="pw-card p-5">
+
+                    <p
+                        class="text-xs
+                               font-semibold
+                               text-slate-500"
+                    >
+                        Content Duration
+                    </p>
+
+
+                    <div
+                        class="mt-2 flex
+                               items-end
+                               justify-between"
+                    >
+
+                        <p
+                            class="text-3xl font-bold
+                                   text-blue-600"
+                        >
+                            {{ $totalMinutes }}
+                            <span
+                                class="text-sm
+                                       font-semibold
+                                       text-slate-400"
+                            >
+                                min
+                            </span>
+                        </p>
+
+
+                        <div
+                            class="flex h-9 w-9
+                                   items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-blue-50
+                                   text-blue-600"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
+
+                                <path
+                                    d="M12 7v5l3 2"
+                                ></path>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- PREVIEWS --}}
+                <div class="pw-card p-5">
+
+                    <p
+                        class="text-xs
+                               font-semibold
+                               text-slate-500"
+                    >
+                        Preview Lessons
+                    </p>
+
+
+                    <div
+                        class="mt-2 flex
+                               items-end
+                               justify-between"
+                    >
+
+                        <p
+                            class="text-3xl font-bold
+                                   text-emerald-600"
+                        >
+                            {{ $previewLessons }}
+                        </p>
+
+
+                        <div
+                            class="flex h-9 w-9
+                                   items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-emerald-50
+                                   text-emerald-600"
+                        >
+                            ▶
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                {{-- LEVEL --}}
+                <div class="pw-card p-5">
+
+                    <p
+                        class="text-xs
+                               font-semibold
+                               text-slate-500"
+                    >
+                        Difficulty
+                    </p>
+
+
+                    <div
+                        class="mt-2 flex
+                               items-end
+                               justify-between"
+                    >
+
+                        <p
+                            class="text-lg font-bold
+                                   text-orange-500"
+                        >
+                            {{
+                                ucfirst(
+                                    $course->difficulty_level
+                                    ?? 'Beginner'
+                                )
+                            }}
+                        </p>
+
+
+                        <div
+                            class="flex h-9 w-9
+                                   items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-orange-50
+                                   text-orange-500"
+                        >
+                            ⚡
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            {{-- =====================================================
+                COURSE CURRICULUM
+            ====================================================== --}}
+
+            <section
+                class="pw-card mt-6
+                       overflow-hidden"
+            >
+
+                <div
+                    class="flex flex-col gap-3
+                           border-b
+                           border-slate-100
+                           p-5
+                           sm:flex-row
+                           sm:items-center
+                           sm:justify-between
+                           sm:p-6"
+                >
+
+                    <div>
+
+                        <h2
+                            class="text-lg font-bold
+                                   text-slate-900"
+                        >
+                            Course Curriculum
+                        </h2>
+
+
+                        <p
+                            class="mt-1 text-xs
+                                   text-slate-500"
+                        >
+                            {{
+                                $totalLessons
+                            }}
+
+                            {{
+                                \Illuminate\Support\Str::plural(
+                                    'lesson',
+                                    $totalLessons
+                                )
+                            }}
+
+                            included in this course.
+                        </p>
+
+                    </div>
+
+
+                    @if($isEnrolled)
+
+                        <a
+                            href="{{ route('student.learn.course', $course) }}"
+                            class="inline-flex h-10
+                                   self-start items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-violet-600
+                                   px-4
+                                   text-xs font-semibold
+                                   text-white
+                                   transition
+                                   hover:bg-violet-700"
+                        >
+                            Open Course
+                        </a>
+
+                    @endif
+
+                </div>
+
+
+
+                @if($lessons->isNotEmpty())
+
+                    <div
+                        class="divide-y
+                               divide-slate-100"
+                    >
+
+                        @foreach($lessons as $lesson)
+
+                            @php
+                                $lessonType =
+                                    $lesson->lesson_type
+                                    ?? 'text';
+
+                                $typeLabel =
+                                    $typeLabels[$lessonType]
+                                    ?? ucfirst($lessonType);
+
+                                $isPreview =
+                                    (bool) $lesson->is_preview;
+                            @endphp
+
+
+                            <div
+                                class="flex flex-col gap-4
+                                       p-5 transition
+                                       hover:bg-slate-50/60
+                                       sm:flex-row
+                                       sm:items-center
+                                       sm:justify-between
+                                       sm:p-6"
+                            >
+
+                                <div
+                                    class="flex min-w-0
+                                           items-start gap-4"
+                                >
+
+
+                                    {{-- NUMBER --}}
+                                    <div
+                                        class="flex h-10 w-10
+                                               shrink-0 items-center
+                                               justify-center
+                                               rounded-xl
+                                               {{
+                                                   $lessonType === 'quiz'
+                                                   ? 'bg-orange-50 text-orange-500'
+                                                   : (
+                                                       $lessonType === 'video'
+                                                       ? 'bg-violet-50 text-violet-600'
+                                                       : (
+                                                           $lessonType === 'document'
+                                                           ? 'bg-blue-50 text-blue-600'
+                                                           : 'bg-emerald-50 text-emerald-600'
+                                                       )
+                                                   )
+                                               }}
+                                               text-xs font-bold"
+                                    >
+
+                                        @if($lessonType === 'video')
+                                            ▶
+                                        @elseif($lessonType === 'quiz')
+                                            ?
+                                        @elseif($lessonType === 'document')
+                                            ▤
+                                        @else
+                                            Aa
+                                        @endif
+
+                                    </div>
+
+
+
+                                    {{-- CONTENT --}}
+                                    <div class="min-w-0">
+
+                                        <div
+                                            class="flex flex-wrap
+                                                   items-center gap-2"
+                                        >
+
+                                            <p
+                                                class="text-[10px]
+                                                       font-bold uppercase
+                                                       tracking-[.08em]
+                                                       text-slate-400"
+                                            >
+                                                Lesson
+                                                {{ $lesson->lesson_order }}
+                                            </p>
+
+
+                                            @if($isPreview)
+
+                                                <span
+                                                    class="rounded-full
+                                                           bg-violet-50
+                                                           px-2 py-0.5
+                                                           text-[9px]
+                                                           font-bold
+                                                           uppercase
+                                                           tracking-wide
+                                                           text-violet-600"
+                                                >
+                                                    Preview
+                                                </span>
+
+                                            @endif
+
+                                        </div>
+
+
+                                        <h3
+                                            class="mt-1
+                                                   text-sm font-bold
+                                                   text-slate-800"
+                                        >
+                                            {{ $lesson->title }}
+                                        </h3>
+
+
+                                        <div
+                                            class="mt-2 flex
+                                                   flex-wrap
+                                                   items-center
+                                                   gap-3
+                                                   text-[11px]
+                                                   text-slate-400"
+                                        >
+
+                                            <span>
+                                                {{ $typeLabel }}
+                                            </span>
+
+
+                                            @if($lesson->duration_minutes)
+
+                                                <span>
+                                                    •
+                                                </span>
+
+                                                <span>
+                                                    {{
+                                                        $lesson
+                                                            ->duration_minutes
+                                                    }}
+                                                    min
+                                                </span>
+
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                {{-- RIGHT SIDE --}}
+                                <div
+                                    class="flex shrink-0
+                                           items-center gap-2
+                                           pl-14 sm:pl-0"
+                                >
+
+                                    @if($isEnrolled)
+
+                                        <a
+                                            href="{{ route('student.lesson.view', $lesson) }}"
+                                            class="inline-flex h-9
+                                                   items-center
+                                                   justify-center
+                                                   gap-1.5
+                                                   rounded-lg
+                                                   border
+                                                   border-violet-200
+                                                   bg-white
+                                                   px-3
+                                                   text-xs font-semibold
+                                                   text-violet-700
+                                                   transition
+                                                   hover:bg-violet-50"
+                                        >
+                                            Open Lesson
+
+                                            <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path
+                                                    d="m9 18
+                                                       6-6-6-6"
+                                                ></path>
+                                            </svg>
+                                        </a>
+
+                                    @elseif($isPreview)
+
+                                        <span
+                                            class="inline-flex h-9
+                                                   items-center
+                                                   justify-center
+                                                   rounded-lg
+                                                   bg-violet-50
+                                                   px-3
+                                                   text-xs font-semibold
+                                                   text-violet-600"
+                                        >
+                                            Preview available
+                                        </span>
+
+                                    @else
+
+                                        <span
+                                            class="inline-flex h-9
+                                                   items-center
+                                                   justify-center
+                                                   gap-1.5
+                                                   rounded-lg
+                                                   bg-slate-100
+                                                   px-3
+                                                   text-xs font-semibold
+                                                   text-slate-500"
+                                        >
+                                            <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <rect
+                                                    x="5"
+                                                    y="10"
+                                                    width="14"
+                                                    height="10"
+                                                    rx="2"
+                                                ></rect>
+
+                                                <path
+                                                    d="M8 10V7
+                                                       a4 4 0 018 0v3"
+                                                ></path>
+                                            </svg>
+
+                                            Locked
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+
+                @else
+
+
+                    <div
+                        class="px-6 py-16
+                               text-center"
+                    >
+
+                        <div
+                            class="mx-auto flex
+                                   h-14 w-14
+                                   items-center
+                                   justify-center
+                                   rounded-2xl
+                                   bg-violet-50
+                                   text-violet-600"
+                        >
+
+                            <svg
+                                class="h-6 w-6"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path
+                                    d="M4 19.5A2.5
+                                       2.5 0 016.5
+                                       17H20"
+                                ></path>
+
+                                <path
+                                    d="M6.5 2H20v20H6.5
+                                       A2.5 2.5 0 014
+                                       19.5v-15A2.5
+                                       2.5 0 016.5 2z"
+                                ></path>
+                            </svg>
+
+                        </div>
+
+
+                        <h3
+                            class="mt-4 text-sm
+                                   font-bold
+                                   text-slate-800"
+                        >
+                            No lessons yet
+                        </h3>
+
+
+                        <p
+                            class="mt-1 text-xs
+                                   text-slate-400"
+                        >
+                            Course lessons will
+                            appear here once added.
+                        </p>
+
+                    </div>
+
+                @endif
+
+            </section>
+
+
+
+            {{-- =====================================================
+                FINAL COURSE INFO
+            ====================================================== --}}
+
+            <section
+                class="pw-card mt-6 p-5 sm:p-6"
+            >
+
+                <div
+                    class="grid grid-cols-1
+                           gap-6
+                           lg:grid-cols-3"
+                >
+
+
+                    {{-- LEARN AT OWN PACE --}}
+                    <div
+                        class="flex items-start gap-3"
+                    >
+
+                        <div
+                            class="flex h-10 w-10
+                                   shrink-0 items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-violet-50
+                                   text-violet-600"
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                ></circle>
+
+                                <path
+                                    d="M12 7v5l3 2"
+                                ></path>
+                            </svg>
+                        </div>
+
+
+                        <div>
+
+                            <h3
+                                class="text-sm
+                                       font-bold
+                                       text-slate-800"
+                            >
+                                Learn at your pace
+                            </h3>
+
+                            <p
+                                class="mt-1 text-xs
+                                       leading-5
+                                       text-slate-500"
+                            >
+                                Complete lessons based
+                                on your own learning schedule.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    {{-- MULTIPLE TYPES --}}
+                    <div
+                        class="flex items-start gap-3"
+                    >
+
+                        <div
+                            class="flex h-10 w-10
+                                   shrink-0 items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-blue-50
+                                   text-blue-600"
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <rect
+                                    x="3"
+                                    y="3"
+                                    width="7"
+                                    height="7"
+                                    rx="1"
+                                ></rect>
+
+                                <rect
+                                    x="14"
+                                    y="3"
+                                    width="7"
+                                    height="7"
+                                    rx="1"
+                                ></rect>
+
+                                <rect
+                                    x="3"
+                                    y="14"
+                                    width="7"
+                                    height="7"
+                                    rx="1"
+                                ></rect>
+
+                                <rect
+                                    x="14"
+                                    y="14"
+                                    width="7"
+                                    height="7"
+                                    rx="1"
+                                ></rect>
+                            </svg>
+                        </div>
+
+
+                        <div>
+
+                            <h3
+                                class="text-sm
+                                       font-bold
+                                       text-slate-800"
+                            >
+                                Mixed learning content
+                            </h3>
+
+                            <p
+                                class="mt-1 text-xs
+                                       leading-5
+                                       text-slate-500"
+                            >
+                                Learn through readings,
+                                videos, documents, and quizzes.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    {{-- CERTIFICATE --}}
+                    <div
+                        class="flex items-start gap-3"
+                    >
+
+                        <div
+                            class="flex h-10 w-10
+                                   shrink-0 items-center
+                                   justify-center
+                                   rounded-xl
+                                   bg-emerald-50
+                                   text-emerald-600"
+                        >
+                            ✓
+                        </div>
+
+
+                        <div>
+
+                            <h3
+                                class="text-sm
+                                       font-bold
+                                       text-slate-800"
+                            >
+                                {{
+                                    $course->certificate_available
+                                    ? 'Certificate available'
+                                    : 'Track your progress'
+                                }}
+                            </h3>
+
+                            <p
+                                class="mt-1 text-xs
+                                       leading-5
+                                       text-slate-500"
+                            >
+                                @if($course->certificate_available)
+
+                                    Complete the course
+                                    requirements to earn
+                                    your PathWise certificate.
+
+                                @else
+
+                                    Follow your lesson
+                                    completion and quiz
+                                    performance in PathWise.
+
+                                @endif
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
 
         </div>
 
-    </div>
+    </main>
+
 </div>
 
 </x-layouts::app>

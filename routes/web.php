@@ -188,6 +188,16 @@ Route::middleware('role:super_admin')->group(function () {
         Route::get('/teacher/my-courses', [CourseController::class, 'teacherCourses'])
             ->name('teacher.my-courses');
 
+        // ============================================
+        // NEW: CREATE COURSE ROUTES (ADD THESE)
+        // ============================================
+        Route::get('/teacher/courses/create', [CourseController::class, 'teacherCreateCourse'])
+            ->name('teacher.courses.create');
+
+        Route::post('/teacher/courses', [CourseController::class, 'teacherStoreCourse'])
+            ->name('teacher.courses.store');
+        // ============================================
+
 
         // View Students
         Route::get('/teacher-courses/{course}/students', [CourseController::class, 'teacherCourseStudents'])
