@@ -66,6 +66,7 @@
             <div class="flex flex-col gap-3 lg:flex-row">
 
                 {{-- SEARCH --}}
+
                 <div class="relative flex-1">
 
                     <svg
@@ -94,6 +95,7 @@
 
 
                 {{-- CATEGORY --}}
+
                 <select
                     id="categoryFilter"
                     class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -115,6 +117,7 @@
 
 
                 {{-- STATUS --}}
+
                 <select
                     id="statusFilter"
                     class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
@@ -227,37 +230,53 @@
                 >
 
 
-                    {{-- THUMBNAIL --}}
+                    {{-- =================================================
+                         COURSE THUMBNAIL
+                    ================================================== --}}
 
-                    <div class="relative h-44 overflow-hidden bg-linear-to-br from-purple-700 via-purple-600 to-indigo-700">
+                    <div class="relative h-44 overflow-hidden bg-gray-100 dark:bg-gray-800">
 
-                        <div class="absolute inset-0 flex items-center justify-center">
+                        @if($course->thumbnail)
 
-                            <div class="text-center text-white">
+                            <img
+                                src="{{ asset('storage/' . $course->thumbnail) }}"
+                                alt="{{ $course->title }}"
+                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                            >
 
-                                <svg
-                                    class="mx-auto h-12 w-12 opacity-90"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
+                        @else
 
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="1.5"
-                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"
-                                    />
+                            {{-- DEFAULT COVER WHEN NO IMAGE EXISTS --}}
 
-                                </svg>
+                            <div class="flex h-full w-full items-center justify-center bg-linear-to-br from-purple-700 via-purple-600 to-indigo-700">
 
-                                <p class="mt-2 text-sm font-medium text-white/90">
-                                    PathWise
-                                </p>
+                                <div class="text-center text-white">
+
+                                    <svg
+                                        class="mx-auto h-12 w-12 opacity-90"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="1.5"
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"
+                                        />
+
+                                    </svg>
+
+                                    <p class="mt-2 text-sm font-medium text-white/90">
+                                        PathWise
+                                    </p>
+
+                                </div>
 
                             </div>
 
-                        </div>
+                        @endif
 
 
                         {{-- STATUS BADGE --}}
@@ -273,7 +292,9 @@
                     </div>
 
 
-                    {{-- COURSE DETAILS --}}
+                    {{-- =================================================
+                         COURSE DETAILS
+                    ================================================== --}}
 
                     <div class="p-5">
 
@@ -293,6 +314,15 @@
                             {{ $course->title }}
 
                         </h3>
+
+
+                        {{-- DESCRIPTION --}}
+
+                        <p class="mt-2 line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
+
+                            {{ $course->description }}
+
+                        </p>
 
 
                         {{-- TEACHER --}}
@@ -332,7 +362,9 @@
                         <div class="my-4 border-t border-gray-100 dark:border-gray-800"></div>
 
 
-                        {{-- ACTIONS --}}
+                        {{-- =================================================
+                             ACTIONS
+                        ================================================== --}}
 
                         <div class="flex flex-wrap gap-2">
 
@@ -440,7 +472,7 @@
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="1.5"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332 1.253"
                             />
 
                         </svg>
@@ -540,9 +572,6 @@
                     document.getElementById('noCourseResults');
 
 
-                /*
-                 * Stop if this is not the Courses page.
-                 */
                 if (
                     !searchInput ||
                     !categoryFilter ||
@@ -552,10 +581,6 @@
                 }
 
 
-                /*
-                 * Prevent duplicate event listeners
-                 * when wire:navigate loads the page again.
-                 */
                 if (searchInput.dataset.filterInitialized === 'true') {
                     return;
                 }
@@ -631,9 +656,6 @@
                     });
 
 
-                    /*
-                     * Update count
-                     */
                     if (courseCount) {
 
                         courseCount.textContent =
@@ -652,9 +674,6 @@
                     }
 
 
-                    /*
-                     * No results message
-                     */
                     if (noResults) {
 
                         if (visibleCount === 0) {
@@ -672,44 +691,29 @@
                 }
 
 
-                /*
-                 * SEARCH WHILE TYPING
-                 */
                 searchInput.addEventListener(
                     'input',
                     filterCourses
                 );
 
 
-                /*
-                 * CATEGORY AUTOMATIC FILTER
-                 */
                 categoryFilter.addEventListener(
                     'change',
                     filterCourses
                 );
 
 
-                /*
-                 * STATUS AUTOMATIC FILTER
-                 */
                 statusFilter.addEventListener(
                     'change',
                     filterCourses
                 );
 
 
-                /*
-                 * Run immediately
-                 */
                 filterCourses();
 
             }
 
 
-            /*
-             * Initial page load
-             */
             if (document.readyState === 'loading') {
 
                 document.addEventListener(
@@ -724,19 +728,6 @@
             }
 
 
-            /*
-             * IMPORTANT FOR FLUX / LIVEWIRE NAVIGATION
-             *
-             * This runs when navigating:
-             *
-             * Courses
-             *     ↓
-             * Categories
-             *     ↓
-             * Courses
-             *
-             * without refreshing the browser.
-             */
             document.addEventListener(
                 'livewire:navigated',
                 initializeCourseFilters

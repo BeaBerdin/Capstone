@@ -429,14 +429,15 @@ class CourseController extends Controller
 
 
 
-    public function teacherStoreCourse(
-        Request $request
-    ) {
-        $validated = $request->validate([
+   public function teacherStoreCourse(Request $request)
+{
+    $validated = $request->validate(
+        [
             'title' => [
                 'required',
                 'string',
                 'max:255',
+                'unique:courses,title',
             ],
 
             'description' => [
@@ -483,58 +484,46 @@ class CourseController extends Controller
                 'nullable',
                 'boolean',
             ],
-        ]);
+        ],
+        [
+            'title.unique' =>
+                'This course title already exists. Please choose a different title.',
+        ]
+    );
 
+    // Automatically assign the logged-in teacher
+    $validated['teacher_id'] = auth()->id();
 
-        $validated['teacher_id'] =
-            auth()->id();
+    // Automatically submit the course for admin approval
+    $validated['status'] = 'pending';
 
+    // Default price to 0 if empty
+    $validated['price'] = $validated['price'] ?? 0;
 
-        $validated['status'] =
-            'draft';
+    // Convert checkbox value to boolean
+    $validated['certificate_available'] =
+        $request->boolean('certificate_available');
 
-
-        $validated['price'] =
-            $validated['price']
-            ?? 0;
-
-
-        $validated['certificate_available'] =
-            $request->boolean(
-                'certificate_available'
-            );
-
-
-        if (
-            $request->hasFile(
-                'thumbnail'
-            )
-        ) {
-            $validated['thumbnail'] =
-                $request
-                    ->file('thumbnail')
-                    ->store(
-                        'courses',
-                        'public'
-                    );
-        }
-
-
-        Course::create(
-            $validated
-        );
-
-
-        return redirect()
-            ->route(
-                'teacher.my-courses'
-            )
-            ->with(
-                'success',
-                'Course created successfully! You can now add lessons.'
+    // Upload thumbnail
+    if ($request->hasFile('thumbnail')) {
+        $validated['thumbnail'] =
+            $request->file('thumbnail')->store(
+                'courses',
+                'public'
             );
     }
 
+    // Create course
+    Course::create($validated);
+
+    // Redirect back to My Courses
+    return redirect()
+        ->route('teacher.my-courses')
+        ->with(
+            'success',
+            'Course created successfully and submitted for admin approval!'
+        );
+}
 
 
     /* ------------------------------------------------------------------ */
