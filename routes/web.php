@@ -262,6 +262,10 @@ Route::middleware('role:super_admin')->group(function () {
         // All Teacher Lessons
         Route::get('/teacher/lessons', [LessonController::class, 'teacherAllLessons'])
             ->name('teacher.lessons.index');
+
+        // Teacher Performance Analytics
+        Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
+            ->name('teacher.analytics');
     });
 
 

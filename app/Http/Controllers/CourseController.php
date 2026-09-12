@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\User;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CourseController extends Controller
 {
@@ -429,101 +430,147 @@ class CourseController extends Controller
 
 
 
-   public function teacherStoreCourse(Request $request)
-{
-    $validated = $request->validate(
-        [
-            'title' => [
-                'required',
-                'string',
-                'max:255',
-                'unique:courses,title',
+    public function teacherStoreCourse(Request $request)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | NORMALIZE TITLE
+        |--------------------------------------------------------------------------
+        | Prevent duplicates caused only by extra spaces.
+        */
+
+        $request->merge([
+            'title' => trim(
+                preg_replace(
+                    '/\s+/',
+                    ' ',
+                    (string) $request->title
+                )
+            ),
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | VALIDATION
+        |--------------------------------------------------------------------------
+        | A teacher cannot create another course with the same title.
+        | Another teacher may still use the same title.
+        */
+
+        $validated = $request->validate(
+            [
+                'title' => [
+                    'required',
+                    'string',
+                    'max:255',
+
+                    Rule::unique('courses', 'title')
+                        ->where(function ($query) {
+                            return $query->where(
+                                'teacher_id',
+                                auth()->id()
+                            );
+                        }),
+                ],
+
+                'description' => [
+                    'required',
+                    'string',
+                ],
+
+                'category_id' => [
+                    'required',
+                    'exists:course_categories,id',
+                ],
+
+                'thumbnail' => [
+                    'nullable',
+                    'image',
+                    'mimes:jpeg,jpg,png,webp',
+                    'max:5120',
+                ],
+
+                'intro_video' => [
+                    'nullable',
+                    'url',
+                    'max:255',
+                ],
+
+                'difficulty_level' => [
+                    'required',
+                    'in:beginner,intermediate,advanced',
+                ],
+
+                'price' => [
+                    'nullable',
+                    'numeric',
+                    'min:0',
+                ],
+
+                'estimated_hours' => [
+                    'nullable',
+                    'integer',
+                    'min:1',
+                ],
+
+                'certificate_available' => [
+                    'nullable',
+                    'boolean',
+                ],
             ],
+            [
+                'title.unique' =>
+                    'You already have a course with this title. Please use a different title.',
+            ]
+        );
 
-            'description' => [
-                'required',
-                'string',
-            ],
 
-            'category_id' => [
-                'required',
-                'exists:course_categories,id',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | SYSTEM VALUES
+        |--------------------------------------------------------------------------
+        */
 
-            'thumbnail' => [
-                'nullable',
-                'image',
-                'mimes:jpeg,jpg,png,webp',
-                'max:5120',
-            ],
+        $validated['teacher_id'] = auth()->id();
+        $validated['status'] = 'pending';
+        $validated['price'] = $validated['price'] ?? 0;
 
-            'intro_video' => [
-                'nullable',
-                'url',
-                'max:255',
-            ],
+        $validated['certificate_available'] =
+            $request->boolean('certificate_available');
 
-            'difficulty_level' => [
-                'required',
-                'in:beginner,intermediate,advanced',
-            ],
 
-            'price' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | THUMBNAIL
+        |--------------------------------------------------------------------------
+        */
 
-            'estimated_hours' => [
-                'nullable',
-                'integer',
-                'min:1',
-            ],
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] =
+                $request->file('thumbnail')->store(
+                    'courses',
+                    'public'
+                );
+        }
 
-            'certificate_available' => [
-                'nullable',
-                'boolean',
-            ],
-        ],
-        [
-            'title.unique' =>
-                'This course title already exists. Please choose a different title.',
-        ]
-    );
 
-    // Automatically assign the logged-in teacher
-    $validated['teacher_id'] = auth()->id();
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE COURSE
+        |--------------------------------------------------------------------------
+        */
 
-    // Automatically submit the course for admin approval
-    $validated['status'] = 'pending';
+        Course::create($validated);
 
-    // Default price to 0 if empty
-    $validated['price'] = $validated['price'] ?? 0;
 
-    // Convert checkbox value to boolean
-    $validated['certificate_available'] =
-        $request->boolean('certificate_available');
-
-    // Upload thumbnail
-    if ($request->hasFile('thumbnail')) {
-        $validated['thumbnail'] =
-            $request->file('thumbnail')->store(
-                'courses',
-                'public'
+        return redirect()
+            ->route('teacher.my-courses')
+            ->with(
+                'success',
+                'Course created successfully and submitted for admin approval!'
             );
     }
-
-    // Create course
-    Course::create($validated);
-
-    // Redirect back to My Courses
-    return redirect()
-        ->route('teacher.my-courses')
-        ->with(
-            'success',
-            'Course created successfully and submitted for admin approval!'
-        );
-}
 
 
     /* ------------------------------------------------------------------ */

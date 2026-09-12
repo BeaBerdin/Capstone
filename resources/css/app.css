@@ -68,3 +68,183 @@ select:focus[data-flux-control] {
     background-color: rgb(255 255 255 / 0.06) !important;
     color: #ffffff !important;
 }
+/* =========================================================
+   PATHWISE GLOBAL DESIGN SYSTEM
+   Shared by Teacher / Student / Admin / Super Admin
+========================================================= */
+
+:root {
+    --pw-page: #f8f9fc;
+    --pw-surface: #ffffff;
+    --pw-surface-soft: #fafafa;
+
+    --pw-border: #e7e9ef;
+    --pw-border-soft: #eef0f4;
+
+    --pw-heading: #0f172a;
+    --pw-text: #334155;
+    --pw-muted: #64748b;
+    --pw-soft: #94a3b8;
+
+    --pw-primary: #7c3aed;
+    --pw-primary-hover: #6d28d9;
+    --pw-primary-soft: #f5f3ff;
+
+    --pw-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+
+/* DARK / SYSTEM-DARK */
+
+html.dark {
+    --pw-page: #09090b;
+    --pw-surface: #18181b;
+    --pw-surface-soft: #202024;
+
+    --pw-border: #2f2f35;
+    --pw-border-soft: #27272a;
+
+    --pw-heading: #fafafa;
+    --pw-text: #d4d4d8;
+    --pw-muted: #a1a1aa;
+    --pw-soft: #71717a;
+
+    --pw-primary: #a78bfa;
+    --pw-primary-hover: #c4b5fd;
+    --pw-primary-soft: rgba(124, 58, 237, 0.14);
+
+    --pw-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+
+/* PAGE */
+
+.pw-page {
+    min-height: 100vh;
+    background: var(--pw-page);
+    color: var(--pw-text);
+
+    transition:
+        background-color 180ms ease,
+        color 180ms ease;
+}
+
+
+/* CARD / PANEL */
+
+.pw-surface,
+.pw-card {
+    background: var(--pw-surface);
+    border: 1px solid var(--pw-border);
+    color: var(--pw-text);
+
+    box-shadow: var(--pw-shadow);
+
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        color 180ms ease;
+}
+
+.pw-card {
+    border-radius: 18px;
+}
+
+
+/* TYPOGRAPHY */
+
+.pw-heading {
+    color: var(--pw-heading);
+}
+
+.pw-text {
+    color: var(--pw-text);
+}
+
+.pw-muted {
+    color: var(--pw-muted);
+}
+
+.pw-soft {
+    color: var(--pw-soft);
+}
+
+
+/* STANDARD FORM CONTROLS */
+
+.pw-input,
+.pw-select,
+.pw-textarea {
+    width: 100%;
+
+    border: 1px solid var(--pw-border);
+    border-radius: 12px;
+
+    background: var(--pw-surface);
+    color: var(--pw-text);
+
+    outline: none;
+
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background-color 160ms ease;
+}
+
+.pw-input::placeholder,
+.pw-textarea::placeholder {
+    color: var(--pw-soft);
+}
+
+.pw-input:focus,
+.pw-select:focus,
+.pw-textarea:focus {
+    border-color: #a78bfa;
+
+    box-shadow:
+        0 0 0 4px rgba(124, 58, 237, 0.10);
+}
+
+
+/* PRIMARY LINK */
+
+.pw-link {
+    color: var(--pw-primary);
+
+    transition: color 150ms ease;
+}
+
+.pw-link:hover {
+    color: var(--pw-primary-hover);
+}
+
+
+/* SECONDARY BUTTON */
+
+.pw-btn-secondary {
+    border: 1px solid var(--pw-border);
+    background: var(--pw-surface);
+    color: var(--pw-text);
+
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+.pw-btn-secondary:hover {
+    border-color: #a78bfa;
+    color: var(--pw-primary);
+    background: var(--pw-surface-soft);
+}
+
+
+/* DIVIDERS */
+
+.pw-border {
+    border-color: var(--pw-border);
+}
+
+.pw-border-soft {
+    border-color: var(--pw-border-soft);
+}
