@@ -135,10 +135,11 @@
     }
 
     .pw-course-cover {
-        position: relative;
-        height: 158px;
-        overflow: hidden;
-        background: #f1f5f9;
+    position: relative;
+    height: 158px;
+    overflow: visible;
+    background: #f1f5f9;
+    z-index: 5;
     }
 
     .pw-course-cover img {
@@ -243,7 +244,7 @@
         position: absolute;
         top: 44px;
         right: 0;
-        z-index: 30;
+        z-index: 50;
         width: 165px;
         padding: 6px;
         overflow: hidden;
@@ -282,6 +283,16 @@
     .pw-course-menu-button.is-submit:hover {
         background: #ecfdf5;
         color: #047857;
+    }
+
+
+    .pw-course-menu-button.is-delete {
+        color: #dc2626;
+    }
+
+    .pw-course-menu-button.is-delete:hover {
+        background: #fef2f2;
+        color: #b91c1c;
     }
 
     .pw-course-line-clamp-2 {
@@ -455,59 +466,107 @@
         </section>
 
 
+{{-- =====================================================
+     SUCCESS MESSAGE
+====================================================== --}}
 
-        {{-- =====================================================
-             SUCCESS MESSAGE
-        ====================================================== --}}
+@if(session('success'))
 
-        @if(session('success'))
+    <div
+        class="mt-5 flex items-start gap-3
+               rounded-xl border border-emerald-200
+               bg-emerald-50 px-4 py-3
+               text-xs text-emerald-800"
+    >
 
-            <div
-                class="mt-5 flex items-start gap-3
-                       rounded-xl border border-emerald-200
-                       bg-emerald-50 px-4 py-3
-                       text-xs text-emerald-800"
+        <div
+            class="mt-0.5 flex h-7 w-7
+                   shrink-0 items-center
+                   justify-center rounded-full
+                   bg-emerald-100 text-emerald-600"
+        >
+            <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
             >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+            </svg>
+        </div>
 
-                <div
-                    class="mt-0.5 flex h-7 w-7
-                           shrink-0 items-center
-                           justify-center rounded-full
-                           bg-emerald-100 text-emerald-600"
-                >
-                    <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                        />
-                    </svg>
-                </div>
-
-
-                <div>
-
-                    <div class="font-bold">
-                        Success
-                    </div>
-
-                    <div class="mt-0.5 text-emerald-700">
-                        {{ session('success') }}
-                    </div>
-
-                </div>
-
+        <div>
+            <div class="font-bold">
+                Success
             </div>
 
-        @endif
+            <div class="mt-0.5 text-emerald-700">
+                {{ session('success') }}
+            </div>
+        </div>
 
+    </div>
+
+@endif
+
+
+{{-- =====================================================
+     ERROR MESSAGE
+====================================================== --}}
+
+@if(session('error'))
+
+    <div
+        class="mt-5 flex items-start gap-3
+               rounded-xl border border-red-200
+               bg-red-50 px-4 py-3
+               text-xs text-red-800"
+    >
+
+        <div
+            class="mt-0.5 flex h-7 w-7
+                   shrink-0 items-center
+                   justify-center rounded-full
+                   bg-red-100 text-red-600"
+        >
+            <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v4m0 4h.01M10.29 3.86
+                       1.82 18a2 2 0 0 0 1.71 3h16.94
+                       a2 2 0 0 0 1.71-3L13.71 3.86
+                       a2 2 0 0 0-3.42 0Z"
+                />
+            </svg>
+        </div>
+
+        <div>
+            <div class="font-bold">
+                Unable to submit
+            </div>
+
+            <div class="mt-0.5 text-red-700">
+                {{ session('error') }}
+            </div>
+        </div>
+
+    </div>
+
+@endif
 
 
         {{-- =====================================================
@@ -1018,7 +1077,28 @@
                                                 type="submit"
                                                 class="pw-course-menu-button is-submit"
                                             >
-                                                Submit for Approval
+                                                {{ $course->status === 'rejected'
+    ? 'Resubmit for Approval'
+    : 'Submit for Approval'
+}}
+                                            </button>
+
+                                        </form>
+
+
+                                        <form
+                                            action="{{ route('teacher.courses.destroy', $course) }}"
+                                            method="POST"
+                                            onsubmit="return confirm('Are you sure you want to delete this course? This action cannot be undone.');"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="pw-course-menu-button is-delete"
+                                            >
+                                                Delete Course
                                             </button>
 
                                         </form>
@@ -1296,7 +1376,10 @@
                                                transition
                                                hover:bg-emerald-100"
                                     >
-                                        Submit for Approval
+                                        {{ $course->status === 'rejected'
+    ? 'Resubmit for Approval'
+    : 'Submit for Approval'
+}}
                                     </button>
 
                                 </form>

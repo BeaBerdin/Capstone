@@ -19,6 +19,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\NotificationController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -51,6 +52,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         abort(403, 'Unauthorized');
 
     })->name('dashboard');
+
+     /*
+    |--------------------------------------------------------------------------
+    | NOTIFICATIONS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/notifications/{notification}/read',
+    [NotificationController::class, 'read']) 
+    ->name('notifications.read');
+
+    Route::post( '/notifications/read-all', [NotificationController::class, 'readAll'])
+    ->name('notifications.read-all');
 
 
     /*
@@ -266,6 +280,9 @@ Route::middleware('role:super_admin')->group(function () {
         // Teacher Performance Analytics
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
+
+        Route::delete( '/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
+            ->name('teacher.courses.destroy');
     });
 
 

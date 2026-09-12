@@ -964,7 +964,45 @@ html.dark .pw-mobile-toggle {
         .pw-notification-item:last-child {
             border-bottom: 0;
         }
+       
+        .pw-notification-item-button {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #f8fafc;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 
+    transition:
+        background-color .15s ease;
+}
+
+.pw-notification-item-button:hover {
+    background: #faf7ff;
+}
+
+.pw-notification-form:last-child .pw-notification-item-button {
+    border-bottom: 0;
+}
+
+.pw-notification-mark-all {
+    border: 0;
+    background: transparent;
+    color: #7c3aed;
+
+    padding: 4px 0;
+
+    font-size: 9px;
+    font-weight: 750;
+
+    cursor: pointer;
+}
+
+.pw-notification-mark-all:hover {
+    color: #5b21b6;
+    text-decoration: underline;
+}
         .pw-notification-dot {
             width: 8px;
             height: 8px;
@@ -2585,21 +2623,41 @@ html.dark .pw-mobile-toggle {
                         class="pw-topbar-dropdown"
                     >
 
-                        <div class="pw-topbar-dropdown-header">
+                       <div class="pw-topbar-dropdown-header">
 
-                            <div>
+    <div>
 
-                                <div class="pw-topbar-dropdown-title">
-                                    Notifications
-                                </div>
+        <div class="pw-topbar-dropdown-title">
+            Notifications
+        </div>
 
-                                <div class="pw-topbar-dropdown-subtitle">
-                                    {{ $pwUnreadCount }} unread
-                                </div>
+        <div class="pw-topbar-dropdown-subtitle">
+            {{ $pwUnreadCount }} unread
+        </div>
 
-                            </div>
+    </div>
 
-                        </div>
+
+    @if($pwUnreadCount > 0)
+
+        <form
+            action="{{ route('notifications.read-all') }}"
+            method="POST"
+        >
+            @csrf
+
+            <button
+                type="submit"
+                class="pw-notification-mark-all"
+            >
+                Mark all as read
+            </button>
+
+        </form>
+
+    @endif
+
+    </div>
 
 
                         <div class="pw-notification-list">
@@ -2618,31 +2676,47 @@ html.dark .pw-mobile-toggle {
                                 @endphp
 
 
-                                <div class="pw-notification-item">
+                                <form
+                                    action="{{ route('notifications.read', $pwNotification->id) }}"
+                                    method="POST"
+                                    class="pw-notification-form"
+                                >
+                                    @csrf
 
-                                    @if(is_null($pwNotification->read_at))
-                                        <span class="pw-notification-dot"></span>
-                                    @else
-                                        <span
-                                            class="pw-notification-dot"
-                                            style="background:#cbd5e1;"
-                                        ></span>
-                                    @endif
+                                    <button
+                                        type="submit"
+                                        class="pw-notification-item pw-notification-item-button"
+                                    >
+
+                                        @if(is_null($pwNotification->read_at))
+
+                                            <span class="pw-notification-dot"></span>
+
+                                        @else
+
+                                            <span
+                                                class="pw-notification-dot"
+                                                style="background:#cbd5e1;"
+                                            ></span>
+
+                                        @endif
 
 
-                                    <div>
+                                        <div>
 
-                                        <div class="pw-notification-message">
-                                            {{ $pwNotificationMessage }}
+                                            <div class="pw-notification-message">
+                                                {{ $pwNotificationMessage }}
+                                            </div>
+
+                                            <div class="pw-notification-time">
+                                                {{ optional($pwNotification->created_at)->diffForHumans() }}
+                                            </div>
+
                                         </div>
 
-                                        <div class="pw-notification-time">
-                                            {{ optional($pwNotification->created_at)->diffForHumans() }}
-                                        </div>
+                                    </button>
 
-                                    </div>
-
-                                </div>
+                                </form>
 
 
                             @empty
