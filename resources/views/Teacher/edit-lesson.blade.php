@@ -1063,6 +1063,19 @@
                                             be managed in the Quiz Builder.
                                         </p>
 
+                                        @if($lesson->lesson_type === 'quiz')
+                                            <a
+                                                href="{{ route('teacher.quiz.builder', $lesson) }}"
+                                                class="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                            >
+                                                Open Quiz Builder →
+                                            </a>
+                                        @else
+                                            <p class="mt-4 text-xs leading-5 text-slate-500">
+                                                Save this lesson as a quiz first, then open the Quiz Builder to add or generate questions.
+                                            </p>
+                                        @endif
+
                                     </div>
 
                                 </div>

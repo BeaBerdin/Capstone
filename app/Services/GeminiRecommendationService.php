@@ -12,7 +12,7 @@ class GeminiRecommendationService
     public function generateReason(Quiz $quiz, Course $recommendedCourse, float $percentage): ?string
     {
         $apiKey = config('services.gemini.api_key');
-        $model = config('services.gemini.model', 'gemini-2.5-flash');
+        $model = config('services.gemini.model', 'gemini-3.6-flash');
 
         if (!$apiKey) {
             return null;
@@ -67,18 +67,30 @@ Output Rules:
 ";
 
         try {
-            $response = Http::timeout(20)->post(
-                "https://generativelanguage.googleapis.com/v1/models/{$model}:generateContent?key={$apiKey}",
-                [
-                    'contents' => [
+            $response = null;
+
+            for ($attempt = 1; $attempt <= 3; $attempt++) {
+                $response = Http::timeout(20)
+                    ->withHeaders(['x-goog-api-key' => $apiKey])
+                    ->post(
+                        "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
                         [
-                            'parts' => [
-                                ['text' => $prompt],
+                            'contents' => [
+                                [
+                                    'parts' => [
+                                        ['text' => $prompt],
+                                    ],
+                                ],
                             ],
-                        ],
-                    ],
-                ]
-            );
+                        ]
+                    );
+
+                if ($response->successful() || $response->status() < 500 || $attempt === 3) {
+                    break;
+                }
+
+                usleep($attempt * 500000);
+            }
 
             if (!$response->successful()) {
                 Log::warning('Gemini recommendation failed', [

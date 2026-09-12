@@ -1,0 +1,37 @@
+# PathWise Project Rules
+
+## Architecture & Conflict Prevention
+- Always inspect existing models, migrations, and controllers before creating new features to prevent naming collisions or duplicate logic.
+- Reuse existing FormRequests, middleware, and database traits across Laravel controllers rather than writing redundant code.
+
+## Comments & Documentation
+- Document complex business logic, custom database queries, and non-obvious algorithm steps using clear inline comments.
+- Add concise docblocks to Laravel controller methods and custom Vue component props, events, and computed properties.
+
+## UI/UX Consistency & Design Elements
+- Maintain consistent spacing, typography scales, and responsive design patterns using the established Tailwind configuration.
+- You are permitted to create new design elements or components when building new features, provided they strictly match the style, color palette, and layout conventions of existing components.
+
+## Validation & Data Integrity
+- Implement strict dual-layer validation: Laravel FormRequests on the backend and corresponding reactive validation on the frontend.
+- Explicitly check for uniqueness and duplicate entries at the database and model levels (e.g., unique composite keys for courses and departments).
+
+## Token Efficiency & Tool Usage
+- Avoid broad wildcard directory searches (`*`). Use precise, targeted file paths for all read and search tool calls.
+- Read only the specific files required for the active task; never scan vendor, storage, or build directories.
+
+## Terminal & Environment
+- Operating System: Windows (PowerShell)
+- Note: Never use `&&` to chain commands in PowerShell. Use semicolons (`;`) or run commands on separate lines instead.
+
+## Allowed Packages & Dependencies
+- Do not use Laravel Flux, Livewire Pro, or any paid/proprietary packages that require a license key. Stick strictly to standard open-source tools, Tailwind, Blade, and Vue.
+
+## Objectives for pathwise
+- Course Creation
+- AI-Powered Course Recommendation
+- Quiz Generation
+- Output Evaluation
+- Certificate Generation
+- Payment Tracking
+- Performance Tracking and Analytics Report Generation

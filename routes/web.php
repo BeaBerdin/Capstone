@@ -228,6 +228,25 @@ Route::middleware('role:super_admin')->group(function () {
         Route::delete('/teacher/lessons/{lesson}', [LessonController::class, 'teacherDeleteLesson'])
             ->name('teacher.lessons.delete');
 
+        // Quiz Builder
+        Route::get('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherBuilder'])
+            ->name('teacher.quiz.builder');
+
+        Route::post('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherSaveQuiz'])
+            ->name('teacher.quiz.save');
+
+        Route::post('/teacher/quizzes/{quiz}/generate-questions', [QuizController::class, 'teacherGenerateQuestions'])
+            ->name('teacher.quiz.questions.generate');
+
+        Route::post('/teacher/quizzes/{quiz}/questions', [QuizController::class, 'teacherStoreQuestion'])
+            ->name('teacher.quiz.question.store');
+
+        Route::put('/teacher/quizzes/{quiz}/questions/{question}', [QuizController::class, 'teacherUpdateQuestion'])
+            ->name('teacher.quiz.question.update');
+
+        Route::delete('/teacher/quizzes/{quiz}/questions/{question}', [QuizController::class, 'teacherDeleteQuestion'])
+            ->name('teacher.quiz.question.delete');
+
 
         // Submit Course for Approval
         Route::post('/teacher/courses/{course}/submit', [CourseController::class, 'submitForApproval'])
@@ -262,6 +281,10 @@ Route::middleware('role:super_admin')->group(function () {
         // All Teacher Lessons
         Route::get('/teacher/lessons', [LessonController::class, 'teacherAllLessons'])
             ->name('teacher.lessons.index');
+
+        // Teacher Performance Analytics
+        Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
+            ->name('teacher.analytics');
     });
 
 

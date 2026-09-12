@@ -528,6 +528,54 @@
 
                             </div>
 
+                            <form
+                                action="{{ route('teacher.quiz.questions.generate', $quiz) }}"
+                                method="POST"
+                                class="mb-5 flex flex-col gap-3 rounded-2xl border border-violet-100 bg-violet-50 p-4 sm:flex-row sm:items-end"
+                            >
+                                @csrf
+
+                                <div class="flex-1">
+                                    <label for="question_count" class="text-xs font-bold text-violet-900">
+                                        AI question count
+                                    </label>
+                                    <input
+                                        id="question_count"
+                                        name="question_count"
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value="{{ old('question_count', 5) }}"
+                                        required
+                                        class="pw-field mt-1.5 h-10 px-3"
+                                    >
+                                </div>
+
+                                <div class="flex-1">
+                                    <label for="difficulty" class="text-xs font-bold text-violet-900">
+                                        Difficulty
+                                    </label>
+                                    <select id="difficulty" name="difficulty" class="pw-field mt-1.5 h-10 px-3">
+                                        @foreach(['beginner', 'intermediate', 'advanced'] as $difficulty)
+                                            <option value="{{ $difficulty }}" @selected(old('difficulty', 'beginner') === $difficulty)>
+                                                {{ ucfirst($difficulty) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                >
+                                    Generate with AI
+                                </button>
+                            </form>
+
+                            <p class="-mt-2 mb-5 text-xs leading-5 text-slate-500">
+                                Uses the published text lessons in this course. Generated questions are editable and must be reviewed before publishing.
+                            </p>
+
 
 
                             <div class="space-y-4">

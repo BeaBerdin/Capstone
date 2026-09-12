@@ -12,6 +12,7 @@ use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Services\RecommendationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
@@ -417,6 +418,51 @@ class QuizController extends Controller
                 'success',
                 'Quiz settings saved successfully.'
             );
+    }
+
+    /**
+     * Generate editable multiple-choice question drafts from the course's text lessons.
+     */
+    public function teacherGenerateQuestions(Request $request, Quiz $quiz)
+    {
+        $quiz->load('course');
+
+        if ((int) $quiz->course->teacher_id !== (int) auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'question_count' => ['required', 'integer', 'min:1', 'max:10'],
+            'difficulty' => ['required', 'in:beginner,intermediate,advanced'],
+        ]);
+
+        try {
+            $questions = app(\App\Services\GeminiQuizGenerationService::class)->generate(
+                $quiz->course,
+                $validated['question_count'],
+                $validated['difficulty']
+            );
+
+            $existingQuestions = $quiz->questions()
+                ->pluck('question')
+                ->map(fn ($question) => mb_strtolower(trim($question)));
+
+            if (collect($questions)->contains(fn ($question) => $existingQuestions->contains(mb_strtolower($question['question'])))) {
+                return back()->with('error', 'The AI generated a duplicate question. Please try again.');
+            }
+
+            DB::transaction(function () use ($quiz, $questions) {
+                foreach ($questions as $question) {
+                    $quiz->questions()->create($question);
+                }
+            });
+
+            return redirect()
+                ->route('teacher.quiz.builder', $quiz->lesson_id)
+                ->with('success', 'AI-generated questions were added. Review them before publishing the quiz.');
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
     }
 
 
