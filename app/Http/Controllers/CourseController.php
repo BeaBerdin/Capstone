@@ -10,11 +10,7 @@ use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-<<<<<<< HEAD
-=======
 use Illuminate\Validation\Rule;
-
->>>>>>> origin/Dakoykoy
 
 class CourseController extends Controller
 {
@@ -29,42 +25,6 @@ class CourseController extends Controller
         $query = Course::with(['category', 'teacher']);
 
         if ($request->filled('search')) {
-<<<<<<< HEAD
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where(
-                    'title',
-                    'like',
-                    '%' . $search . '%'
-                )
-                ->orWhere(
-                    'description',
-                    'like',
-                    '%' . $search . '%'
-                );
-            });
-        }
-
-        if (
-            $request->filled('category') &&
-            $request->category !== 'all'
-        ) {
-            $query->where(
-                'category_id',
-                $request->category
-            );
-        }
-
-        if (
-            $request->filled('status') &&
-            $request->status !== 'all'
-        ) {
-            $query->where(
-                'status',
-                $request->status
-            );
-=======
             $search = trim((string) $request->search);
 
             $query->where(function ($q) use ($search) {
@@ -79,40 +39,21 @@ class CourseController extends Controller
 
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
->>>>>>> origin/Dakoykoy
         }
 
-        $courses = $query
-            ->latest()
-            ->get();
+        $courses = $query->latest()->get();
 
-<<<<<<< HEAD
-        $categories = CourseCategory::orderBy(
-            'name'
-        )->get();
-=======
         $categories = CourseCategory::orderBy('name')->get();
->>>>>>> origin/Dakoykoy
 
         return view(
             'courses.index',
-            compact(
-                'courses',
-                'categories'
-            )
+            compact('courses', 'categories')
         );
     }
 
-
     public function create()
     {
-<<<<<<< HEAD
-        $categories = CourseCategory::orderBy(
-            'name'
-        )->get();
-=======
         $categories = CourseCategory::orderBy('name')->get();
->>>>>>> origin/Dakoykoy
 
         return view(
             'courses.create',
@@ -120,18 +61,12 @@ class CourseController extends Controller
         );
     }
 
-
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_id' =>
-                'required|exists:course_categories,id',
-
-            'title' =>
-                'required|string|max:255',
-
-            'description' =>
-                'required|string',
+            'category_id' => 'required|exists:course_categories,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
 
             'thumbnail' => [
                 'nullable',
@@ -140,104 +75,58 @@ class CourseController extends Controller
                 'max:5120',
             ],
 
-            'intro_video' =>
-                'nullable|max:255',
+            'intro_video' => 'nullable|max:255',
 
-            'difficulty_level' =>
-                'required|in:beginner,intermediate,advanced',
+            'difficulty_level' => [
+                'required',
+                'in:beginner,intermediate,advanced',
+            ],
 
-            'price' =>
-                'required|numeric|min:0',
+            'price' => 'required|numeric|min:0',
 
-            'status' =>
-                'required|in:draft,pending,approved,rejected,published',
+            'status' => [
+                'required',
+                'in:draft,pending,approved,rejected,published',
+            ],
 
-            'estimated_hours' =>
-                'nullable|integer|min:1',
-
-            'certificate_available' =>
-                'nullable|boolean',
+            'estimated_hours' => 'nullable|integer|min:1',
+            'certificate_available' => 'nullable|boolean',
         ]);
 
-<<<<<<< HEAD
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD THUMBNAIL
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('thumbnail')) {
-            $validated['thumbnail'] =
-                $request->file('thumbnail')->store(
-                    'courses',
-                    'public'
-                );
+            $validated['thumbnail'] = $request
+                ->file('thumbnail')
+                ->store('courses', 'public');
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE COURSE
-        |--------------------------------------------------------------------------
-        */
 
         $validated['teacher_id'] = auth()->id();
 
         $validated['certificate_available'] =
             $request->boolean('certificate_available');
-=======
-        $validated['teacher_id'] =
-            auth()->id();
-
-        $validated['certificate_available'] =
-            $request->boolean(
-                'certificate_available'
-            );
->>>>>>> origin/Dakoykoy
 
         Course::create($validated);
 
         return redirect()
             ->route('courses.index')
-            ->with(
-                'success',
-                'Course created successfully.'
-            );
+            ->with('success', 'Course created successfully.');
     }
-
 
     public function edit(Course $course)
     {
-<<<<<<< HEAD
-        $categories = CourseCategory::orderBy(
-            'name'
-        )->get();
-=======
         $categories = CourseCategory::orderBy('name')->get();
->>>>>>> origin/Dakoykoy
 
         return view(
             'courses.edit',
-            compact(
-                'course',
-                'categories'
-            )
+            compact('course', 'categories')
         );
     }
 
-
-    public function update(
-        Request $request,
-        Course $course
-    ) {
+    public function update(Request $request, Course $course)
+    {
         $validated = $request->validate([
-            'category_id' =>
-                'required|exists:course_categories,id',
-
-            'title' =>
-                'required|string|max:255',
-
-            'description' =>
-                'required|string',
+            'category_id' => 'required|exists:course_categories,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
 
             'thumbnail' => [
                 'nullable',
@@ -246,136 +135,76 @@ class CourseController extends Controller
                 'max:5120',
             ],
 
-            'intro_video' =>
-                'nullable|max:255',
+            'intro_video' => 'nullable|max:255',
 
-            'difficulty_level' =>
-                'required|in:beginner,intermediate,advanced',
+            'difficulty_level' => [
+                'required',
+                'in:beginner,intermediate,advanced',
+            ],
 
-            'price' =>
-                'required|numeric|min:0',
+            'price' => 'required|numeric|min:0',
 
-            'status' =>
-                'required|in:draft,pending,approved,rejected,published',
+            'status' => [
+                'required',
+                'in:draft,pending,approved,rejected,published',
+            ],
 
-            'estimated_hours' =>
-                'nullable|integer|min:1',
-
-            'certificate_available' =>
-                'nullable|boolean',
+            'estimated_hours' => 'nullable|integer|min:1',
+            'certificate_available' => 'nullable|boolean',
         ]);
 
-<<<<<<< HEAD
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE THUMBNAIL ONLY IF NEW IMAGE IS UPLOADED
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('thumbnail')) {
-
-            // Delete old thumbnail if it exists
             if (
                 $course->thumbnail &&
-                Storage::disk('public')->exists(
-                    $course->thumbnail
-                )
+                Storage::disk('public')->exists($course->thumbnail)
             ) {
-                Storage::disk('public')->delete(
-                    $course->thumbnail
-                );
+                Storage::disk('public')->delete($course->thumbnail);
             }
 
-            // Store new thumbnail
-            $validated['thumbnail'] =
-                $request->file('thumbnail')->store(
-                    'courses',
-                    'public'
-                );
+            $validated['thumbnail'] = $request
+                ->file('thumbnail')
+                ->store('courses', 'public');
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE COURSE
-        |--------------------------------------------------------------------------
-        */
 
         $validated['certificate_available'] =
             $request->boolean('certificate_available');
 
-=======
-        $validated['certificate_available'] =
-            $request->boolean(
-                'certificate_available'
-            );
-
->>>>>>> origin/Dakoykoy
         $course->update($validated);
 
         return redirect()
             ->route('courses.index')
-            ->with(
-                'success',
-                'Course updated successfully.'
-            );
+            ->with('success', 'Course updated successfully.');
     }
-
 
     public function destroy(Course $course)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | DELETE THUMBNAIL
-        |--------------------------------------------------------------------------
-        */
-
-<<<<<<< HEAD
         if (
             $course->thumbnail &&
-            Storage::disk('public')->exists(
-                $course->thumbnail
-            )
+            Storage::disk('public')->exists($course->thumbnail)
         ) {
-            Storage::disk('public')->delete(
-                $course->thumbnail
-            );
+            Storage::disk('public')->delete($course->thumbnail);
         }
 
         $course->delete();
 
-=======
->>>>>>> origin/Dakoykoy
         return redirect()
             ->route('courses.index')
-            ->with(
-                'success',
-                'Course deleted successfully.'
-            );
+            ->with('success', 'Course deleted successfully.');
     }
 
-
-<<<<<<< HEAD
-    /* ------------------------------------------------------------------ */
-    /*  STUDENT — MARKETPLACE                                             */
-    /* ------------------------------------------------------------------ */
-=======
     /*
     |--------------------------------------------------------------------------
     | STUDENT - MARKETPLACE
     |--------------------------------------------------------------------------
     */
->>>>>>> origin/Dakoykoy
 
     public function marketplace()
     {
         $courses = Course::with([
-                'category',
-                'teacher',
-            ])
-            ->where(
-                'status',
-                'published'
-            )
+            'category',
+            'teacher',
+        ])
+            ->where('status', 'published')
             ->latest()
             ->get();
 
@@ -385,10 +214,8 @@ class CourseController extends Controller
         );
     }
 
-
-    public function showStudentCourse(
-        Course $course
-    ) {
+    public function showStudentCourse(Course $course)
+    {
         abort_unless(
             $course->status === 'published',
             404
@@ -400,37 +227,22 @@ class CourseController extends Controller
         );
     }
 
-
-<<<<<<< HEAD
     public function enroll(Course $course)
     {
-=======
-    public function enroll(
-        Course $course
-    ) {
         abort_unless(
             $course->status === 'published',
             404
         );
 
->>>>>>> origin/Dakoykoy
         Enrollment::firstOrCreate(
             [
-                'student_id' =>
-                    auth()->id(),
-
-                'course_id' =>
-                    $course->id,
+                'student_id' => auth()->id(),
+                'course_id' => $course->id,
             ],
             [
-                'status' =>
-                    'active',
-
-                'enrolled_at' =>
-                    now(),
-
-                'progress_percentage' =>
-                    0,
+                'status' => 'active',
+                'enrolled_at' => now(),
+                'progress_percentage' => 0,
             ]
         );
 
@@ -442,12 +254,11 @@ class CourseController extends Controller
             );
     }
 
-
     public function myCourses()
     {
         $enrollments = Enrollment::with(
-                'course.category'
-            )
+            'course.category'
+        )
             ->where(
                 'student_id',
                 auth()->id()
@@ -461,31 +272,15 @@ class CourseController extends Controller
         );
     }
 
-
-<<<<<<< HEAD
-    /* ------------------------------------------------------------------ */
-    /*  TEACHER — MY COURSES                                              */
-    /* ------------------------------------------------------------------ */
-
-    public function teacherCourses()
-    {
-        $courses = Course::with([
-                'category',
-            ])
-=======
     /*
     |--------------------------------------------------------------------------
     | TEACHER - MY COURSES
     |--------------------------------------------------------------------------
     */
 
-    public function teacherCourses(
-        Request $request
-    ) {
-        $query = Course::with(
-                'category'
-            )
->>>>>>> origin/Dakoykoy
+    public function teacherCourses(Request $request)
+    {
+        $query = Course::with('category')
             ->withCount([
                 'lessons',
                 'enrollments',
@@ -500,25 +295,22 @@ class CourseController extends Controller
                 (string) $request->search
             );
 
-            $query->where(
-                function ($q) use ($search) {
-                    $q->where(
-                        'title',
-                        'like',
-                        "%{$search}%"
-                    )
+            $query->where(function ($q) use ($search) {
+                $q->where(
+                    'title',
+                    'like',
+                    "%{$search}%"
+                )
                     ->orWhere(
                         'description',
                         'like',
                         "%{$search}%"
                     );
-                }
-            );
+            });
         }
 
         if (
-            $request->filled('status')
-            &&
+            $request->filled('status') &&
             $request->status !== 'all'
         ) {
             $query->where(
@@ -528,8 +320,7 @@ class CourseController extends Controller
         }
 
         if (
-            $request->filled('category')
-            &&
+            $request->filled('category') &&
             $request->category !== 'all'
         ) {
             $query->where(
@@ -542,13 +333,10 @@ class CourseController extends Controller
             ->latest()
             ->get();
 
-<<<<<<< HEAD
-=======
         $categories = CourseCategory::orderBy(
             'name'
         )->get();
 
->>>>>>> origin/Dakoykoy
         return view(
             'teacher.my-courses',
             compact(
@@ -558,18 +346,11 @@ class CourseController extends Controller
         );
     }
 
-
-<<<<<<< HEAD
-    /* ------------------------------------------------------------------ */
-    /*  TEACHER — CREATE COURSE                                           */
-    /* ------------------------------------------------------------------ */
-=======
     /*
     |--------------------------------------------------------------------------
     | TEACHER - CREATE COURSE
     |--------------------------------------------------------------------------
     */
->>>>>>> origin/Dakoykoy
 
     public function teacherCreateCourse()
     {
@@ -583,160 +364,8 @@ class CourseController extends Controller
         );
     }
 
-
-<<<<<<< HEAD
     public function teacherStoreCourse(Request $request)
     {
-        $validated = $request->validate(
-            [
-                'title' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:courses,title',
-                ],
-
-                'description' => [
-                    'required',
-                    'string',
-                ],
-
-                'category_id' => [
-                    'required',
-                    'exists:course_categories,id',
-                ],
-
-                'thumbnail' => [
-                    'nullable',
-                    'image',
-                    'mimes:jpeg,jpg,png,webp',
-                    'max:5120',
-                ],
-
-                'intro_video' => [
-                    'nullable',
-                    'url',
-                    'max:255',
-                ],
-
-                'difficulty_level' => [
-                    'required',
-                    'in:beginner,intermediate,advanced',
-                ],
-
-                'price' => [
-                    'nullable',
-                    'numeric',
-                    'min:0',
-                ],
-
-                'estimated_hours' => [
-                    'nullable',
-                    'integer',
-                    'min:1',
-                ],
-
-                'certificate_available' => [
-                    'nullable',
-                    'boolean',
-                ],
-            ],
-            [
-                'title.unique' =>
-                    'This course title already exists. Please choose a different title.',
-            ]
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | TEACHER
-        |--------------------------------------------------------------------------
-        */
-
-        $validated['teacher_id'] =
-            auth()->id();
-
-        /*
-        |--------------------------------------------------------------------------
-        | COURSE STATUS
-        |--------------------------------------------------------------------------
-        */
-
-        $validated['status'] =
-            'pending';
-
-        /*
-        |--------------------------------------------------------------------------
-        | DEFAULT PRICE
-        |--------------------------------------------------------------------------
-        */
-
-        $validated['price'] =
-            $validated['price'] ?? 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | CERTIFICATE
-        |--------------------------------------------------------------------------
-        */
-
-        $validated['certificate_available'] =
-            $request->boolean(
-                'certificate_available'
-            );
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD THUMBNAIL
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->hasFile('thumbnail')) {
-
-            $validated['thumbnail'] =
-                $request->file('thumbnail')->store(
-                    'courses',
-                    'public'
-                );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE COURSE
-        |--------------------------------------------------------------------------
-        */
-
-        Course::create($validated);
-
-        return redirect()
-            ->route('teacher.my-courses')
-            ->with(
-                'success',
-                'Course created successfully and submitted for admin approval!'
-            );
-    }
-
-
-    /* ------------------------------------------------------------------ */
-    /*  TEACHER — COURSE STUDENTS                                         */
-    /* ------------------------------------------------------------------ */
-
-    public function teacherCourseStudents(
-        Course $course
-    ) {
-        if (
-            (int) $course->teacher_id !==
-            (int) auth()->id()
-=======
-    public function teacherStoreCourse(
-        Request $request
-    ) {
-        /*
-        |--------------------------------------------------------------------------
-        | NORMALIZE TITLE
-        |--------------------------------------------------------------------------
-        */
-
         $request->merge([
             'title' => trim(
                 preg_replace(
@@ -746,13 +375,6 @@ class CourseController extends Controller
                 )
             ),
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
 
         $validated = $request->validate(
             [
@@ -764,8 +386,7 @@ class CourseController extends Controller
                     Rule::unique(
                         'courses',
                         'title'
-                    )
-                    ->where(
+                    )->where(
                         function ($query) {
                             return $query->where(
                                 'teacher_id',
@@ -826,18 +447,9 @@ class CourseController extends Controller
             ]
         );
 
+        $validated['teacher_id'] = auth()->id();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SYSTEM VALUES
-        |--------------------------------------------------------------------------
-        */
-
-        $validated['teacher_id'] =
-            auth()->id();
-
-        $validated['status'] =
-            'draft';
+        $validated['status'] = 'draft';
 
         $validated['price'] =
             $validated['price'] ?? 0;
@@ -847,15 +459,7 @@ class CourseController extends Controller
                 'certificate_available'
             );
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | THUMBNAIL
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('thumbnail')) {
-
             $validated['thumbnail'] =
                 $request
                     ->file('thumbnail')
@@ -865,15 +469,7 @@ class CourseController extends Controller
                     );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CREATE COURSE
-        |--------------------------------------------------------------------------
-        */
-
         Course::create($validated);
-
 
         return redirect()
             ->route('teacher.my-courses')
@@ -883,19 +479,15 @@ class CourseController extends Controller
             );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | TEACHER - EDIT COURSE
     |--------------------------------------------------------------------------
     */
 
-    public function teacherEditCourse(
-        Course $course
-    ) {
-        $this->ensureTeacherOwnsCourse(
-            $course
-        );
+    public function teacherEditCourse(Course $course)
+    {
+        $this->ensureTeacherOwnsCourse($course);
 
         $categories = CourseCategory::orderBy(
             'name'
@@ -910,21 +502,11 @@ class CourseController extends Controller
         );
     }
 
-
     public function teacherUpdateCourse(
         Request $request,
         Course $course
     ) {
-        $this->ensureTeacherOwnsCourse(
-            $course
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | NORMALIZE TITLE
-        |--------------------------------------------------------------------------
-        */
+        $this->ensureTeacherOwnsCourse($course);
 
         $request->merge([
             'title' => trim(
@@ -935,13 +517,6 @@ class CourseController extends Controller
                 )
             ),
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDATION
-        |--------------------------------------------------------------------------
-        */
 
         $validated = $request->validate(
             [
@@ -954,17 +529,15 @@ class CourseController extends Controller
                         'courses',
                         'title'
                     )
-                    ->where(
-                        function ($query) {
-                            return $query->where(
-                                'teacher_id',
-                                auth()->id()
-                            );
-                        }
-                    )
-                    ->ignore(
-                        $course->id
-                    ),
+                        ->where(
+                            function ($query) {
+                                return $query->where(
+                                    'teacher_id',
+                                    auth()->id()
+                                );
+                            }
+                        )
+                        ->ignore($course->id),
                 ],
 
                 'description' => [
@@ -1018,7 +591,6 @@ class CourseController extends Controller
             ]
         );
 
-
         $validated['price'] =
             $validated['price'] ?? 0;
 
@@ -1027,20 +599,9 @@ class CourseController extends Controller
                 'certificate_available'
             );
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | THUMBNAIL
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('thumbnail')) {
-
             if ($course->thumbnail) {
-
-                Storage::disk(
-                    'public'
-                )->delete(
+                Storage::disk('public')->delete(
                     $course->thumbnail
                 );
             }
@@ -1054,9 +615,7 @@ class CourseController extends Controller
                     );
         }
 
-
         $course->update($validated);
-
 
         return redirect()
             ->route('teacher.my-courses')
@@ -1065,7 +624,6 @@ class CourseController extends Controller
                 'Course details updated successfully.'
             );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -1076,16 +634,7 @@ class CourseController extends Controller
     public function submitForApproval(
         Course $course
     ) {
-        $this->ensureTeacherOwnsCourse(
-            $course
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS CHECK
-        |--------------------------------------------------------------------------
-        */
+        $this->ensureTeacherOwnsCourse($course);
 
         if (
             ! in_array(
@@ -1096,7 +645,6 @@ class CourseController extends Controller
                 ],
                 true
             )
->>>>>>> origin/Dakoykoy
         ) {
             return redirect()
                 ->route(
@@ -1107,22 +655,6 @@ class CourseController extends Controller
                     'This course cannot be submitted for approval in its current status.'
                 );
         }
-
-<<<<<<< HEAD
-        $course->load([
-            'category',
-        ]);
-
-        $enrollments = Enrollment::with([
-                'student',
-            ])
-=======
-
-        /*
-        |--------------------------------------------------------------------------
-        | LESSON REQUIREMENT
-        |--------------------------------------------------------------------------
-        */
 
         if (
             ! $course
@@ -1139,18 +671,9 @@ class CourseController extends Controller
                 );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | SUBMIT
-        |--------------------------------------------------------------------------
-        */
-
         $course->update([
-            'status' =>
-                'pending',
+            'status' => 'pending',
         ]);
-
 
         return redirect()
             ->route(
@@ -1162,7 +685,6 @@ class CourseController extends Controller
             );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | TEACHER - COURSE STUDENTS
@@ -1172,14 +694,11 @@ class CourseController extends Controller
     public function teacherCourseStudents(
         Course $course
     ) {
-        $this->ensureTeacherOwnsCourse(
-            $course
-        );
+        $this->ensureTeacherOwnsCourse($course);
 
         $enrollments = Enrollment::with(
-                'student'
-            )
->>>>>>> origin/Dakoykoy
+            'student'
+        )
             ->where(
                 'course_id',
                 $course->id
@@ -1196,55 +715,22 @@ class CourseController extends Controller
         );
     }
 
-
-<<<<<<< HEAD
-    /* ------------------------------------------------------------------ */
-    /*  TEACHER — INDIVIDUAL STUDENT PROGRESS                             */
-    /* ------------------------------------------------------------------ */
-=======
     /*
     |--------------------------------------------------------------------------
     | TEACHER - STUDENT PROGRESS
     |--------------------------------------------------------------------------
     */
->>>>>>> origin/Dakoykoy
 
     public function studentProgress(
         Course $course,
         User $student
     ) {
-<<<<<<< HEAD
-        if (
-            (int) $course->teacher_id !==
-            (int) auth()->id()
-        ) {
-            abort(
-                403,
-                'Unauthorized'
-            );
-        }
+        $this->ensureTeacherOwnsCourse($course);
 
-        $course->load([
-            'category',
-
-            'lessons' => function ($query) {
-                $query->orderBy(
-                    'lesson_order'
-                );
-            },
-        ]);
-
-        $enrollment = Enrollment::where(
-=======
-        $this->ensureTeacherOwnsCourse(
-            $course
-        );
-
-        $isEnrolled =
-            Enrollment::where(
-                'course_id',
-                $course->id
-            )
+        $isEnrolled = Enrollment::where(
+            'course_id',
+            $course->id
+        )
             ->where(
                 'student_id',
                 $student->id
@@ -1255,66 +741,31 @@ class CourseController extends Controller
             abort(404);
         }
 
+        $lessons = $course
+            ->lessons()
+            ->orderBy('lesson_order')
+            ->get();
 
-        $lessons =
-            $course
-                ->lessons()
-                ->orderBy(
-                    'lesson_order'
-                )
-                ->get();
-
-
-        $progressByLesson =
-            LessonProgress::where(
-                'student_id',
-                $student->id
-            )
+        $progressByLesson = LessonProgress::where(
+            'student_id',
+            $student->id
+        )
             ->whereIn(
                 'lesson_id',
                 $lessons->pluck('id')
             )
             ->get()
-            ->keyBy(
-                'lesson_id'
-            );
+            ->keyBy('lesson_id');
 
-
-        $enrollment =
-            Enrollment::where(
->>>>>>> origin/Dakoykoy
-                'course_id',
-                $course->id
-            )
+        $enrollment = Enrollment::where(
+            'course_id',
+            $course->id
+        )
             ->where(
                 'student_id',
                 $student->id
             )
             ->firstOrFail();
-
-<<<<<<< HEAD
-        $progress = LessonProgress::with([
-                'lesson',
-            ])
-            ->where(
-                'student_id',
-                $student->id
-            )
-            ->whereHas(
-                'lesson',
-                function ($query) use ($course) {
-                    $query->where(
-                        'course_id',
-                        $course->id
-                    );
-                }
-            )
-            ->get()
-            ->keyBy(
-                'lesson_id'
-            );
-=======
->>>>>>> origin/Dakoykoy
 
         return view(
             'teacher.student-progress',
@@ -1331,109 +782,63 @@ class CourseController extends Controller
     /*
     |--------------------------------------------------------------------------
     | TEACHER - DELETE COURSE
-|--------------------------------------------------------------------------
-*/
-
-public function teacherDestroyCourse(
-    Course $course
-) {
-    /*
-    |--------------------------------------------------------------------------
-    | OWNERSHIP CHECK
     |--------------------------------------------------------------------------
     */
 
-    $this->ensureTeacherOwnsCourse(
-        $course
-    );
-
-<<<<<<< HEAD
-    /* ------------------------------------------------------------------ */
-    /*  ADMIN — COURSE APPROVAL                                           */
-    /* ------------------------------------------------------------------ */
-=======
-
-    /*
-    |--------------------------------------------------------------------------
-    | STATUS CHECK
-    |--------------------------------------------------------------------------
-    | Teachers may only delete Draft or Returned/Rejected courses.
-    */
-
-    if (
-        ! in_array(
-            $course->status,
-            [
-                'draft',
-                'rejected',
-            ],
-            true
-        )
+    public function teacherDestroyCourse(
+        Course $course
     ) {
+        $this->ensureTeacherOwnsCourse($course);
+
+        if (
+            ! in_array(
+                $course->status,
+                [
+                    'draft',
+                    'rejected',
+                ],
+                true
+            )
+        ) {
+            return redirect()
+                ->route(
+                    'teacher.my-courses'
+                )
+                ->with(
+                    'error',
+                    'Only draft or returned courses can be deleted.'
+                );
+        }
+
+        if ($course->thumbnail) {
+            Storage::disk('public')->delete(
+                $course->thumbnail
+            );
+        }
+
+        $course->delete();
+
         return redirect()
             ->route(
                 'teacher.my-courses'
             )
             ->with(
-                'error',
-                'Only draft or returned courses can be deleted.'
+                'success',
+                'Course deleted successfully.'
             );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE THUMBNAIL
-    |--------------------------------------------------------------------------
-    */
-
-    if ($course->thumbnail) {
-
-        Storage::disk(
-            'public'
-        )->delete(
-            $course->thumbnail
-        );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE COURSE
-    |--------------------------------------------------------------------------
-    */
-
-    $course->delete();
-
-
-    return redirect()
-        ->route(
-            'teacher.my-courses'
-        )
-        ->with(
-            'success',
-            'Course deleted successfully.'
-        );
-}
     /*
     |--------------------------------------------------------------------------
     | ADMIN - COURSE APPROVAL
     |--------------------------------------------------------------------------
     */
->>>>>>> origin/Dakoykoy
 
-    public function approve(
-        Course $course
-    ) {
-        if (
-            $course->status
-            !==
-            'pending'
-        ) {
+    public function approve(Course $course)
+    {
+        if ($course->status !== 'pending') {
             return redirect()
-                ->route(
-                    'courses.index'
-                )
+                ->route('courses.index')
                 ->with(
                     'error',
                     'Only pending courses can be approved.'
@@ -1441,17 +846,8 @@ public function teacherDestroyCourse(
         }
 
         $course->update([
-            'status' =>
-                'published',
+            'status' => 'published',
         ]);
-
-<<<<<<< HEAD
-=======
-        /*
-        |--------------------------------------------------------------------------
-        | NOTIFY TEACHER
-        |--------------------------------------------------------------------------
-        */
 
         $teacher = $course->teacher;
 
@@ -1465,7 +861,6 @@ public function teacherDestroyCourse(
             );
         }
 
->>>>>>> origin/Dakoykoy
         return redirect()
             ->route('courses.index')
             ->with(
@@ -1473,24 +868,12 @@ public function teacherDestroyCourse(
                 'Course approved and published successfully.'
             );
     }
-<<<<<<< HEAD
-}
 
-=======
-
-
-    public function reject(
-        Course $course
-    ) {
-        if (
-            $course->status
-            !==
-            'pending'
-        ) {
+    public function reject(Course $course)
+    {
+        if ($course->status !== 'pending') {
             return redirect()
-                ->route(
-                    'courses.index'
-                )
+                ->route('courses.index')
                 ->with(
                     'error',
                     'Only pending courses can be returned for revision.'
@@ -1498,15 +881,8 @@ public function teacherDestroyCourse(
         }
 
         $course->update([
-            'status' =>
-                'rejected',
+            'status' => 'rejected',
         ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | NOTIFY TEACHER
-        |--------------------------------------------------------------------------
-        */
 
         $teacher = $course->teacher;
 
@@ -1528,7 +904,6 @@ public function teacherDestroyCourse(
             );
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | HELPER - COURSE OWNERSHIP
@@ -1539,8 +914,7 @@ public function teacherDestroyCourse(
         Course $course
     ): void {
         if (
-            (int) $course->teacher_id
-            !==
+            (int) $course->teacher_id !==
             (int) auth()->id()
         ) {
             abort(
@@ -1550,4 +924,3 @@ public function teacherDestroyCourse(
         }
     }
 }
->>>>>>> origin/Dakoykoy

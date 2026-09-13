@@ -19,11 +19,8 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
-<<<<<<< HEAD
 use App\Http\Controllers\DepartmentController;
-=======
 use App\Http\Controllers\NotificationController;
->>>>>>> origin/Dakoykoy
 
 Route::view('/', 'welcome')->name('home');
 
@@ -57,69 +54,71 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     })->name('dashboard');
 
-     /*
+    /*
     |--------------------------------------------------------------------------
     | NOTIFICATIONS
     |--------------------------------------------------------------------------
     */
 
     Route::post('/notifications/{notification}/read',
-    [NotificationController::class, 'read']) 
+    [NotificationController::class, 'read'])
     ->name('notifications.read');
 
-    Route::post( '/notifications/read-all', [NotificationController::class, 'readAll'])
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])
     ->name('notifications.read-all');
 
 
     /*
-|--------------------------------------------------------------------------
-| SUPER ADMIN - EDP
-|--------------------------------------------------------------------------
-| System-level administration
-*/
+    |--------------------------------------------------------------------------
+    | SUPER ADMIN - EDP
+    |--------------------------------------------------------------------------
+    | System-level administration
+    */
 
-Route::middleware('role:super_admin')->group(function () {
+    Route::middleware('role:super_admin')->group(function () {
 
-    // Super Admin Dashboard
-    Route::get('/super-admin-dashboard', [DashboardController::class, 'superAdmin'])
-        ->name('super_admin.dashboard');
-// User Management
-Route::get('/super-admin/users', [UserManagementController::class, 'index'])
-    ->name('users.index');
+        // Super Admin Dashboard
+        Route::get('/super-admin-dashboard', [DashboardController::class, 'superAdmin'])
+            ->name('super_admin.dashboard');
 
-Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
-    ->name('users.update-role');
+        // User Management
+        Route::get('/super-admin/users', [UserManagementController::class, 'index'])
+            ->name('users.index');
 
-Route::put('/super-admin/users/{user}/department', [UserManagementController::class, 'updateDepartment'])
-    ->name('users.update-department');
+        Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
+            ->name('users.update-role');
 
-    // Transaction Verification
-    Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
-        ->name('super_admin.transactions.index');
+        Route::put('/super-admin/users/{user}/department', [UserManagementController::class, 'updateDepartment'])
+            ->name('users.update-department');
 
-    Route::post('/super-admin/transactions/{transaction}/approve', [TransactionController::class, 'approve'])
-        ->name('super_admin.transactions.approve');
+        // Transaction Verification
+        Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
+            ->name('super_admin.transactions.index');
 
-    Route::post('/super-admin/transactions/{transaction}/reject', [TransactionController::class, 'reject'])
-        ->name('super_admin.transactions.reject');
+        Route::post('/super-admin/transactions/{transaction}/approve', [TransactionController::class, 'approve'])
+            ->name('super_admin.transactions.approve');
 
-    // System Reports
-    Route::get('/super-admin/reports', [ReportsController::class, 'index'])
-        ->name('reports.index');
-    
-    Route::get('/super-admin/departments', [DepartmentController::class, 'index'])
-    ->name('super-admin.departments.index');
+        Route::post('/super-admin/transactions/{transaction}/reject', [TransactionController::class, 'reject'])
+            ->name('super_admin.transactions.reject');
 
-Route::post('/super-admin/departments', [DepartmentController::class, 'store'])
-    ->name('super-admin.departments.store');
+        // System Reports
+        Route::get('/super-admin/reports', [ReportsController::class, 'index'])
+            ->name('reports.index');
 
-Route::put('/super-admin/departments/{department}', [DepartmentController::class, 'update'])
-    ->name('super-admin.departments.update');
+        Route::get('/super-admin/departments', [DepartmentController::class, 'index'])
+            ->name('super-admin.departments.index');
 
-Route::delete('/super-admin/departments/{department}', [DepartmentController::class, 'destroy'])
-    ->name('super-admin.departments.destroy');
+        Route::post('/super-admin/departments', [DepartmentController::class, 'store'])
+            ->name('super-admin.departments.store');
 
-});
+        Route::put('/super-admin/departments/{department}', [DepartmentController::class, 'update'])
+            ->name('super-admin.departments.update');
+
+        Route::delete('/super-admin/departments/{department}', [DepartmentController::class, 'destroy'])
+            ->name('super-admin.departments.destroy');
+
+    });
+
     /*
     |--------------------------------------------------------------------------
     | ADMIN - DEPARTMENT HEAD
@@ -220,15 +219,13 @@ Route::delete('/super-admin/departments/{department}', [DepartmentController::cl
         Route::get('/teacher/my-courses', [CourseController::class, 'teacherCourses'])
             ->name('teacher.my-courses');
 
-        // ============================================
-        // NEW: CREATE COURSE ROUTES (ADD THESE)
-        // ============================================
+
+        // Create Course Routes
         Route::get('/teacher/courses/create', [CourseController::class, 'teacherCreateCourse'])
             ->name('teacher.courses.create');
 
         Route::post('/teacher/courses', [CourseController::class, 'teacherStoreCourse'])
             ->name('teacher.courses.store');
-        // ============================================
 
 
         // View Students
@@ -295,11 +292,12 @@ Route::delete('/super-admin/departments/{department}', [DepartmentController::cl
         Route::get('/teacher/lessons', [LessonController::class, 'teacherAllLessons'])
             ->name('teacher.lessons.index');
 
+
         // Teacher Performance Analytics
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
 
-        Route::delete( '/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
+        Route::delete('/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
             ->name('teacher.courses.destroy');
     });
 
@@ -381,7 +379,7 @@ Route::delete('/super-admin/departments/{department}', [DepartmentController::cl
             ->name('student.recommendations');
 
 
-               // Student Transactions
+        // Student Transactions
         Route::get('/transactions', [TransactionController::class, 'studentIndex'])
             ->name('student.transactions');
 
@@ -391,16 +389,18 @@ Route::delete('/super-admin/departments/{department}', [DepartmentController::cl
         Route::get('/transactions/{transaction}', [TransactionController::class, 'studentShow'])
             ->name('student.transactions.show');
 
+
         // PayMongo Payment Success
         Route::get('/transactions/{transaction}/success', [TransactionController::class, 'success'])
             ->name('student.transactions.success');
+
 
         // PayMongo Payment Cancelled
         Route::get('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
             ->name('student.transactions.cancel');
 
-        // OLD PAYMENT PROOF ROUTE
-        // Keep temporarily for compatibility.
+
+        // Payment proof upload (kept for compatibility)
         Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
             ->name('student.transactions.upload-proof');
     });
