@@ -18,6 +18,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string|null $profile_photo_path
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -28,8 +29,17 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $updated_at
  * @property int|null $department_id
  */
+<<<<<<< HEAD
 #[Fillable(['name', 'email', 'password', 'department_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+=======
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'profile_photo_path',
+])]
+>>>>>>> origin/Dakoykoy
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -49,7 +59,7 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Get the user's initials
+     * Get the user's initials.
      */
     public function initials(): string
     {
@@ -60,22 +70,29 @@ class User extends Authenticatable implements PasskeyUser
             ->implode('');
     }
 
+<<<<<<< HEAD
     /**
      * Courses taught by this user
      */
+=======
+>>>>>>> origin/Dakoykoy
     public function courses()
     {
         return $this->hasMany(Course::class, 'teacher_id');
     }
 
+<<<<<<< HEAD
     /**
      * User roles
      */
+=======
+>>>>>>> origin/Dakoykoy
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'user_roles');
     }
 
+<<<<<<< HEAD
     /**
      * Check if user has a specific role
      */
@@ -90,5 +107,12 @@ class User extends Authenticatable implements PasskeyUser
     public function department()
     {
         return $this->belongsTo(Department::class);
+=======
+    public function hasRole($role)
+    {
+        return $this->roles()
+            ->where('name', $role)
+            ->exists();
+>>>>>>> origin/Dakoykoy
     }
 }

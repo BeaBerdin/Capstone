@@ -19,7 +19,11 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
+<<<<<<< HEAD
 use App\Http\Controllers\DepartmentController;
+=======
+use App\Http\Controllers\NotificationController;
+>>>>>>> origin/Dakoykoy
 
 Route::view('/', 'welcome')->name('home');
 
@@ -52,6 +56,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         abort(403, 'Unauthorized');
 
     })->name('dashboard');
+
+     /*
+    |--------------------------------------------------------------------------
+    | NOTIFICATIONS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/notifications/{notification}/read',
+    [NotificationController::class, 'read']) 
+    ->name('notifications.read');
+
+    Route::post( '/notifications/read-all', [NotificationController::class, 'readAll'])
+    ->name('notifications.read-all');
 
 
     /*
@@ -277,6 +294,13 @@ Route::delete('/super-admin/departments/{department}', [DepartmentController::cl
         // All Teacher Lessons
         Route::get('/teacher/lessons', [LessonController::class, 'teacherAllLessons'])
             ->name('teacher.lessons.index');
+
+        // Teacher Performance Analytics
+        Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
+            ->name('teacher.analytics');
+
+        Route::delete( '/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
+            ->name('teacher.courses.destroy');
     });
 
 
