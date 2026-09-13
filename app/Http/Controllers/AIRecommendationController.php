@@ -29,80 +29,115 @@ class AIRecommendationController extends Controller
         return view('ai-recommendations.create', compact('students'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'student_id' => 'required|exists:users,id',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'student_id' => 'required|exists:users,id',
+    ]);
 
-        $studentId = $request->student_id;
+    $studentId = $request->student_id;
 
-        $averageScore = QuizResult::where('student_id', $studentId)
-            ->avg('percentage');
+    // Get the student's latest quiz result
+    $quizResult = QuizResult::with('quiz.course.category')
+        ->where('student_id', $studentId)
+        ->latest('completed_at')
+        ->first();
 
-        if (!$averageScore) {
-            return redirect()
-                ->back()
-                ->with('error', 'No quiz results found for this student.');
-        }
+    if (!$quizResult) {
+        return redirect()
+            ->back()
+            ->with('error', 'No quiz results found for this student.');
+    }
 
-        if ($averageScore >= 85) {
-            $difficulty = 'advanced';
-            $reason = 'The student has demonstrated strong performance based on quiz results and is ready for advanced learning materials.';
-        } elseif ($averageScore >= 70) {
-            $difficulty = 'intermediate';
-            $reason = 'The student has shown satisfactory understanding and is recommended to continue with intermediate-level courses.';
-        } else {
-            $difficulty = 'beginner';
-            $reason = 'The student needs foundational reinforcement based on quiz performance and is recommended to review beginner-level courses.';
-        }
+    $averageScore = QuizResult::where('student_id', $studentId)
+        ->avg('percentage');
 
+    // Get the course the student is currently taking
+    $currentCourse = $quizResult->quiz?->course;
+
+    if (!$currentCourse) {
+        return redirect()
+            ->back()
+            ->with('error', 'Unable to determine the student\'s current course.');
+    }
+
+    // Get the current course category
+    $categoryId = $currentCourse->category_id;
+
+    // Determine recommended difficulty
+    if ($averageScore >= 85) {
+        $difficulty = 'advanced';
+
+        $reason = "The student achieved an average quiz score of "
+            . round($averageScore, 2)
+            . "% and is ready for an advanced course in the same learning category.";
+    } elseif ($averageScore >= 70) {
+        $difficulty = 'intermediate';
+
+        $reason = "The student achieved an average quiz score of "
+            . round($averageScore, 2)
+            . "% and is recommended to continue with an intermediate course in the same learning category.";
+    } else {
+        $difficulty = 'beginner';
+
+        $reason = "The student achieved an average quiz score of "
+            . round($averageScore, 2)
+            . "% and is recommended to strengthen foundational skills with a beginner course in the same learning category.";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Find a related course
+    |--------------------------------------------------------------------------
+    */
+
+    // First priority:
+    // Same category + recommended difficulty + published
+    $course = Course::where('category_id', $categoryId)
+        ->where('difficulty_level', $difficulty)
+        ->where('status', 'published')
+        ->where('id', '!=', $currentCourse->id)
+        ->first();
+
+    // Second priority:
+    // Same category + any difficulty + published
+    if (!$course) {
+        $course = Course::where('category_id', $categoryId)
+            ->where('status', 'published')
+            ->where('id', '!=', $currentCourse->id)
+            ->first();
+    }
+
+    // Third priority:
+    // If there is no other course in the same category,
+    // look for the same difficulty in another category.
+    if (!$course) {
         $course = Course::where('difficulty_level', $difficulty)
             ->where('status', 'published')
+            ->where('id', '!=', $currentCourse->id)
             ->first();
 
-        if (!$course) {
-            $course = Course::where('difficulty_level', $difficulty)->first();
+        if ($course) {
+            $reason .= " No other published course was available in the student's current category, so a course with the appropriate difficulty from another category was selected.";
         }
+    }
 
-        if (!$course) {
-            return redirect()
-                ->back()
-                ->with('error', 'No matching course found for recommendation.');
-        }
-
-        AIRecommendation::create([
-            'student_id' => $studentId,
-            'course_id' => $course->id,
-            'recommendation_score' => round($averageScore, 2),
-            'reason' => $reason,
-            'is_viewed' => false,
-        ]);
-
+    if (!$course) {
         return redirect()
-            ->route('ai-recommendations.index')
-            ->with('success', 'AI recommendation generated successfully.');
+            ->back()
+            ->with('error', 'No suitable course found for recommendation.');
     }
 
-    public function destroy(string $id)
-    {
-        AIRecommendation::findOrFail($id)->delete();
+    AIRecommendation::create([
+        'student_id' => $studentId,
+        'course_id' => $course->id,
+        'recommendation_score' => round($averageScore, 2),
+        'reason' => $reason,
+        'is_viewed' => false,
+    ]);
 
-        return back()->with(
-            'success',
-            'Recommendation deleted successfully.'
-        );
-    }
-    public function studentRecommendations()
-{
-    $recommendations = AIRecommendation::with('course')
-        ->where('student_id', auth()->id())
-        ->latest()
-        ->get();
-
-    return view(
-        'student.recommendations.index',
-        compact('recommendations')
-    );
+    return redirect()
+        ->route('ai-recommendations.index')
+        ->with('success', 'AI recommendation generated successfully.');
 }
 }

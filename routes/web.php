@@ -19,6 +19,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\DepartmentController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -65,13 +66,15 @@ Route::middleware('role:super_admin')->group(function () {
     // Super Admin Dashboard
     Route::get('/super-admin-dashboard', [DashboardController::class, 'superAdmin'])
         ->name('super_admin.dashboard');
+// User Management
+Route::get('/super-admin/users', [UserManagementController::class, 'index'])
+    ->name('users.index');
 
-    // User Management
-    Route::get('/super-admin/users', [UserManagementController::class, 'index'])
-        ->name('users.index');
+Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
+    ->name('users.update-role');
 
-    Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
-        ->name('users.update-role');
+Route::put('/super-admin/users/{user}/department', [UserManagementController::class, 'updateDepartment'])
+    ->name('users.update-department');
 
     // Transaction Verification
     Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
@@ -86,6 +89,18 @@ Route::middleware('role:super_admin')->group(function () {
     // System Reports
     Route::get('/super-admin/reports', [ReportsController::class, 'index'])
         ->name('reports.index');
+    
+    Route::get('/super-admin/departments', [DepartmentController::class, 'index'])
+    ->name('super-admin.departments.index');
+
+Route::post('/super-admin/departments', [DepartmentController::class, 'store'])
+    ->name('super-admin.departments.store');
+
+Route::put('/super-admin/departments/{department}', [DepartmentController::class, 'update'])
+    ->name('super-admin.departments.update');
+
+Route::delete('/super-admin/departments/{department}', [DepartmentController::class, 'destroy'])
+    ->name('super-admin.departments.destroy');
 
 });
     /*

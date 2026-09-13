@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\User;
 use App\Models\LessonProgress;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CourseController extends Controller
 {
@@ -23,30 +24,24 @@ class CourseController extends Controller
         ]);
 
         if ($request->filled('search')) {
-
             $search = $request->search;
 
-            $query->where(
-                function ($q) use ($search) {
-
-                    $q->where(
-                        'title',
-                        'like',
-                        '%' . $search . '%'
-                    )
-                    ->orWhere(
-                        'description',
-                        'like',
-                        '%' . $search . '%'
-                    );
-                }
-            );
+            $query->where(function ($q) use ($search) {
+                $q->where(
+                    'title',
+                    'like',
+                    '%' . $search . '%'
+                )
+                ->orWhere(
+                    'description',
+                    'like',
+                    '%' . $search . '%'
+                );
+            });
         }
 
-
         if (
-            $request->filled('category')
-            &&
+            $request->filled('category') &&
             $request->category !== 'all'
         ) {
             $query->where(
@@ -55,10 +50,8 @@ class CourseController extends Controller
             );
         }
 
-
         if (
-            $request->filled('status')
-            &&
+            $request->filled('status') &&
             $request->status !== 'all'
         ) {
             $query->where(
@@ -67,16 +60,13 @@ class CourseController extends Controller
             );
         }
 
-
         $courses = $query
             ->latest()
             ->get();
 
-
         $categories = CourseCategory::orderBy(
             'name'
         )->get();
-
 
         return view(
             'courses.index',
@@ -88,13 +78,11 @@ class CourseController extends Controller
     }
 
 
-
     public function create()
     {
         $categories = CourseCategory::orderBy(
             'name'
         )->get();
-
 
         return view(
             'courses.create',
@@ -103,10 +91,9 @@ class CourseController extends Controller
     }
 
 
-
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'category_id' =>
                 'required|exists:course_categories,id',
 
@@ -115,6 +102,13 @@ class CourseController extends Controller
 
             'description' =>
                 'required',
+
+            'thumbnail' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,webp',
+                'max:5120',
+            ],
 
             'intro_video' =>
                 'nullable|max:255',
@@ -135,41 +129,32 @@ class CourseController extends Controller
                 'nullable',
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD THUMBNAIL
+        |--------------------------------------------------------------------------
+        */
 
-        Course::create([
-            'teacher_id' =>
-                auth()->id(),
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] =
+                $request->file('thumbnail')->store(
+                    'courses',
+                    'public'
+                );
+        }
 
-            'category_id' =>
-                $request->category_id,
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE COURSE
+        |--------------------------------------------------------------------------
+        */
 
-            'title' =>
-                $request->title,
+        $validated['teacher_id'] = auth()->id();
 
-            'description' =>
-                $request->description,
+        $validated['certificate_available'] =
+            $request->boolean('certificate_available');
 
-            'intro_video' =>
-                $request->intro_video,
-
-            'difficulty_level' =>
-                $request->difficulty_level,
-
-            'price' =>
-                $request->price,
-
-            'status' =>
-                $request->status,
-
-            'estimated_hours' =>
-                $request->estimated_hours,
-
-            'certificate_available' =>
-                $request->has(
-                    'certificate_available'
-                ),
-        ]);
-
+        Course::create($validated);
 
         return redirect()
             ->route('courses.index')
@@ -180,13 +165,11 @@ class CourseController extends Controller
     }
 
 
-
     public function edit(Course $course)
     {
         $categories = CourseCategory::orderBy(
             'name'
         )->get();
-
 
         return view(
             'courses.edit',
@@ -198,12 +181,11 @@ class CourseController extends Controller
     }
 
 
-
     public function update(
         Request $request,
         Course $course
     ) {
-        $request->validate([
+        $validated = $request->validate([
             'category_id' =>
                 'required|exists:course_categories,id',
 
@@ -212,6 +194,13 @@ class CourseController extends Controller
 
             'description' =>
                 'required',
+
+            'thumbnail' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,webp',
+                'max:5120',
+            ],
 
             'intro_video' =>
                 'nullable|max:255',
@@ -232,38 +221,44 @@ class CourseController extends Controller
                 'nullable',
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE THUMBNAIL ONLY IF NEW IMAGE IS UPLOADED
+        |--------------------------------------------------------------------------
+        */
 
-        $course->update([
-            'category_id' =>
-                $request->category_id,
+        if ($request->hasFile('thumbnail')) {
 
-            'title' =>
-                $request->title,
+            // Delete old thumbnail if it exists
+            if (
+                $course->thumbnail &&
+                Storage::disk('public')->exists(
+                    $course->thumbnail
+                )
+            ) {
+                Storage::disk('public')->delete(
+                    $course->thumbnail
+                );
+            }
 
-            'description' =>
-                $request->description,
+            // Store new thumbnail
+            $validated['thumbnail'] =
+                $request->file('thumbnail')->store(
+                    'courses',
+                    'public'
+                );
+        }
 
-            'intro_video' =>
-                $request->intro_video,
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE COURSE
+        |--------------------------------------------------------------------------
+        */
 
-            'difficulty_level' =>
-                $request->difficulty_level,
+        $validated['certificate_available'] =
+            $request->boolean('certificate_available');
 
-            'price' =>
-                $request->price,
-
-            'status' =>
-                $request->status,
-
-            'estimated_hours' =>
-                $request->estimated_hours,
-
-            'certificate_available' =>
-                $request->has(
-                    'certificate_available'
-                ),
-        ]);
-
+        $course->update($validated);
 
         return redirect()
             ->route('courses.index')
@@ -274,11 +269,26 @@ class CourseController extends Controller
     }
 
 
-
     public function destroy(Course $course)
     {
-        $course->delete();
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE THUMBNAIL
+        |--------------------------------------------------------------------------
+        */
 
+        if (
+            $course->thumbnail &&
+            Storage::disk('public')->exists(
+                $course->thumbnail
+            )
+        ) {
+            Storage::disk('public')->delete(
+                $course->thumbnail
+            );
+        }
+
+        $course->delete();
 
         return redirect()
             ->route('courses.index')
@@ -287,7 +297,6 @@ class CourseController extends Controller
                 'Course deleted successfully.'
             );
     }
-
 
 
     /* ------------------------------------------------------------------ */
@@ -307,13 +316,11 @@ class CourseController extends Controller
             ->latest()
             ->get();
 
-
         return view(
             'student.marketplace',
             compact('courses')
         );
     }
-
 
 
     public function showStudentCourse(
@@ -324,7 +331,6 @@ class CourseController extends Controller
             compact('course')
         );
     }
-
 
 
     public function enroll(Course $course)
@@ -349,7 +355,6 @@ class CourseController extends Controller
             ]
         );
 
-
         return redirect()
             ->route('student.dashboard')
             ->with(
@@ -357,7 +362,6 @@ class CourseController extends Controller
                 'Successfully enrolled in course.'
             );
     }
-
 
 
     public function myCourses()
@@ -372,13 +376,11 @@ class CourseController extends Controller
             ->latest()
             ->get();
 
-
         return view(
             'student.my-courses',
             compact('enrollments')
         );
     }
-
 
 
     /* ------------------------------------------------------------------ */
@@ -401,13 +403,11 @@ class CourseController extends Controller
             ->latest()
             ->get();
 
-
         return view(
             'teacher.my-courses',
             compact('courses')
         );
     }
-
 
 
     /* ------------------------------------------------------------------ */
@@ -420,7 +420,6 @@ class CourseController extends Controller
             'name'
         )->get();
 
-
         return view(
             'teacher.courses.create',
             compact('categories')
@@ -428,102 +427,136 @@ class CourseController extends Controller
     }
 
 
+    public function teacherStoreCourse(Request $request)
+    {
+        $validated = $request->validate(
+            [
+                'title' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:courses,title',
+                ],
 
-   public function teacherStoreCourse(Request $request)
-{
-    $validated = $request->validate(
-        [
-            'title' => [
-                'required',
-                'string',
-                'max:255',
-                'unique:courses,title',
+                'description' => [
+                    'required',
+                    'string',
+                ],
+
+                'category_id' => [
+                    'required',
+                    'exists:course_categories,id',
+                ],
+
+                'thumbnail' => [
+                    'nullable',
+                    'image',
+                    'mimes:jpeg,jpg,png,webp',
+                    'max:5120',
+                ],
+
+                'intro_video' => [
+                    'nullable',
+                    'url',
+                    'max:255',
+                ],
+
+                'difficulty_level' => [
+                    'required',
+                    'in:beginner,intermediate,advanced',
+                ],
+
+                'price' => [
+                    'nullable',
+                    'numeric',
+                    'min:0',
+                ],
+
+                'estimated_hours' => [
+                    'nullable',
+                    'integer',
+                    'min:1',
+                ],
+
+                'certificate_available' => [
+                    'nullable',
+                    'boolean',
+                ],
             ],
+            [
+                'title.unique' =>
+                    'This course title already exists. Please choose a different title.',
+            ]
+        );
 
-            'description' => [
-                'required',
-                'string',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | TEACHER
+        |--------------------------------------------------------------------------
+        */
 
-            'category_id' => [
-                'required',
-                'exists:course_categories,id',
-            ],
+        $validated['teacher_id'] =
+            auth()->id();
 
-            'thumbnail' => [
-                'nullable',
-                'image',
-                'mimes:jpeg,jpg,png,webp',
-                'max:5120',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | COURSE STATUS
+        |--------------------------------------------------------------------------
+        */
 
-            'intro_video' => [
-                'nullable',
-                'url',
-                'max:255',
-            ],
+        $validated['status'] =
+            'pending';
 
-            'difficulty_level' => [
-                'required',
-                'in:beginner,intermediate,advanced',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | DEFAULT PRICE
+        |--------------------------------------------------------------------------
+        */
 
-            'price' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
+        $validated['price'] =
+            $validated['price'] ?? 0;
 
-            'estimated_hours' => [
-                'nullable',
-                'integer',
-                'min:1',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | CERTIFICATE
+        |--------------------------------------------------------------------------
+        */
 
-            'certificate_available' => [
-                'nullable',
-                'boolean',
-            ],
-        ],
-        [
-            'title.unique' =>
-                'This course title already exists. Please choose a different title.',
-        ]
-    );
+        $validated['certificate_available'] =
+            $request->boolean(
+                'certificate_available'
+            );
 
-    // Automatically assign the logged-in teacher
-    $validated['teacher_id'] = auth()->id();
+        /*
+        |--------------------------------------------------------------------------
+        | UPLOAD THUMBNAIL
+        |--------------------------------------------------------------------------
+        */
 
-    // Automatically submit the course for admin approval
-    $validated['status'] = 'pending';
+        if ($request->hasFile('thumbnail')) {
 
-    // Default price to 0 if empty
-    $validated['price'] = $validated['price'] ?? 0;
+            $validated['thumbnail'] =
+                $request->file('thumbnail')->store(
+                    'courses',
+                    'public'
+                );
+        }
 
-    // Convert checkbox value to boolean
-    $validated['certificate_available'] =
-        $request->boolean('certificate_available');
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE COURSE
+        |--------------------------------------------------------------------------
+        */
 
-    // Upload thumbnail
-    if ($request->hasFile('thumbnail')) {
-        $validated['thumbnail'] =
-            $request->file('thumbnail')->store(
-                'courses',
-                'public'
+        Course::create($validated);
+
+        return redirect()
+            ->route('teacher.my-courses')
+            ->with(
+                'success',
+                'Course created successfully and submitted for admin approval!'
             );
     }
-
-    // Create course
-    Course::create($validated);
-
-    // Redirect back to My Courses
-    return redirect()
-        ->route('teacher.my-courses')
-        ->with(
-            'success',
-            'Course created successfully and submitted for admin approval!'
-        );
-}
 
 
     /* ------------------------------------------------------------------ */
@@ -533,15 +566,8 @@ class CourseController extends Controller
     public function teacherCourseStudents(
         Course $course
     ) {
-        /*
-        |--------------------------------------------------------------------------
-        | SECURITY
-        |--------------------------------------------------------------------------
-        */
-
         if (
-            (int) $course->teacher_id
-            !==
+            (int) $course->teacher_id !==
             (int) auth()->id()
         ) {
             abort(
@@ -550,11 +576,9 @@ class CourseController extends Controller
             );
         }
 
-
         $course->load([
             'category',
         ]);
-
 
         $enrollments = Enrollment::with([
                 'student',
@@ -566,7 +590,6 @@ class CourseController extends Controller
             ->latest()
             ->get();
 
-
         return view(
             'teacher.course-students',
             compact(
@@ -577,7 +600,6 @@ class CourseController extends Controller
     }
 
 
-
     /* ------------------------------------------------------------------ */
     /*  TEACHER — INDIVIDUAL STUDENT PROGRESS                             */
     /* ------------------------------------------------------------------ */
@@ -586,17 +608,8 @@ class CourseController extends Controller
         Course $course,
         User $student
     ) {
-        /*
-        |--------------------------------------------------------------------------
-        | SECURITY
-        |--------------------------------------------------------------------------
-        | Teacher can only access progress from their own course.
-        |--------------------------------------------------------------------------
-        */
-
         if (
-            (int) $course->teacher_id
-            !==
+            (int) $course->teacher_id !==
             (int) auth()->id()
         ) {
             abort(
@@ -605,31 +618,15 @@ class CourseController extends Controller
             );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD COURSE
-        |--------------------------------------------------------------------------
-        */
-
         $course->load([
             'category',
 
             'lessons' => function ($query) {
-
                 $query->orderBy(
                     'lesson_order'
                 );
-
             },
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VERIFY ENROLLMENT
-        |--------------------------------------------------------------------------
-        */
 
         $enrollment = Enrollment::where(
                 'course_id',
@@ -641,13 +638,6 @@ class CourseController extends Controller
             )
             ->firstOrFail();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | GET STUDENT LESSON PROGRESS
-        |--------------------------------------------------------------------------
-        */
-
         $progress = LessonProgress::with([
                 'lesson',
             ])
@@ -658,19 +648,16 @@ class CourseController extends Controller
             ->whereHas(
                 'lesson',
                 function ($query) use ($course) {
-
                     $query->where(
                         'course_id',
                         $course->id
                     );
-
                 }
             )
             ->get()
             ->keyBy(
                 'lesson_id'
             );
-
 
         return view(
             'teacher.student-progress',
@@ -682,7 +669,6 @@ class CourseController extends Controller
             )
         );
     }
-
 
 
     /* ------------------------------------------------------------------ */
@@ -697,7 +683,6 @@ class CourseController extends Controller
                 'published',
         ]);
 
-
         return redirect()
             ->route('courses.index')
             ->with(
@@ -706,3 +691,4 @@ class CourseController extends Controller
             );
     }
 }
+

@@ -2,19 +2,19 @@
 
 <div class="space-y-6">
 
-    {{-- Header --}}
-    <div class="rounded-2xl border border-purple-500/30 bg-linear-to-r from-purple-900 via-neutral-900 to-neutral-900 p-6 shadow-lg">
-        <h1 class="text-3xl font-bold text-white">
+    {{-- Header — Coursera v1 style: light card, blue accents --}}
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
             Edit Course Category
         </h1>
 
-        <p class="mt-2 text-sm text-purple-200">
+        <p class="mt-2 text-sm text-slate-500">
             Update the category name and description used to organize courses.
         </p>
     </div>
 
     {{-- Form Card --}}
-    <div class="rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-lg">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
         <form method="POST"
               action="{{ route('course-categories.update', $courseCategory->id) }}"
@@ -25,7 +25,7 @@
 
             {{-- Category Name --}}
             <div>
-                <label class="block mb-2 text-sm font-medium text-gray-300">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">
                     Category Name
                 </label>
 
@@ -33,10 +33,10 @@
                        name="name"
                        value="{{ old('name', $courseCategory->name) }}"
                        placeholder="Enter category name"
-                       class="w-full rounded-xl border border-neutral-700 bg-neutral-800 p-3 text-white outline-none transition focus:border-purple-500">
+                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0056D2] focus:ring-2 focus:ring-[#0056D2]/20">
 
                 @error('name')
-                    <p class="mt-2 text-sm text-red-400">
+                    <p class="mt-2 text-sm font-medium text-red-600">
                         {{ $message }}
                     </p>
                 @enderror
@@ -44,7 +44,7 @@
 
             {{-- Description --}}
             <div>
-                <label class="block mb-2 text-sm font-medium text-gray-300">
+                <label class="mb-2 block text-sm font-semibold text-slate-700">
                     Description
                 </label>
 
@@ -52,25 +52,26 @@
                     name="description"
                     rows="5"
                     placeholder="Write a short description for this category..."
-                    class="w-full rounded-xl border border-neutral-700 bg-neutral-800 p-3 text-white outline-none transition focus:border-purple-500">{{ old('description', $courseCategory->description) }}</textarea>
+                    class="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#0056D2] focus:ring-2 focus:ring-[#0056D2]/20"
+                >{{ old('description', $courseCategory->description) }}</textarea>
 
                 @error('description')
-                    <p class="mt-2 text-sm text-red-400">
+                    <p class="mt-2 text-sm font-medium text-red-600">
                         {{ $message }}
                     </p>
                 @enderror
             </div>
 
             {{-- Buttons --}}
-            <div class="flex gap-3 pt-2">
+            <div class="flex gap-3 border-t border-slate-100 pt-5">
 
                 <button type="submit"
-                        class="rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-500">
+                        class="rounded-lg bg-[#0056D2] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#00419E]">
                     Update Category
                 </button>
 
                 <a href="{{ route('course-categories.index') }}"
-                   class="rounded-xl border border-neutral-700 bg-neutral-800 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-700">
+                   class="rounded-lg border border-[#0056D2] px-6 py-3 text-sm font-semibold text-[#0056D2] transition hover:bg-[#E8F0FE]">
                     Cancel
                 </a>
 

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -27,8 +26,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int|null $department_id
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'department_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -59,19 +59,36 @@ class User extends Authenticatable implements PasskeyUser
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    /**
+     * Courses taught by this user
+     */
     public function courses()
-{
-    return $this->hasMany(Course::class, 'teacher_id');
-}
+    {
+        return $this->hasMany(Course::class, 'teacher_id');
+    }
 
-public function roles()
-{
-    return $this->belongsToMany(Role::class, 'user_roles');
-}
+    /**
+     * User roles
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
 
-public function hasRole($role)
-{
-    return $this->roles()->where('name', $role)->exists();
-}
+    /**
+     * Check if user has a specific role
+     */
+    public function hasRole($role)
+    {
+        return $this->roles()->where('name', $role)->exists();
+    }
 
+    /**
+     * User's department
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

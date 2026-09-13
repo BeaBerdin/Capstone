@@ -42,18 +42,13 @@
         }
     </style>
 
-
     <div class="min-h-screen bg-[#f8f9fc]">
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
             <div class="mx-auto max-w-[1500px]">
 
-
-                {{-- =====================================================
-                    HEADER
-                ====================================================== --}}
-
+                {{-- HEADER --}}
                 <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 
                     <div>
@@ -67,19 +62,15 @@
                         </h1>
 
                         <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                            Manage registered users, assigned roles, and account information
-                            across the PathWise platform.
+                            Manage registered users, assigned roles, departments, and account
+                            information across the PathWise platform.
                         </p>
 
                     </div>
 
                 </div>
 
-
-                {{-- =====================================================
-                    SUCCESS / ERROR MESSAGES
-                ====================================================== --}}
-
+                {{-- SUCCESS MESSAGE --}}
                 @if (session('success'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
@@ -96,7 +87,7 @@
 
                 @endif
 
-
+                {{-- ERROR MESSAGE --}}
                 @if (session('error'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -113,16 +104,10 @@
 
                 @endif
 
-
-                {{-- =====================================================
-                    ROLE SUMMARY
-                ====================================================== --}}
-
+                {{-- ROLE SUMMARY --}}
                 <section class="mt-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
 
-
                     {{-- ADMIN --}}
-
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -162,9 +147,7 @@
 
                     </div>
 
-
                     {{-- TEACHERS --}}
-
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -204,9 +187,7 @@
 
                     </div>
 
-
                     {{-- STUDENTS --}}
-
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -248,9 +229,7 @@
 
                     </div>
 
-
                     {{-- SUPER ADMIN --}}
-
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -291,16 +270,10 @@
 
                 </section>
 
-
-                {{-- =====================================================
-                    USER DIRECTORY
-                ====================================================== --}}
-
+                {{-- USER DIRECTORY --}}
                 <section class="pw-card mt-6 overflow-hidden">
 
-
                     {{-- TABLE HEADER --}}
-
                     <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
 
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -317,9 +290,7 @@
 
                             </div>
 
-
                             {{-- SEARCH --}}
-
                             <div class="relative w-full lg:w-72">
 
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -350,12 +321,10 @@
 
                     </div>
 
-
                     {{-- TABLE --}}
-
                     <div class="overflow-x-auto">
 
-                        <table class="w-full min-w-[950px] text-left">
+                        <table class="w-full min-w-[1200px] text-left">
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 
@@ -374,6 +343,10 @@
                                     </th>
 
                                     <th class="px-6 py-4">
+                                        Department
+                                    </th>
+
+                                    <th class="px-6 py-4">
                                         Change Role
                                     </th>
 
@@ -385,9 +358,7 @@
 
                             </thead>
 
-
                             <tbody id="userTableBody" class="divide-y divide-slate-100">
-
 
                                 @forelse($users as $user)
 
@@ -427,23 +398,18 @@
 
                                     @endphp
 
-
                                     <tr
                                         class="user-row transition hover:bg-slate-50/70"
-                                        data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $roleLabel) }}"
+                                        data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $roleLabel . ' ' . ($user->department?->name ?? '')) }}"
                                     >
 
-
                                         {{-- USER --}}
-
                                         <td class="px-6 py-5">
 
                                             <div class="flex items-center gap-3">
 
                                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
-
                                                     {{ strtoupper(substr($user->name, 0, 1)) }}
-
                                                 </div>
 
                                                 <div class="min-w-0">
@@ -462,9 +428,7 @@
 
                                         </td>
 
-
                                         {{-- EMAIL --}}
-
                                         <td class="px-6 py-5">
 
                                             <p class="text-xs font-medium text-slate-600">
@@ -473,9 +437,7 @@
 
                                         </td>
 
-
                                         {{-- CURRENT ROLE --}}
-
                                         <td class="px-6 py-5">
 
                                             @if($currentRole)
@@ -498,9 +460,64 @@
 
                                         </td>
 
+                                        {{-- DEPARTMENT --}}
+                                        <td class="px-6 py-5">
+
+                                            @if($currentRole === 'admin' || $currentRole === 'teacher')
+
+                                                <form
+                                                    action="{{ route('users.update-department', $user) }}"
+                                                    method="POST"
+                                                    class="flex items-center gap-2"
+                                                >
+
+                                                    @csrf
+
+                                                    @method('PUT')
+
+                                                    <select
+                                                        name="department_id"
+                                                        class="h-9 max-w-[230px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                                                    >
+
+                                                        <option value="">
+                                                            Unassigned
+                                                        </option>
+
+                                                        @foreach($departments as $department)
+
+                                                            <option
+                                                                value="{{ $department->id }}"
+                                                                {{ $user->department_id == $department->id ? 'selected' : '' }}
+                                                            >
+                                                                {{ $department->name }}
+                                                            </option>
+
+                                                        @endforeach
+
+                                                    </select>
+
+                                                    <button
+                                                        type="submit"
+                                                        onclick="return confirm('Are you sure you want to assign this department?')"
+                                                        class="h-9 rounded-lg bg-emerald-600 px-3 text-[11px] font-bold text-white transition hover:bg-emerald-700"
+                                                    >
+                                                        Assign
+                                                    </button>
+
+                                                </form>
+
+                                            @else
+
+                                                <span class="text-[11px] text-slate-400">
+                                                    Not applicable
+                                                </span>
+
+                                            @endif
+
+                                        </td>
 
                                         {{-- CHANGE ROLE --}}
-
                                         <td class="px-6 py-5">
 
                                             <form
@@ -512,7 +529,6 @@
                                                 @csrf
 
                                                 @method('PUT')
-
 
                                                 <select
                                                     name="role"
@@ -549,7 +565,6 @@
 
                                                 </select>
 
-
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Are you sure you want to change this user role?')"
@@ -562,9 +577,7 @@
 
                                         </td>
 
-
                                         {{-- DATE --}}
-
                                         <td class="px-6 py-5">
 
                                             <p class="text-xs font-semibold text-slate-600">
@@ -579,12 +592,11 @@
 
                                     </tr>
 
-
                                 @empty
 
                                     <tr>
 
-                                        <td colspan="5" class="px-6 py-16 text-center">
+                                        <td colspan="6" class="px-6 py-16 text-center">
 
                                             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
 
@@ -617,12 +629,10 @@
 
                                 @endforelse
 
-
                                 {{-- SEARCH EMPTY STATE --}}
-
                                 <tr id="noSearchResults" class="hidden">
 
-                                    <td colspan="5" class="px-6 py-14 text-center">
+                                    <td colspan="6" class="px-6 py-14 text-center">
 
                                         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
 
@@ -644,7 +654,7 @@
                                         </h3>
 
                                         <p class="mt-1 text-xs text-slate-400">
-                                            Try searching with a different name, email, or role.
+                                            Try searching with a different name, email, role, or department.
                                         </p>
 
                                     </td>
@@ -659,18 +669,13 @@
 
                 </section>
 
-
             </div>
 
         </main>
 
     </div>
 
-
-    {{-- =====================================================
-        SEARCH SCRIPT
-    ====================================================== --}}
-
+    {{-- SEARCH SCRIPT --}}
     <script>
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -681,18 +686,15 @@
 
             const noResults = document.getElementById('noSearchResults');
 
-
             if (!searchInput) {
                 return;
             }
-
 
             searchInput.addEventListener('input', function () {
 
                 const searchValue = this.value.toLowerCase().trim();
 
                 let visibleRows = 0;
-
 
                 rows.forEach(function (row) {
 
@@ -702,17 +704,14 @@
                     const matches =
                         searchableText.includes(searchValue);
 
-
                     row.style.display =
                         matches ? '' : 'none';
-
 
                     if (matches) {
                         visibleRows++;
                     }
 
                 });
-
 
                 if (noResults) {
 

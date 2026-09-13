@@ -229,68 +229,55 @@
                     data-status="{{ strtolower($course->status) }}"
                 >
 
+{{-- THUMBNAIL --}}
 
-                    {{-- =================================================
-                         COURSE THUMBNAIL
-                    ================================================== --}}
+<div class="relative h-44 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
 
-                    <div class="relative h-44 overflow-hidden bg-gray-100 dark:bg-gray-800">
+    @if($course->thumbnail)
 
-                        @if($course->thumbnail)
+        <img
+            src="{{ asset('storage/' . $course->thumbnail) }}"
+            alt="{{ $course->title }}"
+            class="block h-full w-full object-cover"
+        >
 
-                            <img
-                                src="{{ asset('storage/' . $course->thumbnail) }}"
-                                alt="{{ $course->title }}"
-                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                            >
+    @else
 
-                        @else
+        <div class="flex h-full w-full items-center justify-center bg-linear-to-br from-purple-700 via-purple-600 to-indigo-700">
 
-                            {{-- DEFAULT COVER WHEN NO IMAGE EXISTS --}}
+            <div class="text-center text-white">
 
-                            <div class="flex h-full w-full items-center justify-center bg-linear-to-br from-purple-700 via-purple-600 to-indigo-700">
+                <svg
+                    class="mx-auto h-12 w-12 opacity-90"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s3.332 1.253 4.5 1.253"
+                    />
+                </svg>
 
-                                <div class="text-center text-white">
+                <p class="mt-2 text-sm font-medium">
+                    PathWise
+                </p>
 
-                                    <svg
-                                        class="mx-auto h-12 w-12 opacity-90"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
+            </div>
 
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="1.5"
-                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"
-                                        />
+        </div>
 
-                                    </svg>
+    @endif
 
-                                    <p class="mt-2 text-sm font-medium text-white/90">
-                                        PathWise
-                                    </p>
+    <div class="absolute right-3 top-3">
+        <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
+            {{ ucfirst($course->status) }}
+        </span>
+    </div>
 
-                                </div>
-
-                            </div>
-
-                        @endif
-
-
-                        {{-- STATUS BADGE --}}
-
-                        <div class="absolute right-3 top-3">
-
-                            <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
-                                {{ ucfirst($course->status) }}
-                            </span>
-
-                        </div>
-
-                    </div>
-
+</div>
 
                     {{-- =================================================
                          COURSE DETAILS
