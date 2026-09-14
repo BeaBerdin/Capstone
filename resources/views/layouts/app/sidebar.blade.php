@@ -1652,7 +1652,54 @@ html.dark .pw-mobile-toggle {
 
                     </a>
 
+                     {{-- Department Management --}}
+        <a
+            href="{{ route('departments.index') }}"
+            wire:navigate
+            class="pw-nav-link {{ request()->routeIs('departments.*') ? 'is-active' : '' }}"
+        >
+            <svg
+                class="pw-nav-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 21h18"
+                />
 
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M5 21V8l7-5 7 5v13"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 21v-6h6v6"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 10h.01M12 10h.01M16 10h.01"
+                />
+            </svg>
+
+            <span>
+                Department Management
+            </span>
+        </a>
+
+    </section>
+
+                  {{-- Transactions --}}
                     <a
                         href="{{ route('super_admin.transactions.index') }}"
                         wire:navigate
@@ -1687,6 +1734,64 @@ html.dark .pw-mobile-toggle {
 
                 </section>
 
+                    {{-- Reports --}}
+        <a
+            href="{{ route('reports.index') }}"
+            wire:navigate
+            class="pw-nav-link {{ request()->routeIs('reports.*') ? 'is-active' : '' }}"
+        >
+            <svg
+                class="pw-nav-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 19V5"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 19h16"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 16v-5"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 16V7"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16 16v-9"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M20 16V4"
+                />
+            </svg>
+
+            <span>
+                Reports
+            </span>
+        </a>
+
+    </section>
 
 
             {{-- =================================================

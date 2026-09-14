@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DepartmentController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -100,6 +101,29 @@ Route::middleware('role:super_admin')->group(function () {
     // System Reports
     Route::get('/super-admin/reports', [ReportsController::class, 'index'])
         ->name('reports.index');
+    Route::get('/departments', [DepartmentController::class, 'index'])
+    ->name('departments.index');
+
+Route::get('/departments/create', [DepartmentController::class, 'create'])
+    ->name('departments.create');
+
+Route::post('/departments', [DepartmentController::class, 'store'])
+    ->name('departments.store');
+
+Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])
+    ->name('departments.edit');
+
+Route::put('/departments/{department}', [DepartmentController::class, 'update'])
+    ->name('departments.update');
+
+Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
+    ->name('departments.destroy');
+
+Route::get('/departments/assign', [DepartmentController::class, 'assign'])
+    ->name('departments.assign');
+
+Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
+    ->name('departments.assign.store');
 
 });
     /*
