@@ -357,7 +357,7 @@
 
                     <div>
                         <div class="pw-a-label">
-                            Active Learners
+                            Total Learners
                         </div>
 
                         <div class="pw-a-value">
@@ -388,7 +388,7 @@
                 </div>
 
                 <div class="pw-a-kpi-foot">
-                    <span>Across</span>
+                    <span>Unique enrolled students across</span>
                     <strong>
                         {{ $totalCourses }}
                         {{ \Illuminate\Support\Str::plural('course', $totalCourses) }}

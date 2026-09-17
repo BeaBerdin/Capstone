@@ -134,58 +134,205 @@ class LessonController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | STUDENT - ACCESS GUARDS
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureStudentCanAccessCourse(
+        Course $course
+    ): void {
+        if (
+            strtolower(
+                trim(
+                    (string) $course->status
+                )
+            )
+            !==
+            'published'
+        ) {
+            abort(
+                404,
+                'Course not found.'
+            );
+        }
+
+        $isEnrolled = Enrollment::where(
+                'student_id',
+                auth()->id()
+            )
+            ->where(
+                'course_id',
+                $course->id
+            )
+            ->exists();
+
+        if (!$isEnrolled) {
+            abort(
+                403,
+                'You must be enrolled in this course to access its learning content.'
+            );
+        }
+    }
+
+
+    private function ensureStudentCanAccessLesson(
+        Lesson $lesson
+    ): void {
+        $lesson->loadMissing('course');
+
+        if (!$lesson->course) {
+            abort(
+                404,
+                'Course not found.'
+            );
+        }
+
+        $this->ensureStudentCanAccessCourse(
+            $lesson->course
+        );
+
+        if (!(bool) $lesson->is_published) {
+            abort(
+                404,
+                'Lesson not found.'
+            );
+        }
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
     | STUDENT - COURSE LESSONS
     |--------------------------------------------------------------------------
     */
 
     public function studentCourse(Course $course)
     {
-        $lessons = $course->lessons()
-            ->orderBy('lesson_order')
+        $this->ensureStudentCanAccessCourse(
+            $course
+        );
+
+        $lessons = $course
+            ->lessons()
+            ->where(
+                'is_published',
+                true
+            )
+            ->orderBy(
+                'lesson_order'
+            )
             ->get();
 
         return view(
             'student.learn-course',
-            compact('course', 'lessons')
+            compact(
+                'course',
+                'lessons'
+            )
         );
     }
 
 
     public function studentLesson(Lesson $lesson)
     {
+        $this->ensureStudentCanAccessLesson(
+            $lesson
+        );
+
+        /*
+         * Quiz lessons must be taken through QuizController so the
+         * enrollment, publication, scoring, and completion guards there
+         * cannot be bypassed through the ordinary lesson route.
+         */
+        if (
+            strtolower(
+                trim(
+                    (string) $lesson->lesson_type
+                )
+            )
+            ===
+            'quiz'
+        ) {
+            $quiz = Quiz::where(
+                    'lesson_id',
+                    $lesson->id
+                )
+                ->where(
+                    'course_id',
+                    $lesson->course_id
+                )
+                ->where(
+                    'is_published',
+                    true
+                )
+                ->first();
+
+            if (!$quiz) {
+                abort(
+                    404,
+                    'Quiz not found.'
+                );
+            }
+
+            return redirect()
+                ->route(
+                    'student.quiz.take',
+                    $quiz
+                );
+        }
+
         $progress = LessonProgress::firstOrCreate(
             [
-                'student_id' => auth()->id(),
-                'lesson_id' => $lesson->id,
+                'student_id' =>
+                    auth()->id(),
+
+                'lesson_id' =>
+                    $lesson->id,
             ],
             [
-                'status' => 'in_progress',
-                'started_at' => now(),
+                'status' =>
+                    'in_progress',
+
+                'started_at' =>
+                    now(),
             ]
         );
 
         $previousLesson = Lesson::where(
-            'course_id',
-            $lesson->course_id
-        )
+                'course_id',
+                $lesson->course_id
+            )
+            ->where(
+                'is_published',
+                true
+            )
             ->where(
                 'lesson_order',
                 '<',
                 $lesson->lesson_order
             )
-            ->orderByDesc('lesson_order')
+            ->orderByDesc(
+                'lesson_order'
+            )
             ->first();
 
         $nextLesson = Lesson::where(
-            'course_id',
-            $lesson->course_id
-        )
+                'course_id',
+                $lesson->course_id
+            )
+            ->where(
+                'is_published',
+                true
+            )
             ->where(
                 'lesson_order',
                 '>',
                 $lesson->lesson_order
             )
-            ->orderBy('lesson_order')
+            ->orderBy(
+                'lesson_order'
+            )
             ->first();
 
         return view(
@@ -202,141 +349,251 @@ class LessonController extends Controller
 
     public function markComplete(Lesson $lesson)
     {
-        $studentId = auth()->id();
-
-        LessonProgress::updateOrCreate(
-            [
-                'student_id' => $studentId,
-                'lesson_id' => $lesson->id,
-            ],
-            [
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]
+        $this->ensureStudentCanAccessLesson(
+            $lesson
         );
 
-        $course = $lesson->course;
-
-        $totalLessons = $course
-            ->lessons()
-            ->count();
-
-        $completedLessons = LessonProgress::where(
-            'student_id',
-            $studentId
-        )
-            ->where('status', 'completed')
-            ->whereIn(
-                'lesson_id',
-                $course->lessons()->pluck('id')
+        /*
+         * A quiz lesson cannot be completed by directly calling the
+         * lesson-complete endpoint. It is completed only after the quiz
+         * is passed through QuizController.
+         */
+        if (
+            strtolower(
+                trim(
+                    (string) $lesson->lesson_type
+                )
             )
-            ->count();
-
-        $progressPercentage = 0;
-
-        if ($totalLessons > 0) {
-            $progressPercentage = round(
-                ($completedLessons / $totalLessons) * 100,
-                2
+            ===
+            'quiz'
+        ) {
+            abort(
+                403,
+                'Quiz lessons can only be completed by passing the quiz.'
             );
         }
 
+        $studentId =
+            auth()->id();
+
+        $course =
+            $lesson->course;
+
+        LessonProgress::updateOrCreate(
+            [
+                'student_id' =>
+                    $studentId,
+
+                'lesson_id' =>
+                    $lesson->id,
+            ],
+            [
+                'status' =>
+                    'completed',
+
+                'completed_at' =>
+                    now(),
+            ]
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECALCULATE PUBLISHED LESSON PROGRESS
+        |--------------------------------------------------------------------------
+        */
+
+        $publishedLessonIds = $course
+            ->lessons()
+            ->where(
+                'is_published',
+                true
+            )
+            ->pluck('id');
+
+        $totalLessons =
+            $publishedLessonIds->count();
+
+        $completedLessons = LessonProgress::where(
+                'student_id',
+                $studentId
+            )
+            ->where(
+                'status',
+                'completed'
+            )
+            ->whereIn(
+                'lesson_id',
+                $publishedLessonIds
+            )
+            ->count();
+
+        $progressPercentage =
+            $totalLessons > 0
+                ? round(
+                    (
+                        $completedLessons
+                        /
+                        $totalLessons
+                    )
+                    * 100,
+                    2
+                )
+                : 0;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OPTIONAL STANDALONE FINAL QUIZ
+        |--------------------------------------------------------------------------
+        | A published quiz with no lesson_id is treated as the final
+        | assessment. If one exists, the latest attempt must be passed
+        | before the course can be completed.
+        */
+
+        $finalQuiz = Quiz::where(
+                'course_id',
+                $course->id
+            )
+            ->where(
+                'is_published',
+                true
+            )
+            ->whereNull(
+                'lesson_id'
+            )
+            ->first();
+
+        $passedFinalQuiz =
+            true;
+
+        if ($finalQuiz) {
+            $latestFinalQuizResult =
+                QuizResult::where(
+                    'student_id',
+                    $studentId
+                )
+                    ->where(
+                        'quiz_id',
+                        $finalQuiz->id
+                    )
+                    ->orderByDesc(
+                        'completed_at'
+                    )
+                    ->orderByDesc(
+                        'id'
+                    )
+                    ->first();
+
+            $passedFinalQuiz =
+                $latestFinalQuizResult
+                &&
+                strtolower(
+                    trim(
+                        (string) (
+                            $latestFinalQuizResult
+                                ->remarks
+                            ??
+                            ''
+                        )
+                    )
+                )
+                ===
+                'passed';
+        }
+
+        $allLessonsCompleted =
+            $totalLessons > 0
+            &&
+            $completedLessons >= $totalLessons;
+
+        $courseCompleted =
+            $allLessonsCompleted
+            &&
+            $passedFinalQuiz;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SYNC ENROLLMENT
+        |--------------------------------------------------------------------------
+        */
+
         $enrollment = Enrollment::where(
-            'student_id',
-            $studentId
-        )
+                'student_id',
+                $studentId
+            )
             ->where(
                 'course_id',
                 $course->id
             )
-            ->first();
+            ->firstOrFail();
 
-        if ($enrollment) {
+        $enrollmentData = [
+            'progress_percentage' =>
+                $progressPercentage,
 
-            $enrollment->update([
-                'progress_percentage' =>
-                    $progressPercentage,
-            ]);
+            'status' =>
+                $courseCompleted
+                    ? 'completed'
+                    : 'active',
+        ];
 
-            if ($progressPercentage >= 100) {
+        if ($courseCompleted) {
+            $enrollmentData['completed_at'] =
+                $enrollment->completed_at
+                ??
+                now();
+        }
 
-                $courseQuizIds = $course
-                    ->quizzes()
-                    ->pluck('id');
+        $enrollment->update(
+            $enrollmentData
+        );
 
-                $hasQuiz =
-                    $courseQuizIds->isNotEmpty();
 
-                $hasPassed = false;
+        /*
+        |--------------------------------------------------------------------------
+        | CERTIFICATE
+        |--------------------------------------------------------------------------
+        */
 
-                if ($hasQuiz) {
+        if (
+            $courseCompleted
+            &&
+            $course->certificate_available
+        ) {
+            Certificate::firstOrCreate(
+                [
+                    'student_id' =>
+                        $studentId,
 
-                    $bestResult = QuizResult::where(
-                        'student_id',
-                        $studentId
-                    )
-                        ->whereIn(
-                            'quiz_id',
-                            $courseQuizIds
-                        )
-                        ->orderByDesc('percentage')
-                        ->first();
+                    'course_id' =>
+                        $course->id,
+                ],
+                [
+                    'certificate_number' =>
+                        'PW-'
+                        .
+                        now()->format('Y')
+                        .
+                        '-'
+                        .
+                        str_pad(
+                            $studentId
+                            .
+                            $course->id,
+                            5,
+                            '0',
+                            STR_PAD_LEFT
+                        ),
 
-                    if ($bestResult) {
+                    'issued_date' =>
+                        now()->toDateString(),
 
-                        $quiz = Quiz::find(
-                            $bestResult->quiz_id
-                        );
-
-                        $passingScore =
-                            $quiz->passing_score ?? 75;
-
-                        $hasPassed =
-                            $bestResult->percentage
-                            >=
-                            $passingScore;
-                    }
-                }
-
-                $eligibleForCertificate =
-                    $hasQuiz
-                        ? $hasPassed
-                        : true;
-
-                if ($eligibleForCertificate) {
-
-                    $enrollment->update([
-                        'status' => 'completed',
-                        'completed_at' => now(),
-                    ]);
-
-                    Certificate::firstOrCreate(
-                        [
-                            'student_id' => $studentId,
-                            'course_id' => $course->id,
-                        ],
-                        [
-                            'certificate_number' =>
-                                'PW-' .
-                                now()->format('Y') .
-                                '-' .
-                                str_pad(
-                                    $studentId .
-                                    $course->id,
-                                    5,
-                                    '0',
-                                    STR_PAD_LEFT
-                                ),
-
-                            'issued_date' =>
-                                now()->toDateString(),
-
-                            'status' =>
-                                'issued',
-                        ]
-                    );
-                }
-            }
+                    'status' =>
+                        'issued',
+                ]
+            );
         }
 
         return back()->with(
@@ -372,6 +629,39 @@ class LessonController extends Controller
             'teacher.lessons-index',
             compact('courses')
         );
+    }
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEACHER - COURSE MODIFICATION GUARD
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureTeacherCanModifyCourse(Course $course): void
+    {
+        if (
+            (int) $course->teacher_id
+            !==
+            (int) auth()->id()
+        ) {
+            abort(403, 'Unauthorized');
+        }
+
+        if (
+            !in_array(
+                strtolower(trim((string) $course->status)),
+                ['draft', 'rejected'],
+                true
+            )
+        ) {
+            abort(
+                403,
+                'This course cannot be modified while it is pending approval or published.'
+            );
+        }
     }
 
 
@@ -424,13 +714,7 @@ class LessonController extends Controller
 
     public function teacherCreateLesson(Course $course)
     {
-        if (
-            (int) $course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(403, 'Unauthorized');
-        }
+        $this->ensureTeacherCanModifyCourse($course);
 
         $course->load('category');
 
@@ -459,13 +743,7 @@ class LessonController extends Controller
         Request $request,
         Course $course
     ) {
-        if (
-            (int) $course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(403, 'Unauthorized');
-        }
+        $this->ensureTeacherCanModifyCourse($course);
 
         $validated = $request->validate([
             'title' => [
@@ -656,13 +934,7 @@ class LessonController extends Controller
     {
         $lesson->load('course.category');
 
-        if (
-            (int) $lesson->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(403, 'Unauthorized');
-        }
+        $this->ensureTeacherCanModifyCourse($lesson->course);
 
         return view(
             'teacher.edit-lesson',
@@ -684,13 +956,7 @@ class LessonController extends Controller
     ) {
         $lesson->load('course');
 
-        if (
-            (int) $lesson->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(403, 'Unauthorized');
-        }
+        $this->ensureTeacherCanModifyCourse($lesson->course);
 
         $validated = $request->validate([
             'title' => [
@@ -903,13 +1169,7 @@ class LessonController extends Controller
     {
         $lesson->load('course');
 
-        if (
-            (int) $lesson->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(403, 'Unauthorized');
-        }
+        $this->ensureTeacherCanModifyCourse($lesson->course);
 
         $course = $lesson->course;
 

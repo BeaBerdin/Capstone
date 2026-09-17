@@ -1092,6 +1092,88 @@
 
                             </div>
 
+
+                            {{-- QUIZ BUILDER ACTION --}}
+                            <div
+                                class="mt-5 rounded-2xl border
+                                       border-violet-100
+                                       bg-violet-50/60 p-5"
+                            >
+
+                                @if($lesson->lesson_type === 'quiz')
+
+                                    <div
+                                        class="flex flex-col gap-4
+                                               sm:flex-row
+                                               sm:items-center
+                                               sm:justify-between"
+                                    >
+
+                                        <div>
+
+                                            <p
+                                                class="text-sm font-bold
+                                                       text-slate-900"
+                                            >
+                                                Build quiz questions
+                                            </p>
+
+                                            <p
+                                                class="mt-1 text-xs
+                                                       leading-5
+                                                       text-slate-500"
+                                            >
+                                                Configure the quiz settings
+                                                and manage the multiple-choice
+                                                questions for this lesson.
+                                            </p>
+
+                                        </div>
+
+
+                                        <a
+                                            href="{{ route('teacher.quiz.builder', $lesson) }}"
+                                            class="inline-flex h-11 shrink-0
+                                                   items-center justify-center
+                                                   gap-2 rounded-xl
+                                                   bg-violet-600 px-5
+                                                   text-sm font-semibold
+                                                   text-white transition
+                                                   hover:bg-violet-700"
+                                        >
+                                            Open Quiz Builder
+                                            <span aria-hidden="true">→</span>
+                                        </a>
+
+                                    </div>
+
+                                @else
+
+                                    <div>
+
+                                        <p
+                                            class="text-sm font-bold
+                                                   text-slate-800"
+                                        >
+                                            Save this lesson as Quiz first
+                                        </p>
+
+                                        <p
+                                            class="mt-1 text-xs
+                                                   leading-5
+                                                   text-slate-500"
+                                        >
+                                            After saving the lesson type
+                                            as Quiz, reopen it to access
+                                            the Quiz Builder.
+                                        </p>
+
+                                    </div>
+
+                                @endif
+
+                            </div>
+
                         </section>
 
 

@@ -172,11 +172,31 @@
     $inProgressLessons = $lessons
         ->filter(function ($lesson) use (
             $lessonProgressRecords,
-            $completedLessonIds
+            $completedLessonIds,
+            $lessonQuizzes,
+            $latestQuizResults
         ) {
 
             if ($completedLessonIds->contains($lesson->id)) {
                 return false;
+            }
+
+            /*
+             * A quiz that has already been attempted but not yet passed
+             * is considered in progress / needing a retake.
+             */
+            if (strtolower($lesson->lesson_type ?? '') === 'quiz') {
+
+                $linkedQuiz = $lessonQuizzes->get($lesson->id);
+
+                if ($linkedQuiz) {
+
+                    $quizResult = $latestQuizResults->get($linkedQuiz->id);
+
+                    if ($quizResult) {
+                        return true;
+                    }
+                }
             }
 
             $record = $lessonProgressRecords->get($lesson->id);
@@ -779,21 +799,43 @@
                                     $isCompleted =
                                         $completedLessonIds->contains($lesson->id);
 
-                                    $status =
-                                        $isCompleted
-                                            ? 'completed'
-                                            : (
-                                                $progressRecord &&
-                                                strtolower($progressRecord->status ?? '') === 'in_progress'
-                                                    ? 'in_progress'
-                                                    : 'not_started'
-                                            );
-
                                     $lessonType =
                                         strtolower(
                                             $lesson->lesson_type
                                             ?? 'text'
                                         );
+
+                                    /*
+                                     * Quiz lessons use the quiz result as their status source.
+                                     * No attempt = Not Started
+                                     * Failed attempt = Needs Retake
+                                     * Passed attempt = Completed
+                                     */
+                                    if ($lessonType === 'quiz' && $linkedQuizResult) {
+
+                                        $quizRemark =
+                                            strtolower(
+                                                $linkedQuizResult->remarks
+                                                ?? ''
+                                            );
+
+                                        $status =
+                                            $quizRemark === 'passed'
+                                                ? 'completed'
+                                                : 'failed';
+
+                                    } else {
+
+                                        $status =
+                                            $isCompleted
+                                                ? 'completed'
+                                                : (
+                                                    $progressRecord &&
+                                                    strtolower($progressRecord->status ?? '') === 'in_progress'
+                                                        ? 'in_progress'
+                                                        : 'not_started'
+                                                );
+                                    }
 
                                     $typeLabel =
                                         $typeLabels[$lessonType]
@@ -1059,6 +1101,25 @@
                                                     Completed
                                                 </span>
 
+                                            @elseif($status === 'failed')
+
+                                                <span
+                                                    class="inline-flex items-center
+                                                           gap-1.5 rounded-full
+                                                           bg-red-50
+                                                           px-3 py-1.5
+                                                           text-[10px] font-bold
+                                                           text-red-600"
+                                                >
+                                                    <span
+                                                        class="h-1.5 w-1.5
+                                                               rounded-full
+                                                               bg-red-500"
+                                                    ></span>
+
+                                                    Needs Retake
+                                                </span>
+
                                             @elseif($status === 'in_progress')
 
                                                 <span
@@ -1112,6 +1173,23 @@
                                                            text-slate-400"
                                                 >
                                                     Quiz unavailable
+                                                </span>
+
+                                            @elseif(
+                                                $lessonType === 'quiz' &&
+                                                $linkedQuizResult &&
+                                                strtolower($linkedQuizResult->remarks ?? '') === 'passed'
+                                            )
+
+                                                <span
+                                                    class="inline-flex h-9
+                                                           items-center justify-center
+                                                           gap-1.5 rounded-lg
+                                                           bg-emerald-50 px-3
+                                                           text-xs font-semibold
+                                                           text-emerald-700"
+                                                >
+                                                    ✓ Quiz Passed
                                                 </span>
 
                                             @else
@@ -1646,42 +1724,49 @@
 
                         @if($allLessonsCompleted)
 
-                            <a
-                                href="{{ route('student.quiz.take', $finalQuiz) }}"
-                                class="mt-5 inline-flex h-11
-                                       items-center justify-center gap-2
-                                       rounded-xl
-                                       {{
-                                           $failedFinalQuiz
-                                           ? 'bg-red-600 hover:bg-red-700'
-                                           : 'bg-violet-600 hover:bg-violet-700'
-                                       }}
-                                       px-5 text-sm font-semibold
-                                       text-white transition"
-                            >
+                            @if($passedFinalQuiz && $finalQuizResult)
 
-                                @if($finalQuizResult)
-
-                                    Retake Final Quiz
-
-                                @else
-
-                                    Take Final Quiz
-
-                                @endif
-
-
-                                <svg
-                                    class="h-4 w-4"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
+                                <span
+                                    class="mt-5 inline-flex h-11
+                                           items-center justify-center gap-2
+                                           rounded-xl bg-emerald-50
+                                           px-5 text-sm font-semibold
+                                           text-emerald-700"
                                 >
-                                    <path d="m9 18 6-6-6-6"></path>
-                                </svg>
+                                    ✓ Final Quiz Passed
+                                </span>
 
-                            </a>
+                            @else
+
+                                <a
+                                    href="{{ route('student.quiz.take', $finalQuiz) }}"
+                                    class="mt-5 inline-flex h-11
+                                           items-center justify-center gap-2
+                                           rounded-xl
+                                           {{
+                                               $failedFinalQuiz
+                                               ? 'bg-red-600 hover:bg-red-700'
+                                               : 'bg-violet-600 hover:bg-violet-700'
+                                           }}
+                                           px-5 text-sm font-semibold
+                                           text-white transition"
+                                >
+
+                                    {{ $failedFinalQuiz ? 'Retake Final Quiz' : 'Take Final Quiz' }}
+
+                                    <svg
+                                        class="h-4 w-4"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path d="m9 18 6-6-6-6"></path>
+                                    </svg>
+
+                                </a>
+
+                            @endif
 
 
                         @else

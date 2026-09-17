@@ -240,32 +240,98 @@ class CourseController extends Controller
         Course $course
     ) {
         abort_unless(
-            $course->status === 'published',
+            strtolower(
+                trim(
+                    (string) $course->status
+                )
+            ) === 'published',
             404
         );
 
-        Enrollment::firstOrCreate(
-            [
-                'student_id' =>
-                    auth()->id(),
 
-                'course_id' =>
-                    $course->id,
-            ],
-            [
-                'status' =>
-                    'active',
+        /*
+        |--------------------------------------------------------------------------
+        | EXISTING ENROLLMENT
+        |--------------------------------------------------------------------------
+        | If the student already has access, do not create or change anything.
+        */
 
-                'enrolled_at' =>
-                    now(),
+        $existingEnrollment =
+            Enrollment::where(
+                'student_id',
+                auth()->id()
+            )
+                ->where(
+                    'course_id',
+                    $course->id
+                )
+                ->first();
 
-                'progress_percentage' =>
-                    0,
-            ]
-        );
+
+        if ($existingEnrollment) {
+            return redirect()
+                ->route('student.my-courses')
+                ->with(
+                    'success',
+                    'You are already enrolled in this course.'
+                );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAID COURSE PROTECTION
+        |--------------------------------------------------------------------------
+        | This endpoint is for FREE enrollment only.
+        |
+        | Paid courses must go through TransactionController / PayMongo.
+        | Never create an enrollment from this route when the course price
+        | is greater than zero.
+        */
+
+        $price =
+            (float) ($course->price ?? 0);
+
+
+        if ($price > 0) {
+            return redirect()
+                ->route(
+                    'student.course.show',
+                    $course
+                )
+                ->with(
+                    'error',
+                    'This is a paid course. Please complete the payment process before enrollment.'
+                );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FREE COURSE ENROLLMENT
+        |--------------------------------------------------------------------------
+        */
+
+        Enrollment::create([
+            'student_id' =>
+                auth()->id(),
+
+            'course_id' =>
+                $course->id,
+
+            'status' =>
+                'active',
+
+            'enrolled_at' =>
+                now(),
+
+            'progress_percentage' =>
+                0,
+        ]);
+
 
         return redirect()
-            ->route('student.dashboard')
+            ->route('student.my-courses')
             ->with(
                 'success',
                 'Successfully enrolled in course.'

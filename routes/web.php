@@ -267,6 +267,26 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
             ->name('teacher.lessons.delete');
 
 
+        // Teacher Quiz Builder
+        Route::get('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherBuilder'])
+            ->name('teacher.quiz.builder');
+
+        Route::post('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherSaveQuiz'])
+            ->name('teacher.quiz.save');
+
+        Route::post('/teacher/quizzes/{quiz}/generate-questions', [QuizController::class, 'teacherGenerateQuestions'])
+            ->name('teacher.quiz.questions.generate');
+
+        Route::post('/teacher/quizzes/{quiz}/questions', [QuizController::class, 'teacherStoreQuestion'])
+            ->name('teacher.quiz.question.store');
+
+        Route::put('/teacher/quizzes/{quiz}/questions/{question}', [QuizController::class, 'teacherUpdateQuestion'])
+            ->name('teacher.quiz.question.update');
+
+        Route::delete('/teacher/quizzes/{quiz}/questions/{question}', [QuizController::class, 'teacherDeleteQuestion'])
+            ->name('teacher.quiz.question.delete');
+
+
         // Submit Course for Approval
         Route::post('/teacher/courses/{course}/submit', [CourseController::class, 'submitForApproval'])
             ->name('teacher.courses.submit');
@@ -405,8 +425,8 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::get('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
             ->name('student.transactions.cancel');
 
-        // OLD PAYMENT PROOF ROUTE
-        // Keep temporarily for compatibility.
+        // Legacy manual payment proof route
+        // Kept only for older non-PayMongo transactions.
         Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
             ->name('student.transactions.upload-proof');
     });

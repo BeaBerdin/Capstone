@@ -159,6 +159,9 @@
     |--------------------------------------------------------------------------
     | Quiz Chart
     |--------------------------------------------------------------------------
+    | Use only real quiz attempts. Do not pad the chart with average-score
+    | placeholders because that makes the trend look like historical data
+    | that never actually happened.
     */
 
     $chartResults = \App\Models\QuizResult::whereHas(
@@ -183,57 +186,66 @@
                     )
                 )
         )
+        ->values()
         ->all();
 
 
-    while (count($chartArray) < 7) {
-        array_unshift(
-            $chartArray,
-            $averageScore
-        );
-    }
-
-
-    $chartArray = array_slice(
-        $chartArray,
-        -7
-    );
-
+    $chartAttemptCount = count($chartArray);
 
     $chartWidth = 600;
     $chartHeight = 150;
 
 
-    $chartPoints = collect($chartArray)
+    $chartCoordinates = collect($chartArray)
         ->map(
             function ($score, $index) use (
                 $chartWidth,
-                $chartHeight
+                $chartHeight,
+                $chartAttemptCount
             ) {
-                return
-                    round(
-                        $index * ($chartWidth / 6),
-                        1
-                    )
-                    . ','
-                    . round(
-                        $chartHeight
-                        - (($score / 100) * $chartHeight),
-                        1
+                $x = $chartAttemptCount <= 1
+                    ? $chartWidth / 2
+                    : $index * (
+                        $chartWidth
+                        / ($chartAttemptCount - 1)
                     );
+
+                $y = $chartHeight
+                    - (($score / 100) * $chartHeight);
+
+                return [
+                    'x' => round($x, 1),
+                    'y' => round($y, 1),
+                    'score' => $score,
+                ];
             }
+        )
+        ->values();
+
+
+    $chartPoints = $chartCoordinates
+        ->map(
+            fn ($point) =>
+                $point['x']
+                . ','
+                . $point['y']
         )
         ->implode(' ');
 
 
-    $chartAreaPoints =
-        '0,' . $chartHeight
-        . ' '
-        . $chartPoints
-        . ' '
-        . $chartWidth
-        . ','
-        . $chartHeight;
+    $chartAreaPoints = '';
+
+    if ($chartAttemptCount >= 2) {
+        $firstX = $chartCoordinates->first()['x'];
+        $lastX = $chartCoordinates->last()['x'];
+
+        $chartAreaPoints =
+            $firstX . ',' . $chartHeight
+            . ' '
+            . $chartPoints
+            . ' '
+            . $lastX . ',' . $chartHeight;
+    }
 
 
     /*
@@ -1217,7 +1229,12 @@
                             </div>
 
                             <div class="pw-chart-note">
-                                Latest 7 attempts
+                                @if($chartAttemptCount > 0)
+                                    Latest {{ $chartAttemptCount }}
+                                    {{ \Illuminate\Support\Str::plural('attempt', $chartAttemptCount) }}
+                                @else
+                                    No attempts yet
+                                @endif
                             </div>
 
                         </div>
@@ -1225,103 +1242,120 @@
 
                         <div class="pw-chart-box">
 
-                            <div class="pw-y-axis">
-                                <span>100%</span>
-                                <span>75%</span>
-                                <span>50%</span>
-                                <span>25%</span>
-                                <span>0%</span>
-                            </div>
+                            @if($chartAttemptCount > 0)
 
-
-                            <div class="pw-chart-canvas">
-
-                                <div class="pw-chart-grid">
-                                    @for($i = 0; $i < 5; $i++)
-                                        <div></div>
-                                    @endfor
+                                <div class="pw-y-axis">
+                                    <span>100%</span>
+                                    <span>75%</span>
+                                    <span>50%</span>
+                                    <span>25%</span>
+                                    <span>0%</span>
                                 </div>
 
 
-                                <svg
-                                    class="pw-chart-svg"
-                                    preserveAspectRatio="none"
-                                    viewBox="0 0 600 150"
+                                <div class="pw-chart-canvas">
+
+                                    <div class="pw-chart-grid">
+                                        @for($i = 0; $i < 5; $i++)
+                                            <div></div>
+                                        @endfor
+                                    </div>
+
+
+                                    <svg
+                                        class="pw-chart-svg"
+                                        preserveAspectRatio="none"
+                                        viewBox="0 0 600 150"
+                                    >
+
+                                        <defs>
+                                            <linearGradient
+                                                id="pwDashboardGradient"
+                                                x1="0"
+                                                y1="0"
+                                                x2="0"
+                                                y2="1"
+                                            >
+                                                <stop
+                                                    offset="0%"
+                                                    stop-color="#7657f6"
+                                                    stop-opacity=".18"
+                                                />
+                                                <stop
+                                                    offset="100%"
+                                                    stop-color="#7657f6"
+                                                    stop-opacity="0"
+                                                />
+                                            </linearGradient>
+                                        </defs>
+
+
+                                        @if($chartAttemptCount >= 2)
+
+                                            <polygon
+                                                points="{{ $chartAreaPoints }}"
+                                                fill="url(#pwDashboardGradient)"
+                                            />
+
+
+                                            <polyline
+                                                points="{{ $chartPoints }}"
+                                                fill="none"
+                                                stroke="#7657f6"
+                                                stroke-width="3"
+                                                vector-effect="non-scaling-stroke"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            />
+
+                                        @endif
+
+
+                                        @foreach($chartCoordinates as $point)
+
+                                            <circle
+                                                cx="{{ $point['x'] }}"
+                                                cy="{{ $point['y'] }}"
+                                                r="4.5"
+                                                fill="#7657f6"
+                                            />
+
+                                        @endforeach
+
+                                    </svg>
+
+
+                                    <div
+                                        class="pw-x-axis"
+                                        @if($chartAttemptCount === 1)
+                                            style="justify-content:center;"
+                                        @endif
+                                    >
+                                        @foreach($chartCoordinates as $point)
+                                            <span>{{ $loop->iteration }}</span>
+                                        @endforeach
+                                    </div>
+
+                                </div>
+
+                            @else
+
+                                <div
+                                    style="
+                                        height:100%;
+                                        display:grid;
+                                        place-items:center;
+                                        padding:24px;
+                                        text-align:center;
+                                        color:#94a3b8;
+                                        font-size:10px;
+                                        font-weight:600;
+                                    "
                                 >
-
-                                    <defs>
-                                        <linearGradient
-                                            id="pwDashboardGradient"
-                                            x1="0"
-                                            y1="0"
-                                            x2="0"
-                                            y2="1"
-                                        >
-                                            <stop
-                                                offset="0%"
-                                                stop-color="#7657f6"
-                                                stop-opacity=".18"
-                                            />
-                                            <stop
-                                                offset="100%"
-                                                stop-color="#7657f6"
-                                                stop-opacity="0"
-                                            />
-                                        </linearGradient>
-                                    </defs>
-
-
-                                    <polygon
-                                        points="{{ $chartAreaPoints }}"
-                                        fill="url(#pwDashboardGradient)"
-                                    />
-
-
-                                    <polyline
-                                        points="{{ $chartPoints }}"
-                                        fill="none"
-                                        stroke="#7657f6"
-                                        stroke-width="3"
-                                        vector-effect="non-scaling-stroke"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
-
-
-                                    @foreach($chartArray as $score)
-
-                                        @php
-                                            $cx = $loop->index
-                                                * ($chartWidth / 6);
-
-                                            $cy = $chartHeight
-                                                - (($score / 100)
-                                                * $chartHeight);
-                                        @endphp
-
-                                        <circle
-                                            cx="{{ $cx }}"
-                                            cy="{{ $cy }}"
-                                            r="4.5"
-                                            fill="#7657f6"
-                                        />
-
-                                    @endforeach
-
-                                </svg>
-
-
-                                <div class="pw-x-axis">
-                                    <span>1</span>
-                                    <span>2</span>
-                                    <span>3</span>
-                                    <span>4</span>
-                                    <span>5</span>
-                                    <span>6</span>
-                                    <span>7</span>
+                                    Quiz attempts will appear here once students submit assessments.
                                 </div>
 
-                            </div>
+                            @endif
 
                         </div>
 

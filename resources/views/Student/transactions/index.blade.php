@@ -7,71 +7,77 @@
     $rejectedTransactions = $transactions->where('status', 'rejected')->count();
 @endphp
 
-<style>
-    .pw-card {
-        background: #ffffff;
-        border: 1px solid #e7e9ef;
-        border-radius: 20px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.035);
-    }
 
-    .pw-card-hover {
-        transition:
-            transform 160ms ease,
-            border-color 160ms ease,
-            box-shadow 160ms ease;
-    }
+<div class="min-h-screen bg-slate-50/70">
 
-    .pw-card-hover:hover {
-        transform: translateY(-2px);
-        border-color: #ddd6fe;
-        box-shadow: 0 12px 30px rgba(76, 29, 149, 0.06);
-    }
-</style>
+    <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
 
-<div class="min-h-screen bg-[#f8f9fc]">
+        <div class="w-full max-w-none space-y-6">
 
-    <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
-
-        <div class="mx-auto max-w-[1500px]">
 
             {{-- =====================================================
                 HEADER
             ====================================================== --}}
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 
-                <div>
+            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
 
-                    <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
-                        Student
-                    </p>
+                <div class="relative px-6 py-7 sm:px-8">
 
-                    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                        My Transactions
-                    </h1>
+                    <div class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-violet-100/70 blur-3xl"></div>
+                    <div class="pointer-events-none absolute right-36 top-12 h-24 w-24 rounded-full bg-indigo-100/70 blur-2xl"></div>
 
-                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                        Track your course purchases, payment receipts,
-                        and transaction approval status.
-                    </p>
+                    <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
+                        <div class="max-w-2xl">
+
+                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                                    <path d="M3 10h18"></path>
+                                </svg>
+                                Payment Records
+                            </div>
+
+                            <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                                My Transactions
+                            </h1>
+
+                            <p class="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+                                Review your course purchases, payment references, and current transaction status.
+                            </p>
+
+                        </div>
+
+
+                        <a
+                            href="{{ route('student.marketplace') }}"
+                            class="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                        >
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+
+                            Browse Courses
+                        </a>
+
+                    </div>
 
                 </div>
 
-            </div>
+            </section>
+
 
 
             {{-- =====================================================
-                SUMMARY CARDS
+                SUMMARY
             ====================================================== --}}
-            <section class="mt-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
 
-                {{-- TOTAL --}}
-                <div class="pw-card p-5">
+            <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
-
                         <div>
-
                             <p class="text-xs font-semibold text-slate-500">
                                 Total Transactions
                             </p>
@@ -80,40 +86,24 @@
                                 {{ $totalTransactions }}
                             </p>
 
+                            <p class="mt-2 text-xs text-slate-400">
+                                All purchase attempts
+                            </p>
                         </div>
 
-                        <div class="flex h-10 w-10 items-center justify-center
-                                    rounded-xl bg-violet-50 text-violet-600">
-
-                            <svg
-                                class="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                 <path d="M3 10h18"></path>
                             </svg>
-
                         </div>
-
                     </div>
-
-                    <p class="mt-2 text-xs text-slate-400">
-                        All purchases
-                    </p>
-
                 </div>
 
 
-                {{-- APPROVED --}}
-                <div class="pw-card p-5">
-
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
-
                         <div>
-
                             <p class="text-xs font-semibold text-slate-500">
                                 Approved
                             </p>
@@ -122,379 +112,266 @@
                                 {{ $approvedTransactions }}
                             </p>
 
+                            <p class="mt-2 text-xs text-slate-400">
+                                Verified payments
+                            </p>
                         </div>
 
-                        <div class="flex h-10 w-10 items-center justify-center
-                                    rounded-xl bg-emerald-50 text-emerald-600">
-
-                            <svg
-                                class="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 6 9 17l-5-5"></path>
                             </svg>
-
                         </div>
-
                     </div>
-
-                    <p class="mt-2 text-xs text-slate-400">
-                        Verified payments
-                    </p>
-
                 </div>
 
 
-                {{-- PENDING --}}
-                <div class="pw-card p-5">
-
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
-
                         <div>
-
                             <p class="text-xs font-semibold text-slate-500">
                                 Pending
                             </p>
 
-                            <p class="mt-2 text-3xl font-bold tracking-tight text-amber-500">
+                            <p class="mt-2 text-3xl font-bold tracking-tight text-amber-600">
                                 {{ $pendingTransactions }}
                             </p>
 
+                            <p class="mt-2 text-xs text-slate-400">
+                                Awaiting verification
+                            </p>
                         </div>
 
-                        <div class="flex h-10 w-10 items-center justify-center
-                                    rounded-xl bg-amber-50 text-amber-500">
-
-                            <svg
-                                class="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="9"></circle>
                                 <path d="M12 7v5l3 2"></path>
                             </svg>
-
                         </div>
-
                     </div>
-
-                    <p class="mt-2 text-xs text-slate-400">
-                        Awaiting review
-                    </p>
-
                 </div>
 
 
-                {{-- REJECTED --}}
-                <div class="pw-card p-5">
-
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
-
                         <div>
-
                             <p class="text-xs font-semibold text-slate-500">
                                 Rejected
                             </p>
 
-                            <p class="mt-2 text-3xl font-bold tracking-tight text-red-500">
+                            <p class="mt-2 text-3xl font-bold tracking-tight text-rose-600">
                                 {{ $rejectedTransactions }}
                             </p>
 
+                            <p class="mt-2 text-xs text-slate-400">
+                                Declined transactions
+                            </p>
                         </div>
 
-                        <div class="flex h-10 w-10 items-center justify-center
-                                    rounded-xl bg-red-50 text-red-500">
-
-                            <svg
-                                class="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M18 6 6 18"></path>
                                 <path d="m6 6 12 12"></path>
                             </svg>
-
                         </div>
-
                     </div>
-
-                    <p class="mt-2 text-xs text-slate-400">
-                        Declined payments
-                    </p>
-
                 </div>
 
             </section>
 
 
+
             {{-- =====================================================
-                TRANSACTIONS
+                TRANSACTION HISTORY
             ====================================================== --}}
-            <section class="mt-6">
 
-                <div class="mb-4">
+            <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
-                    <h2 class="text-lg font-bold text-slate-900">
-                        Transaction History
-                    </h2>
+                <div class="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
 
-                    <p class="mt-1 text-xs text-slate-500">
-                        View your course purchases and payment verification status.
-                    </p>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                            Payment Activity
+                        </p>
+
+                        <h2 class="mt-1 text-xl font-bold text-slate-900">
+                            Transaction History
+                        </h2>
+
+                        <p class="mt-1 text-xs text-slate-500">
+                            Review your latest course purchase and payment records.
+                        </p>
+                    </div>
+
+
+                    <span class="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-500">
+                        {{ $totalTransactions }}
+                        {{ \Illuminate\Support\Str::plural('record', $totalTransactions) }}
+                    </span>
 
                 </div>
 
 
-                <div class="grid gap-5 lg:grid-cols-2">
+                @forelse($transactions as $transaction)
 
-                    @forelse($transactions as $transaction)
+                    @php
+                        $status = strtolower($transaction->status ?? 'pending');
 
-                        <article class="pw-card pw-card-hover overflow-hidden">
+                        $statusLabel = 'Pending';
+                        $statusClass = 'bg-amber-50 text-amber-700';
+                        $dotClass = 'bg-amber-500';
+                        $message = 'Waiting for payment verification.';
+                        $messageClass = 'text-amber-700';
 
-                            {{-- CARD HEADER --}}
-                            <div class="border-b border-slate-100 p-5">
-
-                                <div class="flex items-start justify-between gap-4">
-
-                                    <div class="min-w-0">
-
-                                        <p class="text-[10px] font-bold uppercase
-                                                  tracking-[.08em] text-violet-500">
-                                            Transaction No.
-                                        </p>
-
-                                        <h3 class="mt-1 truncate text-base font-bold text-slate-900">
-                                            {{ $transaction->transaction_no }}
-                                        </h3>
-
-                                    </div>
-
-
-                                    {{-- STATUS --}}
-                                    @if($transaction->status === 'approved')
-
-                                        <span class="inline-flex shrink-0 items-center gap-1.5
-                                                     rounded-full bg-emerald-50
-                                                     px-3 py-1.5 text-[10px]
-                                                     font-bold text-emerald-700">
-
-                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-
-                                            Approved
-
-                                        </span>
-
-                                    @elseif($transaction->status === 'rejected')
-
-                                        <span class="inline-flex shrink-0 items-center gap-1.5
-                                                     rounded-full bg-red-50
-                                                     px-3 py-1.5 text-[10px]
-                                                     font-bold text-red-600">
-
-                                            <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
-
-                                            Rejected
-
-                                        </span>
-
-                                    @else
-
-                                        <span class="inline-flex shrink-0 items-center gap-1.5
-                                                     rounded-full bg-amber-50
-                                                     px-3 py-1.5 text-[10px]
-                                                     font-bold text-amber-700">
-
-                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-
-                                            Pending
-
-                                        </span>
-
-                                    @endif
-
-                                </div>
-
-                            </div>
+                        if ($status === 'approved') {
+                            $statusLabel = 'Approved';
+                            $statusClass = 'bg-emerald-50 text-emerald-700';
+                            $dotClass = 'bg-emerald-500';
+                            $message = 'Payment approved. Course access granted.';
+                            $messageClass = 'text-emerald-700';
+                        } elseif ($status === 'rejected') {
+                            $statusLabel = 'Rejected';
+                            $statusClass = 'bg-rose-50 text-rose-700';
+                            $dotClass = 'bg-rose-500';
+                            $message = 'Payment was rejected. Review the transaction details.';
+                            $messageClass = 'text-rose-600';
+                        }
+                    @endphp
 
 
-                            {{-- COURSE --}}
-                            <div class="p-5">
+                    <article class="border-b border-slate-100 last:border-b-0">
 
-                                <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="grid grid-cols-1 gap-5 px-5 py-5 transition hover:bg-slate-50/70 sm:px-6 lg:grid-cols-[minmax(0,1.7fr)_140px_160px_180px_130px] lg:items-center">
 
-                                    <p class="text-[10px] font-bold uppercase
-                                              tracking-[.08em] text-slate-400">
-                                        Course Purchased
+
+                            {{-- TRANSACTION / COURSE --}}
+                            <div class="min-w-0">
+
+                                <div class="flex flex-wrap items-center gap-2">
+
+                                    <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                        {{ $transaction->transaction_no }}
                                     </p>
 
-                                    <h3 class="mt-2 line-clamp-2 text-base
-                                               font-bold leading-6 text-slate-900">
-                                        {{ $transaction->course->title ?? 'Course unavailable' }}
-                                    </h3>
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold {{ $statusClass }}">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ $dotClass }}"></span>
+                                        {{ $statusLabel }}
+                                    </span>
 
                                 </div>
 
 
-                                {{-- DETAILS --}}
-                                <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-                                    {{-- AMOUNT --}}
-                                    <div class="rounded-xl border border-slate-100
-                                                bg-white p-3">
-
-                                        <p class="text-[10px] font-semibold text-slate-400">
-                                            Amount
-                                        </p>
-
-                                        <p class="mt-1 text-sm font-bold text-slate-800">
-                                            ₱{{ number_format($transaction->amount, 2) }}
-                                        </p>
-
-                                    </div>
+                                <h3 class="mt-2 truncate text-base font-bold text-slate-900">
+                                    {{ $transaction->course->title ?? 'Course unavailable' }}
+                                </h3>
 
 
-                                    {{-- METHOD --}}
-                                    <div class="rounded-xl border border-slate-100
-                                                bg-white p-3">
-
-                                        <p class="text-[10px] font-semibold text-slate-400">
-                                            Method
-                                        </p>
-
-                                        <p class="mt-1 truncate text-sm font-bold text-slate-800">
-                                            {{ $transaction->payment_method ?? 'Not submitted' }}
-                                        </p>
-
-                                    </div>
-
-
-                                    {{-- REFERENCE --}}
-                                    <div class="rounded-xl border border-slate-100
-                                                bg-white p-3">
-
-                                        <p class="text-[10px] font-semibold text-slate-400">
-                                            Reference
-                                        </p>
-
-                                        <p class="mt-1 truncate text-sm font-bold text-slate-800">
-                                            {{ $transaction->payment_reference ?? 'Not submitted' }}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                {{-- STATUS MESSAGE --}}
-                                <div class="mt-5 flex flex-col gap-4
-                                            border-t border-slate-100 pt-4
-                                            sm:flex-row sm:items-center
-                                            sm:justify-between">
-
-                                    <div>
-
-                                        @if($transaction->status === 'approved')
-
-                                            <p class="text-xs font-medium text-emerald-600">
-                                                Payment approved. Course access granted.
-                                            </p>
-
-                                        @elseif($transaction->status === 'rejected')
-
-                                            <p class="text-xs font-medium text-red-500">
-                                                Payment was rejected. Please review the details.
-                                            </p>
-
-                                        @else
-
-                                            <p class="text-xs font-medium text-amber-600">
-                                                Waiting for administrator verification.
-                                            </p>
-
-                                        @endif
-
-                                    </div>
-
-
-                                    <a
-                                        href="{{ route('student.transactions.show', $transaction) }}"
-                                        class="inline-flex h-9 shrink-0 items-center
-                                               justify-center rounded-lg
-                                               bg-violet-600 px-4
-                                               text-[11px] font-semibold
-                                               text-white transition
-                                               hover:bg-violet-700"
-                                    >
-                                        View Details
-                                    </a>
-
-                                </div>
+                                <p class="mt-1 text-xs font-medium {{ $messageClass }}">
+                                    {{ $message }}
+                                </p>
 
                             </div>
 
-                        </article>
 
-                    @empty
 
-                        {{-- =================================================
-                            EMPTY STATE
-                        ================================================== --}}
-                        <div class="col-span-full pw-card px-6 py-16 text-center">
+                            {{-- AMOUNT --}}
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Amount
+                                </p>
 
-                            <div class="mx-auto flex h-14 w-14 items-center
-                                        justify-center rounded-2xl
-                                        bg-violet-50 text-violet-600">
+                                <p class="mt-1 text-sm font-bold text-slate-900">
+                                    ₱{{ number_format($transaction->amount, 2) }}
+                                </p>
+                            </div>
 
-                                <svg
-                                    class="h-6 w-6"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.8"
+
+
+                            {{-- METHOD --}}
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Method
+                                </p>
+
+                                <p class="mt-1 truncate text-sm font-semibold text-slate-700">
+                                    {{ $transaction->payment_method ?? 'Not submitted' }}
+                                </p>
+                            </div>
+
+
+
+                            {{-- REFERENCE --}}
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Reference
+                                </p>
+
+                                <p
+                                    class="mt-1 truncate text-sm font-semibold text-slate-700"
+                                    title="{{ $transaction->payment_reference ?? 'Not submitted' }}"
                                 >
-                                    <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                                    <path d="M3 10h18"></path>
-                                    <path d="M7 15h3"></path>
-                                </svg>
-
+                                    {{ $transaction->payment_reference ?? 'Not submitted' }}
+                                </p>
                             </div>
 
 
-                            <h3 class="mt-4 text-sm font-bold text-slate-800">
-                                No transactions yet
-                            </h3>
 
+                            {{-- ACTION --}}
+                            <div class="flex lg:justify-end">
 
-                            <p class="mx-auto mt-1 max-w-sm text-xs
-                                      leading-5 text-slate-400">
-                                Your course purchases and payment records
-                                will appear here.
-                            </p>
+                                <a
+                                    href="{{ route('student.transactions.show', $transaction) }}"
+                                    class="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-50 lg:w-auto"
+                                >
+                                    View Details
 
+                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m9 18 6-6-6-6"></path>
+                                    </svg>
+                                </a>
 
-                            <a
-                                href="{{ route('student.marketplace') }}"
-                                class="mt-5 inline-flex h-10 items-center
-                                       justify-center rounded-xl
-                                       bg-violet-600 px-5
-                                       text-xs font-semibold text-white
-                                       transition hover:bg-violet-700"
-                            >
-                                Browse Courses
-                            </a>
+                            </div>
 
                         </div>
 
-                    @endforelse
+                    </article>
 
-                </div>
+
+                @empty
+
+
+                    {{-- EMPTY STATE --}}
+                    <div class="px-6 py-16 text-center">
+
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                                <path d="M3 10h18"></path>
+                                <path d="M7 15h3"></path>
+                            </svg>
+                        </div>
+
+
+                        <h3 class="mt-4 text-base font-bold text-slate-900">
+                            No transactions yet
+                        </h3>
+
+
+                        <p class="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                            Your course purchases and payment records will appear here.
+                        </p>
+
+
+                        <a
+                            href="{{ route('student.marketplace') }}"
+                            class="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-5 text-xs font-semibold text-white transition hover:bg-violet-700"
+                        >
+                            Browse Courses
+                        </a>
+
+                    </div>
+
+                @endforelse
 
             </section>
 
