@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Notifications\PathwiseNotification;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -74,7 +75,13 @@ class CertificateController extends Controller
             (int) $validated['course_id']
         );
 
-        Certificate::create($validated);
+        $certificate = Certificate::create($validated);
+
+        if ($certificate->status === 'issued') {
+            $this->notifyStudentAboutIssuedCertificate(
+                $certificate
+            );
+        }
 
         return redirect()
             ->route('certificates.index')
@@ -137,7 +144,52 @@ class CertificateController extends Controller
             (int) $validated['course_id']
         );
 
+        $wasIssued =
+            strtolower(
+                trim(
+                    (string) $certificate->status
+                )
+            )
+            ===
+            'issued';
+
+        $previousStudentId =
+            (int) $certificate->student_id;
+
+        $previousCourseId =
+            (int) $certificate->course_id;
+
         $certificate->update($validated);
+
+        $certificate->refresh();
+
+        $isIssuedNow =
+            strtolower(
+                trim(
+                    (string) $certificate->status
+                )
+            )
+            ===
+            'issued';
+
+        $issuedRecipientChanged =
+            $previousStudentId !== (int) $certificate->student_id
+            ||
+            $previousCourseId !== (int) $certificate->course_id;
+
+        if (
+            $isIssuedNow
+            &&
+            (
+                ! $wasIssued
+                ||
+                $issuedRecipientChanged
+            )
+        ) {
+            $this->notifyStudentAboutIssuedCertificate(
+                $certificate
+            );
+        }
 
         return redirect()
             ->route('certificates.index')
@@ -214,6 +266,63 @@ class CertificateController extends Controller
         return $pdf->download(
             $safeCertificateNumber . '.pdf'
         );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CERTIFICATE NOTIFICATION
+    |--------------------------------------------------------------------------
+    | Only an issued certificate notifies the student. Updating ordinary
+    | certificate details does not generate duplicate bell notifications.
+    */
+
+    private function notifyStudentAboutIssuedCertificate(
+        Certificate $certificate
+    ): void {
+        try {
+            $certificate->loadMissing([
+                'student',
+                'course',
+            ]);
+
+            $student =
+                $certificate->student;
+
+            $course =
+                $certificate->course;
+
+            if (
+                ! $student
+                ||
+                ! $course
+                ||
+                strtolower(
+                    trim(
+                        (string) $certificate->status
+                    )
+                )
+                !==
+                'issued'
+            ) {
+                return;
+            }
+
+            $student->notify(
+                new PathwiseNotification(
+                    title: 'Certificate available',
+                    message:
+                        'Your certificate for "'
+                        . $course->title
+                        . '" is now available.',
+                    type: 'certificate_issued',
+                    courseId: $course->id,
+                    certificateId: $certificate->id
+                )
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
 

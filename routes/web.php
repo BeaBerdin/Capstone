@@ -54,97 +54,90 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     })->name('dashboard');
 
-     /*
+    /*
     |--------------------------------------------------------------------------
     | NOTIFICATIONS
     |--------------------------------------------------------------------------
     */
 
     Route::post('/notifications/{notification}/read',
-    [NotificationController::class, 'read']) 
-    ->name('notifications.read');
+        [NotificationController::class, 'read'])
+        ->name('notifications.read');
 
-    Route::post( '/notifications/read-all', [NotificationController::class, 'readAll'])
-    ->name('notifications.read-all');
+    Route::post('/notifications/read-all',
+        [NotificationController::class, 'readAll'])
+        ->name('notifications.read-all');
 
 
     /*
-|--------------------------------------------------------------------------
-| SUPER ADMIN - EDP
-|--------------------------------------------------------------------------
-| System-level administration
-*/
+    |--------------------------------------------------------------------------
+    | SUPER ADMIN - EDP
+    |--------------------------------------------------------------------------
+    | System-level administration
+    */
 
-Route::middleware('role:super_admin')->group(function () {
+    Route::middleware('role:super_admin')->group(function () {
 
-    // Super Admin Dashboard
-    Route::get('/super-admin-dashboard', [DashboardController::class, 'superAdmin'])
-        ->name('super_admin.dashboard');
+        Route::get('/super-admin-dashboard', [DashboardController::class, 'superAdmin'])
+            ->name('super_admin.dashboard');
 
-    // User Management
-    Route::get('/super-admin/users', [UserManagementController::class, 'index'])
-        ->name('users.index');
+        Route::get('/super-admin/users', [UserManagementController::class, 'index'])
+            ->name('users.index');
 
-    Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
-        ->name('users.update-role');
+        Route::put('/super-admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
+            ->name('users.update-role');
 
-    // Transaction Verification
-    Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
-        ->name('super_admin.transactions.index');
+        Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
+            ->name('super_admin.transactions.index');
 
-    Route::post('/super-admin/transactions/{transaction}/approve', [TransactionController::class, 'approve'])
-        ->name('super_admin.transactions.approve');
+        Route::post('/super-admin/transactions/{transaction}/approve', [TransactionController::class, 'approve'])
+            ->name('super_admin.transactions.approve');
 
-    Route::post('/super-admin/transactions/{transaction}/reject', [TransactionController::class, 'reject'])
-        ->name('super_admin.transactions.reject');
+        Route::post('/super-admin/transactions/{transaction}/reject', [TransactionController::class, 'reject'])
+            ->name('super_admin.transactions.reject');
 
-    // System Reports
-    Route::get('/super-admin/reports', [ReportsController::class, 'index'])
-        ->name('reports.index');
-    Route::get('/departments', [DepartmentController::class, 'index'])
-    ->name('departments.index');
+        Route::get('/super-admin/reports', [ReportsController::class, 'index'])
+            ->name('reports.index');
 
-Route::get('/departments/create', [DepartmentController::class, 'create'])
-    ->name('departments.create');
+        Route::get('/departments', [DepartmentController::class, 'index'])
+            ->name('departments.index');
 
-Route::post('/departments', [DepartmentController::class, 'store'])
-    ->name('departments.store');
+        Route::get('/departments/create', [DepartmentController::class, 'create'])
+            ->name('departments.create');
 
-Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])
-    ->name('departments.edit');
+        Route::post('/departments', [DepartmentController::class, 'store'])
+            ->name('departments.store');
 
-Route::put('/departments/{department}', [DepartmentController::class, 'update'])
-    ->name('departments.update');
+        Route::get('/departments/{department}/edit', [DepartmentController::class, 'edit'])
+            ->name('departments.edit');
 
-Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
-    ->name('departments.destroy');
+        Route::put('/departments/{department}', [DepartmentController::class, 'update'])
+            ->name('departments.update');
 
-Route::get('/departments/assign', [DepartmentController::class, 'assign'])
-    ->name('departments.assign');
+        Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
+            ->name('departments.destroy');
 
-Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
-    ->name('departments.assign.store');
+        Route::get('/departments/assign', [DepartmentController::class, 'assign'])
+            ->name('departments.assign');
 
-});
+        Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
+            ->name('departments.assign.store');
+    });
+
+
     /*
     |--------------------------------------------------------------------------
     | ADMIN - DEPARTMENT HEAD
     |--------------------------------------------------------------------------
-    | E-learning content and academic management
     */
 
     Route::middleware('role:admin')->group(function () {
 
-        // Admin Dashboard
         Route::get('/admin-dashboard', [DashboardController::class, 'index'])
             ->name('admin.dashboard');
 
-
-        // Course Categories
         Route::resource('course-categories', CourseCategoryController::class);
 
-
-        // Courses
         Route::resource('courses', CourseController::class);
 
         Route::post('/courses/{course}/approve', [CourseController::class, 'approve'])
@@ -153,54 +146,22 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::post('/courses/{course}/reject', [CourseController::class, 'reject'])
             ->name('courses.reject');
 
-
-        // Lessons
         Route::resource('lessons', LessonController::class);
-
-
-        // Quizzes
         Route::resource('quizzes', QuizController::class);
-
-
-        // Quiz Questions
         Route::resource('quiz-questions', QuizQuestionController::class);
-
-
-        // Quiz Results
         Route::resource('quiz-results', QuizResultController::class);
-
-
-        // Enrollments
         Route::resource('enrollments', EnrollmentController::class);
-
-
-        // Assignments
         Route::resource('assignments', AssignmentController::class);
-
-
-        // Submissions
         Route::resource('submissions', SubmissionController::class);
-
-
-        // Certificates
         Route::resource('certificates', CertificateController::class);
-
-
-        // AI Recommendations
         Route::resource('ai-recommendations', AIRecommendationController::class);
 
-
-        // Student Progress
         Route::get('/student-progress', [StudentProgressController::class, 'index'])
             ->name('student-progress.index');
 
-
-        // Certificate Management
         Route::get('/certificate-management', [CertificateManagementController::class, 'index'])
             ->name('certificate-management.index');
 
-
-        // Learning Paths
         Route::resource('admin/learning-paths', LearningPathController::class)
             ->names('learning-paths');
     });
@@ -214,40 +175,27 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
 
     Route::middleware('role:teacher')->group(function () {
 
-        // Teacher Dashboard
         Route::get('/teacher-dashboard', [DashboardController::class, 'teacher'])
             ->name('teacher.dashboard');
 
-
-        // Teacher Courses
         Route::get('/teacher-courses', [CourseController::class, 'teacherCourses'])
             ->name('teacher.courses');
 
         Route::get('/teacher/my-courses', [CourseController::class, 'teacherCourses'])
             ->name('teacher.my-courses');
 
-        // ============================================
-        // NEW: CREATE COURSE ROUTES (ADD THESE)
-        // ============================================
         Route::get('/teacher/courses/create', [CourseController::class, 'teacherCreateCourse'])
             ->name('teacher.courses.create');
 
         Route::post('/teacher/courses', [CourseController::class, 'teacherStoreCourse'])
             ->name('teacher.courses.store');
-        // ============================================
 
-
-        // View Students
         Route::get('/teacher-courses/{course}/students', [CourseController::class, 'teacherCourseStudents'])
             ->name('teacher.course.students');
 
-
-        // Student Progress
         Route::get('/teacher/course/{course}/student/{student}/progress', [CourseController::class, 'studentProgress'])
             ->name('teacher.student.progress');
 
-
-        // Teacher Lessons
         Route::get('/teacher/courses/{course}/lessons', [LessonController::class, 'teacherLessons'])
             ->name('teacher.lessons');
 
@@ -266,8 +214,6 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::delete('/teacher/lessons/{lesson}', [LessonController::class, 'teacherDeleteLesson'])
             ->name('teacher.lessons.delete');
 
-
-        // Teacher Quiz Builder
         Route::get('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherBuilder'])
             ->name('teacher.quiz.builder');
 
@@ -286,13 +232,38 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::delete('/teacher/quizzes/{quiz}/questions/{question}', [QuizController::class, 'teacherDeleteQuestion'])
             ->name('teacher.quiz.question.delete');
 
-
-        // Submit Course for Approval
         Route::post('/teacher/courses/{course}/submit', [CourseController::class, 'submitForApproval'])
             ->name('teacher.courses.submit');
 
+        // Assignments
+        Route::get('/teacher/assignments', [AssignmentController::class, 'teacherIndex'])
+            ->name('teacher.assignments.index');
 
-        // Quiz Results
+        Route::get('/teacher/courses/{course}/assignments/create', [AssignmentController::class, 'teacherCreate'])
+            ->name('teacher.assignments.create');
+
+        Route::post('/teacher/courses/{course}/assignments', [AssignmentController::class, 'teacherStore'])
+            ->name('teacher.assignments.store');
+
+        Route::get('/teacher/assignments/{assignment}/edit', [AssignmentController::class, 'teacherEdit'])
+            ->name('teacher.assignments.edit');
+
+        Route::put('/teacher/assignments/{assignment}', [AssignmentController::class, 'teacherUpdate'])
+            ->name('teacher.assignments.update');
+
+        Route::delete('/teacher/assignments/{assignment}', [AssignmentController::class, 'teacherDestroy'])
+            ->name('teacher.assignments.destroy');
+
+        // Submission review / grading
+        Route::get('/teacher/assignments/{assignment}/submissions', [SubmissionController::class, 'teacherIndex'])
+            ->name('teacher.submissions.index');
+
+        Route::get('/teacher/submissions/{submission}', [SubmissionController::class, 'teacherShow'])
+            ->name('teacher.submissions.show');
+
+        Route::put('/teacher/submissions/{submission}/grade', [SubmissionController::class, 'teacherGrade'])
+            ->name('teacher.submissions.grade');
+
         Route::get('/teacher/quiz-results', [QuizResultController::class, 'index'])
             ->name('teacher.quiz-results.index');
 
@@ -311,21 +282,16 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::delete('/teacher/quiz-results/{quiz_result}', [QuizResultController::class, 'destroy'])
             ->name('teacher.quiz-results.destroy');
 
-
-        // Teacher Student Progress
         Route::get('/teacher/student-progress', [StudentProgressController::class, 'index'])
             ->name('teacher.student-progress.index');
 
-
-        // All Teacher Lessons
         Route::get('/teacher/lessons', [LessonController::class, 'teacherAllLessons'])
             ->name('teacher.lessons.index');
 
-        // Teacher Performance Analytics
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
 
-        Route::delete( '/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
+        Route::delete('/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
             ->name('teacher.courses.destroy');
     });
 
@@ -338,30 +304,21 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
 
     Route::middleware('role:student')->group(function () {
 
-        // Student Dashboard
         Route::get('/student-dashboard', [DashboardController::class, 'student'])
             ->name('student.dashboard');
 
-
-        // Marketplace
         Route::get('/marketplace', [CourseController::class, 'marketplace'])
             ->name('student.marketplace');
 
         Route::get('/marketplace/{course}', [CourseController::class, 'showStudentCourse'])
             ->name('student.course.show');
 
-
-        // Enrollment
         Route::post('/marketplace/{course}/enroll', [CourseController::class, 'enroll'])
             ->name('student.enroll');
 
-
-        // My Courses
         Route::get('/my-courses', [CourseController::class, 'myCourses'])
             ->name('student.my-courses');
 
-
-        // Learning
         Route::get('/learn/{course}', [LessonController::class, 'studentCourse'])
             ->name('student.learn.course');
 
@@ -371,8 +328,16 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::post('/lesson/{lesson}/complete', [LessonController::class, 'markComplete'])
             ->name('student.lesson.complete');
 
+        // Assignments / output submissions
+        Route::get('/student/assignments', [AssignmentController::class, 'studentIndex'])
+            ->name('student.assignments.index');
 
-        // Certificates
+        Route::get('/student/assignments/{assignment}', [AssignmentController::class, 'studentShow'])
+            ->name('student.assignments.show');
+
+        Route::post('/student/assignments/{assignment}/submit', [SubmissionController::class, 'studentStore'])
+            ->name('student.assignments.submit');
+
         Route::get('/my-certificates', [DashboardController::class, 'certificates'])
             ->name('student.certificates');
 
@@ -382,16 +347,12 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::get('/certificate/{certificate}/download', [CertificateController::class, 'download'])
             ->name('student.certificate.download');
 
-
-        // Quizzes
         Route::get('/quiz/{quiz}/take', [QuizController::class, 'take'])
             ->name('student.quiz.take');
 
         Route::post('/quiz/{quiz}/submit', [QuizController::class, 'submit'])
             ->name('student.quiz.submit');
 
-
-        // Learning Paths
         Route::get('/student/learning-paths', [LearningPathController::class, 'studentIndex'])
             ->name('student.learning-paths');
 
@@ -401,13 +362,9 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::post('/student/learning-paths/generate', [LearningPathController::class, 'generateForStudent'])
             ->name('student.learning-paths.generate');
 
-
-        // AI Course Recommendations
         Route::get('/recommended-courses', [AIRecommendationController::class, 'studentRecommendations'])
             ->name('student.recommendations');
 
-
-               // Student Transactions
         Route::get('/transactions', [TransactionController::class, 'studentIndex'])
             ->name('student.transactions');
 
@@ -417,16 +374,12 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
         Route::get('/transactions/{transaction}', [TransactionController::class, 'studentShow'])
             ->name('student.transactions.show');
 
-        // PayMongo Payment Success
         Route::get('/transactions/{transaction}/success', [TransactionController::class, 'success'])
             ->name('student.transactions.success');
 
-        // PayMongo Payment Cancelled
         Route::get('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
             ->name('student.transactions.cancel');
 
-        // Legacy manual payment proof route
-        // Kept only for older non-PayMongo transactions.
         Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
             ->name('student.transactions.upload-proof');
     });
@@ -436,9 +389,6 @@ Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
 // =====================================================
 // PAYMONGO WEBHOOK
 // =====================================================
-// IMPORTANT:
-// This route is outside auth/verified middleware.
-// PayMongo needs to access this endpoint directly.
 
 Route::post('/paymongo/webhook', [TransactionController::class, 'webhook'])
     ->name('paymongo.webhook');

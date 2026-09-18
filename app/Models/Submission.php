@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Submission extends Model
 {
@@ -17,12 +18,20 @@ class Submission extends Model
         'submitted_at',
     ];
 
-    public function assignment()
+    protected function casts(): array
+    {
+        return [
+            'score' => 'integer',
+            'submitted_at' => 'datetime',
+        ];
+    }
+
+    public function assignment(): BelongsTo
     {
         return $this->belongsTo(Assignment::class);
     }
 
-    public function student()
+    public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_id');
     }

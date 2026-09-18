@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\LessonProgress;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
+use App\Notifications\PathwiseNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -871,6 +872,82 @@ class CourseController extends Controller
             'status' =>
                 'pending',
         ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | NOTIFY ADMIN ABOUT PENDING COURSE
+        |--------------------------------------------------------------------------
+        | Prefer administrators assigned to the teacher's department.
+        | If none are found, fall back to all administrators so the course
+        | approval request is not missed.
+        */
+
+        $teacher = auth()->user();
+
+        $adminQuery = User::whereHas(
+            'roles',
+            function ($query) {
+                $query->where(
+                    'name',
+                    'admin'
+                );
+            }
+        );
+
+        if (! empty($teacher->department_id)) {
+            $adminQuery->where(
+                'department_id',
+                $teacher->department_id
+            );
+        }
+
+        $admins = $adminQuery->get();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FALLBACK TO ALL ADMINS
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $admins->isEmpty()
+            &&
+            ! empty($teacher->department_id)
+        ) {
+            $admins = User::whereHas(
+                'roles',
+                function ($query) {
+                    $query->where(
+                        'name',
+                        'admin'
+                    );
+                }
+            )->get();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND DATABASE NOTIFICATION
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($admins as $admin) {
+            $admin->notify(
+                new PathwiseNotification(
+                    title: 'Course awaiting approval',
+                    message:
+                        $teacher->name
+                        . ' submitted "'
+                        . $course->title
+                        . '" for review.',
+                    type: 'course_submitted',
+                    courseId: $course->id
+                )
+            );
+        }
 
 
         return redirect()

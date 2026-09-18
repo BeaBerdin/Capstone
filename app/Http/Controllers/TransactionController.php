@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Transaction;
+use App\Notifications\PathwiseNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -51,6 +52,26 @@ class TransactionController extends Controller
                 auth()->id(),
                 $course->id
             );
+
+            $student = auth()->user();
+
+            if ($student) {
+                try {
+                    $student->notify(
+                        new PathwiseNotification(
+                            title: 'Enrollment confirmed',
+                            message:
+                                'You are now enrolled in "'
+                                . $course->title
+                                . '".',
+                            type: 'enrollment_activated',
+                            courseId: $course->id
+                        )
+                    );
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
 
             return redirect()
                 ->route('student.my-courses')
@@ -720,6 +741,10 @@ class TransactionController extends Controller
             );
         });
 
+        $this->notifyStudentAboutApprovedTransaction(
+            $transaction->fresh()
+        );
+
         return back()->with(
             'success',
             'Transaction approved and student enrolled successfully.'
@@ -969,7 +994,63 @@ class TransactionController extends Controller
                 $transaction->course_id
             );
         });
+
+        $this->notifyStudentAboutApprovedTransaction(
+            $transaction->fresh()
+        );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT / ENROLLMENT NOTIFICATION
+    |--------------------------------------------------------------------------
+    | Notification failure must never undo a verified payment or enrollment,
+    | so it runs only after the database transaction has completed.
+    */
+
+    private function notifyStudentAboutApprovedTransaction(
+        Transaction $transaction
+    ): void {
+        try {
+            $transaction->loadMissing([
+                'student',
+                'course',
+            ]);
+
+            $student =
+                $transaction->student;
+
+            $course =
+                $transaction->course;
+
+            if (
+                ! $student
+                ||
+                ! $course
+                ||
+                $transaction->status !== 'approved'
+            ) {
+                return;
+            }
+
+            $student->notify(
+                new PathwiseNotification(
+                    title: 'Payment confirmed',
+                    message:
+                        'Your payment for "'
+                        . $course->title
+                        . '" has been confirmed and your enrollment is active.',
+                    type: 'payment_approved',
+                    courseId: $course->id,
+                    transactionId: $transaction->id
+                )
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
 
     private function activateEnrollment(
         int $studentId,
