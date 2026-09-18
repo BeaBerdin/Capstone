@@ -16,8 +16,29 @@ class ReportsController extends Controller
     /**
      * Super Admin system reports.
      */
-    public function index()
+    public function index(Request $request)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Report Filters
+        |--------------------------------------------------------------------------
+        */
+
+        $range = (string) $request->input('range', 'all');
+
+        $startDate = match ($range) {
+            '30' => now()->subDays(30)->startOfDay(),
+            '90' => now()->subDays(90)->startOfDay(),
+            '365' => now()->subDays(365)->startOfDay(),
+            default => null,
+        };
+
+        /*
+        |--------------------------------------------------------------------------
+        | Users
+        |--------------------------------------------------------------------------
+        */
+
         $totalStudents = User::whereHas('roles', function ($query) {
             $query->where('name', 'student');
         })->count();
@@ -26,16 +47,156 @@ class ReportsController extends Controller
             $query->where('name', 'teacher');
         })->count();
 
-        $totalCourses = Course::count();
-        $totalEnrollments = Enrollment::count();
-        $completedEnrollments = Enrollment::where('status', 'completed')->count();
-        $activeEnrollments = Enrollment::where('status', 'active')->count();
-        $certificatesIssued = Certificate::count();
-        $quizAttempts = QuizResult::count();
+        $totalAdmins = User::whereHas('roles', function ($query) {
+            $query->where('name', 'admin');
+        })->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Courses
+        |--------------------------------------------------------------------------
+        */
+
+        $courseQuery = Course::query();
+
+        if ($startDate) {
+            $courseQuery->where('created_at', '>=', $startDate);
+        }
+
+        $totalCourses = $courseQuery->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Enrollments
+        |--------------------------------------------------------------------------
+        */
+
+        $enrollmentQuery = Enrollment::query();
+
+        if ($startDate) {
+            $enrollmentQuery->where('created_at', '>=', $startDate);
+        }
+
+        $totalEnrollments = $enrollmentQuery->count();
+
+        $completedEnrollments = (clone $enrollmentQuery)
+            ->where('status', 'completed')
+            ->count();
+
+        $activeEnrollments = (clone $enrollmentQuery)
+            ->where('status', 'active')
+            ->count();
 
         $completionRate = $totalEnrollments > 0
             ? round(($completedEnrollments / $totalEnrollments) * 100, 2)
             : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Certificates
+        |--------------------------------------------------------------------------
+        */
+
+        $certificateQuery = Certificate::query();
+
+        if ($startDate) {
+            $certificateQuery->where('created_at', '>=', $startDate);
+        }
+
+        $certificatesIssued = $certificateQuery->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Quiz Results
+        |--------------------------------------------------------------------------
+        */
+
+        $quizResultQuery = QuizResult::query();
+
+        if ($startDate) {
+            $quizResultQuery->where('created_at', '>=', $startDate);
+        }
+
+        $quizAttempts = $quizResultQuery->count();
+
+        $averageQuizScore = round(
+            (float) ($quizResultQuery->avg('percentage') ?? 0),
+            2
+        );
+
+        $passedQuizAttempts = (clone $quizResultQuery)
+            ->where('remarks', 'passed')
+            ->count();
+
+        $failedQuizAttempts = (clone $quizResultQuery)
+            ->where('remarks', 'failed')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Assignments / Submissions
+        |--------------------------------------------------------------------------
+        */
+
+        $assignmentQuery = Assignment::query();
+
+        if ($startDate) {
+            $assignmentQuery->where('created_at', '>=', $startDate);
+        }
+
+        $totalAssignments = $assignmentQuery->count();
+
+        $submissionQuery = Submission::query();
+
+        if ($startDate) {
+            $submissionQuery->where('created_at', '>=', $startDate);
+        }
+
+        $totalSubmissions = $submissionQuery->count();
+
+        $gradedSubmissions = (clone $submissionQuery)
+            ->where('status', 'graded')
+            ->count();
+
+        $pendingSubmissions = (clone $submissionQuery)
+            ->where('status', 'submitted')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Transactions / Revenue
+        |--------------------------------------------------------------------------
+        */
+
+        $transactionQuery = \App\Models\Transaction::query();
+
+        if ($startDate) {
+            $transactionQuery->where('created_at', '>=', $startDate);
+        }
+
+        $totalTransactions = $transactionQuery->count();
+
+        $approvedTransactions = (clone $transactionQuery)
+            ->where('status', 'approved')
+            ->count();
+
+        $pendingTransactions = (clone $transactionQuery)
+            ->where('status', 'pending')
+            ->count();
+
+        $rejectedTransactions = (clone $transactionQuery)
+            ->where('status', 'rejected')
+            ->count();
+
+        $totalRevenue = (clone $transactionQuery)
+            ->where('status', 'approved')
+            ->sum('amount');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recent Activity
+        |--------------------------------------------------------------------------
+        */
 
         $recentQuizResults = QuizResult::with(['student', 'quiz'])
             ->latest()
@@ -53,15 +214,29 @@ class ReportsController extends Controller
             ->get();
 
         return view('reports.index', compact(
+            'range',
             'totalStudents',
             'totalTeachers',
+            'totalAdmins',
             'totalCourses',
             'totalEnrollments',
             'completedEnrollments',
             'activeEnrollments',
+            'completionRate',
             'certificatesIssued',
             'quizAttempts',
-            'completionRate',
+            'averageQuizScore',
+            'passedQuizAttempts',
+            'failedQuizAttempts',
+            'totalAssignments',
+            'totalSubmissions',
+            'gradedSubmissions',
+            'pendingSubmissions',
+            'totalTransactions',
+            'approvedTransactions',
+            'pendingTransactions',
+            'rejectedTransactions',
+            'totalRevenue',
             'recentQuizResults',
             'recentCertificates',
             'popularCourses'
