@@ -1620,6 +1620,7 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Assignments', 'meta' => 'Create and review graded activities', 'url' => route('teacher.assignments.index')],
             ['label' => 'Quiz Results', 'meta' => 'Review quiz performance', 'url' => route('teacher.quiz-results.index')],
             ['label' => 'Student Progress', 'meta' => 'Track learners', 'url' => route('teacher.student-progress.index')],
+            ['label' => 'Student Invitations', 'meta' => 'Invite learners via unique links', 'url' => route('course-invitations.index')],
             ['label' => 'Performance Analytics', 'meta' => 'Reports and learner performance', 'url' => route('teacher.analytics')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
         ]);
@@ -2460,6 +2461,60 @@ html.dark .pw-mobile-toggle {
 
 
 
+                {{-- STUDENT INVITATIONS --}}
+                <section class="pw-nav-section">
+
+                    <div class="pw-nav-heading">
+                        Enrollment
+                    </div>
+
+
+                    <a
+                        href="{{ route('course-invitations.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{
+                            request()->routeIs('course-invitations.*')
+                                ? 'is-active'
+                                : ''
+                        }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                            />
+                            <circle
+                                cx="9"
+                                cy="7"
+                                r="4"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19 8v6M22 11h-6"
+                            />
+                        </svg>
+
+                        <span>
+                            Student Invitations
+                        </span>
+
+                    </a>
+
+                </section>
+
+
+
                 {{-- ANALYTICS --}}
                 <section class="pw-nav-section">
 
@@ -3149,11 +3204,11 @@ html.dark .pw-mobile-toggle {
                                                     />
                                                 </svg>
 
-                                                {{
+                                                {!!
                                                     optional(
                                                         $pwNotification->created_at
                                                     )->diffForHumans()
-                                                }}
+                                                !!}
 
                                             </span>
 

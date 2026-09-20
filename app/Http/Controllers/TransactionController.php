@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\Transaction;
 use App\Notifications\PathwiseNotification;
@@ -35,10 +36,69 @@ class TransactionController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function store(Course $course)
+    public function store(Request $request, Course $course)
     {
         if (strtolower((string) $course->status) !== 'published') {
-            abort(404, 'This course is not available for purchase.');
+            abort(404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check invitation if this purchase came from an invitation link
+        |--------------------------------------------------------------------------
+        */
+
+        $invitation = null;
+if ($request->filled('course_invitation_code')) {
+
+    $invitationCode = strtoupper(
+        (string) $request->input('course_invitation_code')
+    );
+
+            $invitation = CourseInvitation::where(
+                'code',
+                $invitationCode
+            )
+                ->where('course_id', $course->id)
+                ->whereNull('accepted_at')
+                ->first();
+
+            if (! $invitation) {
+                return redirect()
+                    ->route(
+                        'course-invitations.show',
+                        $invitationCode
+                    )
+                    ->with(
+                        'error',
+                        'This course invitation is invalid or has already been used.'
+                    );
+            }
+if ($invitation->isExpired()) {
+    return redirect()
+        ->route('student.dashboard')
+        ->with(
+            'error',
+            'This course invitation has expired and payment cannot be started.'
+        );
+}
+
+            /*
+            |--------------------------------------------------------------------------
+            | If the invitation was assigned to a specific student,
+            | only that student may use it.
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $invitation->student_id !== null
+                && (int) $invitation->student_id !== (int) auth()->id()
+            ) {
+                abort(
+                    403,
+                    'This invitation was assigned to another student.'
+                );
+            }
         }
 
         /*
@@ -48,100 +108,137 @@ class TransactionController extends Controller
         */
 
         if ((float) $course->price <= 0) {
+
             $this->activateEnrollment(
                 auth()->id(),
                 $course->id
             );
 
-            $student = auth()->user();
-
-            if ($student) {
-                try {
-                    $student->notify(
-                        new PathwiseNotification(
-                            title: 'Enrollment confirmed',
-                            message:
-                                'You are now enrolled in "'
-                                . $course->title
-                                . '".',
-                            type: 'enrollment_activated',
-                            courseId: $course->id
-                        )
-                    );
-                } catch (\Throwable $e) {
-                    report($e);
-                }
+            if ($invitation) {
+                $invitation->update([
+                    'accepted_at' => now(),
+                    'accepted_by' => auth()->id(),
+                ]);
             }
 
-            return redirect()
-                ->route('student.my-courses')
-                ->with('success', 'You are now enrolled in this free course.');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK EXISTING ENROLLMENT
-        |--------------------------------------------------------------------------
-        */
-
-        $existingEnrollment = Enrollment::where('student_id', auth()->id())
-            ->where('course_id', $course->id)
-            ->first();
-
-        if ($existingEnrollment) {
-            return redirect()
-                ->route('student.my-courses')
-                ->with('success', 'You are already enrolled in this course.');
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK PAYMONGO CONFIGURATION BEFORE CREATING A TRANSACTION
-        |--------------------------------------------------------------------------
-        */
-
-        $secretKey = $this->payMongoSecretKey();
-
-        if ($secretKey === '') {
-            return back()->with(
-                'error',
-                'PayMongo is not configured yet. Add PAYMONGO_SECRET_KEY to your .env file, then clear the Laravel config cache.'
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHECK EXISTING PENDING TRANSACTION
-        |--------------------------------------------------------------------------
-        */
-
-        $existingPendingTransaction = Transaction::where('student_id', auth()->id())
-            ->where('course_id', $course->id)
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
-
-        if ($existingPendingTransaction) {
-            return redirect()
-                ->route(
-                    'student.transactions.show',
-                    $existingPendingTransaction
+            auth()->user()->notify(
+                new PathwiseNotification(
+                    title: 'Enrollment activated',
+                    message: 'You are now enrolled in "' . $course->title . '".',
+                    type: 'enrollment_activated',
+                    courseId: $course->id
                 )
+            );
+
+            return redirect()
+                ->route('student.my-courses')
                 ->with(
                     'success',
-                    'You already have a pending PayMongo transaction for this course. PathWise will check its payment status.'
+                    'You are now enrolled in this course.'
                 );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE PATHWISE TRANSACTION
+        | Check if already enrolled
+        |--------------------------------------------------------------------------
+        */
+
+        $existingEnrollment = Enrollment::where(
+            'student_id',
+            auth()->id()
+        )
+            ->where(
+                'course_id',
+                $course->id
+            )
+            ->first();
+
+        if ($existingEnrollment) {
+
+            if ($invitation) {
+                $invitation->update([
+                    'accepted_at' => now(),
+                    'accepted_by' => auth()->id(),
+                ]);
+            }
+
+            return redirect()
+                ->route('student.my-courses')
+                ->with(
+                    'success',
+                    'You are already enrolled in this course.'
+                );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | PayMongo configuration
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            ! config('services.paymongo.secret_key')
+            || ! config('services.paymongo.public_key')
+        ) {
+            return back()->with(
+                'error',
+                'Payment service is not configured.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing pending transaction
+        |--------------------------------------------------------------------------
+        */
+
+        $existingPendingTransaction = Transaction::where(
+            'student_id',
+            auth()->id()
+        )
+            ->where(
+                'course_id',
+                $course->id
+            )
+            ->where(
+                'status',
+                'pending'
+            )
+            ->latest()
+            ->first();
+
+        if ($existingPendingTransaction) {
+
+            if (
+                $invitation
+                && ! $existingPendingTransaction->course_invitation_id
+            ) {
+                $existingPendingTransaction->update([
+                    'course_invitation_id' => $invitation->id,
+                ]);
+            }
+
+            if (
+                $existingPendingTransaction->checkout_url
+                ?? null
+            ) {
+                return redirect()->away(
+                    $existingPendingTransaction->checkout_url
+                );
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create transaction
         |--------------------------------------------------------------------------
         */
 
         $transaction = Transaction::create([
             'student_id' => auth()->id(),
             'course_id' => $course->id,
+            'course_invitation_id' => $invitation?->id,
             'transaction_no' => $this->generateTransactionNumber(),
             'amount' => $course->price,
             'payment_method' => 'PayMongo',
@@ -150,148 +247,127 @@ class TransactionController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | CREATE PAYMONGO CHECKOUT SESSION
+        | Create PayMongo checkout session
         |--------------------------------------------------------------------------
         */
 
-        try {
-            $response = Http::withBasicAuth(
-                $secretKey,
-                ''
-            )
-                ->acceptJson()
-                ->asJson()
-                ->timeout(30)
-                ->post(
-                    'https://api.paymongo.com/v2/checkout_sessions',
-                    [
-                        'data' => [
-                            'attributes' => [
-                                'line_items' => [
-                                    [
-                                        'name' => $course->title,
-                                        'amount' => (int) round(((float) $course->price) * 100),
-                                        'currency' => 'PHP',
-                                        'quantity' => 1,
-                                    ],
-                                ],
+        $successUrl = route(
+            'student.transactions.success',
+            $transaction
+        );
 
-                                'payment_method_types' => [
-                                    'gcash',
-                                    'card',
-                                ],
+        $cancelUrl = route(
+            'student.transactions'
+        );
 
-                                'success_url' => route(
-                                    'student.transactions.success',
-                                    $transaction
+        $response = Http::withBasicAuth(
+            config('services.paymongo.secret_key'),
+            ''
+        )->post(
+            'https://api.paymongo.com/v1/checkout_sessions',
+            [
+                'data' => [
+                    'attributes' => [
+                        'line_items' => [
+                            [
+                                'currency' => 'PHP',
+                                'amount' => (int) round(
+                                    $course->price * 100
                                 ),
-
-                                'cancel_url' => route(
-                                    'student.transactions.cancel',
-                                    $transaction
-                                ),
-
-                                'reference_number' => $transaction->transaction_no,
-
-                                'send_email_receipt' => false,
-
-                                'metadata' => [
-                                    'transaction_id' => (string) $transaction->id,
-                                    'transaction_no' => $transaction->transaction_no,
-                                    'student_id' => (string) auth()->id(),
-                                    'course_id' => (string) $course->id,
-                                ],
+                                'name' => $course->title,
+                                'quantity' => 1,
                             ],
                         ],
-                    ]
-                );
 
-            if ($response->failed()) {
-                $paymongoDetail = data_get(
-                    $response->json(),
-                    'errors.0.detail'
-                )
-                    ?? data_get(
-                        $response->json(),
-                        'errors.0.code'
-                    )
-                    ?? (
-                        'PayMongo returned HTTP '
-                        . $response->status()
-                    );
+                        'payment_method_types' => [
+                            'gcash',
+                            'card',
+                        ],
 
-                $transaction->update([
-                    'status' => 'rejected',
-                    'remarks' => Str::limit(
-                        'PayMongo checkout error: ' . $paymongoDetail,
-                        1000
-                    ),
-                ]);
+                        'success_url' => $successUrl,
 
-                return back()->with(
-                    'error',
-                    'PayMongo could not create the checkout: ' . $paymongoDetail
-                );
-            }
+                        'cancel_url' => $cancelUrl,
 
-            $checkoutSession = $response->json('data');
+                        'description' =>
+                            'PATHWISE course enrollment: '
+                            . $course->title,
 
-            $checkoutUrl = data_get(
-                $checkoutSession,
-                'attributes.checkout_url'
-            );
+                        'reference_number' =>
+                            $transaction->transaction_no,
 
-            $checkoutSessionId = data_get(
-                $checkoutSession,
-                'id'
-            );
+                        'metadata' => [
+                            'transaction_id' => $transaction->id,
+                            'course_id' => $course->id,
+                            'student_id' => auth()->id(),
+                            'invitation_code' =>
+                                $invitation?->code,
+                        ],
+                    ],
+                ],
+            ]
+        );
 
-            if (!$checkoutSessionId || !Str::startsWith($checkoutSessionId, 'cs_')) {
-                $transaction->update([
-                    'status' => 'rejected',
-                    'remarks' => 'PayMongo did not return a valid checkout session ID.',
-                ]);
-
-                return back()->with(
-                    'error',
-                    'PayMongo did not return a valid checkout session.'
-                );
-            }
+        if ($response->failed()) {
 
             $transaction->update([
-                'payment_reference' => $checkoutSessionId,
-                'payment_method' => 'PayMongo',
+                'status' => 'failed',
             ]);
-
-            if (!$checkoutUrl) {
-                $transaction->update([
-                    'status' => 'rejected',
-                    'remarks' => 'PayMongo checkout session did not return a checkout URL.',
-                ]);
-
-                return back()->with(
-                    'error',
-                    'PayMongo created a response but did not return a checkout URL.'
-                );
-            }
-
-            return redirect()->away($checkoutUrl);
-        } catch (\Throwable $e) {
-            $transaction->update([
-                'status' => 'rejected',
-                'remarks' => Str::limit(
-                    'PayMongo connection error: ' . $e->getMessage(),
-                    1000
-                ),
-            ]);
-
-            report($e);
 
             return back()->with(
                 'error',
-                'A PayMongo connection error occurred: ' . $e->getMessage()
+                'Unable to create the payment session. Please try again.'
             );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get PayMongo Checkout URL
+        |--------------------------------------------------------------------------
+        */
+
+        $checkoutUrl = data_get(
+            $response->json(),
+            'data.attributes.checkout_url'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get PayMongo Checkout Session ID
+        |--------------------------------------------------------------------------
+        |
+        | This is required by verifyPayMongoCheckout().
+        |
+        */
+
+        $checkoutSessionId = data_get(
+            $response->json(),
+            'data.id'
+        );
+
+        if (! $checkoutUrl || ! $checkoutSessionId) {
+
+            $transaction->update([
+                'status' => 'failed',
+            ]);
+
+            return back()->with(
+                'error',
+                'PayMongo did not return a valid checkout session.'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save checkout URL + Checkout Session ID
+        |--------------------------------------------------------------------------
+        */
+
+        $transaction->update([
+            'checkout_url' => $checkoutUrl,
+            'payment_reference' => $checkoutSessionId,
+        ]);
+
+        return redirect()->away($checkoutUrl);
     }
 
     /*
@@ -314,9 +390,14 @@ class TransactionController extends Controller
         $transaction->load('course');
 
         if ($transaction->status === 'approved') {
+
             $this->activateEnrollment(
                 $transaction->student_id,
                 $transaction->course_id
+            );
+
+            $this->acceptCourseInvitationForTransaction(
+                $transaction
             );
 
             return view(
@@ -324,7 +405,8 @@ class TransactionController extends Controller
                 [
                     'transaction' => $transaction->fresh('course'),
                     'paymentVerified' => true,
-                    'verificationMessage' => 'Your PayMongo payment has already been verified.',
+                    'verificationMessage' =>
+                        'Your PayMongo payment has already been verified.',
                 ]
             );
         }
@@ -336,12 +418,17 @@ class TransactionController extends Controller
         ];
 
         /*
-         * PayMongo may redirect the browser a fraction of a second before the
-         * payment record is available through retrieval. Retry briefly so the
-         * local development flow remains smooth without trusting the redirect.
-         */
+        |--------------------------------------------------------------------------
+        | PayMongo may redirect the browser a fraction of a second before the
+        | payment record is available through retrieval. Retry briefly.
+        |--------------------------------------------------------------------------
+        */
+
         for ($attempt = 1; $attempt <= 3; $attempt++) {
-            $verification = $this->verifyPayMongoCheckout($transaction);
+
+            $verification = $this->verifyPayMongoCheckout(
+                $transaction
+            );
 
             if ($verification['paid']) {
                 break;
@@ -353,6 +440,7 @@ class TransactionController extends Controller
         }
 
         if ($verification['paid']) {
+
             $this->approveVerifiedPayMongoTransaction(
                 $transaction,
                 $verification['payment_id']
@@ -365,8 +453,10 @@ class TransactionController extends Controller
             'student.transactions.success',
             [
                 'transaction' => $transaction,
-                'paymentVerified' => $transaction->status === 'approved',
-                'verificationMessage' => $verification['message'],
+                'paymentVerified' =>
+                    $transaction->status === 'approved',
+                'verificationMessage' =>
+                    $verification['message'],
             ]
         );
     }
@@ -382,9 +472,11 @@ class TransactionController extends Controller
         $this->ensureStudentOwnsTransaction($transaction);
 
         if ($transaction->status === 'pending') {
+
             $transaction->update([
                 'status' => 'rejected',
-                'remarks' => 'PayMongo checkout was cancelled by the student.',
+                'remarks' =>
+                    'PayMongo checkout was cancelled by the student.',
             ]);
         }
 
@@ -407,10 +499,17 @@ class TransactionController extends Controller
         $this->ensureStudentOwnsTransaction($transaction);
 
         /*
-         * PayMongo transactions never require a manually uploaded receipt.
-         * View Transaction instead performs a secure PayMongo status check.
-         */
-        if (strcasecmp((string) $transaction->payment_method, 'PayMongo') === 0) {
+        |--------------------------------------------------------------------------
+        | PayMongo transactions never require a manually uploaded receipt.
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            strcasecmp(
+                (string) $transaction->payment_method,
+                'PayMongo'
+            ) === 0
+        ) {
             return redirect()->route(
                 'student.transactions.success',
                 $transaction
@@ -429,10 +528,6 @@ class TransactionController extends Controller
     |--------------------------------------------------------------------------
     | LEGACY MANUAL PAYMENT PROOF
     |--------------------------------------------------------------------------
-    |
-    | Kept only so older non-PayMongo transactions do not crash. New paid
-    | course purchases should use PayMongo and never come through this method.
-    |
     */
 
     public function uploadProof(
@@ -441,9 +536,17 @@ class TransactionController extends Controller
     ) {
         $this->ensureStudentOwnsTransaction($transaction);
 
-        if (strcasecmp((string) $transaction->payment_method, 'PayMongo') === 0) {
+        if (
+            strcasecmp(
+                (string) $transaction->payment_method,
+                'PayMongo'
+            ) === 0
+        ) {
             return redirect()
-                ->route('student.transactions.show', $transaction)
+                ->route(
+                    'student.transactions.show',
+                    $transaction
+                )
                 ->with(
                     'error',
                     'PayMongo payments are verified automatically. No payment proof upload is required.'
@@ -451,26 +554,50 @@ class TransactionController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'required|string|max:100',
-            'payment_reference' => 'nullable|string|max:255',
-            'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:5120',
-            'remarks' => 'nullable|string|max:1000',
+            'payment_method' =>
+                'required|string|max:100',
+
+            'payment_reference' =>
+                'nullable|string|max:255',
+
+            'payment_proof' =>
+                'required|image|mimes:jpg,jpeg,png|max:5120',
+
+            'remarks' =>
+                'nullable|string|max:1000',
         ]);
 
         $proofPath = $request
             ->file('payment_proof')
-            ->store('payment-proofs', 'public');
+            ->store(
+                'payment-proofs',
+                'public'
+            );
 
         $transaction->update([
-            'payment_method' => $validated['payment_method'],
-            'payment_reference' => $validated['payment_reference'] ?? null,
-            'payment_proof' => $proofPath,
-            'status' => 'pending',
-            'remarks' => $validated['remarks'] ?? null,
+            'payment_method' =>
+                $validated['payment_method'],
+
+            'payment_reference' =>
+                $validated['payment_reference']
+                ?? null,
+
+            'payment_proof' =>
+                $proofPath,
+
+            'status' =>
+                'pending',
+
+            'remarks' =>
+                $validated['remarks']
+                ?? null,
         ]);
 
         return redirect()
-            ->route('student.transactions.show', $transaction)
+            ->route(
+                'student.transactions.show',
+                $transaction
+            )
             ->with(
                 'success',
                 'Payment proof submitted successfully and is awaiting verification.'
@@ -486,15 +613,18 @@ class TransactionController extends Controller
     public function webhook(Request $request)
     {
         /*
-         * Verify PayMongo's signature before parsing or processing the
-         * webhook body.
-         */
+        |--------------------------------------------------------------------------
+        | Verify PayMongo's signature
+        |--------------------------------------------------------------------------
+        */
+
         $signatureVerification =
             $this->verifyPayMongoWebhookSignature(
                 $request
             );
 
-        if (!$signatureVerification['valid']) {
+        if (! $signatureVerification['valid']) {
+
             return response()->json(
                 [
                     'message' =>
@@ -511,18 +641,33 @@ class TransactionController extends Controller
             true
         );
 
-        if (!is_array($event)) {
-            return response()->json([
-                'message' => 'Invalid webhook payload.',
-            ], 400);
+        if (! is_array($event)) {
+
+            return response()->json(
+                [
+                    'message' =>
+                        'Invalid webhook payload.',
+                ],
+                400
+            );
         }
 
         /*
-         * Support Hosted Checkout and older/general PayMongo event envelopes.
-         */
+        |--------------------------------------------------------------------------
+        | Support Hosted Checkout and older/general PayMongo event envelopes.
+        |--------------------------------------------------------------------------
+        */
+
         $eventTypeCandidates = [
-            data_get($event, 'data.type'),
-            data_get($event, 'data.attributes.type'),
+            data_get(
+                $event,
+                'data.type'
+            ),
+
+            data_get(
+                $event,
+                'data.attributes.type'
+            ),
         ];
 
         $eventType =
@@ -530,28 +675,47 @@ class TransactionController extends Controller
                 ->filter()
                 ->first(
                     fn ($type) =>
-                        $type === 'checkout_session.payment.paid'
+                        $type ===
+                        'checkout_session.payment.paid'
                 )
             ??
             collect($eventTypeCandidates)
                 ->filter()
                 ->first();
 
-        if ($eventType !== 'checkout_session.payment.paid') {
-            return response()->json([
-                'message' => 'Event ignored.',
-            ], 200);
+        if (
+            $eventType !==
+            'checkout_session.payment.paid'
+        ) {
+            return response()->json(
+                [
+                    'message' =>
+                        'Event ignored.',
+                ],
+                200
+            );
         }
 
         $session =
-            data_get($event, 'data.data')
+            data_get(
+                $event,
+                'data.data'
+            )
             ??
-            data_get($event, 'data.attributes.data');
+            data_get(
+                $event,
+                'data.attributes.data'
+            );
 
-        if (!is_array($session)) {
-            return response()->json([
-                'message' => 'Checkout session data missing.',
-            ], 400);
+        if (! is_array($session)) {
+
+            return response()->json(
+                [
+                    'message' =>
+                        'Checkout session data missing.',
+                ],
+                400
+            );
         }
 
         $transactionNo = data_get(
@@ -564,10 +728,15 @@ class TransactionController extends Controller
             'id'
         );
 
-        if (!$transactionNo) {
-            return response()->json([
-                'message' => 'Reference number missing.',
-            ], 400);
+        if (! $transactionNo) {
+
+            return response()->json(
+                [
+                    'message' =>
+                        'Reference number missing.',
+                ],
+                400
+            );
         }
 
         $transaction = Transaction::where(
@@ -575,49 +744,75 @@ class TransactionController extends Controller
             $transactionNo
         )->first();
 
-        if (!$transaction) {
-            return response()->json([
-                'message' => 'Transaction not found.',
-            ], 404);
+        if (! $transaction) {
+
+            return response()->json(
+                [
+                    'message' =>
+                        'Transaction not found.',
+                ],
+                404
+            );
         }
 
         if (
             $checkoutSessionId
             && $transaction->payment_reference
-            && !hash_equals(
+            && ! hash_equals(
                 (string) $transaction->payment_reference,
                 (string) $checkoutSessionId
             )
         ) {
-            return response()->json([
-                'message' => 'Checkout session mismatch.',
-            ], 400);
+            return response()->json(
+                [
+                    'message' =>
+                        'Checkout session mismatch.',
+                ],
+                400
+            );
         }
 
         if ($transaction->status === 'approved') {
+
             $this->activateEnrollment(
                 $transaction->student_id,
                 $transaction->course_id
             );
 
-            return response()->json([
-                'message' => 'Transaction already processed.',
-            ], 200);
+            $this->acceptCourseInvitationForTransaction(
+                $transaction
+            );
+
+            return response()->json(
+                [
+                    'message' =>
+                        'Transaction already processed.',
+                ],
+                200
+            );
         }
 
         /*
-         * Signature verification proves origin. Re-querying the exact
-         * Checkout Session provides a second verification layer.
-         */
+        |--------------------------------------------------------------------------
+        | Signature verification proves origin.
+        | Re-query exact Checkout Session for second verification.
+        |--------------------------------------------------------------------------
+        */
+
         $verification =
             $this->verifyPayMongoCheckout(
                 $transaction
             );
 
-        if (!$verification['paid']) {
-            return response()->json([
-                'message' => $verification['message'],
-            ], 202);
+        if (! $verification['paid']) {
+
+            return response()->json(
+                [
+                    'message' =>
+                        $verification['message'],
+                ],
+                202
+            );
         }
 
         $this->approveVerifiedPayMongoTransaction(
@@ -625,11 +820,14 @@ class TransactionController extends Controller
             $verification['payment_id']
         );
 
-        return response()->json([
-            'message' => 'Payment successfully processed.',
-        ], 200);
+        return response()->json(
+            [
+                'message' =>
+                    'Payment successfully processed.',
+            ],
+            200
+        );
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -661,10 +859,13 @@ class TransactionController extends Controller
     public function approve(Transaction $transaction)
     {
         /*
-         * Do not allow an already finalized transaction to be changed through
-         * the manual approval action.
-         */
+        |--------------------------------------------------------------------------
+        | Already finalized
+        |--------------------------------------------------------------------------
+        */
+
         if ($transaction->status === 'approved') {
+
             return back()->with(
                 'success',
                 'This transaction has already been approved.'
@@ -672,6 +873,7 @@ class TransactionController extends Controller
         }
 
         if ($transaction->status !== 'pending') {
+
             return back()->with(
                 'error',
                 'Only pending transactions can be approved.'
@@ -679,22 +881,25 @@ class TransactionController extends Controller
         }
 
         /*
-         * PayMongo transactions must never be approved from the dashboard
-         * based only on a button click. Re-query PayMongo first and approve
-         * only when the stored Checkout Session contains a real paid payment.
-         */
+        |--------------------------------------------------------------------------
+        | PayMongo transactions
+        |--------------------------------------------------------------------------
+        */
+
         if (
             strcasecmp(
                 (string) $transaction->payment_method,
                 'PayMongo'
             ) === 0
         ) {
+
             $verification =
                 $this->verifyPayMongoCheckout(
                     $transaction
                 );
 
-            if (!$verification['paid']) {
+            if (! $verification['paid']) {
+
                 return back()->with(
                     'error',
                     $verification['message']
@@ -713,33 +918,43 @@ class TransactionController extends Controller
         }
 
         /*
-         * Legacy/manual transactions still require an uploaded proof before
-         * an administrator can approve them.
-         */
+        |--------------------------------------------------------------------------
+        | Legacy/manual transactions
+        |--------------------------------------------------------------------------
+        */
+
         if (empty($transaction->payment_proof)) {
+
             return back()->with(
                 'error',
                 'A payment proof is required before this manual transaction can be approved.'
             );
         }
 
-        DB::transaction(function () use ($transaction) {
-            $transaction->update([
-                'status' =>
-                    'approved',
+        DB::transaction(
+            function () use ($transaction) {
 
-                'approved_by' =>
-                    auth()->id(),
+                $transaction->update([
+                    'status' =>
+                        'approved',
 
-                'approved_at' =>
-                    now(),
-            ]);
+                    'approved_by' =>
+                        auth()->id(),
 
-            $this->activateEnrollment(
-                $transaction->student_id,
-                $transaction->course_id
-            );
-        });
+                    'approved_at' =>
+                        now(),
+                ]);
+
+                $this->activateEnrollment(
+                    $transaction->student_id,
+                    $transaction->course_id
+                );
+
+                $this->acceptCourseInvitationForTransaction(
+                    $transaction
+                );
+            }
+        );
 
         $this->notifyStudentAboutApprovedTransaction(
             $transaction->fresh()
@@ -762,6 +977,7 @@ class TransactionController extends Controller
         Transaction $transaction
     ) {
         if ($transaction->status === 'approved') {
+
             return back()->with(
                 'error',
                 'An approved transaction cannot be rejected.'
@@ -769,6 +985,7 @@ class TransactionController extends Controller
         }
 
         if ($transaction->status !== 'pending') {
+
             return back()->with(
                 'error',
                 'Only pending transactions can be rejected.'
@@ -812,30 +1029,38 @@ class TransactionController extends Controller
         Transaction $transaction
     ): array {
         $secretKey = $this->payMongoSecretKey();
+
         $checkoutSessionId = trim(
             (string) $transaction->payment_reference
         );
 
         if ($secretKey === '') {
+
             return [
                 'paid' => false,
                 'payment_id' => null,
-                'message' => 'PayMongo secret key is not configured.',
+                'message' =>
+                    'PayMongo secret key is not configured.',
             ];
         }
 
         if (
             $checkoutSessionId === ''
-            || !Str::startsWith($checkoutSessionId, 'cs_')
+            || ! Str::startsWith(
+                $checkoutSessionId,
+                'cs_'
+            )
         ) {
             return [
                 'paid' => false,
                 'payment_id' => null,
-                'message' => 'This transaction does not have a valid PayMongo Checkout Session reference.',
+                'message' =>
+                    'This transaction does not have a valid PayMongo Checkout Session reference.',
             ];
         }
 
         try {
+
             $response = Http::withBasicAuth(
                 $secretKey,
                 ''
@@ -844,15 +1069,19 @@ class TransactionController extends Controller
                 ->timeout(30)
                 ->get(
                     'https://api.paymongo.com/v1/checkout_sessions/'
-                    . rawurlencode($checkoutSessionId)
+                    . rawurlencode(
+                        $checkoutSessionId
+                    )
                 );
 
             if ($response->failed()) {
+
                 $detail = data_get(
                     $response->json(),
                     'errors.0.detail'
                 )
-                    ?? (
+                    ??
+                    (
                         'PayMongo returned HTTP '
                         . $response->status()
                     );
@@ -860,38 +1089,47 @@ class TransactionController extends Controller
                 return [
                     'paid' => false,
                     'payment_id' => null,
-                    'message' => 'PathWise could not verify the PayMongo checkout yet: ' . $detail,
+                    'message' =>
+                        'PathWise could not verify the PayMongo checkout yet: '
+                        . $detail,
                 ];
             }
 
-            $session = $response->json('data');
-
-            $returnedSessionId = (string) data_get(
-                $session,
-                'id',
-                ''
+            $session = $response->json(
+                'data'
             );
 
-            $referenceNumber = (string) data_get(
-                $session,
-                'attributes.reference_number',
-                ''
-            );
+            $returnedSessionId =
+                (string) data_get(
+                    $session,
+                    'id',
+                    ''
+                );
+
+            $referenceNumber =
+                (string) data_get(
+                    $session,
+                    'attributes.reference_number',
+                    ''
+                );
 
             if (
-                !hash_equals(
+                ! hash_equals(
                     $checkoutSessionId,
                     $returnedSessionId
                 )
-                || !hash_equals(
+                ||
+                ! hash_equals(
                     (string) $transaction->transaction_no,
                     $referenceNumber
                 )
             ) {
+
                 return [
                     'paid' => false,
                     'payment_id' => null,
-                    'message' => 'PayMongo returned a checkout session that does not match this PathWise transaction.',
+                    'message' =>
+                        'PayMongo returned a checkout session that does not match this PathWise transaction.',
                 ];
             }
 
@@ -901,7 +1139,7 @@ class TransactionController extends Controller
                 []
             );
 
-            if (!is_array($payments)) {
+            if (! is_array($payments)) {
                 $payments = [];
             }
 
@@ -910,6 +1148,7 @@ class TransactionController extends Controller
             );
 
             foreach ($payments as $payment) {
+
                 $status = strtolower(
                     (string) data_get(
                         $payment,
@@ -937,13 +1176,16 @@ class TransactionController extends Controller
                     && $currency === 'PHP'
                     && $amount === $expectedAmount
                 ) {
+
                     return [
                         'paid' => true,
-                        'payment_id' => data_get(
-                            $payment,
-                            'id'
-                        ),
-                        'message' => 'PayMongo confirmed the payment successfully.',
+                        'payment_id' =>
+                            data_get(
+                                $payment,
+                                'id'
+                            ),
+                        'message' =>
+                            'PayMongo confirmed the payment successfully.',
                     ];
                 }
             }
@@ -951,68 +1193,143 @@ class TransactionController extends Controller
             return [
                 'paid' => false,
                 'payment_id' => null,
-                'message' => 'PayMongo has not returned a completed paid payment for this transaction yet.',
+                'message' =>
+                    'PayMongo has not returned a completed paid payment for this transaction yet.',
             ];
+
         } catch (\Throwable $e) {
+
             report($e);
 
             return [
                 'paid' => false,
                 'payment_id' => null,
-                'message' => 'PathWise could not contact PayMongo to verify the payment. Please try again.',
+                'message' =>
+                    'PathWise could not contact PayMongo to verify the payment. Please try again.',
             ];
         }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPROVE VERIFIED PAYMONGO TRANSACTION
+    |--------------------------------------------------------------------------
+    */
 
     private function approveVerifiedPayMongoTransaction(
         Transaction $transaction,
         ?string $paymentId = null
     ): void {
-        DB::transaction(function () use (
-            $transaction,
-            $paymentId
-        ) {
-            $remarks = 'Payment securely verified through PayMongo.';
+        DB::transaction(
+            function () use (
+                $transaction,
+                $paymentId
+            ) {
 
-            if ($paymentId) {
-                $remarks .= ' Payment ID: ' . $paymentId;
+                $remarks =
+                    'Payment securely verified through PayMongo.';
+
+                if ($paymentId) {
+
+                    $remarks .=
+                        ' Payment ID: '
+                        . $paymentId;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Keep payment_reference as cs_...
+                |--------------------------------------------------------------------------
+                */
+
+                $transaction->update([
+                    'status' =>
+                        'approved',
+
+                    'payment_method' =>
+                        'PayMongo',
+
+                    'remarks' =>
+                        Str::limit(
+                            $remarks,
+                            1000
+                        ),
+
+                    'approved_at' =>
+                        now(),
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Activate enrollment
+                |--------------------------------------------------------------------------
+                */
+
+                $this->activateEnrollment(
+                    $transaction->student_id,
+                    $transaction->course_id
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Mark invitation accepted ONLY after payment succeeds
+                |--------------------------------------------------------------------------
+                */
+
+                $this->acceptCourseInvitationForTransaction(
+                    $transaction
+                );
             }
+        );
 
-            /*
-             * Keep payment_reference as cs_... so PathWise can re-query the
-             * exact Checkout Session later if needed.
-             */
-            $transaction->update([
-                'status' => 'approved',
-                'payment_method' => 'PayMongo',
-                'remarks' => Str::limit($remarks, 1000),
-                'approved_at' => now(),
-            ]);
-
-            $this->activateEnrollment(
-                $transaction->student_id,
-                $transaction->course_id
-            );
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | Notify student after successful payment
+        |--------------------------------------------------------------------------
+        */
 
         $this->notifyStudentAboutApprovedTransaction(
             $transaction->fresh()
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ACCEPT COURSE INVITATION AFTER PAYMENT
+    |--------------------------------------------------------------------------
+    */
+
+    private function acceptCourseInvitationForTransaction(
+        Transaction $transaction
+    ): void {
+        if (! $transaction->course_invitation_id) {
+            return;
+        }
+
+        CourseInvitation::whereKey(
+            $transaction->course_invitation_id
+        )
+            ->whereNull('accepted_at')
+            ->update([
+                'accepted_at' => now(),
+                'accepted_by' => $transaction->student_id,
+            ]);
+    }
 
     /*
     |--------------------------------------------------------------------------
     | PAYMENT / ENROLLMENT NOTIFICATION
     |--------------------------------------------------------------------------
-    | Notification failure must never undo a verified payment or enrollment,
-    | so it runs only after the database transaction has completed.
+    |
+    | Notification failure must never undo a verified payment or enrollment.
+    |
     */
 
     private function notifyStudentAboutApprovedTransaction(
         Transaction $transaction
     ): void {
         try {
+
             $transaction->loadMissing([
                 'student',
                 'course',
@@ -1026,10 +1343,8 @@ class TransactionController extends Controller
 
             if (
                 ! $student
-                ||
-                ! $course
-                ||
-                $transaction->status !== 'approved'
+                || ! $course
+                || $transaction->status !== 'approved'
             ) {
                 return;
             }
@@ -1046,11 +1361,18 @@ class TransactionController extends Controller
                     transactionId: $transaction->id
                 )
             );
+
         } catch (\Throwable $e) {
+
             report($e);
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ACTIVATE ENROLLMENT
+    |--------------------------------------------------------------------------
+    */
 
     private function activateEnrollment(
         int $studentId,
@@ -1065,10 +1387,11 @@ class TransactionController extends Controller
         ]);
 
         /*
-         * Never downgrade a completed enrollment back to active when a paid
-         * transaction page is revisited or a duplicate PayMongo webhook is
-         * received.
-         */
+        |--------------------------------------------------------------------------
+        | Never downgrade completed enrollment back to active.
+        |--------------------------------------------------------------------------
+        */
+
         $alreadyCompleted =
             $enrollment->exists
             &&
@@ -1080,12 +1403,14 @@ class TransactionController extends Controller
             ===
             'completed';
 
-        if (!$alreadyCompleted) {
+        if (! $alreadyCompleted) {
+
             $enrollment->status =
                 'active';
         }
 
-        if (!$enrollment->enrolled_at) {
+        if (! $enrollment->enrolled_at) {
+
             $enrollment->enrolled_at =
                 now();
         }
@@ -1095,6 +1420,7 @@ class TransactionController extends Controller
             ===
             null
         ) {
+
             $enrollment->progress_percentage =
                 0;
         }
@@ -1102,11 +1428,24 @@ class TransactionController extends Controller
         $enrollment->save();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | AUTHORIZATION
+    |--------------------------------------------------------------------------
+    */
+
     private function ensureStudentOwnsTransaction(
         Transaction $transaction
     ): void {
-        if ((int) $transaction->student_id !== (int) auth()->id()) {
-            abort(403, 'Unauthorized');
+        if (
+            (int) $transaction->student_id
+            !==
+            (int) auth()->id()
+        ) {
+            abort(
+                403,
+                'Unauthorized'
+            );
         }
     }
 
@@ -1123,6 +1462,7 @@ class TransactionController extends Controller
             $this->payMongoWebhookSecret();
 
         if ($webhookSecret === '') {
+
             return [
                 'valid' => false,
                 'status' => 503,
@@ -1133,15 +1473,20 @@ class TransactionController extends Controller
 
         $signatureHeader = trim(
             (string) (
-                $request->header('Paymongo-Signature')
+                $request->header(
+                    'Paymongo-Signature'
+                )
                 ??
-                $request->header('X-Paymongo-Signature')
+                $request->header(
+                    'X-Paymongo-Signature'
+                )
                 ??
                 ''
             )
         );
 
         if ($signatureHeader === '') {
+
             return [
                 'valid' => false,
                 'status' => 401,
@@ -1152,7 +1497,13 @@ class TransactionController extends Controller
 
         $signatureParts = [];
 
-        foreach (explode(',', $signatureHeader) as $part) {
+        foreach (
+            explode(
+                ',',
+                $signatureHeader
+            ) as $part
+        ) {
+
             $pair = explode(
                 '=',
                 trim($part),
@@ -1163,17 +1514,25 @@ class TransactionController extends Controller
                 continue;
             }
 
-            $key = trim($pair[0]);
-            $value = trim($pair[1]);
+            $key =
+                trim($pair[0]);
+
+            $value =
+                trim($pair[1]);
 
             if (
                 in_array(
                     $key,
-                    ['t', 'te', 'li'],
+                    [
+                        't',
+                        'te',
+                        'li',
+                    ],
                     true
                 )
             ) {
-                $signatureParts[$key] = $value;
+                $signatureParts[$key] =
+                    $value;
             }
         }
 
@@ -1185,8 +1544,11 @@ class TransactionController extends Controller
         if (
             $timestamp === ''
             ||
-            !ctype_digit($timestamp)
+            ! ctype_digit(
+                $timestamp
+            )
         ) {
+
             return [
                 'valid' => false,
                 'status' => 401,
@@ -1209,6 +1571,7 @@ class TransactionController extends Controller
             >
             $tolerance
         ) {
+
             return [
                 'valid' => false,
                 'status' => 401,
@@ -1218,8 +1581,11 @@ class TransactionController extends Controller
         }
 
         /*
-         * PayMongo uses "te" for test-mode webhooks and "li" for live mode.
-         */
+        |--------------------------------------------------------------------------
+        | PayMongo uses "te" for test mode and "li" for live mode.
+        |--------------------------------------------------------------------------
+        */
+
         $signatureKey =
             Str::startsWith(
                 $this->payMongoSecretKey(),
@@ -1234,6 +1600,7 @@ class TransactionController extends Controller
             '';
 
         if ($providedSignature === '') {
+
             return [
                 'valid' => false,
                 'status' => 401,
@@ -1257,11 +1624,12 @@ class TransactionController extends Controller
             );
 
         if (
-            !hash_equals(
+            ! hash_equals(
                 $expectedSignature,
                 $providedSignature
             )
         ) {
+
             return [
                 'valid' => false,
                 'status' => 401,
@@ -1278,6 +1646,11 @@ class TransactionController extends Controller
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMONGO CONFIG
+    |--------------------------------------------------------------------------
+    */
 
     private function payMongoWebhookSecret(): string
     {
@@ -1287,7 +1660,6 @@ class TransactionController extends Controller
             )
         );
     }
-
 
     private function payMongoWebhookTolerance(): int
     {
@@ -1299,7 +1671,6 @@ class TransactionController extends Controller
             )
         );
     }
-
 
     private function payMongoSecretKey(): string
     {
@@ -1318,12 +1689,14 @@ class TransactionController extends Controller
 
     private function generateTransactionNumber(): string
     {
-        $date = now()->format('Ymd');
+        $date =
+            now()->format('Ymd');
 
-        $countToday = Transaction::whereDate(
-            'created_at',
-            now()->toDateString()
-        )->count() + 1;
+        $countToday =
+            Transaction::whereDate(
+                'created_at',
+                now()->toDateString()
+            )->count() + 1;
 
         return 'TRX-'
             . $date

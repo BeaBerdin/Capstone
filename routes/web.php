@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CourseInvitationController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizQuestionController;
@@ -99,6 +100,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/super-admin/reports', [ReportsController::class, 'index'])
             ->name('reports.index');
 
+        /*
+        | FIX: assign routes BEFORE the resource,
+        | otherwise GET /departments/assign matches
+        | the resource show route ({department} = "assign")
+        */
+        Route::get('/departments/assign', [DepartmentController::class, 'assign'])
+            ->name('departments.assign');
+
+        Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
+            ->name('departments.assign.store');
+
         Route::get('/departments', [DepartmentController::class, 'index'])
             ->name('departments.index');
 
@@ -116,12 +128,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
             ->name('departments.destroy');
-
-        Route::get('/departments/assign', [DepartmentController::class, 'assign'])
-            ->name('departments.assign');
-
-        Route::post('/departments/assign', [DepartmentController::class, 'assignStore'])
-            ->name('departments.assign.store');
     });
 
 
@@ -189,6 +195,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/teacher/courses', [CourseController::class, 'teacherStoreCourse'])
             ->name('teacher.courses.store');
+
+        /*
+        | ADDED: edit/update course routes
+        | (teacherEditCourse / teacherUpdateCourse exist in CourseController)
+        */
+        Route::get('/teacher/courses/{course}/edit', [CourseController::class, 'teacherEditCourse'])
+            ->name('teacher.courses.edit');
+
+        Route::put('/teacher/courses/{course}', [CourseController::class, 'teacherUpdateCourse'])
+            ->name('teacher.courses.update');
 
         Route::get('/teacher-courses/{course}/students', [CourseController::class, 'teacherCourseStudents'])
             ->name('teacher.course.students');
@@ -291,104 +307,135 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
 
+        // Course invitations
+        Route::get('/teacher/invitations', [CourseInvitationController::class, 'index'])
+            ->name('course-invitations.index');
+
+        Route::post('/teacher/invitations', [CourseInvitationController::class, 'store'])
+            ->name('course-invitations.store');
+
+        Route::delete('/teacher/invitations/{courseInvitation}', [CourseInvitationController::class, 'destroy'])
+            ->name('course-invitations.destroy');
+
         Route::delete('/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
             ->name('teacher.courses.destroy');
+        
+            Route::post(
+    '/teacher/invitations/{courseInvitation}/send',
+    [CourseInvitationController::class, 'send']
+)->name('course-invitations.send');
     });
 
+/*
+|--------------------------------------------------------------------------
+| STUDENT
+|--------------------------------------------------------------------------
+*/
 
-    /*
-    |--------------------------------------------------------------------------
-    | STUDENT
-    |--------------------------------------------------------------------------
-    */
+Route::middleware('role:student')->group(function () {
 
-    Route::middleware('role:student')->group(function () {
+    Route::get('/student-dashboard', [DashboardController::class, 'student'])
+        ->name('student.dashboard');
 
-        Route::get('/student-dashboard', [DashboardController::class, 'student'])
-            ->name('student.dashboard');
+    Route::get('/marketplace', [CourseController::class, 'marketplace'])
+        ->name('student.marketplace');
 
-        Route::get('/marketplace', [CourseController::class, 'marketplace'])
-            ->name('student.marketplace');
+    Route::get('/marketplace/{course}', [CourseController::class, 'showStudentCourse'])
+        ->name('student.course.show');
 
-        Route::get('/marketplace/{course}', [CourseController::class, 'showStudentCourse'])
-            ->name('student.course.show');
+    Route::post('/marketplace/{course}/enroll', [CourseController::class, 'enroll'])
+        ->name('student.enroll');
 
-        Route::post('/marketplace/{course}/enroll', [CourseController::class, 'enroll'])
-            ->name('student.enroll');
+    Route::get('/my-courses', [CourseController::class, 'myCourses'])
+        ->name('student.my-courses');
 
-        Route::get('/my-courses', [CourseController::class, 'myCourses'])
-            ->name('student.my-courses');
+    Route::get('/learn/{course}', [LessonController::class, 'studentCourse'])
+        ->name('student.learn.course');
 
-        Route::get('/learn/{course}', [LessonController::class, 'studentCourse'])
-            ->name('student.learn.course');
+    Route::get('/lesson/{lesson}', [LessonController::class, 'studentLesson'])
+        ->name('student.lesson.view');
 
-        Route::get('/lesson/{lesson}', [LessonController::class, 'studentLesson'])
-            ->name('student.lesson.view');
+    Route::post('/lesson/{lesson}/complete', [LessonController::class, 'markComplete'])
+        ->name('student.lesson.complete');
 
-        Route::post('/lesson/{lesson}/complete', [LessonController::class, 'markComplete'])
-            ->name('student.lesson.complete');
+    // Assignments / output submissions
+    Route::get('/student/assignments', [AssignmentController::class, 'studentIndex'])
+        ->name('student.assignments.index');
 
-        // Assignments / output submissions
-        Route::get('/student/assignments', [AssignmentController::class, 'studentIndex'])
-            ->name('student.assignments.index');
+    Route::get('/student/assignments/{assignment}', [AssignmentController::class, 'studentShow'])
+        ->name('student.assignments.show');
 
-        Route::get('/student/assignments/{assignment}', [AssignmentController::class, 'studentShow'])
-            ->name('student.assignments.show');
+    Route::post('/student/assignments/{assignment}/submit', [SubmissionController::class, 'studentStore'])
+        ->name('student.assignments.submit');
 
-        Route::post('/student/assignments/{assignment}/submit', [SubmissionController::class, 'studentStore'])
-            ->name('student.assignments.submit');
+    Route::get('/my-certificates', [DashboardController::class, 'certificates'])
+        ->name('student.certificates');
 
-        Route::get('/my-certificates', [DashboardController::class, 'certificates'])
-            ->name('student.certificates');
+    Route::get('/certificate/{certificate}', [CertificateController::class, 'studentView'])
+        ->name('student.certificate.view');
 
-        Route::get('/certificate/{certificate}', [CertificateController::class, 'studentView'])
-            ->name('student.certificate.view');
+    Route::get('/certificate/{certificate}/download', [CertificateController::class, 'download'])
+        ->name('student.certificate.download');
 
-        Route::get('/certificate/{certificate}/download', [CertificateController::class, 'download'])
-            ->name('student.certificate.download');
+    Route::get('/quiz/{quiz}/take', [QuizController::class, 'take'])
+        ->name('student.quiz.take');
 
-        Route::get('/quiz/{quiz}/take', [QuizController::class, 'take'])
-            ->name('student.quiz.take');
+    Route::post('/quiz/{quiz}/submit', [QuizController::class, 'submit'])
+        ->name('student.quiz.submit');
 
-        Route::post('/quiz/{quiz}/submit', [QuizController::class, 'submit'])
-            ->name('student.quiz.submit');
+    Route::get('/student/learning-paths', [LearningPathController::class, 'studentIndex'])
+        ->name('student.learning-paths');
 
-        Route::get('/student/learning-paths', [LearningPathController::class, 'studentIndex'])
-            ->name('student.learning-paths');
+    Route::get('/student/learning-paths/{learningPath}', [LearningPathController::class, 'studentShow'])
+        ->name('student.learning-paths.show');
 
-        Route::get('/student/learning-paths/{learningPath}', [LearningPathController::class, 'studentShow'])
-            ->name('student.learning-paths.show');
+    Route::post('/student/learning-paths/generate', [LearningPathController::class, 'generateForStudent'])
+        ->name('student.learning-paths.generate');
 
-        Route::post('/student/learning-paths/generate', [LearningPathController::class, 'generateForStudent'])
-            ->name('student.learning-paths.generate');
+    Route::get('/recommended-courses', [AIRecommendationController::class, 'studentRecommendations'])
+        ->name('student.recommendations');
 
-        Route::get('/recommended-courses', [AIRecommendationController::class, 'studentRecommendations'])
-            ->name('student.recommendations');
+    Route::get('/transactions', [TransactionController::class, 'studentIndex'])
+        ->name('student.transactions');
 
-        Route::get('/transactions', [TransactionController::class, 'studentIndex'])
-            ->name('student.transactions');
+    Route::post('/marketplace/{course}/purchase', [TransactionController::class, 'store'])
+        ->name('student.transactions.store');
 
-        Route::post('/marketplace/{course}/purchase', [TransactionController::class, 'store'])
-            ->name('student.transactions.store');
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'studentShow'])
+        ->name('student.transactions.show');
 
-        Route::get('/transactions/{transaction}', [TransactionController::class, 'studentShow'])
-            ->name('student.transactions.show');
+    Route::get('/transactions/{transaction}/success', [TransactionController::class, 'success'])
+        ->name('student.transactions.success');
 
-        Route::get('/transactions/{transaction}/success', [TransactionController::class, 'success'])
-            ->name('student.transactions.success');
+    Route::get('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
+        ->name('student.transactions.cancel');
 
-        Route::get('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
-            ->name('student.transactions.cancel');
+    Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
+        ->name('student.transactions.upload-proof');
 
-        Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
-            ->name('student.transactions.upload-proof');
-    });
+    // Course invitation acceptance
+    Route::post('/invitations/{code}/accept', [CourseInvitationController::class, 'accept'])
+        ->name('course-invitations.accept');
 });
+});
+/*
+|--------------------------------------------------------------------------
+| COURSE INVITATION PREVIEW
+|--------------------------------------------------------------------------
+|
+| This route is outside the student role middleware so the invitation
+| link can be opened before the student accepts the invitation.
+|
+*/
 
-
+Route::get('/invitations/{code}', [CourseInvitationController::class, 'show'])
+    ->name('course-invitations.show');
 // =====================================================
 // PAYMONGO WEBHOOK
 // =====================================================
+// IMPORTANT:
+// This route is outside auth/verified middleware.
+// PayMongo needs to access this endpoint directly.
 
 Route::post('/paymongo/webhook', [TransactionController::class, 'webhook'])
     ->name('paymongo.webhook');

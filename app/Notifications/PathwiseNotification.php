@@ -17,7 +17,9 @@ class PathwiseNotification extends Notification
         public ?int $assignmentId = null,
         public ?int $submissionId = null,
         public ?int $transactionId = null,
-        public ?int $certificateId = null
+        public ?int $certificateId = null,
+        public ?int $invitationId = null,
+        public ?string $invitationCode = null
     ) {
     }
 
@@ -25,8 +27,6 @@ class PathwiseNotification extends Notification
     |--------------------------------------------------------------------------
     | DELIVERY CHANNEL
     |--------------------------------------------------------------------------
-    | PathWise currently uses database notifications so they appear inside
-    | the bell notification dropdown.
     */
 
     public function via(object $notifiable): array
@@ -35,7 +35,6 @@ class PathwiseNotification extends Notification
             'database',
         ];
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -55,6 +54,8 @@ class PathwiseNotification extends Notification
             'submission_id' => $this->submissionId,
             'transaction_id' => $this->transactionId,
             'certificate_id' => $this->certificateId,
+            'invitation_id' => $this->invitationId,
+            'invitation_code' => $this->invitationCode,
         ];
     }
 }

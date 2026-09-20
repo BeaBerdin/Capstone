@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourseInvitation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -22,9 +23,6 @@ class NotificationController extends Controller
         |--------------------------------------------------------------------------
         | OWNERSHIP-SAFE NOTIFICATION LOOKUP
         |--------------------------------------------------------------------------
-        | The notification is always resolved through the authenticated user's
-        | own notification relationship. A user cannot mark another user's
-        | notification as read by guessing its UUID.
         */
 
         $item = $user
@@ -40,32 +38,24 @@ class NotificationController extends Controller
             ? $item->data
             : [];
 
-        $type =
-            (string) ($data['type'] ?? '');
+        $type = (string) ($data['type'] ?? '');
 
-        $courseId =
-            $data['course_id'] ?? null;
+        $courseId = $data['course_id'] ?? null;
 
-        $assignmentId =
-            $data['assignment_id'] ?? null;
+        $assignmentId = $data['assignment_id'] ?? null;
 
-        $submissionId =
-            $data['submission_id'] ?? null;
+        $submissionId = $data['submission_id'] ?? null;
 
-        $transactionId =
-            $data['transaction_id'] ?? null;
+        $transactionId = $data['transaction_id'] ?? null;
 
-        $certificateId =
-            $data['certificate_id'] ?? null;
+        $certificateId = $data['certificate_id'] ?? null;
 
+        $invitationId = $data['invitation_id'] ?? null;
 
         /*
         |--------------------------------------------------------------------------
         | TYPE-SPECIFIC DESTINATIONS
         |--------------------------------------------------------------------------
-        | Resolve specific notification types before the generic course fallback.
-        | Assignment/payment/certificate notifications also contain course_id,
-        | so checking course_id first would send users to the wrong page.
         */
 
         switch ($type) {
@@ -76,64 +66,54 @@ class NotificationController extends Controller
                 }
                 break;
 
-
             case 'assignment_published':
             case 'assignment_graded':
             case 'assignment_grade_updated':
             case 'assignment_returned':
                 if (
                     $user->hasRole('student')
-                    &&
-                    $assignmentId
+                    && $assignmentId
                 ) {
                     return redirect()
                         ->route(
                             'student.assignments.show',
                             [
-                                'assignment' =>
-                                    $assignmentId,
+                                'assignment' => $assignmentId,
                             ]
                         );
                 }
                 break;
-
 
             case 'assignment_submitted':
             case 'assignment_resubmitted':
                 if (
                     $user->hasRole('teacher')
-                    &&
-                    $assignmentId
+                    && $assignmentId
                 ) {
                     return redirect()
                         ->route(
                             'teacher.submissions.index',
                             [
-                                'assignment' =>
-                                    $assignmentId,
+                                'assignment' => $assignmentId,
                             ]
                         );
                 }
                 break;
 
-
             case 'payment_approved':
                 if (
                     $user->hasRole('student')
-                    &&
-                    $transactionId
+                    && $transactionId
                 ) {
                     return redirect()
                         ->route(
                             'student.transactions.show',
                             [
-                                'transaction' =>
-                                    $transactionId,
+                                'transaction' => $transactionId,
                             ]
                         );
                 }
                 break;
-
 
             case 'enrollment_activated':
                 if ($user->hasRole('student')) {
@@ -142,32 +122,55 @@ class NotificationController extends Controller
                 }
                 break;
 
-
             case 'certificate_issued':
                 if (
                     $user->hasRole('student')
-                    &&
-                    $certificateId
+                    && $certificateId
                 ) {
                     return redirect()
                         ->route(
                             'student.certificate.view',
                             [
-                                'certificate' =>
-                                    $certificateId,
+                                'certificate' => $certificateId,
                             ]
                         );
                 }
                 break;
-        }
 
+            case 'course_invitation':
+                if (
+                    $user->hasRole('student')
+                    && $invitationId
+                ) {
+                    $invitation = CourseInvitation::query()
+                        ->whereKey($invitationId)
+                        ->where('student_id', $user->id)
+                        ->whereNull('accepted_at')
+                        ->first();
+
+                    if ($invitation) {
+                        return redirect()
+                            ->route(
+                                'course-invitations.show',
+                                [
+                                    'code' => $invitation->code,
+                                ]
+                            );
+                    }
+                }
+
+                return redirect()
+                    ->route('student.dashboard')
+                    ->with(
+                        'error',
+                        'This course invitation is no longer available.'
+                    );
+        }
 
         /*
         |--------------------------------------------------------------------------
         | LEGACY / GENERIC COURSE NOTIFICATION FALLBACK
         |--------------------------------------------------------------------------
-        | Existing CourseStatusNotification records do not contain a `type`
-        | value, so preserve the original role-aware behavior for them.
         */
 
         if ($courseId) {
@@ -187,7 +190,6 @@ class NotificationController extends Controller
             }
         }
 
-
         /*
         |--------------------------------------------------------------------------
         | SAFE DEFAULT
@@ -197,7 +199,6 @@ class NotificationController extends Controller
         return redirect()
             ->route('dashboard');
     }
-
 
     public function readAll(
         Request $request

@@ -60,7 +60,7 @@
                     </p>
 
                     <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                        Welcome, {{ auth()->user()->name }} 👋
+                        Welcome, {{ auth()->user()->name }} 
                     </h1>
 
                     <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
