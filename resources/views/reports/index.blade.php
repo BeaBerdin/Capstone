@@ -49,21 +49,21 @@
                         onchange="this.form.submit()"
                         class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                     >
-                        <option value="all" @selected($range === 'all')}>
-                            All Time
-                        </option>
+                       <option value="all" @selected($range === 'all')>
+    All Time
+</option>
 
-                        <option value="30" @selected($range === '30')}>
-                            Last 30 Days
-                        </option>
+<option value="30" @selected($range === '30')>
+    Last 30 Days
+</option>
 
-                        <option value="90" @selected($range === '90')}>
-                            Last 90 Days
-                        </option>
+<option value="90" @selected($range === '90')>
+    Last 90 Days
+</option>
 
-                        <option value="365" @selected($range === '365')}>
-                            Last 365 Days
-                        </option>
+<option value="365" @selected($range === '365')>
+    Last 365 Days
+</option>
                     </select>
 
                 </form>

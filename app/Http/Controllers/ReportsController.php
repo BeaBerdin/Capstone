@@ -198,20 +198,47 @@ class ReportsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $recentQuizResults = QuizResult::with(['student', 'quiz'])
-            ->latest()
-            ->take(5)
-            ->get();
+       $recentQuizResultsQuery = QuizResult::with(['student', 'quiz'])
+    ->latest();
 
-        $recentCertificates = Certificate::with(['student', 'course'])
-            ->latest()
-            ->take(5)
-            ->get();
+if ($startDate) {
+    $recentQuizResultsQuery->where('created_at', '>=', $startDate);
+}
 
-        $popularCourses = Course::withCount('enrollments')
-            ->orderByDesc('enrollments_count')
-            ->take(5)
-            ->get();
+$recentQuizResults = $recentQuizResultsQuery
+    ->take(5)
+    ->get();
+
+$recentCertificatesQuery = Certificate::with(['student', 'course'])
+    ->latest();
+
+if ($startDate) {
+    $recentCertificatesQuery->where('created_at', '>=', $startDate);
+}
+
+$recentCertificates = $recentCertificatesQuery
+    ->take(5)
+    ->get();
+
+$popularCoursesQuery = Course::query();
+
+if ($startDate) {
+    $popularCoursesQuery->whereHas('enrollments', function ($query) use ($startDate) {
+        $query->where('created_at', '>=', $startDate);
+    });
+}
+
+$popularCourses = $popularCoursesQuery
+    ->withCount([
+        'enrollments' => function ($query) use ($startDate) {
+            if ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }
+        },
+    ])
+    ->orderByDesc('enrollments_count')
+    ->take(5)
+    ->get();
 
         return view('reports.index', compact(
             'range',

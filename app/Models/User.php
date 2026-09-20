@@ -34,6 +34,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
     'email',
     'password',
     'profile_photo_path',
+    'department_id',
 ])]
 class User extends Authenticatable implements PasskeyUser
 {
