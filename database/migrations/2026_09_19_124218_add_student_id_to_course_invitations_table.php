@@ -23,10 +23,7 @@ return new class extends Migration
     {
         Schema::table('course_invitations', function (Blueprint $table) {
             $table->dropForeign(['student_id']);
-            $table->dropIndex([
-                'student_id',
-                'accepted_at',
-            ]);
+            $table->dropIndex('course_invitations_student_id_accepted_at_index');
             $table->dropColumn('student_id');
         });
     }

@@ -8,23 +8,39 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('course_invitations', function (Blueprint $table) {
-            $table->foreignId('student_id')
+        Schema::create('course_invitations', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('course_id')
+                ->constrained('courses')
+                ->cascadeOnDelete();
+
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
+            $table->string('code', 32)
+                ->unique();
+
+            $table->timestamp('expires_at')
+                ->nullable();
+
+            $table->timestamp('accepted_at')
+                ->nullable();
+
+            $table->foreignId('accepted_by')
                 ->nullable()
-                ->after('created_by')
                 ->constrained('users')
                 ->nullOnDelete();
 
-            $table->index(['student_id', 'accepted_at']);
+            $table->timestamps();
+
+            $table->index(['course_id', 'expires_at']);
         });
     }
 
     public function down(): void
     {
-        Schema::table('course_invitations', function (Blueprint $table) {
-            $table->dropForeign(['student_id']);
-            $table->dropIndex(['course_invitations_student_id_accepted_at_index']);
-            $table->dropColumn('student_id');
-        });
+        Schema::dropIfExists('course_invitations');
     }
 };
