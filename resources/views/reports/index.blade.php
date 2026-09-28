@@ -11,8 +11,6 @@
 
                 <div>
                     <div class="mb-2 flex items-center gap-2">
-                    
-
                         <span class="text-sm font-semibold text-purple-600">
                              Super Admin
                         </span>
@@ -28,45 +26,70 @@
                     </p>
                 </div>
 
+                {{-- Report Controls --}}
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
 
-                {{-- Report Period --}}
-                <form
-                    method="GET"
-                    action="{{ route('reports.index') }}"
-                    class="flex items-center gap-3"
-                >
-
-                    <label
-                        for="range"
-                        class="whitespace-nowrap text-sm font-medium text-gray-600"
+                    <form
+                        method="GET"
+                        action="{{ route('reports.index') }}"
+                        class="flex items-center gap-3"
                     >
-                        Report period
-                    </label>
+                        <label
+                            for="range"
+                            class="whitespace-nowrap text-sm font-medium text-gray-600"
+                        >
+                            Report period
+                        </label>
 
-                    <select
-                        id="range"
-                        name="range"
-                        onchange="this.form.submit()"
-                        class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                        <select
+                            id="range"
+                            name="range"
+                            onchange="this.form.submit()"
+                            class="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                        >
+                            <option value="all" @selected($range === 'all')>
+                                All Time
+                            </option>
+
+                            <option value="30" @selected($range === '30')>
+                                Last 30 Days
+                            </option>
+
+                            <option value="90" @selected($range === '90')>
+                                Last 90 Days
+                            </option>
+
+                            <option value="365" @selected($range === '365')>
+                                Last 365 Days
+                            </option>
+                        </select>
+                    </form>
+
+                    {{-- Export PDF --}}
+                    <a
+                        href="{{ route('reports.export.pdf', ['range' => $range]) }}"
+                        target="_blank"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
                     >
-                       <option value="all" @selected($range === 'all')>
-    All Time
-</option>
+                        <svg
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 10v6m0 0-3-3m3 3 3-3m6 3a3 3 0 01-3 3H6a3 3 0 01-3-3V8a3 3 0 013-3h4l2 2h6a3 3 0 013 3v6z"
+                            />
+                        </svg>
 
-<option value="30" @selected($range === '30')>
-    Last 30 Days
-</option>
+                        Export PDF
+                    </a>
 
-<option value="90" @selected($range === '90')>
-    Last 90 Days
-</option>
-
-<option value="365" @selected($range === '365')>
-    Last 365 Days
-</option>
-                    </select>
-
-                </form>
+                </div>
 
             </div>
 
