@@ -8,23 +8,39 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('course_invitation_id')
+        Schema::create('course_invitations', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('course_id')
+                ->constrained('courses')
+                ->cascadeOnDelete();
+
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
+            $table->string('code', 32)
+                ->unique();
+
+            $table->timestamp('expires_at')
+                ->nullable();
+
+            $table->timestamp('accepted_at')
+                ->nullable();
+
+            $table->foreignId('accepted_by')
                 ->nullable()
-                ->after('course_id')
-                ->constrained('course_invitations')
+                ->constrained('users')
                 ->nullOnDelete();
 
-            $table->index('course_invitation_id');
+            $table->timestamps();
+
+            $table->index(['course_id', 'expires_at']);
         });
     }
 
     public function down(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['course_invitation_id']);
-            $table->dropIndex(['course_invitation_id']);
-            $table->dropColumn('course_invitation_id');
-        });
+        Schema::dropIfExists('course_invitations');
     }
 };

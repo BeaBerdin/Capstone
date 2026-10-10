@@ -45,7 +45,7 @@
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-        <div class="mx-auto max-w-[1500px]">
+        <div class="mx-auto max-w-375">
 
             {{-- =====================================================
                 HEADER

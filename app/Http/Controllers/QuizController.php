@@ -1797,25 +1797,42 @@ class QuizController extends Controller
 
 
 
-    private function generateCertificateNumber(): string
-    {
-        $count =
-            Certificate::count()
-            + 1;
+   private function generateCertificateNumber(): string
+{
+    $year = now()->year;
 
+    $lastCertificate = Certificate::where(
+        'certificate_number',
+        'like',
+        "PATH-{$year}-%"
+    )
+        ->orderByDesc('id')
+        ->first();
 
-        return
-            'PATH-'
-            .
-            now()->format('Y')
-            .
-            '-'
-            .
-            str_pad(
-                $count,
-                5,
-                '0',
-                STR_PAD_LEFT
-            );
+    $nextNumber = 1;
+
+    if ($lastCertificate) {
+        $parts = explode('-', $lastCertificate->certificate_number);
+        $lastNumber = (int) end($parts);
+        $nextNumber = $lastNumber + 1;
     }
+
+    do {
+        $certificateNumber = 'PATH-' . $year . '-' . str_pad(
+            $nextNumber,
+            5,
+            '0',
+            STR_PAD_LEFT
+        );
+
+        $nextNumber++;
+    } while (
+        Certificate::where(
+            'certificate_number',
+            $certificateNumber
+        )->exists()
+    );
+
+    return $certificateNumber;
+}
 }

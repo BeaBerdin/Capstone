@@ -47,7 +47,7 @@
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-            <div class="mx-auto max-w-[1500px]">
+            <div class="mx-auto max-w-375">
 
 
                 {{-- =====================================================
@@ -355,7 +355,7 @@
 
                     <div class="overflow-x-auto">
 
-                        <table class="w-full min-w-[950px] text-left">
+                        <table class="w-full min-w-237.5 text-left">
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 

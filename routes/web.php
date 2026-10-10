@@ -22,6 +22,7 @@ use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\StudentRemovalRequestController;
 
 Route::view('/', 'welcome')->name('home');
 
@@ -99,6 +100,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/super-admin/reports', [ReportsController::class, 'index'])
             ->name('reports.index');
+        
+        Route::get('/super-admin/reports/pdf', [ReportsController::class, 'exportPdf'])
+            ->name('reports.export.pdf');
 
         /*
         | FIX: assign routes BEFORE the resource,
@@ -170,6 +174,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('admin/learning-paths', LearningPathController::class)
             ->names('learning-paths');
+        
+        // Student removal requests — Department Head
+        Route::get('/admin/student-removal-requests',[StudentRemovalRequestController::class, 'departmentHeadIndex'])
+            ->name('admin.student-removal-requests.index');
+
+        Route::post('/admin/student-removal-requests/{studentRemovalRequest}/review',[StudentRemovalRequestController::class, 'review'])
+            ->name('admin.student-removal-requests.review');
+
     });
 
 
@@ -306,6 +318,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
+        
+        Route::post('/teacher/submissions/{submission}/ai-evaluate',[\App\Http\Controllers\SubmissionController::class, 'aiEvaluate'])                                              
+             ->name('teacher.submissions.ai-evaluate');
 
         // Course invitations
         Route::get('/teacher/invitations', [CourseInvitationController::class, 'index'])
@@ -320,10 +335,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/teacher/courses/{course}', [CourseController::class, 'teacherDestroyCourse'])
             ->name('teacher.courses.destroy');
         
-            Route::post(
-    '/teacher/invitations/{courseInvitation}/send',
-    [CourseInvitationController::class, 'send']
-)->name('course-invitations.send');
+         Route::post('/teacher/invitations/{courseInvitation}/send',[CourseInvitationController::class, 'send'])
+           ->name('course-invitations.send');
+
+        // Student removal requests — Instructor
+        Route::get('/teacher/student-removal-requests', [StudentRemovalRequestController::class, 'instructorIndex'])
+           ->name('teacher.student-removal-requests.index');
+
+        Route::post('/teacher/courses/{course}/students/removal-request',[StudentRemovalRequestController::class, 'store'])
+            ->name('teacher.student-removal-requests.store');
+
     });
 
 /*
@@ -364,9 +385,14 @@ Route::middleware('role:student')->group(function () {
 
     Route::get('/student/assignments/{assignment}', [AssignmentController::class, 'studentShow'])
         ->name('student.assignments.show');
+    
+    Route::post('/student/submissions/{submission}/run-code', [\App\Http\Controllers\SubmissionController::class, 'runCode']
+        )->name('student.submissions.run-code');
 
     Route::post('/student/assignments/{assignment}/submit', [SubmissionController::class, 'studentStore'])
         ->name('student.assignments.submit');
+
+  
 
     Route::get('/my-certificates', [DashboardController::class, 'certificates'])
         ->name('student.certificates');

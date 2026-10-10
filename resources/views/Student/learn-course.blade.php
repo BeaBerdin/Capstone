@@ -302,7 +302,7 @@
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-        <div class="mx-auto max-w-[1500px]">
+        <div class="mx-auto max-w-375">
 
 
             {{-- =====================================================
@@ -399,7 +399,7 @@
 
 
                     {{-- IMAGE --}}
-                    <div class="relative min-h-[220px] overflow-hidden">
+                    <div class="relative min-h-55 overflow-hidden">
 
                         @if($thumbnailUrl)
 
@@ -419,7 +419,7 @@
                         @else
 
                             <div
-                                class="flex h-full min-h-[220px] w-full
+                                class="flex h-full min-h-55 w-full
                                        items-center justify-center
                                        bg-linear-to-br
                                        from-violet-500
@@ -1852,7 +1852,7 @@
 
                                 <p
                                     class="text-[10px] font-bold
-                                           uppercase tracking-[.1em]
+                                           uppercase tracking-widest
                                            text-emerald-600"
                                 >
                                     Course Completed
@@ -1984,7 +1984,7 @@
 
                                 <p
                                     class="text-[10px] font-bold
-                                           uppercase tracking-[.1em]
+                                           uppercase tracking-widest
                                            text-violet-600"
                                 >
                                     PathWise Recommendation

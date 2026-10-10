@@ -9,23 +9,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Assignment extends Model
 {
     protected $fillable = [
-        'course_id',
-        'lesson_id',
-        'title',
-        'description',
-        'due_date',
-        'max_score',
-        'is_published',
-    ];
+    'course_id',
+    'lesson_id',
+    'title',
+    'description',
+    'submission_type',
+    'evaluation_criteria',
+    'programming_language',
+    'ai_evaluation_enabled',
+    'due_date',
+    'max_score',
+    'is_published',
+];
 
-    protected function casts(): array
-    {
-        return [
-            'due_date' => 'datetime',
-            'max_score' => 'integer',
-            'is_published' => 'boolean',
-        ];
-    }
+  protected function casts(): array
+{
+    return [
+        'due_date' => 'datetime',
+        'max_score' => 'integer',
+        'is_published' => 'boolean',
+        'ai_evaluation_enabled' => 'boolean',
+    ];
+}
 
     public function course(): BelongsTo
     {

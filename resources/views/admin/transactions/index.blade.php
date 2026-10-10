@@ -380,7 +380,7 @@
 
                                         <div class="min-w-0">
 
-                                            <p class="break-words text-xs font-semibold text-slate-800">
+                                            <p class="wrap-break-word text-xs font-semibold text-slate-800">
                                                 {{ $transaction->student->name ?? 'Student unavailable' }}
                                             </p>
 
@@ -398,7 +398,7 @@
                                 {{-- COURSE --}}
                                 <td class="px-4 py-4 align-top">
 
-                                    <p class="break-words text-xs font-medium text-slate-700" title="{{ $transaction->course->title ?? '' }}">
+                                    <p class="wrap-break-word text-xs font-medium text-slate-700" title="{{ $transaction->course->title ?? '' }}">
                                         {{ $transaction->course->title ?? 'Course unavailable' }}
                                     </p>
 
@@ -412,7 +412,7 @@
                                         ₱{{ number_format($transaction->amount, 2) }}
                                     </p>
 
-                                    <p class="mt-1 break-words text-[10px] text-slate-400">
+                                    <p class="mt-1 wrap-break-word text-[10px] text-slate-400">
                                         {{ $transaction->payment_method ?? 'No method' }}
                                     </p>
 

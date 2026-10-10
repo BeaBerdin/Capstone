@@ -1714,7 +1714,7 @@ html.dark .pw-mobile-toggle {
             <div class="pw-brand-icon">
 
                 <img
-                    src="{{ asset('images/pathwise-icon.png') }}"
+                    src="{{ asset('images/pathwise-logo.png') . '?v=' . filemtime(public_path('images/pathwise-logo.png')) }}"
                     alt="PathWise"
                 >
 
@@ -1727,10 +1727,7 @@ html.dark .pw-mobile-toggle {
                     PATHWISE
                 </div>
 
-                <div class="pw-brand-subtitle">
-                    An AI Learning<br>
-                    Platform
-                </div>
+                
 
             </div>
 
@@ -3595,3 +3592,7 @@ html.dark .pw-mobile-toggle {
 </body>
 
 </html>
+
+
+
+

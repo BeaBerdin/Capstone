@@ -8,7 +8,7 @@
 
 <div class="min-h-screen bg-[#f8f9fc]">
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
-        <div class="mx-auto max-w-[1500px]">
+        <div class="mx-auto max-w-375">
 
             <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                 <a

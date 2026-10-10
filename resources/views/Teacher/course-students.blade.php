@@ -212,6 +212,23 @@
 
             </div>
 
+            @if(session('success'))
+    <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p class="font-semibold">Unable to submit the request.</p>
+        <ul class="mt-1 list-inside list-disc">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 
 
             {{-- =====================================================
@@ -1441,58 +1458,77 @@
 
 
 
-                                        {{-- ACTION --}}
-                                        <td
-                                            class="px-6 py-5
-                                                   text-right"
-                                        >
+                                       {{-- ACTION --}}
+<td class="px-6 py-5">
+    @if($student)
+        <div class="flex flex-col items-end gap-2">
 
-                                            @if($student)
+            {{-- Existing View Progress button --}}
+            <a
+                href="{{ route('teacher.student.progress', [$course, $student]) }}"
+                class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
+            >
+                View Progress
+            </a>
 
-                                                <a
-                                                    href="{{ route(
-                                                        'teacher.student.progress',
-                                                        [
-                                                            $course,
-                                                            $student
-                                                        ]
-                                                    ) }}"
-                                                    class="inline-flex
-                                                           h-9
-                                                           items-center
-                                                           justify-center
-                                                           gap-1.5
-                                                           rounded-lg
-                                                           border
-                                                           border-violet-200
-                                                           bg-white
-                                                           px-3
-                                                           text-xs
-                                                           font-semibold
-                                                           text-violet-700
-                                                           transition
-                                                           hover:bg-violet-50"
-                                                >
-                                                    View Progress
+            {{-- Request Student Removal --}}
+            <details class="w-56 text-left">
+                <summary
+                    class="cursor-pointer list-none rounded-lg border border-red-200 bg-white px-3 py-2 text-center text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                >
+                    Request Removal
+                </summary>
 
-                                                    <svg
-                                                        class="h-3.5
-                                                               w-3.5"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        stroke-width="2"
-                                                    >
-                                                        <path
-                                                            d="m9 18 6-6-6-6"
-                                                        ></path>
-                                                    </svg>
+                <div class="mt-2 rounded-xl border border-red-100 bg-red-50/50 p-3">
+                    <p class="mb-2 text-xs leading-5 text-slate-600">
+                        Explain why you want this student removed from this course.
+                        The student will remain enrolled until the Department Head approves.
+                    </p>
 
-                                                </a>
+                    <form
+                        method="POST"
+                        action="{{ route('teacher.student-removal-requests.store', $course) }}"
+                        onsubmit="return confirm('Submit this student removal request to the Department Head?');"
+                    >
+                        @csrf
 
-                                            @endif
+                        <input
+                            type="hidden"
+                            name="student_id"
+                            value="{{ $student->id }}"
+                        >
 
-                                        </td>
+                        <label
+                            for="removal_reason_{{ $student->id }}"
+                            class="mb-1 block text-xs font-semibold text-slate-700"
+                        >
+                            Reason for removal
+                        </label>
+
+                        <textarea
+                            id="removal_reason_{{ $student->id }}"
+                            name="reason"
+                            rows="4"
+                            minlength="10"
+                            maxlength="2000"
+                            required
+                            placeholder="Enter your reason (at least 10 characters)..."
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-100"
+                        ></textarea>
+
+                        <button
+                            type="submit"
+                            class="mt-2 w-full rounded-lg bg-red-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-red-700"
+                        >
+                            Submit Request
+                        </button>
+                    </form>
+                </div>
+            </details>
+
+        </div>
+    @endif
+</td>
 
                                     </tr>
 

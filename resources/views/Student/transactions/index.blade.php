@@ -249,7 +249,7 @@
 
                                 <div class="flex flex-wrap items-center gap-2">
 
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-violet-500">
                                         {{ $transaction->transaction_no }}
                                     </p>
 

@@ -32,32 +32,21 @@ class AssignmentController extends Controller
         $courses = Course::all();
         $lessons = Lesson::all();
 
-        return view('assignments.create', compact('courses', 'lessons'));
+        return view('assignments.create', compact(
+            'courses',
+            'lessons'
+        ));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'lesson_id' => 'nullable|exists:lessons,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'max_score' => 'required|integer|min:1',
-            'is_published' => 'required|boolean',
-        ]);
+        $validated = $this->validateAssignment($request);
 
-        if (! empty($validated['lesson_id'])) {
-            $lessonBelongsToCourse = Lesson::whereKey($validated['lesson_id'])
-                ->where('course_id', $validated['course_id'])
-                ->exists();
+        $this->ensureLessonBelongsToCourse($validated);
 
-            abort_unless(
-                $lessonBelongsToCourse,
-                422,
-                'Selected lesson does not belong to the selected course.'
-            );
-        }
+        $validated = $this->normalizeAiEvaluationFields(
+            $validated
+        );
 
         $assignment = Assignment::create($validated);
 
@@ -72,9 +61,15 @@ class AssignmentController extends Controller
 
     public function show(Assignment $assignment)
     {
-        $assignment->load(['course', 'lesson']);
+        $assignment->load([
+            'course',
+            'lesson',
+        ]);
 
-        return view('assignments.show', compact('assignment'));
+        return view(
+            'assignments.show',
+            compact('assignment')
+        );
     }
 
     public function edit(Assignment $assignment)
@@ -82,42 +77,31 @@ class AssignmentController extends Controller
         $courses = Course::all();
         $lessons = Lesson::all();
 
-        return view('assignments.edit', compact(
-            'assignment',
-            'courses',
-            'lessons'
-        ));
+        return view(
+            'assignments.edit',
+            compact(
+                'assignment',
+                'courses',
+                'lessons'
+            )
+        );
     }
 
-    public function update(Request $request, Assignment $assignment)
-    {
-        $validated = $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'lesson_id' => 'nullable|exists:lessons,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'max_score' => 'required|integer|min:1',
-            'is_published' => 'required|boolean',
-        ]);
+    public function update(
+        Request $request,
+        Assignment $assignment
+    ) {
+        $validated = $this->validateAssignment($request);
 
-        if (! empty($validated['lesson_id'])) {
-            $lessonBelongsToCourse = Lesson::whereKey($validated['lesson_id'])
-                ->where('course_id', $validated['course_id'])
-                ->exists();
+        $this->ensureLessonBelongsToCourse($validated);
 
-            abort_unless(
-                $lessonBelongsToCourse,
-                422,
-                'Selected lesson does not belong to the selected course.'
-            );
-        }
+        $validated = $this->normalizeAiEvaluationFields(
+            $validated
+        );
 
-        $wasPublished =
-            (bool) $assignment->is_published;
+        $wasPublished = (bool) $assignment->is_published;
 
-        $previousCourseId =
-            (int) $assignment->course_id;
+        $previousCourseId = (int) $assignment->course_id;
 
         $assignment->update($validated);
 
@@ -140,7 +124,10 @@ class AssignmentController extends Controller
 
         return redirect()
             ->route('assignments.index')
-            ->with('success', 'Assignment updated successfully.');
+            ->with(
+                'success',
+                'Assignment updated successfully.'
+            );
     }
 
     public function destroy(Assignment $assignment)
@@ -149,8 +136,12 @@ class AssignmentController extends Controller
 
         return redirect()
             ->route('assignments.index')
-            ->with('success', 'Assignment deleted successfully.');
+            ->with(
+                'success',
+                'Assignment deleted successfully.'
+            );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -160,42 +151,87 @@ class AssignmentController extends Controller
 
     public function teacherIndex()
     {
-        $assignments = Assignment::with(['course', 'lesson'])
+        $assignments = Assignment::with([
+                'course',
+                'lesson',
+            ])
             ->whereHas('course', function ($query) {
-                $query->where('teacher_id', auth()->id());
+                $query->where(
+                    'teacher_id',
+                    auth()->id()
+                );
             })
             ->latest()
             ->get();
 
-        $courses = Course::where('teacher_id', auth()->id())
-            ->whereIn('status', ['draft', 'rejected'])
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT
+        |--------------------------------------------------------------------------
+        | Teachers can now create assignments for:
+        |
+        | - Draft courses
+        | - Rejected courses
+        | - Published courses
+        |
+        */
+
+        $courses = Course::where(
+                'teacher_id',
+                auth()->id()
+            )
+            ->whereIn(
+                'status',
+                [
+                    'draft',
+                    'rejected',
+                    'published',
+                ]
+            )
             ->orderBy('title')
             ->get();
 
-        return view('Teacher.assignments.index', compact(
-            'assignments',
-            'courses'
-        ));
+        return view(
+            'Teacher.assignments.index',
+            compact(
+                'assignments',
+                'courses'
+            )
+        );
     }
 
     public function teacherCreate(Course $course)
     {
         $this->ensureTeacherOwnsCourse($course);
+
         $this->ensureTeacherCanEditCourse($course);
 
         $lessons = $course->lessons()
             ->orderBy('title')
             ->get();
 
-        return view('Teacher.assignments.create', compact('course', 'lessons'));
+        return view(
+            'Teacher.assignments.create',
+            compact(
+                'course',
+                'lessons'
+            )
+        );
     }
 
-    public function teacherStore(Request $request, Course $course)
-    {
+    public function teacherStore(
+        Request $request,
+        Course $course
+    ) {
         $this->ensureTeacherOwnsCourse($course);
+
         $this->ensureTeacherCanEditCourse($course);
 
-        $validated = $this->validateTeacherAssignment($request, $course);
+        $validated = $this->validateTeacherAssignment(
+            $request,
+            $course
+        );
+
         $validated['course_id'] = $course->id;
 
         $assignment = Assignment::create($validated);
@@ -206,17 +242,29 @@ class AssignmentController extends Controller
 
         return redirect()
             ->route('teacher.assignments.index')
-            ->with('success', 'Assignment created successfully.');
+            ->with(
+                'success',
+                'Assignment created successfully.'
+            );
     }
 
-    public function teacherEdit(Assignment $assignment)
-    {
+    public function teacherEdit(
+        Assignment $assignment
+    ) {
         $assignment->load('course');
 
-        abort_unless($assignment->course, 404);
+        abort_unless(
+            $assignment->course,
+            404
+        );
 
-        $this->ensureTeacherOwnsCourse($assignment->course);
-        $this->ensureTeacherCanEditCourse($assignment->course);
+        $this->ensureTeacherOwnsCourse(
+            $assignment->course
+        );
+
+        $this->ensureTeacherCanEditCourse(
+            $assignment->course
+        );
 
         $course = $assignment->course;
 
@@ -224,29 +272,41 @@ class AssignmentController extends Controller
             ->orderBy('title')
             ->get();
 
-        return view('Teacher.assignments.edit', compact(
-            'assignment',
-            'course',
-            'lessons'
-        ));
+        return view(
+            'Teacher.assignments.edit',
+            compact(
+                'assignment',
+                'course',
+                'lessons'
+            )
+        );
     }
 
-    public function teacherUpdate(Request $request, Assignment $assignment)
-    {
+    public function teacherUpdate(
+        Request $request,
+        Assignment $assignment
+    ) {
         $assignment->load('course');
 
-        abort_unless($assignment->course, 404);
+        abort_unless(
+            $assignment->course,
+            404
+        );
 
-        $this->ensureTeacherOwnsCourse($assignment->course);
-        $this->ensureTeacherCanEditCourse($assignment->course);
+        $this->ensureTeacherOwnsCourse(
+            $assignment->course
+        );
+
+        $this->ensureTeacherCanEditCourse(
+            $assignment->course
+        );
 
         $validated = $this->validateTeacherAssignment(
             $request,
             $assignment->course
         );
 
-        $wasPublished =
-            (bool) $assignment->is_published;
+        $wasPublished = (bool) $assignment->is_published;
 
         $assignment->update($validated);
 
@@ -264,24 +324,40 @@ class AssignmentController extends Controller
 
         return redirect()
             ->route('teacher.assignments.index')
-            ->with('success', 'Assignment updated successfully.');
+            ->with(
+                'success',
+                'Assignment updated successfully.'
+            );
     }
 
-    public function teacherDestroy(Assignment $assignment)
-    {
+    public function teacherDestroy(
+        Assignment $assignment
+    ) {
         $assignment->load('course');
 
-        abort_unless($assignment->course, 404);
+        abort_unless(
+            $assignment->course,
+            404
+        );
 
-        $this->ensureTeacherOwnsCourse($assignment->course);
-        $this->ensureTeacherCanEditCourse($assignment->course);
+        $this->ensureTeacherOwnsCourse(
+            $assignment->course
+        );
+
+        $this->ensureTeacherCanEditCourse(
+            $assignment->course
+        );
 
         $assignment->delete();
 
         return redirect()
             ->route('teacher.assignments.index')
-            ->with('success', 'Assignment deleted successfully.');
+            ->with(
+                'success',
+                'Assignment deleted successfully.'
+            );
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -297,71 +373,381 @@ class AssignmentController extends Controller
                 'course.teacher',
                 'lesson',
             ])
-            ->where('is_published', true)
-            ->whereHas('course', function ($query) use ($studentId) {
-                $query->where('status', 'published')
-                    ->whereHas('enrollments', function ($enrollmentQuery) use ($studentId) {
-                        $enrollmentQuery->where('student_id', $studentId);
-                    });
-            })
+            ->where(
+                'is_published',
+                true
+            )
+            ->whereHas(
+                'course',
+                function ($query) use ($studentId) {
+
+                    $query->where(
+                        'status',
+                        'published'
+                    )
+                    ->whereHas(
+                        'enrollments',
+                        function ($enrollmentQuery) use (
+                            $studentId
+                        ) {
+
+                            $enrollmentQuery->where(
+                                'student_id',
+                                $studentId
+                            );
+                        }
+                    );
+                }
+            )
             ->latest()
             ->get();
 
-        return view('Student.assignments.index', compact('assignments'));
+        return view(
+            'Student.assignments.index',
+            compact('assignments')
+        );
     }
 
-    public function studentShow(Assignment $assignment)
-    {
-        $this->ensureStudentCanAccessAssignment($assignment);
+    public function studentShow(
+        Assignment $assignment
+    ) {
+        $this->ensureStudentCanAccessAssignment(
+            $assignment
+        );
 
         $assignment->load([
             'course.teacher',
             'lesson',
         ]);
 
-        $submission = Submission::where('assignment_id', $assignment->id)
-            ->where('student_id', auth()->id())
+        $submission = Submission::where(
+                'assignment_id',
+                $assignment->id
+            )
+            ->where(
+                'student_id',
+                auth()->id()
+            )
             ->first();
 
-        return view('Student.assignments.show', compact(
-            'assignment',
-            'submission'
-        ));
+        return view(
+            'Student.assignments.show',
+            compact(
+                'assignment',
+                'submission'
+            )
+        );
     }
+
 
     /*
     |--------------------------------------------------------------------------
-    | HELPERS
+    | VALIDATION
     |--------------------------------------------------------------------------
     */
 
-    private function validateTeacherAssignment(Request $request, Course $course): array
-    {
+    private function validateAssignment(
+        Request $request
+    ): array {
         $validated = $request->validate([
+
+            'course_id' => [
+                'required',
+                'exists:courses,id',
+            ],
+
             'lesson_id' => [
                 'nullable',
-                Rule::exists('lessons', 'id')
-                    ->where(fn ($query) => $query->where('course_id', $course->id)),
+                'exists:lessons,id',
             ],
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date',
-            'max_score' => 'required|integer|min:1|max:10000',
-            'is_published' => 'nullable|boolean',
+
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'submission_type' => [
+                'required',
+                Rule::in([
+                    'essay',
+                    'code',
+                    'multiple_choice',
+                ]),
+            ],
+
+            'evaluation_criteria' => [
+                'nullable',
+                'string',
+            ],
+
+            'programming_language' => [
+                'nullable',
+                Rule::in([
+                    'python',
+                    'javascript',
+                    'c',
+                ]),
+            ],
+
+            'ai_evaluation_enabled' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'due_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'max_score' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10000',
+            ],
+
+            'is_published' => [
+                'required',
+                'boolean',
+            ],
         ]);
 
-        $validated['is_published'] = $request->boolean('is_published');
+        $validated['ai_evaluation_enabled'] =
+            $request->boolean(
+                'ai_evaluation_enabled'
+            );
 
         return $validated;
     }
 
+
+    private function validateTeacherAssignment(
+        Request $request,
+        Course $course
+    ): array {
+        $validated = $request->validate([
+
+            'lesson_id' => [
+                'nullable',
+
+                Rule::exists(
+                    'lessons',
+                    'id'
+                )->where(
+                    fn ($query) =>
+                        $query->where(
+                            'course_id',
+                            $course->id
+                        )
+                ),
+            ],
+
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'submission_type' => [
+                'required',
+                Rule::in([
+                    'essay',
+                    'code',
+                    'multiple_choice',
+                ]),
+            ],
+
+            'evaluation_criteria' => [
+                'nullable',
+                'string',
+            ],
+
+            'programming_language' => [
+                'nullable',
+                Rule::in([
+                    'python',
+                    'javascript',
+                    'c',
+                ]),
+            ],
+
+            'ai_evaluation_enabled' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'due_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'max_score' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10000',
+            ],
+
+            'is_published' => [
+                'nullable',
+                'boolean',
+            ],
+        ]);
+
+        $validated['is_published'] =
+            $request->boolean(
+                'is_published'
+            );
+
+        $validated =
+            $this->normalizeAiEvaluationFields(
+                $validated
+            );
+
+        return $validated;
+    }
+
+
     /*
     |--------------------------------------------------------------------------
-    | NOTIFY ENROLLED STUDENTS ABOUT A PUBLISHED ASSIGNMENT
+    | AI EVALUATION FIELD NORMALIZATION
     |--------------------------------------------------------------------------
-    | Notifications are only sent when BOTH the assignment and its course are
-    | published. This prevents students from receiving links to content that
-    | they cannot access yet.
+    */
+
+    private function normalizeAiEvaluationFields(
+        array $validated
+    ): array {
+
+        $submissionType =
+            $validated['submission_type']
+            ?? 'essay';
+
+        $aiEnabled =
+            (bool) (
+                $validated['ai_evaluation_enabled']
+                ?? false
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Multiple Choice
+        |--------------------------------------------------------------------------
+        | Multiple choice should be evaluated deterministically
+        | by the system rather than Gemini.
+        */
+
+        if (
+            $submissionType ===
+            'multiple_choice'
+        ) {
+            $validated[
+                'ai_evaluation_enabled'
+            ] = false;
+
+            $validated[
+                'evaluation_criteria'
+            ] = null;
+
+            $validated[
+                'programming_language'
+            ] = null;
+
+            return $validated;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Essay / Written Response
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $submissionType ===
+            'essay'
+        ) {
+            $validated[
+                'programming_language'
+            ] = null;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Code Submission
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $submissionType ===
+            'code'
+            &&
+            $aiEnabled
+            &&
+            empty(
+                $validated['programming_language']
+            )
+        ) {
+            abort(
+                422,
+                'A programming language is required when AI evaluation is enabled for code submissions.'
+            );
+        }
+
+        return $validated;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LESSON VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureLessonBelongsToCourse(
+        array $validated
+    ): void {
+        if (
+            empty(
+                $validated['lesson_id']
+            )
+        ) {
+            return;
+        }
+
+        $lessonBelongsToCourse =
+            Lesson::whereKey(
+                $validated['lesson_id']
+            )
+            ->where(
+                'course_id',
+                $validated['course_id']
+            )
+            ->exists();
+
+        abort_unless(
+            $lessonBelongsToCourse,
+            422,
+            'Selected lesson does not belong to the selected course.'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFY ENROLLED STUDENTS
+    |--------------------------------------------------------------------------
     */
 
     private function notifyEnrolledStudentsAboutPublishedAssignment(
@@ -389,57 +775,115 @@ class AssignmentController extends Controller
             ->unique('id');
 
         foreach ($students as $student) {
+
             $student->notify(
                 new PathwiseNotification(
-                    title: 'New assignment available',
+                    title:
+                        'New assignment available',
+
                     message:
-                        '"'
-                        . $assignment->title
-                        . '" is now available in '
-                        . $assignment->course->title
-                        . '.',
-                    type: 'assignment_published',
-                    courseId: $assignment->course->id,
-                    assignmentId: $assignment->id
+                        '"' .
+                        $assignment->title .
+                        '" is now available in ' .
+                        $assignment->course->title .
+                        '.',
+
+                    type:
+                        'assignment_published',
+
+                    courseId:
+                        $assignment->course->id,
+
+                    assignmentId:
+                        $assignment->id
                 )
             );
         }
     }
 
 
-    private function ensureTeacherOwnsCourse(Course $course): void
-    {
+    /*
+    |--------------------------------------------------------------------------
+    | TEACHER AUTHORIZATION
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureTeacherOwnsCourse(
+        Course $course
+    ): void {
         abort_unless(
-            (int) $course->teacher_id === (int) auth()->id(),
+            (int) $course->teacher_id ===
+            (int) auth()->id(),
+
             403,
+
             'You may only manage assignments for your own courses.'
         );
     }
 
-    private function ensureTeacherCanEditCourse(Course $course): void
-    {
+
+    /*
+    |--------------------------------------------------------------------------
+    | COURSE STATUS
+    |--------------------------------------------------------------------------
+    |
+    | Teachers can manage assignments for Draft,
+    | Rejected, AND Published courses.
+    |
+    */
+
+    private function ensureTeacherCanEditCourse(
+        Course $course
+    ): void {
         abort_unless(
-            in_array($course->status, ['draft', 'rejected'], true),
+            in_array(
+                $course->status,
+                [
+                    'draft',
+                    'rejected',
+                    'published',
+                ],
+                true
+            ),
+
             403,
-            'Assignments can only be changed while the course is Draft or Rejected.'
+
+            'Assignments can only be managed for Draft, Rejected, or Published courses.'
         );
     }
 
-    private function ensureStudentCanAccessAssignment(Assignment $assignment): void
-    {
+
+    /*
+    |--------------------------------------------------------------------------
+    | STUDENT ACCESS
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureStudentCanAccessAssignment(
+        Assignment $assignment
+    ): void {
         $assignment->loadMissing('course');
 
         abort_unless(
             $assignment->is_published
-                && $assignment->course
-                && $assignment->course->status === 'published',
+                &&
+                $assignment->course
+                &&
+                $assignment->course->status ===
+                    'published',
+
             404
         );
 
-        $isEnrolled = $assignment->course
-            ->enrollments()
-            ->where('student_id', auth()->id())
-            ->exists();
+        $isEnrolled =
+            $assignment
+                ->course
+                ->enrollments()
+                ->where(
+                    'student_id',
+                    auth()->id()
+                )
+                ->exists();
 
         abort_unless(
             $isEnrolled,

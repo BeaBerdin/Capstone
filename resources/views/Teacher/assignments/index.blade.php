@@ -7,7 +7,7 @@
 
 <div class="min-h-screen bg-[#f8f9fc]">
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
-        <div class="mx-auto max-w-[1500px]">
+        <div class="mx-auto max-w-375">
 
             <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                 <a href="{{ route('teacher.dashboard') }}" class="font-medium hover:text-violet-600">
@@ -36,7 +36,7 @@
                             type="button"
                             @click="open = !open"
                             class="inline-flex h-11 items-center justify-center gap-2 rounded-xl
-                                   bg-gradient-to-r from-violet-600 to-indigo-600 px-5
+                                   bg-linear-to-r from-violet-600 to-indigo-600 px-5
                                    text-sm font-semibold text-white shadow-md shadow-violet-200
                                    transition hover:-translate-y-0.5 hover:shadow-lg"
                         >
