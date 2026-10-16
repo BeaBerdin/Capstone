@@ -7,11 +7,13 @@ use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\Transaction;
 use App\Notifications\PathwiseNotification;
+use App\Support\PaymentMethods;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
@@ -293,10 +295,8 @@ if ($invitation->isExpired()) {
                                 ],
                             ],
 
-                            'payment_method_types' => [
-                                'gcash',
-                                'card',
-                            ],
+                            // From PAYMONGO_PAYMENT_METHODS (gcash, paymaya, card).
+                            'payment_method_types' => PaymentMethods::enabled(),
 
                             'success_url' => $successUrl,
 
@@ -589,8 +589,12 @@ if ($invitation->isExpired()) {
         }
 
         $validated = $request->validate([
-            'payment_method' =>
-                'required|string|max:100',
+            // The enabled PayMongo methods' labels, or bank transfer.
+            'payment_method' => [
+                'required',
+                'string',
+                Rule::in(PaymentMethods::proofOptions()),
+            ],
 
             'payment_reference' =>
                 'nullable|string|max:255',

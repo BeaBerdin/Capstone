@@ -294,7 +294,7 @@
                                 </p>
 
                                 <p class="mt-1 truncate text-sm font-semibold text-slate-700">
-                                    {{ $transaction->payment_method ?? 'Not submitted' }}
+                                    {{ \App\Support\PaymentMethods::label($transaction->payment_method) ?? 'Not submitted' }}
                                 </p>
                             </div>
 

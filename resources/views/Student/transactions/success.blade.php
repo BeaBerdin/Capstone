@@ -102,7 +102,7 @@
                                         Payment Method
                                     </p>
                                     <p class="mt-1 text-sm font-semibold">
-                                        {{ $transaction->payment_method ?? 'PayMongo' }}
+                                        {{ \App\Support\PaymentMethods::label($transaction->payment_method) ?? 'PayMongo' }}
                                     </p>
                                 </div>
 

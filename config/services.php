@@ -53,6 +53,10 @@ return [
         'secret_key' => env('PAYMONGO_SECRET_KEY'),
         'public_key' => env('PAYMONGO_PUBLIC_KEY'),
 
+        // Checkout payment methods, comma-separated: gcash, paymaya (Maya), card.
+        // See App\Support\PaymentMethods.
+        'payment_methods' => env('PAYMONGO_PAYMENT_METHODS', 'gcash,card,paymaya'),
+
         // PayMongo webhook endpoint signing secret (whsk_...), not the API key.
         'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
 

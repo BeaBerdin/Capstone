@@ -1322,6 +1322,11 @@
                                         Purchase Course
                                     </button>
 
+                                    {{-- Enabled PayMongo methods (PAYMONGO_PAYMENT_METHODS). --}}
+                                    <p class="mt-2 text-center text-xs text-slate-500">
+                                        Pay securely with {{ implode(', ', array_values(\App\Support\PaymentMethods::labels())) }} via PayMongo.
+                                    </p>
+
                                 </form>
 
 

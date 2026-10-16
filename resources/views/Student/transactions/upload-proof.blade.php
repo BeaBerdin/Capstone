@@ -66,7 +66,7 @@
             <div class="rounded-lg bg-neutral-800 p-4">
                 <p class="text-sm text-gray-400">Payment Method</p>
                 <p class="mt-1 font-semibold text-white">
-                    {{ $transaction->payment_method ?? 'Not yet submitted' }}
+                    {{ \App\Support\PaymentMethods::label($transaction->payment_method) ?? 'Not yet submitted' }}
                 </p>
             </div>
         </div>
@@ -111,7 +111,7 @@
             </h3>
 
             <p class="mt-1 text-sm text-gray-400">
-                Submit your GCash, Maya, or bank transfer receipt for admin verification.
+                Submit your {{ implode(', ', array_values(\App\Support\PaymentMethods::labels())) }} or bank transfer receipt for admin verification.
             </p>
 
             <form action="{{ route('student.transactions.upload-proof', $transaction) }}"
@@ -129,9 +129,10 @@
                             class="w-full rounded-lg border border-neutral-700 bg-neutral-800 p-3 text-white"
                             required>
                         <option value="">Select payment method</option>
-                        <option value="GCash" @selected($transaction->payment_method === 'GCash')>GCash</option>
-                        <option value="Maya" @selected($transaction->payment_method === 'Maya')>Maya</option>
-                        <option value="Bank Transfer" @selected($transaction->payment_method === 'Bank Transfer')>Bank Transfer</option>
+                        {{-- Enabled PayMongo methods (PAYMONGO_PAYMENT_METHODS) plus bank transfer. --}}
+                        @foreach (\App\Support\PaymentMethods::proofOptions() as $methodLabel)
+                            <option value="{{ $methodLabel }}" @selected(old('payment_method', $transaction->payment_method) === $methodLabel)>{{ $methodLabel }}</option>
+                        @endforeach
                     </select>
                 </div>
 
