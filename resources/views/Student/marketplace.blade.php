@@ -727,6 +727,40 @@
 
 
 
+                                @php
+                                    $isCancelledEnrollment = in_array($course->id, $cancelledCourseIds ?? [], true);
+                                    $pendingPayment = ($pendingPayments ?? collect())->get($course->id);
+                                @endphp
+
+                                {{-- CANCELLED ENROLLMENT --}}
+                                @if($isCancelledEnrollment)
+                                    <p
+                                        class="mt-5 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2.5
+                                               text-[11px] font-semibold leading-5 text-rose-700"
+                                        data-enrollment-cancelled
+                                    >
+                                        Your enrollment was cancelled. Contact the course administrator.
+                                    </p>
+
+                                {{-- PAYMENT STARTED BUT NOT FINISHED --}}
+                                @elseif($pendingPayment)
+                                    <div
+                                        class="mt-5 rounded-xl border border-orange-100 bg-orange-50 px-3 py-2.5"
+                                        data-payment-pending
+                                    >
+                                        <p class="text-[11px] font-bold text-orange-800">
+                                            Payment pending
+                                        </p>
+
+                                        <a
+                                            href="{{ $pendingPayment->checkout_url ?: route('student.transactions.show', $pendingPayment) }}"
+                                            class="mt-1 inline-block text-[11px] font-semibold text-orange-700 underline hover:text-orange-800"
+                                        >
+                                            Continue payment
+                                        </a>
+                                    </div>
+                                @endif
+
                                 {{-- BUTTON --}}
                                 <a
                                     href="{{ route('student.course.show', $course) }}"
@@ -853,9 +887,9 @@
                         class="mx-auto mt-2 max-w-md
                                text-sm leading-6 text-slate-500"
                     >
-                        There are currently no published courses
-                        available in the marketplace. Check back later
-                        for new learning opportunities.
+                        There are no new courses for you right now. Courses
+                        you are already taking or have completed are in My
+                        Courses. Check back later for new learning opportunities.
                     </p>
 
 

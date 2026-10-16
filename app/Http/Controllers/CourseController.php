@@ -8,6 +8,7 @@ use App\Models\CourseTemplate;
 use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\LessonProgress;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use Illuminate\Http\Request;
@@ -232,17 +233,46 @@ class CourseController extends Controller
 
     public function marketplace()
     {
+        $studentId = auth()->id();
+
+        $enrollmentStatuses = Enrollment::where('student_id', $studentId)
+            ->pluck('status', 'course_id');
+
+        // Courses the student is already taking or has finished are not
+        // offered again. Search, category filter and counts on the page all
+        // work on this list, so they leave them out too.
+        $ownedCourseIds = $enrollmentStatuses
+            ->filter(fn ($status) => in_array($status, Enrollment::ACCESS_STATUSES, true))
+            ->keys();
+
         $courses = Course::with([
             'category',
             'teacher',
         ])
             ->where('status', 'published')
+            ->whereNotIn('id', $ownedCourseIds)
             ->latest()
             ->get();
 
+        // Cancelled enrollments stay listed, with a message instead of a
+        // way to enroll again.
+        $cancelledCourseIds = $enrollmentStatuses
+            ->filter(fn ($status) => $status === 'cancelled')
+            ->keys()
+            ->all();
+
+        // A started but unfinished payment, so the student can continue it.
+        $pendingPayments = Transaction::where('student_id', $studentId)
+            ->where('status', 'pending')
+            ->whereIn('course_id', $courses->pluck('id'))
+            ->latest()
+            ->get()
+            ->unique('course_id')
+            ->keyBy('course_id');
+
         return view(
             'Student.marketplace',
-            compact('courses')
+            compact('courses', 'cancelledCourseIds', 'pendingPayments')
         );
     }
 

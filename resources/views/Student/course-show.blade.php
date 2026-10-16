@@ -17,7 +17,20 @@
         )
         ->first();
 
-    $isEnrolled = (bool) $enrollment;
+    // Only an active or completed enrollment gives access; a cancelled
+    // one shows a message instead of any learn or buy button.
+    $isEnrolled = $enrollment && $enrollment->grantsAccess();
+
+    $isCancelled = $enrollment && ! $enrollment->grantsAccess();
+
+    $isCompleted = $isEnrolled && $enrollment->status === 'completed';
+
+    $certificate = $isCompleted
+        ? \App\Models\Certificate::where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->where('status', 'issued')
+            ->first()
+        : null;
 
 
     /*
@@ -1019,23 +1032,34 @@
 
                                         <div>
 
-                                            <p
-                                                class="text-xs
-                                                       font-bold
-                                                       text-emerald-800"
-                                            >
-                                                You're enrolled
-                                            </p>
+                                            @if($isCompleted)
+                                                <span class="inline-flex rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                                                    Completed
+                                                </span>
 
-                                            <p
-                                                class="mt-1
-                                                       text-[11px]
-                                                       leading-5
-                                                       text-emerald-700"
-                                            >
-                                                Continue your course
-                                                whenever you're ready.
-                                            </p>
+                                                <p class="mt-1.5 text-[11px] leading-5 text-emerald-700">
+                                                    You finished this course{{ $enrollment->completed_at ? ' on '.\Carbon\Carbon::parse($enrollment->completed_at)->format('M d, Y') : '' }}.
+                                                    You can still review the lessons.
+                                                </p>
+                                            @else
+                                                <p
+                                                    class="text-xs
+                                                           font-bold
+                                                           text-emerald-800"
+                                                >
+                                                    You're enrolled
+                                                </p>
+
+                                                <p
+                                                    class="mt-1
+                                                           text-[11px]
+                                                           leading-5
+                                                           text-emerald-700"
+                                                >
+                                                    Continue your course
+                                                    whenever you're ready.
+                                                </p>
+                                            @endif
 
                                         </div>
 
@@ -1105,6 +1129,33 @@
 
 
 
+                                @if($isCompleted)
+
+                                    <div class="mt-5 grid gap-2 sm:grid-cols-2">
+                                        @if($certificate)
+                                            <a
+                                                href="{{ route('student.certificate.view', $certificate) }}"
+                                                class="inline-flex h-11 w-full items-center justify-center gap-2
+                                                       rounded-xl bg-emerald-600 text-sm font-semibold text-white
+                                                       transition hover:bg-emerald-700"
+                                            >
+                                                View Certificate
+                                            </a>
+                                        @endif
+
+                                        <a
+                                            href="{{ route('student.learn.course', $course) }}"
+                                            class="inline-flex h-11 w-full items-center justify-center gap-2
+                                                   rounded-xl border border-violet-200 bg-white text-sm font-semibold
+                                                   text-violet-700 transition hover:bg-violet-50
+                                                   {{ $certificate ? '' : 'sm:col-span-2' }}"
+                                        >
+                                            Review Course
+                                        </a>
+                                    </div>
+
+                                @else
+
                                 <a
                                     href="{{ route('student.learn.course', $course) }}"
                                     class="mt-5
@@ -1139,6 +1190,25 @@
 
                                     Continue Learning
                                 </a>
+
+                                @endif
+
+
+
+                            @elseif($isCancelled)
+
+                                <div
+                                    class="mt-6 rounded-2xl border border-rose-100 bg-rose-50 p-4"
+                                    data-enrollment-cancelled
+                                >
+                                    <p class="text-xs font-bold text-rose-800">
+                                        Enrollment cancelled
+                                    </p>
+
+                                    <p class="mt-1 text-[11px] leading-5 text-rose-700">
+                                        Your enrollment was cancelled. Contact the course administrator.
+                                    </p>
+                                </div>
 
 
 
