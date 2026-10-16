@@ -44,3 +44,6 @@ yarn-error.log
 # Database dumps and manuscript/audit PDFs must never be committed.
 *.sql
 docs/audit/*.pdf
+
+# Local test run output.
+test-results*.txt

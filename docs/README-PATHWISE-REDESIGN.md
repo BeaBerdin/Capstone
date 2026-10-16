@@ -1,4 +1,4 @@
-# PathWise Teacher UI Redesign Patch
+﻿# PathWise Teacher UI Redesign Patch
 
 This patch updates the teacher-facing PathWise experience while keeping the existing Laravel/Blade/Livewire/Tailwind stack.
 
