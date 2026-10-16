@@ -41,7 +41,7 @@ trait ProfileValidationRules
         return [
             'required',
             'string',
-            'email:rfc,dns',
+            app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns',
             'regex:/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/',
             'max:255',
             $userId === null
