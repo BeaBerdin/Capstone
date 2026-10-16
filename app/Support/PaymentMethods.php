@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Transaction;
+
 /**
  * The PayMongo payment methods PATHWISE offers, read from
  * PAYMONGO_PAYMENT_METHODS (comma-separated). Used for the checkout
@@ -76,6 +78,42 @@ class PaymentMethods
         }
 
         return self::SUPPORTED[strtolower(trim($stored))] ?? $stored;
+    }
+
+    /**
+     * A PayMongo method key reported by PayMongo (gcash, paymaya, card),
+     * or null when the value is missing or not supported.
+     */
+    public static function normalize(mixed $method): ?string
+    {
+        if (! is_string($method)) {
+            return null;
+        }
+
+        $method = strtolower(trim($method));
+
+        return array_key_exists($method, self::SUPPORTED) ? $method : null;
+    }
+
+    /**
+     * What to show for a transaction's payment method: "Maya via PayMongo"
+     * when PayMongo reported the method, otherwise the stored method as
+     * before (e.g. "PayMongo" for older online payments, "GCash" for a
+     * manual receipt).
+     */
+    public static function forTransaction(?Transaction $transaction): ?string
+    {
+        if ($transaction === null) {
+            return null;
+        }
+
+        $paymongoMethod = self::normalize($transaction->paymongo_method);
+
+        if ($paymongoMethod !== null) {
+            return self::SUPPORTED[$paymongoMethod].' via PayMongo';
+        }
+
+        return self::label($transaction->payment_method);
     }
 
     /**

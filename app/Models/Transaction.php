@@ -13,6 +13,7 @@ class Transaction extends Model
     'transaction_no',
     'amount',
     'payment_method',
+    'paymongo_method',
     'status',
     'payment_proof',
     'checkout_url',

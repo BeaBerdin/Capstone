@@ -66,7 +66,7 @@
             <div class="rounded-lg bg-neutral-800 p-4">
                 <p class="text-sm text-gray-400">Payment Method</p>
                 <p class="mt-1 font-semibold text-white">
-                    {{ \App\Support\PaymentMethods::label($transaction->payment_method) ?? 'Not yet submitted' }}
+                    {{ \App\Support\PaymentMethods::forTransaction($transaction) ?? 'Not yet submitted' }}
                 </p>
             </div>
         </div>

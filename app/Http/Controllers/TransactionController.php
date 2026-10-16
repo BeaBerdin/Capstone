@@ -478,7 +478,8 @@ if ($invitation->isExpired()) {
 
             $this->approveVerifiedPayMongoTransaction(
                 $transaction,
-                $verification['payment_id']
+                $verification['payment_id'],
+                $verification['method'] ?? null
             );
 
             $transaction = $transaction->fresh('course');
@@ -856,7 +857,8 @@ if ($invitation->isExpired()) {
 
         $this->approveVerifiedPayMongoTransaction(
             $transaction,
-            $verification['payment_id']
+            $verification['payment_id'],
+            $verification['method'] ?? null
         );
 
         return response()->json(
@@ -947,7 +949,8 @@ if ($invitation->isExpired()) {
 
             $this->approveVerifiedPayMongoTransaction(
                 $transaction,
-                $verification['payment_id']
+                $verification['payment_id'],
+                $verification['method'] ?? null
             );
 
             return back()->with(
@@ -1223,6 +1226,12 @@ if ($invitation->isExpired()) {
                                 $payment,
                                 'id'
                             ),
+                        // The method the student used (gcash, paymaya or card).
+                        'method' =>
+                            PaymentMethods::normalize(
+                                data_get($payment, 'attributes.source.type')
+                                ?? data_get($session, 'attributes.payment_method_used')
+                            ),
                         'message' =>
                             'PayMongo confirmed the payment successfully.',
                     ];
@@ -1257,12 +1266,14 @@ if ($invitation->isExpired()) {
 
     private function approveVerifiedPayMongoTransaction(
         Transaction $transaction,
-        ?string $paymentId = null
+        ?string $paymentId = null,
+        ?string $paymongoMethod = null
     ): void {
         DB::transaction(
             function () use (
                 $transaction,
-                $paymentId
+                $paymentId,
+                $paymongoMethod
             ) {
 
                 $remarks =
@@ -1287,6 +1298,11 @@ if ($invitation->isExpired()) {
 
                     'payment_method' =>
                         'PayMongo',
+
+                    // Shown as e.g. "Maya via PayMongo"; null if PayMongo
+                    // did not report a supported method.
+                    'paymongo_method' =>
+                        $paymongoMethod,
 
                     'remarks' =>
                         Str::limit(

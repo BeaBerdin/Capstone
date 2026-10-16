@@ -413,7 +413,7 @@
                                     </p>
 
                                     <p class="mt-1 wrap-break-word text-[10px] text-slate-400">
-                                        {{ \App\Support\PaymentMethods::label($transaction->payment_method) ?? 'No method' }}
+                                        {{ \App\Support\PaymentMethods::forTransaction($transaction) ?? 'No method' }}
                                     </p>
 
                                 </td>
