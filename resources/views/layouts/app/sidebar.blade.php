@@ -1607,6 +1607,11 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Categories', 'meta' => 'Course categories', 'url' => route('course-categories.index')],
             ['label' => 'Lessons', 'meta' => 'Learning content', 'url' => route('lessons.index')],
             ['label' => 'Quizzes', 'meta' => 'Assessment management', 'url' => route('quizzes.index')],
+            ['label' => 'Quiz Results', 'meta' => 'All quiz attempts', 'url' => route('quiz-results.index')],
+            ['label' => 'Enrollments', 'meta' => 'Manage and restore enrollments', 'url' => route('enrollments.index')],
+            ['label' => 'Learning Paths', 'meta' => 'Student learning paths', 'url' => route('learning-paths.index')],
+            ['label' => 'Certificate Records', 'meta' => 'Issue, edit and revoke certificates', 'url' => route('certificates.index')],
+            ['label' => 'Removal Requests', 'meta' => 'Student removal requests', 'url' => route('admin.student-removal-requests.index')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommendation tools', 'url' => route('ai-recommendations.index')],
             ['label' => 'Student Progress', 'meta' => 'Learner performance', 'url' => route('student-progress.index')],
             ['label' => 'Certificates', 'meta' => 'Certificate management', 'url' => route('certificate-management.index')],
@@ -2117,6 +2122,66 @@ html.dark .pw-mobile-toggle {
 
                     </a>
 
+
+                    {{-- Quiz Results --}}
+                    <a
+                        href="{{ route('quiz-results.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('quiz-results.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="M9 11l3 3 8-8" />
+
+                            <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+                        </svg>
+
+                        <span>
+                            Quiz Results
+                        </span>
+
+                    </a>
+
+
+                    {{-- Enrollments --}}
+                    <a
+                        href="{{ route('enrollments.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('enrollments.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <circle
+                                cx="9"
+                                cy="8"
+                                r="4"
+                            />
+
+                            <path d="M2 21v-1a6 6 0 0 1 12 0v1M16 11h6M19 8v6" />
+                        </svg>
+
+                        <span>
+                            Enrollments
+                        </span>
+
+                    </a>
+
                 </section>
 
 
@@ -2226,6 +2291,110 @@ html.dark .pw-mobile-toggle {
 
                         <span>
                             Certificates
+                        </span>
+
+                    </a>
+
+
+                    {{-- Certificate Records (issue, edit, revoke) --}}
+                    <a
+                        href="{{ route('certificates.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('certificates.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <rect
+                                x="3"
+                                y="5"
+                                width="18"
+                                height="14"
+                                rx="2"
+                            />
+
+                            <path d="M7 10h10M7 14h6" />
+                        </svg>
+
+                        <span>
+                            Certificate Records
+                        </span>
+
+                    </a>
+
+
+                    {{-- Learning Paths --}}
+                    <a
+                        href="{{ route('learning-paths.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('learning-paths.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <circle
+                                cx="6"
+                                cy="18"
+                                r="2"
+                            />
+
+                            <circle
+                                cx="18"
+                                cy="6"
+                                r="2"
+                            />
+
+                            <path d="M8 18h5a3 3 0 0 0 3-3V9a3 3 0 0 1 2-3" />
+                        </svg>
+
+                        <span>
+                            Learning Paths
+                        </span>
+
+                    </a>
+
+
+                    {{-- Student Removal Requests --}}
+                    <a
+                        href="{{ route('admin.student-removal-requests.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('admin.student-removal-requests.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <circle
+                                cx="9"
+                                cy="8"
+                                r="4"
+                            />
+
+                            <path d="M2 21v-1a6 6 0 0 1 12 0v1M16 11h6" />
+                        </svg>
+
+                        <span>
+                            Removal Requests
                         </span>
 
                     </a>

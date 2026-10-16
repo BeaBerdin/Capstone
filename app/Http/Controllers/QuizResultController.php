@@ -17,12 +17,18 @@ class QuizResultController extends Controller
     {
         $teacherId = auth()->id();
 
+        // The Department Head (admin) reviews every quiz attempt; a
+        // teacher only sees attempts on their own courses.
+        $isAdmin = auth()->user()->hasRole('admin');
+
         $results = QuizResult::with([
                 'student',
                 'quiz.course',
             ])
-            ->whereHas('quiz.course', function (Builder $query) use ($teacherId) {
-                $query->where('teacher_id', $teacherId);
+            ->when(! $isAdmin, function (Builder $query) use ($teacherId) {
+                $query->whereHas('quiz.course', function (Builder $query) use ($teacherId) {
+                    $query->where('teacher_id', $teacherId);
+                });
             })
             ->latest('completed_at')
             ->get();

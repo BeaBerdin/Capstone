@@ -10,6 +10,11 @@
 
     $teacherCourses = $results->map(fn ($r) => $r->quiz?->course)->filter()->unique('id')->sortBy('title')->values();
     $teacherQuizzes = $results->map(fn ($r) => $r->quiz)->filter()->unique('id')->sortBy('title')->values();
+
+    // This page is shared by teachers and the Department Head (admin).
+    $courseContentUrl = auth()->user()->hasRole('admin')
+        ? route('lessons.index')
+        : route('teacher.lessons.index');
 @endphp
 
 <style>
@@ -48,7 +53,7 @@
                         Review student quiz attempts, scores, pass rates, and assessment performance across your courses.
                     </p>
                 </div>
-                <a href="{{ route('teacher.lessons.index') }}" class="inline-flex h-11 self-start items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
+                <a href="{{ $courseContentUrl }}" class="inline-flex h-11 self-start items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                     Course Content
                 </a>
@@ -243,7 +248,7 @@
                         </div>
                         <h3 class="mt-4 text-base font-bold text-slate-900">No quiz results yet</h3>
                         <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Student quiz attempts will automatically appear here after learners complete assessments from your courses.</p>
-                        <a href="{{ route('teacher.lessons.index') }}" class="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700">Manage Course Content</a>
+                        <a href="{{ $courseContentUrl }}" class="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700">Manage Course Content</a>
                     </div>
                 @endif
             </section>

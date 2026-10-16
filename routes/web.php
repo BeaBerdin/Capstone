@@ -152,9 +152,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/admin-dashboard', [DashboardController::class, 'index'])
             ->name('admin.dashboard');
 
-        Route::resource('course-categories', CourseCategoryController::class);
+        Route::resource('course-categories', CourseCategoryController::class)->except('show');
 
-        Route::resource('courses', CourseController::class);
+        Route::resource('courses', CourseController::class)->except('show');
 
         Route::post('/courses/{course}/approve', [CourseController::class, 'approve'])
             ->name('courses.approve');
@@ -162,15 +162,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/courses/{course}/reject', [CourseController::class, 'reject'])
             ->name('courses.reject');
 
-        Route::resource('lessons', LessonController::class);
-        Route::resource('quizzes', QuizController::class);
-        Route::resource('quiz-questions', QuizQuestionController::class);
-        Route::resource('quiz-results', QuizResultController::class);
-        Route::resource('enrollments', EnrollmentController::class);
+        Route::resource('lessons', LessonController::class)->except('show');
+        Route::resource('quizzes', QuizController::class)->except('show');
+        Route::resource('quiz-questions', QuizQuestionController::class)->except('show');
+        Route::resource('quiz-results', QuizResultController::class)->except('show');
+        Route::resource('enrollments', EnrollmentController::class)->except('show');
         Route::resource('assignments', AssignmentController::class);
         Route::resource('submissions', SubmissionController::class);
-        Route::resource('certificates', CertificateController::class);
-        Route::resource('ai-recommendations', AIRecommendationController::class);
+        Route::resource('certificates', CertificateController::class)->except('show');
+        Route::resource('ai-recommendations', AIRecommendationController::class)->except(['show', 'edit', 'update']);
 
         Route::get('/student-progress', [StudentProgressController::class, 'index'])
             ->name('student-progress.index');
