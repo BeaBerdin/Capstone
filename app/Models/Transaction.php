@@ -17,6 +17,9 @@ class Transaction extends Model
     'payment_proof',
     'checkout_url',
     'payment_reference',
+    'remarks',
+    'approved_by',
+    'approved_at',
 ];
     public function student()
     {
