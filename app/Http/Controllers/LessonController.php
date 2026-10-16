@@ -574,20 +574,7 @@ class LessonController extends Controller
                 ],
                 [
                     'certificate_number' =>
-                        'PW-'
-                        .
-                        now()->format('Y')
-                        .
-                        '-'
-                        .
-                        str_pad(
-                            $studentId
-                            .
-                            $course->id,
-                            5,
-                            '0',
-                            STR_PAD_LEFT
-                        ),
+                        Certificate::generateNumber(),
 
                     'issued_date' =>
                         now()->toDateString(),

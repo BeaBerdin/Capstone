@@ -24,4 +24,45 @@ class Certificate extends Model
     {
         return $this->belongsTo(Course::class);
     }
+
+    /**
+     * Next certificate number in the PATH-YYYY-00001 sequence.
+     *
+     * Used for every automatically issued certificate (lesson completion
+     * and final quiz) so the numbers never depend on student or course IDs.
+     */
+    public static function generateNumber(): string
+    {
+        $year = now()->year;
+
+        $lastCertificate = static::where(
+            'certificate_number',
+            'like',
+            "PATH-{$year}-%"
+        )
+            ->orderByDesc('id')
+            ->first();
+
+        $nextNumber = 1;
+
+        if ($lastCertificate) {
+            $parts = explode('-', $lastCertificate->certificate_number);
+            $nextNumber = (int) end($parts) + 1;
+        }
+
+        do {
+            $certificateNumber = 'PATH-'.$year.'-'.str_pad(
+                (string) $nextNumber,
+                5,
+                '0',
+                STR_PAD_LEFT
+            );
+
+            $nextNumber++;
+        } while (
+            static::where('certificate_number', $certificateNumber)->exists()
+        );
+
+        return $certificateNumber;
+    }
 }
