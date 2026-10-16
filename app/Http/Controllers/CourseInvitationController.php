@@ -8,33 +8,62 @@ use App\Models\Enrollment;
 use App\Models\User;
 use App\Notifications\PathwiseNotification;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 
 class CourseInvitationController extends Controller
 {
-   public function index()
+    private const STUDENT_SEARCH_MIN_LENGTH = 3;
+
+    private const STUDENT_SEARCH_LIMIT = 10;
+
+   public function index(Request $request)
 {
     $invitations = CourseInvitation::with('course')
         ->where('created_by', auth()->id())
         ->latest()
         ->get();
 
+    // Invitations can only be created for published courses.
     $courses = Course::where('teacher_id', auth()->id())
+        ->where('status', 'published')
         ->orderBy('title')
         ->get();
 
-    $students = User::whereHas('roles', function ($query) {
-        $query->where('name', 'student');
-    })
-        ->orderBy('name')
-        ->get();
+    /*
+    | Teachers never see a full student list. They search one invitation
+    | at a time by name or email (at least 3 characters, up to 10 results).
+    */
+    $searchInvitationId = (int) $request->query('invitation');
+    $searchTerm = trim((string) $request->query('q'));
+    $searchResults = collect();
+    $searchError = null;
+
+    $searchInvitation = $invitations->firstWhere('id', $searchInvitationId);
+
+    if ($searchInvitation) {
+        if (mb_strlen($searchTerm) < self::STUDENT_SEARCH_MIN_LENGTH) {
+            $searchError = 'Type at least '.self::STUDENT_SEARCH_MIN_LENGTH.' characters of a name or email.';
+        } else {
+            $searchResults = $this->searchStudents($searchInvitation, $searchTerm);
+
+            if ($searchResults->isEmpty()) {
+                $searchError = 'No matching students who are not already enrolled in this course.';
+            }
+        }
+    }
 
     return view('course-invitations.index', compact(
         'invitations',
         'courses',
-        'students'
+        'searchInvitationId',
+        'searchTerm',
+        'searchResults',
+        'searchError'
     ));
 }
 
@@ -44,22 +73,35 @@ class CourseInvitationController extends Controller
     'course_id' => [
         'required',
         'integer',
-        'exists:courses,id',
+        Rule::exists('courses', 'id')
+            ->where('teacher_id', auth()->id())
+            ->where('status', 'published'),
     ],
+    // The form uses <input type="datetime-local">, which sends the time
+    // with or without seconds depending on the browser.
     'expires_at' => [
         'nullable',
-        'date',
+        'date_format:Y-m-d\TH:i,Y-m-d\TH:i:s',
     ],
+], [
+    'course_id.exists' => 'Choose one of your published courses.',
+    'expires_at.date_format' => 'Enter the expiry as a date and time.',
 ]);
 
 $expiresAt = null;
 
 if (! empty($validated['expires_at'])) {
-    $expiresAt = Carbon::createFromFormat(
-        'Y-m-d\TH:i',
+    // The teacher enters Philippine time; it is stored in UTC.
+    $expiresAt = Carbon::parse(
         $validated['expires_at'],
         'Asia/Manila'
     )->utc();
+
+    if ($expiresAt->isPast()) {
+        throw ValidationException::withMessages([
+            'expires_at' => 'The expiry must be in the future.',
+        ]);
+    }
 }
 
         $course = Course::where('id', $validated['course_id'])
@@ -157,6 +199,20 @@ if (! empty($validated['expires_at'])) {
             && (int) $invitation->student_id !== (int) auth()->id()
         ) {
             abort(403, 'This invitation was assigned to another student.');
+        }
+
+        // A course that was unpublished after the invitation was created
+        // cannot be joined.
+        if (strtolower((string) $course->status) !== 'published') {
+            return redirect()
+                ->route(
+                    'course-invitations.show',
+                    $invitation->code
+                )
+                ->with(
+                    'error',
+                    'This course is not open for enrollment right now.'
+                );
         }
 
         /*
@@ -274,16 +330,14 @@ if (! empty($validated['expires_at'])) {
         ],
     ]);
 
-    $student = User::whereKey($validated['student_id'])
-        ->whereHas('roles', function ($query) {
-            $query->where('name', 'student');
-        })
+    $student = $this->invitableStudents($courseInvitation)
+        ->whereKey($validated['student_id'])
         ->first();
 
     if (! $student) {
         return back()->with(
             'error',
-            'The selected user is not a student.'
+            'Choose a student who is not already enrolled in this course.'
         );
     }
 
@@ -332,4 +386,38 @@ if (! empty($validated['expires_at'])) {
         'Invitation sent successfully to ' . $student->name . '.'
     );
 }
+
+    /**
+     * Students who can receive this invitation: any student who has no
+     * enrollment record in the invitation's course yet.
+     */
+    private function invitableStudents(CourseInvitation $invitation): Builder
+    {
+        return User::query()
+            ->whereHas('roles', function (Builder $query) {
+                $query->where('name', 'student');
+            })
+            ->whereNotIn(
+                'id',
+                Enrollment::select('student_id')
+                    ->where('course_id', $invitation->course_id)
+            );
+    }
+
+    /**
+     * Up to 10 invitable students whose name or email contains the term.
+     */
+    private function searchStudents(CourseInvitation $invitation, string $term)
+    {
+        $like = '%'.$term.'%';
+
+        return $this->invitableStudents($invitation)
+            ->where(function (Builder $query) use ($like) {
+                $query->where('name', 'like', $like)
+                    ->orWhere('email', 'like', $like);
+            })
+            ->orderBy('name')
+            ->limit(self::STUDENT_SEARCH_LIMIT)
+            ->get(['id', 'name', 'email']);
+    }
 }

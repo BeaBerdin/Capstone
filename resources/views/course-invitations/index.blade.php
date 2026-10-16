@@ -198,32 +198,30 @@
                                         <td class="whitespace-nowrap px-6 py-4 text-right">
                                             <div class="flex items-center justify-end gap-2">
 
+                                                {{-- Search for one student by name or email (no full student list). --}}
                                                 <form
-                                                    method="POST"
-                                                    action="{{ route('course-invitations.send', $invitation) }}"
+                                                    method="GET"
+                                                    action="{{ route('course-invitations.index') }}"
                                                     class="flex items-center gap-2"
                                                 >
-                                                    @csrf
+                                                    <input type="hidden" name="invitation" value="{{ $invitation->id }}">
 
-                                                    <select
-                                                        name="student_id"
+                                                    <input
+                                                        type="search"
+                                                        name="q"
+                                                        minlength="3"
                                                         required
-                                                        class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+                                                        value="{{ $searchInvitationId === $invitation->id ? $searchTerm : '' }}"
+                                                        placeholder="Student name or email"
+                                                        aria-label="Search student by name or email"
+                                                        class="w-48 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
                                                     >
-                                                        <option value="">Select student</option>
-
-                                                        @foreach($students as $student)
-                                                            <option value="{{ $student->id }}">
-                                                                {{ $student->name }} — {{ $student->email }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
 
                                                     <button
                                                         type="submit"
-                                                        class="rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700"
+                                                        class="rounded-lg border border-purple-300 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
                                                     >
-                                                        Send Invitation
+                                                        Find Student
                                                     </button>
                                                 </form>
 
@@ -246,6 +244,44 @@
                                             </div>
                                         </td>
                                     </tr>
+
+                                    @if ($searchInvitationId === $invitation->id)
+                                        <tr>
+                                            <td colspan="5" class="bg-gray-50 px-6 py-4 dark:bg-zinc-900/40">
+                                                @if ($searchError)
+                                                    <p class="text-sm text-gray-600 dark:text-zinc-400">
+                                                        {{ $searchError }}
+                                                    </p>
+                                                @else
+                                                    <ul class="space-y-2">
+                                                        @foreach ($searchResults as $student)
+                                                            <li class="flex items-center justify-between gap-4">
+                                                                <span class="text-sm text-gray-800 dark:text-zinc-200">
+                                                                    {{ $student->name }} — {{ $student->email }}
+                                                                </span>
+
+                                                                <form
+                                                                    method="POST"
+                                                                    action="{{ route('course-invitations.send', $invitation) }}"
+                                                                >
+                                                                    @csrf
+
+                                                                    <input type="hidden" name="student_id" value="{{ $student->id }}">
+
+                                                                    <button
+                                                                        type="submit"
+                                                                        class="rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700"
+                                                                    >
+                                                                        Send Invitation
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
