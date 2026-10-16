@@ -211,17 +211,21 @@ class SubmissionController extends Controller
         $hasText = $validated['answer_text'] !== null;
         $hasFile = $request->hasFile('submission_file');
 
+        // Messages use the same wording as the teacher's "How Students
+        // Answer" choice, e.g. "Pasted code only" or "File upload only".
+        $formatRule = 'This assignment accepts: '.$assignment->answerFormatLabel().'.';
+
         if ($hasText && ! $assignment->acceptsTypedAnswer()) {
             throw ValidationException::withMessages([
-                'answer_text' => 'This assignment only accepts a file upload.',
+                'answer_text' => $formatRule.' Please upload a file instead.',
             ]);
         }
 
         if ($hasFile && ! $assignment->acceptsFileUpload()) {
             throw ValidationException::withMessages([
-                'submission_file' => $isCodeSubmission
-                    ? 'This assignment only accepts typed or pasted code.'
-                    : 'This assignment only accepts a typed answer.',
+                'submission_file' => $formatRule.($isCodeSubmission
+                    ? ' Please paste your code instead.'
+                    : ' Please type your answer instead.'),
             ]);
         }
 
@@ -230,17 +234,17 @@ class SubmissionController extends Controller
                 match (true) {
                     ! $assignment->acceptsFileUpload() => [
                         'answer_text' => $isCodeSubmission
-                            ? 'Please enter your code before submitting.'
-                            : 'Please enter your answer before submitting.',
+                            ? 'Please paste your code before submitting.'
+                            : 'Please type your answer before submitting.',
                     ],
                     ! $assignment->acceptsTypedAnswer() => [
                         'submission_file' => 'Please upload a file before submitting.',
                     ],
                     $isCodeSubmission => [
-                        'answer_text' => 'Please enter your code or upload a source file before submitting.',
+                        'answer_text' => 'Please paste your code or upload a file before submitting.',
                     ],
                     default => [
-                        'submission' => 'Please enter an answer or attach a file before submitting.',
+                        'submission' => 'Please type your answer or upload a file before submitting.',
                     ],
                 }
             );

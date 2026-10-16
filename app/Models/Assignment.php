@@ -39,12 +39,25 @@ class Assignment extends Model
     ];
 
     /**
-     * How students may answer an essay or code assignment.
+     * How students may answer an essay or code assignment (stored values).
      */
-    public const ANSWER_FORMATS = [
-        'either' => 'Typed answer or file upload',
-        'text' => 'Typed answer / pasted code only',
-        'file' => 'File upload only',
+    public const ANSWER_FORMATS = ['either', 'text', 'file'];
+
+    /**
+     * Labels for each answer format, worded for the submission type.
+     * Used by the teacher form, the student page and the error messages.
+     */
+    public const ANSWER_FORMAT_LABELS = [
+        'essay' => [
+            'either' => 'Typed answer or file upload',
+            'text' => 'Typed answer only',
+            'file' => 'File upload only',
+        ],
+        'code' => [
+            'either' => 'Pasted code or file upload',
+            'text' => 'Pasted code only',
+            'file' => 'File upload only',
+        ],
     ];
 
     /**
@@ -109,6 +122,25 @@ class Assignment extends Model
 
         return self::PROGRAMMING_LANGUAGES[$this->programming_language]['label']
             ?? ucfirst($this->programming_language);
+    }
+
+    /**
+     * Answer-format labels for a submission type (essay wording by default).
+     *
+     * @return array<string, string>
+     */
+    public static function answerFormatLabels(?string $submissionType): array
+    {
+        return self::ANSWER_FORMAT_LABELS[$submissionType === 'code' ? 'code' : 'essay'];
+    }
+
+    /**
+     * Label of this assignment's answer format, e.g. "Pasted code only".
+     */
+    public function answerFormatLabel(): string
+    {
+        return self::answerFormatLabels($this->submission_type)[$this->answer_format ?? 'either']
+            ?? self::answerFormatLabels($this->submission_type)['either'];
     }
 
     /**

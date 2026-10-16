@@ -247,7 +247,7 @@ test('a typed-only assignment accepts code and refuses a file', function () {
 
     $this->actingAs($student)
         ->post(route('student.assignments.submit', $assignment), [])
-        ->assertSessionHasErrors(['answer_text' => 'Please enter your code before submitting.']);
+        ->assertSessionHasErrors(['answer_text' => 'Please paste your code before submitting.']);
 
     $this->actingAs($student)
         ->post(route('student.assignments.submit', $assignment), ['answer_text' => 'class Main {}'])
@@ -323,7 +323,7 @@ test('an essay can be typed-only or file-only too', function () {
         ->post(route('student.assignments.submit', $typedOnly), [
             'submission_file' => UploadedFile::fake()->create('essay.pdf', 10),
         ])
-        ->assertSessionHasErrors(['submission_file' => 'This assignment only accepts a typed answer.']);
+        ->assertSessionHasErrors(['submission_file' => 'This assignment accepts: Typed answer only. Please type your answer instead.']);
 });
 
 test('existing assignments without an answer format keep accepting either', function () {

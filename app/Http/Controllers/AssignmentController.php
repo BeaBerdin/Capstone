@@ -479,7 +479,7 @@ class AssignmentController extends Controller
 
             'answer_format' => [
                 'nullable',
-                Rule::in(array_keys(Assignment::ANSWER_FORMATS)),
+                Rule::in(Assignment::ANSWER_FORMATS),
             ],
 
             'evaluation_criteria' => [
@@ -573,7 +573,7 @@ class AssignmentController extends Controller
 
             'answer_format' => [
                 'nullable',
-                Rule::in(array_keys(Assignment::ANSWER_FORMATS)),
+                Rule::in(Assignment::ANSWER_FORMATS),
             ],
 
             'evaluation_criteria' => [

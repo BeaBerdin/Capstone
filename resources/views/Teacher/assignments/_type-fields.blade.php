@@ -61,13 +61,15 @@
                                 How Students Answer
                             </label>
 
+                            {{-- Labels follow the submission type (essay or code); the stored values do not change. --}}
                             <select
                                 id="answer_format"
                                 name="answer_format"
+                                data-labels='@json(\App\Models\Assignment::ANSWER_FORMAT_LABELS)'
                                 class="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm
                                        outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
                             >
-                                @foreach (\App\Models\Assignment::ANSWER_FORMATS as $formatKey => $formatLabel)
+                                @foreach (\App\Models\Assignment::answerFormatLabels($currentSubmissionType) as $formatKey => $formatLabel)
                                     <option
                                         value="{{ $formatKey }}"
                                         @selected(old('answer_format', $assignment?->answer_format ?? 'either') === $formatKey)
@@ -217,12 +219,23 @@
 
             const answerFormatSection = document.getElementById('answer-format-section');
 
+            const answerFormat = document.getElementById('answer_format');
+
+            const answerFormatLabels = JSON.parse(answerFormat.dataset.labels);
+
             function updateAssignmentFields() {
 
                 const type = submissionType.value;
 
                 // Multiple choice has no typed answer or file upload.
                 answerFormatSection.classList.toggle('hidden', type === 'multiple_choice');
+
+                // Word the options for the selected type; the values stay the same.
+                const labels = answerFormatLabels[type === 'code' ? 'code' : 'essay'];
+
+                Array.from(answerFormat.options).forEach(function (option) {
+                    option.textContent = labels[option.value];
+                });
 
                 /*
                 |--------------------------------------------------------------------------

@@ -329,6 +329,14 @@
                     @csrf
 
 
+                    {{-- HOW TO ANSWER (same wording as the teacher's choice) --}}
+                    @if($assignment->submission_type !== 'multiple_choice')
+                        <p class="text-xs text-slate-500">
+                            How to answer:
+                            <strong class="font-semibold text-slate-700">{{ $assignment->answerFormatLabel() }}</strong>
+                        </p>
+                    @endif
+
                     {{-- CODE SUBMISSION --}}
                     @if($assignment->submission_type === 'code')
 
