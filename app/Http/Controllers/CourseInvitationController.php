@@ -45,6 +45,12 @@ class CourseInvitationController extends Controller
 
     $searchInvitation = $invitations->firstWhere('id', $searchInvitationId);
 
+    // Accepted or expired invitations are single-use and cannot be sent.
+    if ($searchInvitation && ! $searchInvitation->isValid()) {
+        $searchInvitation = null;
+        $searchInvitationId = 0;
+    }
+
     if ($searchInvitation) {
         if (mb_strlen($searchTerm) < self::STUDENT_SEARCH_MIN_LENGTH) {
             $searchError = 'Type at least '.self::STUDENT_SEARCH_MIN_LENGTH.' characters of a name or email.';
@@ -330,6 +336,22 @@ if (! empty($validated['expires_at'])) {
         ],
     ]);
 
+    // Invitations are single-use: once accepted or expired they cannot be
+    // sent again. Create a new invitation instead.
+    if ($courseInvitation->isAccepted()) {
+        return back()->with(
+            'error',
+            'This invitation has already been accepted and cannot be sent again. Create a new invitation.'
+        );
+    }
+
+    if ($courseInvitation->isExpired()) {
+        return back()->with(
+            'error',
+            'This invitation has expired and cannot be sent. Create a new invitation.'
+        );
+    }
+
     $student = $this->invitableStudents($courseInvitation)
         ->whereKey($validated['student_id'])
         ->first();
@@ -338,13 +360,6 @@ if (! empty($validated['expires_at'])) {
         return back()->with(
             'error',
             'Choose a student who is not already enrolled in this course.'
-        );
-    }
-
-    if (! $courseInvitation->isValid()) {
-        return back()->with(
-            'error',
-            'This invitation is no longer valid.'
         );
     }
 

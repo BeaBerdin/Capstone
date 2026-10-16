@@ -229,3 +229,53 @@ test('a teacher can send an invitation to any student not yet enrolled in the co
     expect($invitation->fresh()->student_id)->toBe($student->id);
     Notification::assertSentTo($student, PathwiseNotification::class);
 });
+
+dataset('used invitations', [
+    'accepted' => [
+        fn (App\Models\User $student) => ['accepted_at' => now(), 'accepted_by' => $student->id],
+        'already been accepted',
+    ],
+    'expired' => [
+        fn (App\Models\User $student) => ['expires_at' => now()->subDay()],
+        'has expired',
+    ],
+]);
+
+test('accepted or expired invitations show no student search or send controls', function (Closure $state) {
+    $teacher = pathwiseUser('teacher');
+    $student = pathwiseUser('student', ['name' => 'Searchable Student']);
+    $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
+    $invitation->update($state($student));
+
+    $this->actingAs($teacher)
+        ->get(route('course-invitations.index'))
+        ->assertOk()
+        ->assertDontSee('Find Student')
+        ->assertDontSee(route('course-invitations.send', $invitation), false);
+
+    // A hand-typed search URL for the used invitation shows no results either.
+    $this->actingAs($teacher)
+        ->get(route('course-invitations.index', ['invitation' => $invitation->id, 'q' => 'Searchable']))
+        ->assertOk()
+        ->assertDontSee('Searchable Student')
+        ->assertDontSee(route('course-invitations.send', $invitation), false);
+})->with('used invitations');
+
+test('the server refuses to send accepted or expired invitations', function (Closure $state, string $message) {
+    Notification::fake();
+
+    $teacher = pathwiseUser('teacher');
+    $student = pathwiseUser('student');
+    $otherStudent = pathwiseUser('student');
+    $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
+    $invitation->update($state($student));
+
+    $this->actingAs($teacher)
+        ->from(route('course-invitations.index'))
+        ->post(route('course-invitations.send', $invitation), ['student_id' => $otherStudent->id])
+        ->assertRedirect(route('course-invitations.index'))
+        ->assertSessionHas('error', fn (string $error) => str_contains($error, $message));
+
+    expect($invitation->fresh()->student_id)->toBeNull();
+    Notification::assertNothingSent();
+})->with('used invitations');

@@ -198,7 +198,9 @@
                                         <td class="whitespace-nowrap px-6 py-4 text-right">
                                             <div class="flex items-center justify-end gap-2">
 
-                                                {{-- Search for one student by name or email (no full student list). --}}
+                                                {{-- Search for one student by name or email (no full student list).
+                                                     Invitations are single-use, so accepted or expired ones cannot be sent. --}}
+                                                @if ($invitation->isValid())
                                                 <form
                                                     method="GET"
                                                     action="{{ route('course-invitations.index') }}"
@@ -224,6 +226,7 @@
                                                         Find Student
                                                     </button>
                                                 </form>
+                                                @endif
 
                                                 <form
                                                     method="POST"
