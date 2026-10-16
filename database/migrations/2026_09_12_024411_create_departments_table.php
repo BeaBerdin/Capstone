@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Guarded: some databases already created this table through a
+        // duplicate migration (2026_09_14_045943) from another branch.
+        if (Schema::hasTable('departments')) {
+            return;
+        }
+
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
