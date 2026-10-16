@@ -7,6 +7,7 @@ use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\Transaction;
 use App\Notifications\PathwiseNotification;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -272,58 +273,79 @@ if ($invitation->isExpired()) {
             'student.transactions'
         );
 
-        $response = Http::withBasicAuth(
-            config('services.paymongo.secret_key'),
-            ''
-        )->post(
-            'https://api.paymongo.com/v1/checkout_sessions',
-            [
-                'data' => [
-                    'attributes' => [
-                        'line_items' => [
-                            [
-                                'currency' => 'PHP',
-                                'amount' => (int) round(
-                                    $course->price * 100
-                                ),
-                                'name' => $course->title,
-                                'quantity' => 1,
+        try {
+            $response = Http::withBasicAuth(
+                config('services.paymongo.secret_key'),
+                ''
+            )->post(
+                'https://api.paymongo.com/v1/checkout_sessions',
+                [
+                    'data' => [
+                        'attributes' => [
+                            'line_items' => [
+                                [
+                                    'currency' => 'PHP',
+                                    'amount' => (int) round(
+                                        $course->price * 100
+                                    ),
+                                    'name' => $course->title,
+                                    'quantity' => 1,
+                                ],
+                            ],
+
+                            'payment_method_types' => [
+                                'gcash',
+                                'card',
+                            ],
+
+                            'success_url' => $successUrl,
+
+                            'cancel_url' => $cancelUrl,
+
+                            'description' =>
+                                'PATHWISE course enrollment: '
+                                . $course->title,
+
+                            'reference_number' =>
+                                $transaction->transaction_no,
+
+                            'metadata' => [
+                                'transaction_id' => $transaction->id,
+                                'course_id' => $course->id,
+                                'student_id' => auth()->id(),
+                                'invitation_code' =>
+                                    $invitation?->code,
                             ],
                         ],
-
-                        'payment_method_types' => [
-                            'gcash',
-                            'card',
-                        ],
-
-                        'success_url' => $successUrl,
-
-                        'cancel_url' => $cancelUrl,
-
-                        'description' =>
-                            'PATHWISE course enrollment: '
-                            . $course->title,
-
-                        'reference_number' =>
-                            $transaction->transaction_no,
-
-                        'metadata' => [
-                            'transaction_id' => $transaction->id,
-                            'course_id' => $course->id,
-                            'student_id' => auth()->id(),
-                            'invitation_code' =>
-                                $invitation?->code,
-                        ],
                     ],
-                ],
-            ]
-        );
+                ]
+            );
+        } catch (ConnectionException $e) {
+
+            report($e);
+
+            $this->rejectFailedCheckout(
+                $transaction,
+                'PayMongo could not be reached: '
+                . Str::limit($e->getMessage(), 500)
+            );
+
+            return back()->with(
+                'error',
+                'The payment service is not responding right now. Please try again in a few minutes.'
+            );
+        }
 
         if ($response->failed()) {
 
-            $transaction->update([
-                'status' => 'failed',
-            ]);
+            $this->rejectFailedCheckout(
+                $transaction,
+                'PayMongo checkout could not be created: '
+                . (
+                    data_get($response->json(), 'errors.0.detail')
+                    ?? 'PayMongo returned HTTP ' . $response->status()
+                )
+            );
 
             return back()->with(
                 'error',
@@ -358,9 +380,10 @@ if ($invitation->isExpired()) {
 
         if (! $checkoutUrl || ! $checkoutSessionId) {
 
-            $transaction->update([
-                'status' => 'failed',
-            ]);
+            $this->rejectFailedCheckout(
+                $transaction,
+                'PayMongo checkout could not be created: the response had no checkout URL or session ID.'
+            );
 
             return back()->with(
                 'error',
@@ -1378,6 +1401,25 @@ if ($invitation->isExpired()) {
 
             report($e);
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mark a transaction whose PayMongo checkout could not be created.
+    |--------------------------------------------------------------------------
+    |
+    | The status column only allows pending, approved and rejected, so a
+    | failed checkout is stored as rejected with the reason in remarks.
+    |
+    */
+
+    private function rejectFailedCheckout(
+        Transaction $transaction,
+        string $reason
+    ): void {
+        $transaction->status = 'rejected';
+        $transaction->remarks = $reason;
+        $transaction->save();
     }
 
     /*
