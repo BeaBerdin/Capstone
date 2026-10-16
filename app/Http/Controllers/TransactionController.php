@@ -103,6 +103,34 @@ if ($invitation->isExpired()) {
 
         /*
         |--------------------------------------------------------------------------
+        | Check if already enrolled
+        |--------------------------------------------------------------------------
+        */
+
+        $existingEnrollment = Enrollment::where(
+            'student_id',
+            auth()->id()
+        )
+            ->where(
+                'course_id',
+                $course->id
+            )
+            ->first();
+
+        // A cancelled enrollment must be restored by the administrator;
+        // the student is not asked to pay again. This runs before the
+        // free-course branch so a free course cannot reactivate it.
+        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
+            return redirect()
+                ->route('student.course.show', $course)
+                ->with(
+                    'error',
+                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
+                );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | FREE COURSE
         |--------------------------------------------------------------------------
         */
@@ -135,33 +163,6 @@ if ($invitation->isExpired()) {
                 ->with(
                     'success',
                     'You are now enrolled in this course.'
-                );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Check if already enrolled
-        |--------------------------------------------------------------------------
-        */
-
-        $existingEnrollment = Enrollment::where(
-            'student_id',
-            auth()->id()
-        )
-            ->where(
-                'course_id',
-                $course->id
-            )
-            ->first();
-
-        // A cancelled enrollment must be restored by the administrator;
-        // the student is not asked to pay again.
-        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
                 );
         }
 
