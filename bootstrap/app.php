@@ -26,6 +26,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         /*
+         * Student answers and pasted code are saved exactly as typed:
+         * leading indentation and trailing lines must not be trimmed.
+         */
+        $middleware->trimStrings(except: [
+            'answer_text',
+        ]);
+
+        /*
          * Log out users whose account was deactivated by the Super Admin.
          */
         $middleware->web(append: [

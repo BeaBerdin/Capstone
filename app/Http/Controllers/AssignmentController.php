@@ -481,6 +481,11 @@ class AssignmentController extends Controller
                 ]),
             ],
 
+            'answer_format' => [
+                'nullable',
+                Rule::in(array_keys(Assignment::ANSWER_FORMATS)),
+            ],
+
             'evaluation_criteria' => [
                 'nullable',
                 'string',
@@ -518,6 +523,12 @@ class AssignmentController extends Controller
             $request->boolean(
                 'ai_evaluation_enabled'
             );
+
+        // The admin form has no answer-format field: keep the current value,
+        // or allow either a typed answer or a file for new assignments.
+        if (! isset($validated['answer_format'])) {
+            unset($validated['answer_format']);
+        }
 
         return $validated;
     }
@@ -562,6 +573,11 @@ class AssignmentController extends Controller
                     'code',
                     'multiple_choice',
                 ]),
+            ],
+
+            'answer_format' => [
+                'nullable',
+                Rule::in(array_keys(Assignment::ANSWER_FORMATS)),
             ],
 
             'evaluation_criteria' => [
@@ -634,6 +650,10 @@ class AssignmentController extends Controller
         // An unticked checkbox sends nothing; store false explicitly so
         // editing an assignment can switch AI evaluation off.
         $validated['ai_evaluation_enabled'] = $aiEnabled;
+
+        // Forms without the answer-format field keep the existing behaviour
+        // (typed answer or file upload).
+        $validated['answer_format'] = $validated['answer_format'] ?? 'either';
 
         /*
         |--------------------------------------------------------------------------

@@ -141,14 +141,14 @@ test('a source file of another language is rejected', function () {
     expect(Submission::count())->toBe(0);
 });
 
-test('a source file larger than the limit is rejected', function () {
+test('a source file larger than 25 MB is rejected', function () {
     Storage::fake('public');
 
     [, $student, , $assignment] = codeAssignmentSetup('c');
 
     $this->actingAs($student)
         ->post(route('student.assignments.submit', $assignment), [
-            'submission_file' => UploadedFile::fake()->create('main.c', Assignment::SOURCE_FILE_MAX_KB + 1),
+            'submission_file' => UploadedFile::fake()->create('main.c', Assignment::UPLOAD_MAX_KB + 1),
         ])
         ->assertSessionHasErrors('submission_file');
 

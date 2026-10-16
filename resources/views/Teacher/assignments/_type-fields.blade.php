@@ -52,6 +52,36 @@
                             </p>
                         </div>
 
+                        {{-- How students answer --}}
+                        <div id="answer-format-section">
+                            <label
+                                for="answer_format"
+                                class="text-sm font-semibold text-slate-700"
+                            >
+                                How Students Answer
+                            </label>
+
+                            <select
+                                id="answer_format"
+                                name="answer_format"
+                                class="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm
+                                       outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                            >
+                                @foreach (\App\Models\Assignment::ANSWER_FORMATS as $formatKey => $formatLabel)
+                                    <option
+                                        value="{{ $formatKey }}"
+                                        @selected(old('answer_format', $assignment?->answer_format ?? 'either') === $formatKey)
+                                    >
+                                        {{ $formatLabel }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <p class="mt-1.5 text-xs text-slate-400">
+                                Typed answers and pasted code keep their exact formatting. Uploaded files may be up to 25 MB.
+                            </p>
+                        </div>
+
                         {{-- AI Evaluation --}}
                         <div
                             id="ai-evaluation-section"
@@ -185,9 +215,14 @@
 
             const programmingLanguage = document.getElementById('programming_language');
 
+            const answerFormatSection = document.getElementById('answer-format-section');
+
             function updateAssignmentFields() {
 
                 const type = submissionType.value;
+
+                // Multiple choice has no typed answer or file upload.
+                answerFormatSection.classList.toggle('hidden', type === 'multiple_choice');
 
                 /*
                 |--------------------------------------------------------------------------

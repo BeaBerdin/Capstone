@@ -248,9 +248,7 @@
                                 Your Answer
                             </p>
 
-                            <div class="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
-                                {{ $submission->answer_text }}
-                            </div>
+                            <div class="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-7 text-slate-700">{{ $submission->answer_text }}</div>
 
                         </div>
 
@@ -289,9 +287,7 @@
                             Teacher Feedback
                         </p>
 
-                        <p class="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">
-                            {{ $submission->feedback }}
-                        </p>
+                        <p class="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">{{ $submission->feedback }}</p>
 
                     </div>
 
@@ -336,6 +332,7 @@
                     {{-- CODE SUBMISSION --}}
                     @if($assignment->submission_type === 'code')
 
+                        @if($assignment->acceptsTypedAnswer())
                         <div>
 
                             <div class="flex items-center justify-between gap-4">
@@ -389,7 +386,8 @@
                                     spellcheck="false"
                                     class="block w-full resize-y border-0 bg-slate-950 px-5 py-4 font-mono text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-600 focus:ring-0"
                                     placeholder="Write your {{ $assignment->programmingLanguageLabel() ?? '' }} code here..."
-                                >{{ old('answer_text', $submission?->answer_text) }}</textarea>
+                                >{{-- The newline below is required: browsers drop the first line break inside a textarea. --}}
+{{ old('answer_text', $submission?->answer_text) }}</textarea>
 
                             </div>
 
@@ -410,16 +408,18 @@
                             </div>
 
                         </div>
+                        @endif
 
 
                         {{-- OR ONE SOURCE FILE --}}
+                        @if($assignment->acceptsFileUpload())
                         <div>
 
                             <label
                                 for="submission_file"
                                 class="text-sm font-semibold text-slate-700"
                             >
-                                Or upload one source file
+                                {{ $assignment->acceptsTypedAnswer() ? 'Or upload one source file' : 'Upload one source file' }}
                             </label>
 
                             <input
@@ -432,16 +432,20 @@
 
                             <p class="mt-2 text-xs text-slate-400">
                                 Accepted: {{ implode(', ', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())) }}.
-                                Maximum {{ \App\Models\Assignment::SOURCE_FILE_MAX_KB }} KB.
-                                Typing code without a file replaces an earlier uploaded file.
+                                Maximum 25 MB.
+                                @if($assignment->acceptsTypedAnswer())
+                                    Typing code without a file replaces an earlier uploaded file.
+                                @endif
                             </p>
 
                         </div>
+                        @endif
 
 
                     {{-- WRITTEN / ESSAY --}}
                     @else
 
+                        @if($assignment->acceptsTypedAnswer())
                         <div>
 
                             <label
@@ -458,12 +462,15 @@
                                 maxlength="20000"
                                 class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
                                 placeholder="Write your answer here..."
-                            >{{ old('answer_text', $submission?->answer_text) }}</textarea>
+                            >{{-- The newline below is required: browsers drop the first line break inside a textarea. --}}
+{{ old('answer_text', $submission?->answer_text) }}</textarea>
 
                         </div>
+                        @endif
 
 
                         {{-- FILE UPLOAD --}}
+                        @if($assignment->acceptsFileUpload())
                         <div>
 
                             <label
@@ -483,7 +490,7 @@
 
                             <p class="mt-2 text-xs text-slate-400">
                                 Accepted: PDF, DOC, DOCX, PPT, PPTX, TXT, JPG, JPEG, PNG.
-                                Maximum 10 MB.
+                                Maximum 25 MB.
                             </p>
 
                             @if($submission?->file_path)
@@ -496,6 +503,7 @@
                             @endif
 
                         </div>
+                        @endif
 
                     @endif
 

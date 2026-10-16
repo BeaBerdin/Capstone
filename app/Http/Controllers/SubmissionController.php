@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AiEvaluationException;
 use App\Models\Assignment;
 use App\Models\Submission;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -158,18 +160,19 @@ class SubmissionController extends Controller
 
         // Code assignments accept one source file in the assignment's
         // language (or .txt); other assignments accept documents and images.
+        // Any approved file may be up to 25 MB.
         $fileRules = $isCodeSubmission
             ? [
                 'nullable',
                 'file',
                 'extensions:'.implode(',', $assignment->sourceFileExtensions()),
-                'max:'.Assignment::SOURCE_FILE_MAX_KB,
+                'max:'.Assignment::UPLOAD_MAX_KB,
             ]
             : [
                 'nullable',
                 'file',
                 'mimes:pdf,doc,docx,ppt,pptx,txt,jpg,jpeg,png',
-                'max:10240',
+                'max:'.Assignment::UPLOAD_MAX_KB,
             ];
 
         $validated = $request->validate([
@@ -178,44 +181,69 @@ class SubmissionController extends Controller
         ], [
             'submission_file.extensions' => 'Upload one source file of type: '
                 .implode(', ', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())).'.',
-            'submission_file.max' => $isCodeSubmission
-                ? 'The source file may not be larger than '.Assignment::SOURCE_FILE_MAX_KB.' KB.'
-                : 'The file may not be larger than 10 MB.',
+            'submission_file.max' => 'The file may not be larger than 25 MB.',
+            'submission_file.uploaded' => 'The file could not be uploaded. Files may be up to 25 MB.',
         ]);
 
         /*
         |--------------------------------------------------------------------------
         | VALIDATE THE STUDENT RESPONSE
         |--------------------------------------------------------------------------
+        |
+        | The teacher decides whether students type their answer (or paste
+        | code), upload a file, or may do either.
+        |
         */
 
-        if ($isCodeSubmission) {
-            if (blank($assignment->programming_language)) {
-                throw ValidationException::withMessages([
-                    'submission' =>
-                        'This code assignment does not have a programming language configured.',
-                ]);
-            }
+        if ($isCodeSubmission && blank($assignment->programming_language)) {
+            throw ValidationException::withMessages([
+                'submission' =>
+                    'This code assignment does not have a programming language configured.',
+            ]);
+        }
 
-            if (
-                blank($validated['answer_text'] ?? null)
-                && ! $request->hasFile('submission_file')
-            ) {
-                throw ValidationException::withMessages([
-                    'answer_text' =>
-                        'Please enter your code or upload a source file before submitting.',
-                ]);
-            }
-        } else {
-            if (
-                blank($validated['answer_text'] ?? null)
-                && ! $request->hasFile('submission_file')
-            ) {
-                throw ValidationException::withMessages([
-                    'submission' =>
-                        'Please enter an answer or attach a file before submitting.',
-                ]);
-            }
+        // Whitespace-only text counts as no answer. Real text is kept
+        // exactly as typed, including indentation and line breaks.
+        if (blank($validated['answer_text'] ?? null)) {
+            $validated['answer_text'] = null;
+        }
+
+        $hasText = $validated['answer_text'] !== null;
+        $hasFile = $request->hasFile('submission_file');
+
+        if ($hasText && ! $assignment->acceptsTypedAnswer()) {
+            throw ValidationException::withMessages([
+                'answer_text' => 'This assignment only accepts a file upload.',
+            ]);
+        }
+
+        if ($hasFile && ! $assignment->acceptsFileUpload()) {
+            throw ValidationException::withMessages([
+                'submission_file' => $isCodeSubmission
+                    ? 'This assignment only accepts typed or pasted code.'
+                    : 'This assignment only accepts a typed answer.',
+            ]);
+        }
+
+        if (! $hasText && ! $hasFile) {
+            throw ValidationException::withMessages(
+                match (true) {
+                    ! $assignment->acceptsFileUpload() => [
+                        'answer_text' => $isCodeSubmission
+                            ? 'Please enter your code before submitting.'
+                            : 'Please enter your answer before submitting.',
+                    ],
+                    ! $assignment->acceptsTypedAnswer() => [
+                        'submission_file' => 'Please upload a file before submitting.',
+                    ],
+                    $isCodeSubmission => [
+                        'answer_text' => 'Please enter your code or upload a source file before submitting.',
+                    ],
+                    default => [
+                        'submission' => 'Please enter an answer or attach a file before submitting.',
+                    ],
+                }
+            );
         }
 
         /*
@@ -247,9 +275,10 @@ class SubmissionController extends Controller
         $filePath = $submission?->file_path;
 
         // Typed code replaces an earlier uploaded source file, so the
-        // teacher never sees an old file next to new code.
+        // teacher never sees an old file next to new code. The same applies
+        // when the assignment no longer accepts file uploads.
         if (
-            $isCodeSubmission
+            ($isCodeSubmission || ! $assignment->acceptsFileUpload())
             && ! $request->hasFile('submission_file')
             && $filePath
         ) {
@@ -440,6 +469,24 @@ class SubmissionController extends Controller
                 );
         }
 
+        if ($submission->ai_evaluation_status === 'completed') {
+            return redirect()
+                ->route('teacher.submissions.show', $submission)
+                ->with(
+                    'error',
+                    'This submission already has an AI evaluation.'
+                );
+        }
+
+        if ($submission->aiEvaluationInProgress()) {
+            return redirect()
+                ->route('teacher.submissions.show', $submission)
+                ->with(
+                    'error',
+                    'An AI evaluation for this submission is already in progress.'
+                );
+        }
+
         if (
             blank($submission->answer_text)
             && ! $submission->file_path
@@ -487,7 +534,13 @@ class SubmissionController extends Controller
                 : null,
         ])));
 
+        // Clear any earlier failed attempt before trying again.
         $submission->update([
+            'ai_score' => null,
+            'ai_feedback' => null,
+            'ai_strengths' => null,
+            'ai_improvements' => null,
+            'ai_evaluated_at' => null,
             'ai_evaluation_status' => 'processing',
         ]);
 
@@ -553,17 +606,35 @@ class SubmissionController extends Controller
                 );
 
         } catch (Throwable $e) {
+            // Never leave a partial or invalid result: the submission is
+            // kept, no AI score is stored, and the teacher can retry or
+            // grade manually.
             $submission->update([
+                'ai_score' => null,
+                'ai_feedback' => null,
+                'ai_strengths' => null,
+                'ai_improvements' => null,
+                'ai_evaluated_at' => null,
                 'ai_evaluation_status' => 'failed',
             ]);
 
             report($e);
 
+            $reason = match (true) {
+                $e instanceof ConnectionException =>
+                    'Gemini did not respond in time.',
+                $e instanceof AiEvaluationException =>
+                    $e->getMessage(),
+                default =>
+                    'An unexpected error occurred.',
+            };
+
             return redirect()
                 ->route('teacher.submissions.show', $submission)
                 ->with(
                     'error',
-                    'AI evaluation could not be generated. Please check your Gemini API configuration and try again.'
+                    'AI evaluation failed: '.$reason
+                        .' No AI score was saved. You can retry or grade this submission manually.'
                 );
         }
     }
@@ -777,7 +848,7 @@ class SubmissionController extends Controller
      * Read the text of an uploaded submission file for AI evaluation.
      *
      * Only plain-text and source files (.txt and the code-assignment file
-     * types) up to Assignment::SOURCE_FILE_MAX_KB are read. Documents such
+     * types) up to Assignment::AI_TEXT_MAX_KB are read. Documents such
      * as PDF or Word files, binary files and empty files are not.
      *
      * @return array{text: ?string, error: ?string}
@@ -809,10 +880,10 @@ class SubmissionController extends Controller
             ];
         }
 
-        if ($disk->size($submission->file_path) > Assignment::SOURCE_FILE_MAX_KB * 1024) {
+        if ($disk->size($submission->file_path) > Assignment::AI_TEXT_MAX_KB * 1024) {
             return [
                 'text' => null,
-                'error' => 'The uploaded file ('.$fileName.') is larger than '.Assignment::SOURCE_FILE_MAX_KB.' KB and cannot be read for AI evaluation.',
+                'error' => 'The uploaded file ('.$fileName.') is larger than '.Assignment::AI_TEXT_MAX_KB.' KB and cannot be read for AI evaluation.',
             ];
         }
 

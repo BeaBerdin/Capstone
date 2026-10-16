@@ -14,18 +14,29 @@
             'bg-blue-50 text-blue-700 border-blue-200',
     };
 
-    $aiStatusClass = match($submission->ai_evaluation_status) {
-        'completed' =>
+    // A "processing" status that never finished counts as not finished.
+    $aiDidNotFinish = $submission->aiEvaluationDidNotFinish();
+    $aiInProgress = $submission->aiEvaluationInProgress();
+
+    $aiStatusClass = match(true) {
+        $submission->ai_evaluation_status === 'completed' =>
             'bg-emerald-50 text-emerald-700 border-emerald-200',
 
-        'processing' =>
+        $aiInProgress =>
             'bg-blue-50 text-blue-700 border-blue-200',
 
-        'failed' =>
+        $aiDidNotFinish =>
             'bg-rose-50 text-rose-700 border-rose-200',
 
         default =>
             'bg-slate-50 text-slate-600 border-slate-200',
+    };
+
+    $aiStatusLabel = match(true) {
+        $submission->ai_evaluation_status === 'completed' => 'Completed',
+        $aiInProgress => 'Processing',
+        $aiDidNotFinish => 'Failed',
+        default => 'Not requested',
     };
 @endphp
 
@@ -258,12 +269,12 @@
                                            bg-slate-50 px-4 py-4"
                                 >
 
-                                    <p
-                                        class="whitespace-pre-line text-sm
-                                               leading-7 text-slate-700"
-                                    >
-                                        {{ $submission->answer_text }}
-                                    </p>
+                                    {{-- Shown exactly as submitted: escaped text, line breaks and indentation kept, never run. --}}
+                                    @if($assignment->submission_type === 'code')
+                                        <pre class="overflow-x-auto whitespace-pre font-mono text-sm leading-6 text-slate-800">{{ $submission->answer_text }}</pre>
+                                    @else
+                                        <p class="whitespace-pre-wrap wrap-break-word text-sm leading-7 text-slate-700">{{ $submission->answer_text }}</p>
+                                    @endif
 
                                 </div>
 
@@ -415,7 +426,7 @@
                                                border px-3 py-1.5 text-xs
                                                font-semibold {{ $aiStatusClass }}"
                                     >
-                                        {{ ucfirst(str_replace('_', ' ', $submission->ai_evaluation_status ?? 'Not requested')) }}
+                                        {{ $aiStatusLabel }}
                                     </span>
 
                                 </div>
@@ -428,8 +439,25 @@
                                 {{-- Generate Button --}}
                                 @if(
                                     $submission->ai_evaluation_status !== 'completed'
-                                    && $submission->ai_evaluation_status !== 'processing'
+                                    && ! $aiInProgress
                                 )
+
+                                    @if($aiDidNotFinish)
+                                        <div
+                                            class="mb-4 rounded-xl border border-rose-200
+                                                   bg-rose-50 px-4 py-3"
+                                        >
+                                            <p class="text-sm font-semibold text-rose-800">
+                                                The last AI evaluation did not finish
+                                            </p>
+
+                                            <p class="mt-1 text-xs leading-5 text-rose-700">
+                                                Gemini failed, timed out or returned an unusable answer.
+                                                No AI score was saved and the student's submission is unchanged.
+                                                You can retry, or grade this submission manually below.
+                                            </p>
+                                        </div>
+                                    @endif
 
                                     <div
                                         class="rounded-xl border
@@ -488,7 +516,7 @@
                                                            transition hover:-translate-y-0.5
                                                            sm:w-auto"
                                                 >
-                                                    ✦ Generate AI Evaluation
+                                                    ✦ {{ $aiDidNotFinish ? 'Retry AI Evaluation' : 'Generate AI Evaluation' }}
                                                 </button>
 
                                             </form>
@@ -497,7 +525,7 @@
 
                                     </div>
 
-                                @elseif($submission->ai_evaluation_status === 'processing')
+                                @elseif($aiInProgress)
 
                                     <div
                                         class="rounded-xl border border-blue-200
@@ -630,13 +658,8 @@
                                                        bg-slate-50 px-4 py-4"
                                             >
 
-                                                <p
-                                                    class="whitespace-pre-line
-                                                           text-sm leading-6
-                                                           text-slate-700"
-                                                >
-                                                    {{ $submission->ai_feedback }}
-                                                </p>
+                                                {{-- pre-wrap keeps indentation in code shown by Gemini; content is escaped. --}}
+                                                <p class="whitespace-pre-wrap wrap-break-word text-sm leading-6 text-slate-700">{{ $submission->ai_feedback }}</p>
 
                                             </div>
 
@@ -663,13 +686,7 @@
                                                        bg-emerald-50 px-4 py-4"
                                             >
 
-                                                <p
-                                                    class="whitespace-pre-line
-                                                           text-sm leading-6
-                                                           text-emerald-800"
-                                                >
-                                                    {{ $submission->ai_strengths }}
-                                                </p>
+                                                <p class="whitespace-pre-wrap wrap-break-word text-sm leading-6 text-emerald-800">{{ $submission->ai_strengths }}</p>
 
                                             </div>
 
@@ -696,13 +713,7 @@
                                                        bg-amber-50 px-4 py-4"
                                             >
 
-                                                <p
-                                                    class="whitespace-pre-line
-                                                           text-sm leading-6
-                                                           text-amber-800"
-                                                >
-                                                    {{ $submission->ai_improvements }}
-                                                </p>
+                                                <p class="whitespace-pre-wrap wrap-break-word text-sm leading-6 text-amber-800">{{ $submission->ai_improvements }}</p>
 
                                             </div>
 

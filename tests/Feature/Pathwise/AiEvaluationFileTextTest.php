@@ -121,7 +121,7 @@ test('a file-only submission without readable text is not sent to Gemini', funct
 
 test('a source file over the size limit is not sent to Gemini', function () {
     Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/Big.java', str_repeat('a', Assignment::SOURCE_FILE_MAX_KB * 1024 + 1));
+    Storage::disk('public')->put('assignment-submissions/1/Big.java', str_repeat('a', Assignment::AI_TEXT_MAX_KB * 1024 + 1));
     Http::fake();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Big.java']);

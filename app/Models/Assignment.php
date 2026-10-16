@@ -39,9 +39,24 @@ class Assignment extends Model
     ];
 
     /**
-     * Largest source file a student may upload for a code assignment, in KB.
+     * How students may answer an essay or code assignment.
      */
-    public const SOURCE_FILE_MAX_KB = 256;
+    public const ANSWER_FORMATS = [
+        'either' => 'Typed answer or file upload',
+        'text' => 'Typed answer / pasted code only',
+        'file' => 'File upload only',
+    ];
+
+    /**
+     * Largest file a student may upload, in KB (25 MB).
+     */
+    public const UPLOAD_MAX_KB = 25600;
+
+    /**
+     * Largest amount of file text sent to Gemini for AI evaluation, in KB.
+     * Larger files are graded manually.
+     */
+    public const AI_TEXT_MAX_KB = 256;
 
     protected $fillable = [
     'course_id',
@@ -49,6 +64,7 @@ class Assignment extends Model
     'title',
     'description',
     'submission_type',
+    'answer_format',
     'evaluation_criteria',
     'programming_language',
     'ai_evaluation_enabled',
@@ -93,6 +109,22 @@ class Assignment extends Model
 
         return self::PROGRAMMING_LANGUAGES[$this->programming_language]['label']
             ?? ucfirst($this->programming_language);
+    }
+
+    /**
+     * Whether students may type an answer or paste code.
+     */
+    public function acceptsTypedAnswer(): bool
+    {
+        return ($this->answer_format ?? 'either') !== 'file';
+    }
+
+    /**
+     * Whether students may upload a file.
+     */
+    public function acceptsFileUpload(): bool
+    {
+        return ($this->answer_format ?? 'either') !== 'text';
     }
 
     /**

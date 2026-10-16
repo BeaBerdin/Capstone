@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\AiEvaluationException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 class GeminiEvaluationService
 {
@@ -30,13 +30,13 @@ class GeminiEvaluationService
         );
 
         if (empty($apiKey)) {
-            throw new RuntimeException(
+            throw new AiEvaluationException(
                 'Gemini API key is not configured.'
             );
         }
 
         if (trim($studentAnswer) === '') {
-            throw new RuntimeException(
+            throw new AiEvaluationException(
                 'The student submission is empty.'
             );
         }
@@ -146,7 +146,7 @@ class GeminiEvaluationService
                     ]
                 );
 
-                throw new RuntimeException(
+                throw new AiEvaluationException(
                     'Gemini API request failed: HTTP ' .
                     $response->status()
                 );
@@ -183,7 +183,7 @@ class GeminiEvaluationService
                     ]
                 );
 
-                throw new RuntimeException(
+                throw new AiEvaluationException(
                     'Gemini returned an empty evaluation response.'
                 );
             }
@@ -468,7 +468,7 @@ PROMPT;
                 ]
             );
 
-            throw new RuntimeException(
+            throw new AiEvaluationException(
                 'Gemini returned an invalid evaluation format.'
             );
         }
@@ -480,6 +480,24 @@ PROMPT;
         array $result,
         int $maxScore
     ): array {
+        // A result without a numeric score or without feedback is not an
+        // evaluation; never store it as one.
+        if (
+            ! isset($result['score'])
+            || ! is_numeric($result['score'])
+            || trim((string) ($result['feedback'] ?? '')) === ''
+        ) {
+            Log::error(
+                'Gemini evaluation is missing a score or feedback.',
+                [
+                    'keys' => array_keys($result),
+                ]
+            );
+
+            throw new AiEvaluationException(
+                'Gemini returned an incomplete evaluation (no score or feedback).'
+            );
+        }
 
         $score = (int) (
             $result['score']

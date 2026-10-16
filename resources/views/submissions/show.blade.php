@@ -40,7 +40,8 @@
         @if($submission->answer_text)
             <div class="mt-6">
                 <h2 class="text-sm font-semibold text-gray-500">Answer</h2>
-                <p class="mt-1 whitespace-pre-line rounded border bg-gray-50 p-3 text-sm dark:bg-neutral-800">{{ $submission->answer_text }}</p>
+                {{-- Shown exactly as submitted: escaped, indentation and line breaks kept. --}}
+                <pre class="mt-1 overflow-x-auto whitespace-pre-wrap wrap-break-word rounded border bg-gray-50 p-3 font-mono text-sm dark:bg-neutral-800">{{ $submission->answer_text }}</pre>
             </div>
         @endif
 
@@ -63,7 +64,7 @@
         @if($submission->ai_feedback)
             <div class="mt-6">
                 <h2 class="text-sm font-semibold text-gray-500">AI evaluation (reviewed by the teacher)</h2>
-                <p class="mt-1 whitespace-pre-line text-sm">{{ $submission->ai_feedback }}</p>
+                <p class="mt-1 whitespace-pre-wrap wrap-break-word text-sm">{{ $submission->ai_feedback }}</p>
             </div>
         @endif
 
