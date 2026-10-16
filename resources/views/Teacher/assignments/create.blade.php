@@ -256,30 +256,18 @@
                             >
                                 <option value="">Select language</option>
 
-                                <option
-                                    value="python"
-                                    @selected(old('programming_language') === 'python')
-                                >
-                                    Python
-                                </option>
-
-                                <option
-                                    value="javascript"
-                                    @selected(old('programming_language') === 'javascript')
-                                >
-                                    JavaScript
-                                </option>
-
-                                <option
-                                    value="c"
-                                    @selected(old('programming_language') === 'c')
-                                >
-                                    C
-                                </option>
+                                @foreach (\App\Models\Assignment::PROGRAMMING_LANGUAGES as $languageKey => $language)
+                                    <option
+                                        value="{{ $languageKey }}"
+                                        @selected(old('programming_language') === $languageKey)
+                                    >
+                                        {{ $language['label'] }}
+                                    </option>
+                                @endforeach
                             </select>
 
                             <p class="mt-1.5 text-xs text-slate-400">
-                                The selected language will be used for the future code execution and AI evaluation process.
+                                Students can type their code or upload one source file in this language. The language is also used for AI evaluation.
                             </p>
                         </div>
 

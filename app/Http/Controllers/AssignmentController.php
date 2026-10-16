@@ -488,11 +488,7 @@ class AssignmentController extends Controller
 
             'programming_language' => [
                 'nullable',
-                Rule::in([
-                    'python',
-                    'javascript',
-                    'c',
-                ]),
+                Rule::in(array_keys(Assignment::PROGRAMMING_LANGUAGES)),
             ],
 
             'ai_evaluation_enabled' => [
@@ -575,11 +571,7 @@ class AssignmentController extends Controller
 
             'programming_language' => [
                 'nullable',
-                Rule::in([
-                    'python',
-                    'javascript',
-                    'c',
-                ]),
+                Rule::in(array_keys(Assignment::PROGRAMMING_LANGUAGES)),
             ],
 
             'ai_evaluation_enabled' => [

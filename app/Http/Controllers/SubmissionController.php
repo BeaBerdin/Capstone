@@ -156,15 +156,31 @@ class SubmissionController extends Controller
         $isCodeSubmission =
             $assignment->submission_type === 'code';
 
-        $validated = $request->validate([
-            'answer_text' => 'nullable|string|max:20000',
-
-            'submission_file' => [
+        // Code assignments accept one source file in the assignment's
+        // language (or .txt); other assignments accept documents and images.
+        $fileRules = $isCodeSubmission
+            ? [
+                'nullable',
+                'file',
+                'extensions:'.implode(',', $assignment->sourceFileExtensions()),
+                'max:'.Assignment::SOURCE_FILE_MAX_KB,
+            ]
+            : [
                 'nullable',
                 'file',
                 'mimes:pdf,doc,docx,ppt,pptx,txt,jpg,jpeg,png',
                 'max:10240',
-            ],
+            ];
+
+        $validated = $request->validate([
+            'answer_text' => 'nullable|string|max:20000',
+            'submission_file' => $fileRules,
+        ], [
+            'submission_file.extensions' => 'Upload one source file of type: '
+                .implode(', ', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())).'.',
+            'submission_file.max' => $isCodeSubmission
+                ? 'The source file may not be larger than '.Assignment::SOURCE_FILE_MAX_KB.' KB.'
+                : 'The file may not be larger than 10 MB.',
         ]);
 
         /*
@@ -181,10 +197,13 @@ class SubmissionController extends Controller
                 ]);
             }
 
-            if (blank($validated['answer_text'] ?? null)) {
+            if (
+                blank($validated['answer_text'] ?? null)
+                && ! $request->hasFile('submission_file')
+            ) {
                 throw ValidationException::withMessages([
                     'answer_text' =>
-                        'Please enter your code before submitting.',
+                        'Please enter your code or upload a source file before submitting.',
                 ]);
             }
         } else {
@@ -227,15 +246,18 @@ class SubmissionController extends Controller
 
         $filePath = $submission?->file_path;
 
-        if ($isCodeSubmission && $filePath) {
+        // Typed code replaces an earlier uploaded source file, so the
+        // teacher never sees an old file next to new code.
+        if (
+            $isCodeSubmission
+            && ! $request->hasFile('submission_file')
+            && $filePath
+        ) {
             Storage::disk('public')->delete($filePath);
             $filePath = null;
         }
 
-        if (
-            ! $isCodeSubmission
-            && $request->hasFile('submission_file')
-        ) {
+        if ($request->hasFile('submission_file')) {
             if ($filePath) {
                 Storage::disk('public')->delete($filePath);
             }
@@ -251,8 +273,8 @@ class SubmissionController extends Controller
         | SAVE SUBMISSION
         |--------------------------------------------------------------------------
         |
-        | Code assignments store source code in answer_text.
-        | No code execution is performed.
+        | Code assignments store typed source code in answer_text, or one
+        | uploaded source file in file_path. No code execution is performed.
         |
         */
 

@@ -59,7 +59,7 @@
 
                         @if($assignment->programming_language)
                             <span class="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700">
-                                {{ ucfirst($assignment->programming_language) }}
+                                {{ $assignment->programmingLanguageLabel() }}
                             </span>
                         @endif
 
@@ -203,7 +203,16 @@
 
                 @if($assignment->submission_type === 'code')
 
+                    {{-- EXISTING SOURCE FILE --}}
+                    @if($submission->file_path)
+                        <p class="mt-5 text-sm text-slate-600">
+                            Submitted source file:
+                            <strong class="font-mono">{{ basename($submission->file_path) }}</strong>
+                        </p>
+                    @endif
+
                     {{-- EXISTING CODE --}}
+                    @if($submission->answer_text)
                     <div class="mt-5 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
 
                         <div class="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2.5">
@@ -217,7 +226,7 @@
                             </div>
 
                             <span class="text-xs font-medium text-slate-400">
-                                {{ ucfirst($assignment->programming_language ?? 'Code') }}
+                                {{ $assignment->programmingLanguageLabel() ?? 'Code' }}
                             </span>
 
                         </div>
@@ -225,6 +234,7 @@
                         <pre class="overflow-x-auto p-5 font-mono text-sm leading-6 text-slate-100">{{ $submission->answer_text }}</pre>
 
                     </div>
+                    @endif
 
 
                 @else
@@ -346,7 +356,7 @@
                                 </div>
 
                                 <span class="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
-                                    {{ strtoupper($assignment->programming_language ?? 'CODE') }}
+                                    {{ strtoupper($assignment->programmingLanguageLabel() ?? 'Code') }}
                                 </span>
 
                             </div>
@@ -365,7 +375,7 @@
                                     </div>
 
                                     <span class="text-[11px] font-medium text-slate-400">
-                                        {{ ucfirst($assignment->programming_language ?? 'Code') }}
+                                        {{ $assignment->programmingLanguageLabel() ?? 'Code' }}
                                     </span>
 
                                 </div>
@@ -378,7 +388,7 @@
                                     maxlength="20000"
                                     spellcheck="false"
                                     class="block w-full resize-y border-0 bg-slate-950 px-5 py-4 font-mono text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-600 focus:ring-0"
-                                    placeholder="@if($assignment->programming_language === 'python')Write your Python code here...@elseif($assignment->programming_language === 'javascript')Write your JavaScript code here...@elseif($assignment->programming_language === 'c')Write your C code here...@else Write your code here...@endif"
+                                    placeholder="Write your {{ $assignment->programmingLanguageLabel() ?? '' }} code here..."
                                 >{{ old('answer_text', $submission?->answer_text) }}</textarea>
 
                             </div>
@@ -389,7 +399,7 @@
                                 <span>
                                     Language:
                                     <strong class="text-slate-600">
-                                        {{ ucfirst($assignment->programming_language ?? 'Not specified') }}
+                                        {{ $assignment->programmingLanguageLabel() ?? 'Not specified' }}
                                     </strong>
                                 </span>
 
@@ -398,6 +408,33 @@
                                 </span>
 
                             </div>
+
+                        </div>
+
+
+                        {{-- OR ONE SOURCE FILE --}}
+                        <div>
+
+                            <label
+                                for="submission_file"
+                                class="text-sm font-semibold text-slate-700"
+                            >
+                                Or upload one source file
+                            </label>
+
+                            <input
+                                id="submission_file"
+                                type="file"
+                                name="submission_file"
+                                accept="{{ implode(',', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())) }}"
+                                class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"
+                            />
+
+                            <p class="mt-2 text-xs text-slate-400">
+                                Accepted: {{ implode(', ', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())) }}.
+                                Maximum {{ \App\Models\Assignment::SOURCE_FILE_MAX_KB }} KB.
+                                Typing code without a file replaces an earlier uploaded file.
+                            </p>
 
                         </div>
 
