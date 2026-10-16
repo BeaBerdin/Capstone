@@ -2,26 +2,27 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Role;
+use Database\Seeders\Concerns\SeedsAccounts;
 use Illuminate\Database\Seeder;
 
 class AdminUserSeeder extends Seeder
 {
+    use SeedsAccounts;
+
     public function run(): void
     {
-        $user = User::firstOrCreate(
-            ['email' => 'admin@pathwise.test'],
-            [
-                'name' => 'System Administrator',
-                'password' => bcrypt('password'),
-            ]
-        );
+        // Demo account with a known password: local and testing only.
+        if (! $this->isLocalEnvironment()) {
+            $this->command?->info('Skipping the demo admin account outside local/testing.');
 
-        $adminRole = Role::where('name', 'admin')->first();
-
-        if ($adminRole) {
-            $user->roles()->syncWithoutDetaching([$adminRole->id]);
+            return;
         }
+
+        $this->seedAccount(
+            'admin@pathwise.test',
+            'System Administrator',
+            fn () => 'password',
+            'admin'
+        );
     }
 }

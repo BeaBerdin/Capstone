@@ -2,42 +2,37 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Concerns\SeedsAccounts;
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Role;
 use App\Models\CourseCategory;
 use App\Models\Course;
 
 class PathWiseDemoSeeder extends Seeder
 {
+    use SeedsAccounts;
+
     public function run(): void
     {
-        $teacher = User::firstOrCreate(
-            ['email' => 'teacher@pathwise.test'],
-            [
-                'name' => 'Teacher Account',
-                'password' => bcrypt('password'),
-            ]
-        );
+        // Demo accounts and demo courses: local and testing only.
+        if (! $this->isLocalEnvironment()) {
+            $this->command?->info('Skipping demo data outside local/testing.');
 
-        $student = User::firstOrCreate(
-            ['email' => 'student@pathwise.test'],
-            [
-                'name' => 'Student Account',
-                'password' => bcrypt('password'),
-            ]
-        );
-
-        $teacherRole = Role::where('name', 'teacher')->first();
-        $studentRole = Role::where('name', 'student')->first();
-
-        if ($teacherRole) {
-            $teacher->roles()->syncWithoutDetaching([$teacherRole->id]);
+            return;
         }
 
-        if ($studentRole) {
-            $student->roles()->syncWithoutDetaching([$studentRole->id]);
-        }
+        $teacher = $this->seedAccount(
+            'teacher@pathwise.test',
+            'Teacher Account',
+            fn () => 'password',
+            'teacher'
+        );
+
+        $this->seedAccount(
+            'student@pathwise.test',
+            'Student Account',
+            fn () => 'password',
+            'student'
+        );
 
         $accounting = CourseCategory::firstOrCreate(
             ['name' => 'Accounting'],

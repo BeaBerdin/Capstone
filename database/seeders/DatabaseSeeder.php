@@ -2,48 +2,45 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Role;
+use Database\Seeders\Concerns\SeedsAccounts;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
+    use SeedsAccounts;
     use WithoutModelEvents;
 
     public function run(): void
     {
+        // Safe in every environment, including production.
         $this->call([
             RoleSeeder::class,
-            AdminUserSeeder::class,
+            SuperAdminSeeder::class,
             CourseTemplateSeeder::class,
         ]);
 
-        $teacher = User::firstOrCreate(
-            ['email' => 'teacher@pathwise.test'],
-            [
-                'name' => 'Teacher Account',
-                'password' => bcrypt('password'),
-            ]
-        );
+        // Demo accounts with the password "password": local and testing only.
+        if (! $this->isLocalEnvironment()) {
+            $this->command?->info('Skipping demo accounts outside local/testing.');
 
-        $student = User::firstOrCreate(
-            ['email' => 'student@pathwise.test'],
-            [
-                'name' => 'Student Account',
-                'password' => bcrypt('password'),
-            ]
-        );
-
-        $teacherRole = Role::where('name', 'teacher')->first();
-        $studentRole = Role::where('name', 'student')->first();
-
-        if ($teacherRole) {
-            $teacher->roles()->syncWithoutDetaching([$teacherRole->id]);
+            return;
         }
 
-        if ($studentRole) {
-            $student->roles()->syncWithoutDetaching([$studentRole->id]);
-        }
+        $this->call(AdminUserSeeder::class);
+
+        $this->seedAccount(
+            'teacher@pathwise.test',
+            'Teacher Account',
+            fn () => 'password',
+            'teacher'
+        );
+
+        $this->seedAccount(
+            'student@pathwise.test',
+            'Student Account',
+            fn () => 'password',
+            'student'
+        );
     }
 }

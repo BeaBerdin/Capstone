@@ -114,4 +114,18 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Seeded Super Admin Password
+    |--------------------------------------------------------------------------
+    |
+    | Password for the Super Admin account created by `php artisan db:seed`.
+    | Leave it empty to have the seeder generate a random password and print
+    | it once. It is only used when the account is created, never to change
+    | the password of an existing account.
+    |
+    */
+
+    'seed_super_admin_password' => env('SEED_SUPERADMIN_PASSWORD'),
+
 ];
