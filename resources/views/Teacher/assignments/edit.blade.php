@@ -19,7 +19,7 @@
                     Edit Assignment
                 </h1>
                 <p class="mt-2 text-sm text-slate-500">
-                    Update the instructions, scoring, deadline, or publication status.
+                    Update the instructions, submission type, AI evaluation, scoring, deadline, or publication status.
                 </p>
             </div>
 
@@ -75,6 +75,8 @@
                                    outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
                         >{{ old('description', $assignment->description) }}</textarea>
                     </div>
+
+                    @include('Teacher.assignments._type-fields', ['assignment' => $assignment])
 
                     <div class="grid gap-5 sm:grid-cols-2">
                         <div>

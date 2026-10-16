@@ -631,6 +631,10 @@ class AssignmentController extends Controller
                 ?? false
             );
 
+        // An unticked checkbox sends nothing; store false explicitly so
+        // editing an assignment can switch AI evaluation off.
+        $validated['ai_evaluation_enabled'] = $aiEnabled;
+
         /*
         |--------------------------------------------------------------------------
         | Multiple Choice
