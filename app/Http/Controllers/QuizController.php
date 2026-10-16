@@ -1702,10 +1702,14 @@ class QuizController extends Controller
                 'course_id',
                 $course->id
             )
+            // Only an active enrollment is updated: failing a retake must
+            // not downgrade a completed course, and a cancelled enrollment
+            // must stay cancelled.
+            ->where(
+                'status',
+                'active'
+            )
             ->update([
-                'status' =>
-                    'active',
-
                 'progress_percentage' =>
                     $progressPercentage,
             ]);
