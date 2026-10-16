@@ -319,6 +319,60 @@
 
 
             {{-- =====================================================
+                FLASH / PAYMENT MESSAGES
+            ====================================================== --}}
+
+            @if(session('success'))
+
+                <div
+                    class="mt-6 rounded-2xl border
+                           border-emerald-200 bg-emerald-50
+                           px-5 py-4 text-sm font-medium
+                           text-emerald-700"
+                >
+                    ✓ {{ session('success') }}
+                </div>
+
+            @endif
+
+
+            @if(session('error'))
+
+                <div
+                    class="mt-6 rounded-2xl border
+                           border-red-200 bg-red-50
+                           px-5 py-4 text-sm font-medium
+                           text-red-700"
+                >
+                    {{ session('error') }}
+                </div>
+
+            @endif
+
+
+            @if($errors->any())
+
+                <div
+                    class="mt-6 rounded-2xl border
+                           border-red-200 bg-red-50
+                           px-5 py-4 text-sm text-red-700"
+                >
+                    <p class="font-semibold">
+                        Please check the following:
+                    </p>
+
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+
+            @endif
+
+
+
+            {{-- =====================================================
                 MAIN COURSE HERO
             ====================================================== --}}
 
@@ -1217,11 +1271,24 @@
                                     action="{{ route('student.transactions.store', $course) }}"
                                     method="POST"
                                     class="mt-4"
+                                    onsubmit="
+                                        const button =
+                                            this.querySelector(
+                                                '[data-purchase-button]'
+                                            );
+
+                                        if (button) {
+                                            button.disabled = true;
+                                            button.innerText =
+                                                'Opening PayMongo...';
+                                        }
+                                    "
                                 >
                                     @csrf
 
                                     <button
                                         type="submit"
+                                        data-purchase-button
                                         class="inline-flex
                                                h-11 w-full
                                                items-center

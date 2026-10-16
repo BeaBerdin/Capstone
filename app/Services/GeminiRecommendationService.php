@@ -67,8 +67,18 @@ Output Rules:
 ";
 
         try {
-            $response = Http::timeout(20)->post(
-                "https://generativelanguage.googleapis.com/v1/models/{$model}:generateContent?key={$apiKey}",
+            /*
+             * SECURITY (P1 fix): the API key is sent in the
+             * x-goog-api-key header instead of the URL, so it can no longer
+             * appear in exception messages or log files.
+             */
+            $response = Http::timeout(20)
+                ->connectTimeout(10)
+                ->withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                ])
+                ->post(
+                "https://generativelanguage.googleapis.com/v1/models/{$model}:generateContent",
                 [
                     'contents' => [
                         [
@@ -83,7 +93,7 @@ Output Rules:
             if (!$response->successful()) {
                 Log::warning('Gemini recommendation failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'error' => data_get($response->json(), 'error.message'),
                 ]);
 
                 return null;

@@ -8,16 +8,31 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('learning_path_courses', function (Blueprint $table) {
+        // SQLite (used only by the automated tests) cannot add a required
+        // column without a default value, so the columns are optional there.
+        // MySQL keeps the original definition.
+        $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
 
-            $table->foreignId('learning_path_id')
-                  ->after('id')
-                  ->constrained()
+        Schema::table('learning_path_courses', function (Blueprint $table) use ($isSqlite) {
+
+            $learningPathId = $table->foreignId('learning_path_id')
+                  ->after('id');
+
+            if ($isSqlite) {
+                $learningPathId->nullable();
+            }
+
+            $learningPathId->constrained()
                   ->cascadeOnDelete();
 
-            $table->foreignId('course_id')
-                  ->after('learning_path_id')
-                  ->constrained()
+            $courseId = $table->foreignId('course_id')
+                  ->after('learning_path_id');
+
+            if ($isSqlite) {
+                $courseId->nullable();
+            }
+
+            $courseId->constrained()
                   ->cascadeOnDelete();
         });
     }

@@ -20,32 +20,6 @@
             --pw-background: #f7f8fc;
         }
 
-<<<<<<< HEAD
-        html.dark [data-flux-sidebar] [data-flux-sidebar-item]:hover,
-        html.dark ui-sidebar [data-flux-sidebar-item]:hover {
-            background-color: rgb(168 85 247 / 0.10) !important;
-            color: rgb(216 180 254) !important;
-        }
-
-        html.dark [data-flux-sidebar] [data-flux-sidebar-item][data-current],
-        html.dark ui-sidebar [data-flux-sidebar-item][data-current] {
-            background-image: linear-gradient(
-                90deg,
-                rgb(168 85 247 / 0.35),
-                rgb(99 102 241 / 0.18)
-            ) !important;
-
-            color: #ffffff !important;
-
-            box-shadow:
-                inset 4px 0 0 rgb(168 85 247),
-                0 0 18px rgb(168 85 247 / 0.15) !important;
-        }
-
-        html.dark [data-flux-sidebar] [data-flux-sidebar-item][data-current] svg,
-        html.dark ui-sidebar [data-flux-sidebar-item][data-current] svg {
-            color: rgb(216 180 254) !important;
-=======
         *,
         *::before,
         *::after {
@@ -61,7 +35,6 @@
         body {
             background: var(--pw-background);
             color: var(--pw-text);
->>>>>>> origin/Dakoykoy
         }
 
 
@@ -927,7 +900,7 @@ html.dark .pw-mobile-toggle {
 
             z-index: 90;
 
-            width: 320px;
+            width: min(390px, calc(100vw - 24px));
 
             display: none;
 
@@ -973,100 +946,238 @@ html.dark .pw-mobile-toggle {
         }
 
         .pw-notification-list {
-            max-height: 350px;
+            max-height: 430px;
             overflow-y: auto;
+            padding: 6px;
+            background: #ffffff;
         }
 
-        .pw-notification-item {
+        .pw-notification-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .pw-notification-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .pw-notification-list::-webkit-scrollbar-thumb {
+            border-radius: 999px;
+            background: #d8dce5;
+        }
+
+        .pw-notification-form {
+            margin: 0;
+        }
+
+        .pw-notification-item-button {
+            width: 100%;
+
             display: flex;
             align-items: flex-start;
+            gap: 12px;
 
-            gap: 11px;
+            margin: 0;
+            padding: 13px 12px;
 
-            padding: 13px 16px;
+            border: 0;
+            border-radius: 12px;
 
-            border-bottom: 1px solid #f8fafc;
+            background: transparent;
+
+            font: inherit;
+            text-align: left;
+
+            cursor: pointer;
+
+            transition:
+                background-color .16s ease,
+                transform .16s ease;
         }
 
-        .pw-notification-item:last-child {
-            border-bottom: 0;
+        .pw-notification-item-button:hover {
+            background: #faf7ff;
         }
-       
-        .pw-notification-item-button {
-    width: 100%;
-    border: 0;
-    border-bottom: 1px solid #f8fafc;
-    background: transparent;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
 
-    transition:
-        background-color .15s ease;
-}
+        .pw-notification-item-button.is-unread {
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(124, 58, 237, .075),
+                    rgba(99, 102, 241, .035)
+                );
+        }
 
-.pw-notification-item-button:hover {
-    background: #faf7ff;
-}
+        .pw-notification-item-button.is-unread:hover {
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(124, 58, 237, .11),
+                    rgba(99, 102, 241, .06)
+                );
+        }
 
-.pw-notification-form:last-child .pw-notification-item-button {
-    border-bottom: 0;
-}
+        .pw-notification-icon {
+            width: 36px;
+            height: 36px;
 
-.pw-notification-mark-all {
-    border: 0;
-    background: transparent;
-    color: #7c3aed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
-    padding: 4px 0;
+            flex: 0 0 36px;
 
-    font-size: 9px;
-    font-weight: 750;
+            border-radius: 11px;
 
-    cursor: pointer;
-}
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
 
-.pw-notification-mark-all:hover {
-    color: #5b21b6;
-    text-decoration: underline;
-}
-        .pw-notification-dot {
-            width: 8px;
-            height: 8px;
+        .pw-notification-icon svg {
+            width: 17px;
+            height: 17px;
+        }
 
-            margin-top: 5px;
+        .pw-notification-copy {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
 
-            flex: 0 0 8px;
+        .pw-notification-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 10px;
+        }
+
+        .pw-notification-title {
+            color: #1e293b;
+
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+
+        .pw-notification-new {
+            flex: 0 0 auto;
+
+            padding: 3px 6px;
 
             border-radius: 999px;
 
-            background: #7c3aed;
+            background: #ede9fe;
+            color: #6d28d9;
+
+            font-size: 8px;
+            font-weight: 800;
+            line-height: 1;
+
+            text-transform: uppercase;
+            letter-spacing: .04em;
         }
 
         .pw-notification-message {
-            color: #334155;
+            margin-top: 3px;
 
-            font-size: 11px;
-            font-weight: 650;
-            line-height: 1.45;
+            color: #64748b;
+
+            font-size: 10px;
+            font-weight: 550;
+            line-height: 1.5;
         }
 
         .pw-notification-time {
-            margin-top: 3px;
+            margin-top: 7px;
+
+            display: flex;
+            align-items: center;
+            gap: 5px;
 
             color: #94a3b8;
 
             font-size: 9px;
-            font-weight: 500;
+            font-weight: 600;
+        }
+
+        .pw-notification-time svg {
+            width: 11px;
+            height: 11px;
+        }
+
+        .pw-notification-mark-all {
+            min-height: 30px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0 10px;
+
+            border: 1px solid #ddd6fe;
+            border-radius: 9px;
+
+            background: #f5f3ff;
+            color: #6d28d9;
+
+            font-size: 9px;
+            font-weight: 800;
+
+            cursor: pointer;
+
+            transition:
+                background-color .15s ease,
+                border-color .15s ease,
+                color .15s ease;
+        }
+
+        .pw-notification-mark-all:hover {
+            border-color: #c4b5fd;
+            background: #ede9fe;
+            color: #5b21b6;
         }
 
         .pw-notification-empty {
-            padding: 30px 18px;
+            padding: 38px 22px 42px;
+
+            text-align: center;
+        }
+
+        .pw-notification-empty-icon {
+            width: 48px;
+            height: 48px;
+
+            margin: 0 auto 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background: #f5f3ff;
+            color: #7c3aed;
+        }
+
+        .pw-notification-empty-icon svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .pw-notification-empty-title {
+            color: #334155;
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .pw-notification-empty-copy {
+            margin-top: 4px;
 
             color: #94a3b8;
 
-            font-size: 11px;
-            text-align: center;
+            font-size: 9px;
+            font-weight: 550;
+            line-height: 1.5;
         }
 
         .pw-profile-trigger {
@@ -1330,6 +1441,53 @@ html.dark .pw-mobile-toggle {
             border-color: #27272a;
         }
 
+        html.dark .pw-notification-list {
+            background: #18181b;
+        }
+
+        html.dark .pw-notification-item-button:hover {
+            background: rgba(124, 58, 237, .11);
+        }
+
+        html.dark .pw-notification-item-button.is-unread {
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(124, 58, 237, .18),
+                    rgba(99, 102, 241, .08)
+                );
+        }
+
+        html.dark .pw-notification-icon {
+            background: rgba(124, 58, 237, .16);
+            color: #c4b5fd;
+        }
+
+        html.dark .pw-notification-title,
+        html.dark .pw-notification-empty-title {
+            color: #f4f4f5;
+        }
+
+        html.dark .pw-notification-message {
+            color: #a1a1aa;
+        }
+
+        html.dark .pw-notification-new {
+            background: rgba(124, 58, 237, .20);
+            color: #c4b5fd;
+        }
+
+        html.dark .pw-notification-mark-all {
+            border-color: rgba(124, 58, 237, .28);
+            background: rgba(124, 58, 237, .14);
+            color: #c4b5fd;
+        }
+
+        html.dark .pw-notification-mark-all:hover {
+            background: rgba(124, 58, 237, .22);
+            color: #ddd6fe;
+        }
+
         @media (max-width: 1023px) {
             .pw-topbar {
                 padding:
@@ -1459,8 +1617,10 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Dashboard', 'meta' => 'Teaching overview', 'url' => route('teacher.dashboard')],
             ['label' => 'My Courses', 'meta' => 'Manage your courses', 'url' => route('teacher.my-courses')],
             ['label' => 'Lessons', 'meta' => 'Manage learning content', 'url' => route('teacher.lessons.index')],
+            ['label' => 'Assignments', 'meta' => 'Create and review graded activities', 'url' => route('teacher.assignments.index')],
             ['label' => 'Quiz Results', 'meta' => 'Review quiz performance', 'url' => route('teacher.quiz-results.index')],
             ['label' => 'Student Progress', 'meta' => 'Track learners', 'url' => route('teacher.student-progress.index')],
+            ['label' => 'Student Invitations', 'meta' => 'Invite learners via unique links', 'url' => route('course-invitations.index')],
             ['label' => 'Performance Analytics', 'meta' => 'Reports and learner performance', 'url' => route('teacher.analytics')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
         ]);
@@ -1469,6 +1629,7 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Dashboard', 'meta' => 'Learning overview', 'url' => route('student.dashboard')],
             ['label' => 'Marketplace', 'meta' => 'Browse courses', 'url' => route('student.marketplace')],
             ['label' => 'My Courses', 'meta' => 'Your enrolled courses', 'url' => route('student.my-courses')],
+            ['label' => 'Assignments', 'meta' => 'View and submit course assignments', 'url' => route('student.assignments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Personalized learning paths', 'url' => route('student.learning-paths')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommended courses', 'url' => route('student.recommendations')],
             ['label' => 'Transactions', 'meta' => 'Payment records', 'url' => route('student.transactions')],
@@ -1553,7 +1714,7 @@ html.dark .pw-mobile-toggle {
             <div class="pw-brand-icon">
 
                 <img
-                    src="{{ asset('images/pathwise-icon.png') }}"
+                    src="{{ asset('images/pathwise-logo.png') . '?v=' . filemtime(public_path('images/pathwise-logo.png')) }}"
                     alt="PathWise"
                 >
 
@@ -1566,10 +1727,7 @@ html.dark .pw-mobile-toggle {
                     PATHWISE
                 </div>
 
-                <div class="pw-brand-subtitle">
-                    An AI Learning<br>
-                    Platform
-                </div>
+                
 
             </div>
 
@@ -1679,7 +1837,54 @@ html.dark .pw-mobile-toggle {
 
                     </a>
 
+                     {{-- Department Management --}}
+        <a
+            href="{{ route('departments.index') }}"
+            wire:navigate
+            class="pw-nav-link {{ request()->routeIs('departments.*') ? 'is-active' : '' }}"
+        >
+            <svg
+                class="pw-nav-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 21h18"
+                />
 
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M5 21V8l7-5 7 5v13"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 21v-6h6v6"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 10h.01M12 10h.01M16 10h.01"
+                />
+            </svg>
+
+            <span>
+                Department Management
+            </span>
+        </a>
+
+    </section>
+
+                  {{-- Transactions --}}
                     <a
                         href="{{ route('super_admin.transactions.index') }}"
                         wire:navigate
@@ -1714,6 +1919,64 @@ html.dark .pw-mobile-toggle {
 
                 </section>
 
+                    {{-- Reports --}}
+        <a
+            href="{{ route('reports.index') }}"
+            wire:navigate
+            class="pw-nav-link {{ request()->routeIs('reports.*') ? 'is-active' : '' }}"
+        >
+            <svg
+                class="pw-nav-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 19V5"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 19h16"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 16v-5"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 16V7"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16 16v-9"
+                />
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M20 16V4"
+                />
+            </svg>
+
+            <span>
+                Reports
+            </span>
+        </a>
+
+    </section>
 
 
             {{-- =================================================
@@ -2067,6 +2330,45 @@ html.dark .pw-mobile-toggle {
                     </div>
 
 
+                    {{-- ASSIGNMENTS --}}
+                    <a
+                        href="{{ route('teacher.assignments.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{
+                            request()->routeIs(
+                                'teacher.assignments.*',
+                                'teacher.submissions.*'
+                            )
+                                ? 'is-active'
+                                : ''
+                        }}"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                d="M9 8h6M9 12h6M9 16h4"
+                            />
+                        </svg>
+
+                        <span>
+                            Assignments
+                        </span>
+                    </a>
+
+
                     <a
                         href="{{ route('teacher.quiz-results.index') }}"
                         wire:navigate
@@ -2148,6 +2450,60 @@ html.dark .pw-mobile-toggle {
 
                         <span>
                             Student Progress
+                        </span>
+
+                    </a>
+
+                </section>
+
+
+
+                {{-- STUDENT INVITATIONS --}}
+                <section class="pw-nav-section">
+
+                    <div class="pw-nav-heading">
+                        Enrollment
+                    </div>
+
+
+                    <a
+                        href="{{ route('course-invitations.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{
+                            request()->routeIs('course-invitations.*')
+                                ? 'is-active'
+                                : ''
+                        }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
+                            />
+                            <circle
+                                cx="9"
+                                cy="7"
+                                r="4"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19 8v6M22 11h-6"
+                            />
+                        </svg>
+
+                        <span>
+                            Student Invitations
                         </span>
 
                     </a>
@@ -2270,6 +2626,42 @@ html.dark .pw-mobile-toggle {
                             My Courses
                         </span>
 
+                    </a>
+
+
+                    {{-- ASSIGNMENTS --}}
+                    <a
+                        href="{{ route('student.assignments.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{
+                            request()->routeIs('student.assignments.*')
+                                ? 'is-active'
+                                : ''
+                        }}"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                d="M9 8h6M9 12h6M9 16h4"
+                            />
+                        </svg>
+
+                        <span>
+                            Assignments
+                        </span>
                     </a>
 
 
@@ -2633,13 +3025,10 @@ html.dark .pw-mobile-toggle {
                             />
                         </svg>
 
-
                         @if($pwUnreadCount > 0)
-
                             <span class="pw-notification-badge">
                                 {{ $pwUnreadCount > 9 ? '9+' : $pwUnreadCount }}
                             </span>
-
                         @endif
 
                     </button>
@@ -2650,77 +3039,40 @@ html.dark .pw-mobile-toggle {
                         class="pw-topbar-dropdown"
                     >
 
-                       <div class="pw-topbar-dropdown-header">
+                        <div class="pw-topbar-dropdown-header">
 
-    <div>
+                            <div>
+                                <div class="pw-topbar-dropdown-title">
+                                    Notifications
+                                </div>
 
-        <div class="pw-topbar-dropdown-title">
-            Notifications
-        </div>
+                                <div class="pw-topbar-dropdown-subtitle">
+                                    @if($pwUnreadCount > 0)
+                                        {{ $pwUnreadCount }} unread
+                                    @else
+                                        You're all caught up
+                                    @endif
+                                </div>
+                            </div>
 
-        <div class="pw-topbar-dropdown-subtitle">
-            {{ $pwUnreadCount }} unread
-        </div>
 
-    </div>
+                            @if($pwUnreadCount > 0)
+                                <form
+                                    action="{{ route('notifications.read-all') }}"
+                                    method="POST"
+                                >
+                                    @csrf
 
-<<<<<<< HEAD
-    <flux:sidebar
-        sticky
-        collapsible="mobile"
-        class="relative z-10 w-72.5 border-e border-zinc-200 bg-zinc-50 dark:border-neutral-800 dark:bg-neutral-950/90 dark:backdrop-blur"
-    >
+                                    <button
+                                        type="submit"
+                                        class="pw-notification-mark-all"
+                                    >
+                                        Mark all read
+                                    </button>
+                                </form>
+                            @endif
 
-        <flux:sidebar.header>
-
-            <a
-                href="{{ route('dashboard') }}"
-                class="flex items-center gap-4 px-5 py-6 transition hover:opacity-95"
-            >
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-purple-600/20 to-indigo-600/20 ring-1 ring-purple-500/20">
-                    <img
-                        src="{{ asset('images/pathwise-icon.png') }}"
-                        alt="PATHWISE"
-                        class="h-11 w-11 shrink-0 drop-shadow-[0_0_18px_rgba(168,85,247,0.55)]"
-                    >
-                </div>
-
-                <div class="min-w-0">
-                    <div class="text-xl font-black tracking-[0.18em] text-white">
-                        PATHWISE
-                    </div>
-
-                    <div class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.35em] text-purple-400">
-                        AN AI LEARNING PLATFORM
-                    </div>
-                </div>
-            </a>
-
-            <flux:sidebar.collapse class="lg:hidden" />
-
-        </flux:sidebar.header>
-=======
-
-    @if($pwUnreadCount > 0)
-
-        <form
-            action="{{ route('notifications.read-all') }}"
-            method="POST"
-        >
-            @csrf
-
-            <button
-                type="submit"
-                class="pw-notification-mark-all"
-            >
-                Mark all as read
-            </button>
-
-        </form>
-
-    @endif
-
-    </div>
+                        </div>
 
 
                         <div class="pw-notification-list">
@@ -2732,10 +3084,28 @@ html.dark .pw-mobile-toggle {
                                         ? $pwNotification->data
                                         : [];
 
+                                    $pwNotificationCourseId =
+                                        $pwNotificationData['course_id']
+                                        ?? null;
+
+                                    $pwNotificationTitle =
+                                        $pwNotificationData['title']
+                                        ?? (
+                                            $pwNotificationCourseId
+                                                ? 'Course update'
+                                                : 'PathWise notification'
+                                        );
+
                                     $pwNotificationMessage =
                                         $pwNotificationData['message']
-                                        ?? $pwNotificationData['title']
-                                        ?? 'You have a new PathWise notification.';
+                                        ?? (
+                                            empty($pwNotificationData['title'])
+                                                ? 'You have a new update in PathWise.'
+                                                : null
+                                        );
+
+                                    $pwNotificationUnread =
+                                        is_null($pwNotification->read_at);
                                 @endphp
 
 
@@ -2748,34 +3118,98 @@ html.dark .pw-mobile-toggle {
 
                                     <button
                                         type="submit"
-                                        class="pw-notification-item pw-notification-item-button"
+                                        class="pw-notification-item-button {{
+                                            $pwNotificationUnread
+                                                ? 'is-unread'
+                                                : ''
+                                        }}"
                                     >
 
-                                        @if(is_null($pwNotification->read_at))
+                                        <span class="pw-notification-icon">
 
-                                            <span class="pw-notification-dot"></span>
+                                            @if($pwNotificationCourseId)
 
-                                        @else
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="1.8"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"
+                                                    />
+                                                </svg>
 
-                                            <span
-                                                class="pw-notification-dot"
-                                                style="background:#cbd5e1;"
-                                            ></span>
+                                            @else
 
-                                        @endif
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="1.8"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M14.857 17.082a23.848 23.848 0 01-5.714 0M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+                                                    />
+                                                </svg>
+
+                                            @endif
+
+                                        </span>
 
 
-                                        <div>
+                                        <span class="pw-notification-copy">
 
-                                            <div class="pw-notification-message">
-                                                {{ $pwNotificationMessage }}
-                                            </div>
+                                            <span class="pw-notification-title-row">
 
-                                            <div class="pw-notification-time">
-                                                {{ optional($pwNotification->created_at)->diffForHumans() }}
-                                            </div>
+                                                <span class="pw-notification-title">
+                                                    {{ $pwNotificationTitle }}
+                                                </span>
 
-                                        </div>
+                                                @if($pwNotificationUnread)
+                                                    <span class="pw-notification-new">
+                                                        New
+                                                    </span>
+                                                @endif
+
+                                            </span>
+
+
+                                            @if($pwNotificationMessage)
+                                                <span class="pw-notification-message">
+                                                    {{ $pwNotificationMessage }}
+                                                </span>
+                                            @endif
+
+
+                                            <span class="pw-notification-time">
+
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="1.8"
+                                                >
+                                                    <circle cx="12" cy="12" r="9" />
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        d="M12 7v5l3 2"
+                                                    />
+                                                </svg>
+
+                                                {!!
+                                                    optional(
+                                                        $pwNotification->created_at
+                                                    )->diffForHumans()
+                                                !!}
+
+                                            </span>
+
+                                        </span>
 
                                     </button>
 
@@ -2786,23 +3220,8 @@ html.dark .pw-mobile-toggle {
 
                                 <div class="pw-notification-empty">
 
-                                    <div
-                                        style="
-                                            width:42px;
-                                            height:42px;
-                                            margin:0 auto 10px;
-                                            display:flex;
-                                            align-items:center;
-                                            justify-content:center;
-                                            border-radius:12px;
-                                            background:#f5f3ff;
-                                            color:#7c3aed;
-                                        "
-                                    >
-
+                                    <div class="pw-notification-empty-icon">
                                         <svg
-                                            width="19"
-                                            height="19"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -2814,10 +3233,15 @@ html.dark .pw-mobile-toggle {
                                                 d="M14.857 17.082a23.848 23.848 0 01-5.714 0M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
                                             />
                                         </svg>
-
                                     </div>
 
-                                    No notifications yet.
+                                    <div class="pw-notification-empty-title">
+                                        No notifications yet
+                                    </div>
+
+                                    <div class="pw-notification-empty-copy">
+                                        Course approvals, updates, and other PathWise activity will appear here.
+                                    </div>
 
                                 </div>
 
@@ -2829,343 +3253,6 @@ html.dark .pw-mobile-toggle {
 
                 </div>
 
-
-
-                {{-- Help --}}
-                <div class="pw-topbar-dropdown-wrap">
-
-                    <button
-                        type="button"
-                        class="pw-topbar-icon-button"
-                        onclick="pwToggleDropdown('pwHelpDropdown')"
-                        aria-label="Help"
-                        aria-haspopup="true"
-                    >
-
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M9.8 9a2.3 2.3 0 114.1 1.4c-.9.9-1.9 1.3-1.9 2.6M12 17h.01"
-                            />
-                        </svg>
-
-                    </button>
-
-
-                    <div
-                        id="pwHelpDropdown"
-                        class="pw-topbar-dropdown"
-                        style="width:280px;"
-                    >
-
-                        <div class="pw-topbar-dropdown-header">
-
-                            <div>
-
-                                <div class="pw-topbar-dropdown-title">
-                                    Need help?
-                                </div>
-
-                                <div class="pw-topbar-dropdown-subtitle">
-                                    Quick PathWise assistance
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div style="padding:16px;">
-
-                            <p
-                                style="
-                                    margin:0;
-                                    color:#64748b;
-                                    font-size:11px;
-                                    line-height:1.6;
-                                "
-                            >
-                                Use the search bar to quickly open the pages
-                                available to your account. More help resources
-                                can be connected here later.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
->>>>>>> origin/Dakoykoy
-
-
-<<<<<<< HEAD
-        <flux:sidebar.nav>
-
-            <flux:sidebar.group
-                :heading="__('Main')"
-                class="mt-2 grid gap-1 px-2"
-            >
-
-                {{-- DASHBOARD --}}
-                <flux:sidebar.item
-                    icon="home"
-                    :href="route('dashboard')"
-                    :current="request()->routeIs('dashboard')"
-                    wire:navigate
-                >
-                    {{ __('Dashboard') }}
-                </flux:sidebar.item>
-
-
-                {{-- =====================================================
-                     SUPER ADMIN
-                ====================================================== --}}
-                @if(auth()->user()->hasRole('super_admin'))
-
-                    {{-- User Management --}}
-                    <flux:sidebar.item
-                        icon="users"
-                        :href="route('users.index')"
-                        :current="request()->routeIs('users.*')"
-                        wire:navigate
-                    >
-                        {{ __('User Management') }}
-                    </flux:sidebar.item>
-
-                    {{-- Manage Departments --}}
-                    <flux:sidebar.item
-                        icon="building-office"
-                        :href="route('super-admin.departments.index')"
-                        :current="request()->routeIs('super-admin.departments.*')"
-                        wire:navigate
-                    >
-                        {{ __('Manage Departments') }}
-                    </flux:sidebar.item>
-
-                    {{-- Transactions --}}
-                    <flux:sidebar.item
-                        icon="credit-card"
-                        :href="route('super_admin.transactions.index')"
-                        :current="request()->routeIs('super_admin.transactions.*')"
-                        wire:navigate
-                    >
-                        {{ __('Transactions') }}
-                    </flux:sidebar.item>
-
-                    {{-- System Reports --}}
-                    <flux:sidebar.item
-                        icon="chart-bar"
-                        :href="route('reports.index')"
-                        :current="request()->routeIs('reports.*')"
-                        wire:navigate
-                    >
-                        {{ __('System Reports') }}
-                    </flux:sidebar.item>
-
-
-                {{-- =====================================================
-                     ADMIN / DEPARTMENT HEAD
-                ====================================================== --}}
-                @elseif(auth()->user()->hasRole('admin'))
-
-                    {{-- Courses --}}
-                    <flux:sidebar.item
-                        icon="book-open"
-                        :href="route('courses.index')"
-                        :current="request()->routeIs('courses.*')"
-                        wire:navigate
-                    >
-                        {{ __('Courses') }}
-                    </flux:sidebar.item>
-
-                    {{-- Categories --}}
-                    <flux:sidebar.item
-                        icon="folder"
-                        :href="route('course-categories.index')"
-                        :current="request()->routeIs('course-categories.*')"
-                        wire:navigate
-                    >
-                        {{ __('Categories') }}
-                    </flux:sidebar.item>
-
-                    {{-- Lessons --}}
-                    <flux:sidebar.item
-                        icon="document"
-                        :href="route('lessons.index')"
-                        :current="request()->routeIs('lessons.*')"
-                        wire:navigate
-                    >
-                        {{ __('Lessons') }}
-                    </flux:sidebar.item>
-
-                    {{-- Quizzes --}}
-                    <flux:sidebar.item
-                        icon="clipboard"
-                        :href="route('quizzes.index')"
-                        :current="request()->routeIs('quizzes.*')"
-                        wire:navigate
-                    >
-                        {{ __('Quizzes') }}
-                    </flux:sidebar.item>
-
-                    {{-- Certificates --}}
-                    <flux:sidebar.item
-                        icon="academic-cap"
-                        :href="route('certificate-management.index')"
-                        :current="request()->routeIs('certificate-management.*')"
-                        wire:navigate
-                    >
-                        {{ __('Certificates') }}
-                    </flux:sidebar.item>
-
-                    {{-- AI Recommendations --}}
-                    <flux:sidebar.item
-                        icon="sparkles"
-                        :href="route('ai-recommendations.index')"
-                        :current="request()->routeIs('ai-recommendations.*')"
-                        wire:navigate
-                    >
-                        {{ __('AI Recommendations') }}
-                    </flux:sidebar.item>
-
-                    {{-- Student Progress --}}
-                    <flux:sidebar.item
-                        icon="chart-bar"
-                        :href="route('student-progress.index')"
-                        :current="request()->routeIs('student-progress.*')"
-                        wire:navigate
-                    >
-                        {{ __('Student Progress') }}
-                    </flux:sidebar.item>
-
-
-                {{-- =====================================================
-                     TEACHER / INSTRUCTOR
-                ====================================================== --}}
-                @elseif(auth()->user()->hasRole('teacher'))
-
-                    {{-- My Courses --}}
-                    <flux:sidebar.item
-                        icon="book-open"
-                        :href="route('teacher.my-courses')"
-                        :current="request()->routeIs('teacher.my-courses')"
-                        wire:navigate
-                    >
-                        {{ __('My Courses') }}
-                    </flux:sidebar.item>
-
-                    {{-- Lessons --}}
-                    <flux:sidebar.item
-                        icon="document"
-                        :href="route('teacher.lessons.index')"
-                        :current="request()->routeIs('teacher.lessons.*')"
-                        wire:navigate
-                    >
-                        {{ __('Lessons') }}
-                    </flux:sidebar.item>
-
-                    {{-- Quiz Results --}}
-                    <flux:sidebar.item
-                        icon="clipboard"
-                        :href="route('teacher.quiz-results.index')"
-                        :current="request()->routeIs('teacher.quiz-results.*')"
-                        wire:navigate
-                    >
-                        {{ __('Quiz Results') }}
-                    </flux:sidebar.item>
-
-                    {{-- Student Progress --}}
-                    <flux:sidebar.item
-                        icon="users"
-                        :href="route('teacher.student-progress.index')"
-                        :current="request()->routeIs('teacher.student-progress.*')"
-                        wire:navigate
-                    >
-                        {{ __('Student Progress') }}
-                    </flux:sidebar.item>
-
-
-                {{-- =====================================================
-                     STUDENT
-                ====================================================== --}}
-                @elseif(auth()->user()->hasRole('student'))
-
-                    {{-- Marketplace --}}
-                    <flux:sidebar.item
-                        icon="shopping-bag"
-                        :href="route('student.marketplace')"
-                        :current="request()->routeIs('student.marketplace')"
-                        wire:navigate
-                    >
-                        {{ __('Marketplace') }}
-                    </flux:sidebar.item>
-
-                    {{-- My Courses --}}
-                    <flux:sidebar.item
-                        icon="book-open"
-                        :href="route('student.my-courses')"
-                        :current="request()->routeIs('student.my-courses')"
-                        wire:navigate
-                    >
-                        {{ __('My Courses') }}
-                    </flux:sidebar.item>
-
-                    {{-- Learning Paths --}}
-                    <flux:sidebar.item
-                        icon="map"
-                        :href="route('student.learning-paths')"
-                        :current="request()->routeIs('student.learning-paths*')"
-                        wire:navigate
-                    >
-                        {{ __('Learning Paths') }}
-                    </flux:sidebar.item>
-
-                    {{-- AI Recommendations --}}
-                    <flux:sidebar.item
-                        icon="sparkles"
-                        :href="route('student.recommendations')"
-                        :current="request()->routeIs('student.recommendations')"
-                        wire:navigate
-                    >
-                        {{ __('AI Recommendations') }}
-                    </flux:sidebar.item>
-
-                    {{-- Transactions --}}
-                    <flux:sidebar.item
-                        icon="credit-card"
-                        :href="route('student.transactions')"
-                        :current="request()->routeIs('student.transactions*')"
-                        wire:navigate
-                    >
-                        {{ __('Transactions') }}
-                    </flux:sidebar.item>
-
-                    {{-- Certificates --}}
-                    <flux:sidebar.item
-                        icon="academic-cap"
-                        :href="route('student.certificates')"
-                        :current="request()->routeIs('student.certificates')"
-                        wire:navigate
-                    >
-                        {{ __('Certificates') }}
-                    </flux:sidebar.item>
-
-                @endif
-
-            </flux:sidebar.group>
-
-        </flux:sidebar.nav>
-
-
-        <flux:spacer />
-=======
 
                 {{-- Profile --}}
                 <div class="pw-topbar-dropdown-wrap">
@@ -3190,42 +3277,11 @@ html.dark .pw-mobile-toggle {
                             @else
 
                                 {{ $pwInitials }}
->>>>>>> origin/Dakoykoy
 
                             @endif
 
-<<<<<<< HEAD
-
-        {{-- ACCOUNT --}}
-        <flux:sidebar.nav class="pt-3">
-
-            <flux:sidebar.group
-                :heading="__('Account')"
-                class="grid gap-1 px-2"
-            >
-
-                <flux:sidebar.item
-                    icon="cog"
-                    :href="route('profile.edit')"
-                    :current="request()->routeIs('profile.edit')"
-                    wire:navigate
-                >
-                    {{ __('Settings') }}
-                </flux:sidebar.item>
-
-            </flux:sidebar.group>
-
-        </flux:sidebar.nav>
-
-
-        <x-desktop-user-menu
-            class="hidden lg:block"
-            :name="auth()->user()->name"
-        />
-=======
                         </div>
 
->>>>>>> origin/Dakoykoy
 
                         <div class="pw-profile-copy">
 
@@ -3353,11 +3409,6 @@ html.dark .pw-mobile-toggle {
     </div>
 
 
-<<<<<<< HEAD
-
-    {{ $slot }}
-=======
->>>>>>> origin/Dakoykoy
 
     @fluxScripts
 
@@ -3541,3 +3592,7 @@ html.dark .pw-mobile-toggle {
 </body>
 
 </html>
+
+
+
+

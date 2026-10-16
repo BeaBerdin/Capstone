@@ -42,13 +42,18 @@
         }
     </style>
 
+
     <div class="min-h-screen bg-[#f8f9fc]">
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-            <div class="mx-auto max-w-[1500px]">
+            <div class="mx-auto max-w-375">
 
-                {{-- HEADER --}}
+
+                {{-- =====================================================
+                    HEADER
+                ====================================================== --}}
+
                 <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 
                     <div>
@@ -62,15 +67,19 @@
                         </h1>
 
                         <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                            Manage registered users, assigned roles, departments, and account
-                            information across the PathWise platform.
+                            Manage registered users, assigned roles, and account information
+                            across the PathWise platform.
                         </p>
 
                     </div>
 
                 </div>
 
-                {{-- SUCCESS MESSAGE --}}
+
+                {{-- =====================================================
+                    SUCCESS / ERROR MESSAGES
+                ====================================================== --}}
+
                 @if (session('success'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
@@ -87,7 +96,7 @@
 
                 @endif
 
-                {{-- ERROR MESSAGE --}}
+
                 @if (session('error'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -104,10 +113,119 @@
 
                 @endif
 
-                {{-- ROLE SUMMARY --}}
+
+
+                {{-- =====================================================
+                    CREATE ACCOUNT (Manuscript Figure 31: "Add User")
+                ====================================================== --}}
+
+                <details
+                    class="pw-card mt-6 overflow-hidden"
+                    @if($errors->any()) open @endif
+                >
+
+                    <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 sm:px-6">
+
+                        <div>
+                            <h2 class="text-sm font-bold text-slate-900">
+                                Create Account
+                            </h2>
+
+                            <p class="mt-0.5 text-xs text-slate-500">
+                                Add an Administrator, Teacher, Student, or Super Admin account.
+                            </p>
+                        </div>
+
+                        <span class="rounded-lg bg-violet-600 px-3 py-2 text-[11px] font-bold text-white">
+                            + Add User
+                        </span>
+
+                    </summary>
+
+                    <form
+                        action="{{ route('users.store') }}"
+                        method="POST"
+                        class="grid gap-4 border-t border-slate-100 px-5 py-5 sm:grid-cols-2 sm:px-6"
+                    >
+                        @csrf
+
+                        <div>
+                            <label for="new_name" class="text-xs font-semibold text-slate-600">Full name</label>
+                            <input id="new_name" name="name" type="text" value="{{ old('name') }}" required
+                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                            @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="new_email" class="text-xs font-semibold text-slate-600">Email address</label>
+                            <input id="new_email" name="email" type="email" value="{{ old('email') }}" required
+                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                            @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="new_role" class="text-xs font-semibold text-slate-600">Role</label>
+                            <select id="new_role" name="role" required
+                                    class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                                <option value="admin" @selected(old('role', 'admin') === 'admin')>Administrator (Department Head)</option>
+                                <option value="teacher" @selected(old('role') === 'teacher')>Teacher</option>
+                                <option value="student" @selected(old('role') === 'student')>Student</option>
+                                <option value="super_admin" @selected(old('role') === 'super_admin')>Super Admin (EDP)</option>
+                            </select>
+                            @error('role') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="new_department" class="text-xs font-semibold text-slate-600">Department (optional)</label>
+                            <select id="new_department" name="department_id"
+                                    class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                                <option value="">No department</option>
+                                @foreach(($departments ?? collect()) as $department)
+                                    <option value="{{ $department->id }}" @selected((string) old('department_id') === (string) $department->id)>
+                                        {{ $department->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('department_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="new_password" class="text-xs font-semibold text-slate-600">Temporary password</label>
+                            <input id="new_password" name="password" type="password" required autocomplete="new-password"
+                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                            @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="new_password_confirmation" class="text-xs font-semibold text-slate-600">Confirm password</label>
+                            <input id="new_password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
+                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
+                        </div>
+
+                        <div class="sm:col-span-2 flex items-center justify-between gap-4">
+                            <p class="text-[11px] text-slate-400">
+                                Accounts created here are already email-verified. Ask the user to change the password after the first login.
+                            </p>
+
+                            <button type="submit"
+                                    class="h-10 shrink-0 rounded-xl bg-violet-600 px-5 text-xs font-bold text-white transition hover:bg-violet-700">
+                                Create Account
+                            </button>
+                        </div>
+
+                    </form>
+
+                </details>
+
+                {{-- =====================================================
+                    ROLE SUMMARY
+                ====================================================== --}}
+
                 <section class="mt-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
 
+
                     {{-- ADMIN --}}
+
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -147,7 +265,9 @@
 
                     </div>
 
+
                     {{-- TEACHERS --}}
+
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -187,7 +307,9 @@
 
                     </div>
 
+
                     {{-- STUDENTS --}}
+
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -229,7 +351,9 @@
 
                     </div>
 
+
                     {{-- SUPER ADMIN --}}
+
                     <div class="pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
@@ -270,10 +394,16 @@
 
                 </section>
 
-                {{-- USER DIRECTORY --}}
+
+                {{-- =====================================================
+                    USER DIRECTORY
+                ====================================================== --}}
+
                 <section class="pw-card mt-6 overflow-hidden">
 
+
                     {{-- TABLE HEADER --}}
+
                     <div class="border-b border-slate-100 px-5 py-5 sm:px-6">
 
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -290,7 +420,9 @@
 
                             </div>
 
+
                             {{-- SEARCH --}}
+
                             <div class="relative w-full lg:w-72">
 
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -321,10 +453,12 @@
 
                     </div>
 
+
                     {{-- TABLE --}}
+
                     <div class="overflow-x-auto">
 
-                        <table class="w-full min-w-[1200px] text-left">
+                        <table class="w-full min-w-237.5 text-left">
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 
@@ -343,11 +477,11 @@
                                     </th>
 
                                     <th class="px-6 py-4">
-                                        Department
+                                        Change Role
                                     </th>
 
                                     <th class="px-6 py-4">
-                                        Change Role
+                                        Status
                                     </th>
 
                                     <th class="px-6 py-4">
@@ -358,7 +492,9 @@
 
                             </thead>
 
+
                             <tbody id="userTableBody" class="divide-y divide-slate-100">
+
 
                                 @forelse($users as $user)
 
@@ -398,18 +534,23 @@
 
                                     @endphp
 
+
                                     <tr
                                         class="user-row transition hover:bg-slate-50/70"
-                                        data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $roleLabel . ' ' . ($user->department?->name ?? '')) }}"
+                                        data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $roleLabel) }}"
                                     >
 
+
                                         {{-- USER --}}
+
                                         <td class="px-6 py-5">
 
                                             <div class="flex items-center gap-3">
 
                                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
+
                                                     {{ strtoupper(substr($user->name, 0, 1)) }}
+
                                                 </div>
 
                                                 <div class="min-w-0">
@@ -428,7 +569,9 @@
 
                                         </td>
 
+
                                         {{-- EMAIL --}}
+
                                         <td class="px-6 py-5">
 
                                             <p class="text-xs font-medium text-slate-600">
@@ -437,7 +580,9 @@
 
                                         </td>
 
+
                                         {{-- CURRENT ROLE --}}
+
                                         <td class="px-6 py-5">
 
                                             @if($currentRole)
@@ -460,64 +605,9 @@
 
                                         </td>
 
-                                        {{-- DEPARTMENT --}}
-                                        <td class="px-6 py-5">
-
-                                            @if($currentRole === 'admin' || $currentRole === 'teacher')
-
-                                                <form
-                                                    action="{{ route('users.update-department', $user) }}"
-                                                    method="POST"
-                                                    class="flex items-center gap-2"
-                                                >
-
-                                                    @csrf
-
-                                                    @method('PUT')
-
-                                                    <select
-                                                        name="department_id"
-                                                        class="h-9 max-w-[230px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
-                                                    >
-
-                                                        <option value="">
-                                                            Unassigned
-                                                        </option>
-
-                                                        @foreach($departments as $department)
-
-                                                            <option
-                                                                value="{{ $department->id }}"
-                                                                {{ $user->department_id == $department->id ? 'selected' : '' }}
-                                                            >
-                                                                {{ $department->name }}
-                                                            </option>
-
-                                                        @endforeach
-
-                                                    </select>
-
-                                                    <button
-                                                        type="submit"
-                                                        onclick="return confirm('Are you sure you want to assign this department?')"
-                                                        class="h-9 rounded-lg bg-emerald-600 px-3 text-[11px] font-bold text-white transition hover:bg-emerald-700"
-                                                    >
-                                                        Assign
-                                                    </button>
-
-                                                </form>
-
-                                            @else
-
-                                                <span class="text-[11px] text-slate-400">
-                                                    Not applicable
-                                                </span>
-
-                                            @endif
-
-                                        </td>
 
                                         {{-- CHANGE ROLE --}}
+
                                         <td class="px-6 py-5">
 
                                             <form
@@ -529,6 +619,7 @@
                                                 @csrf
 
                                                 @method('PUT')
+
 
                                                 <select
                                                     name="role"
@@ -565,6 +656,7 @@
 
                                                 </select>
 
+
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Are you sure you want to change this user role?')"
@@ -577,7 +669,54 @@
 
                                         </td>
 
+
+                                        {{-- STATUS (activate / deactivate) --}}
+
+                                        <td class="px-6 py-5">
+
+                                            @php
+                                                $isActive = $user->is_active !== false;
+                                            @endphp
+
+                                            <div class="flex items-center gap-2">
+
+                                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold {{ $isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600' }}">
+                                                    {{ $isActive ? 'Active' : 'Deactivated' }}
+                                                </span>
+
+                                                @if($user->id !== auth()->id())
+
+                                                    <form
+                                                        action="{{ route('users.update-status', $user) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('{{ $isActive ? 'Deactivate' : 'Activate' }} this account?')"
+                                                    >
+                                                        @csrf
+                                                        @method('PATCH')
+
+                                                        <input type="hidden" name="is_active" value="{{ $isActive ? 0 : 1 }}">
+
+                                                        <button
+                                                            type="submit"
+                                                            class="h-8 rounded-lg border px-2.5 text-[11px] font-bold transition {{ $isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}"
+                                                        >
+                                                            {{ $isActive ? 'Deactivate' : 'Activate' }}
+                                                        </button>
+                                                    </form>
+
+                                                @endif
+
+                                            </div>
+
+                                            @if(! $user->hasVerifiedEmail())
+                                                <p class="mt-1 text-[10px] text-amber-600">Email not verified</p>
+                                            @endif
+
+                                        </td>
+
+
                                         {{-- DATE --}}
+
                                         <td class="px-6 py-5">
 
                                             <p class="text-xs font-semibold text-slate-600">
@@ -591,6 +730,7 @@
                                         </td>
 
                                     </tr>
+
 
                                 @empty
 
@@ -629,7 +769,9 @@
 
                                 @endforelse
 
+
                                 {{-- SEARCH EMPTY STATE --}}
+
                                 <tr id="noSearchResults" class="hidden">
 
                                     <td colspan="6" class="px-6 py-14 text-center">
@@ -654,7 +796,7 @@
                                         </h3>
 
                                         <p class="mt-1 text-xs text-slate-400">
-                                            Try searching with a different name, email, role, or department.
+                                            Try searching with a different name, email, or role.
                                         </p>
 
                                     </td>
@@ -669,13 +811,18 @@
 
                 </section>
 
+
             </div>
 
         </main>
 
     </div>
 
-    {{-- SEARCH SCRIPT --}}
+
+    {{-- =====================================================
+        SEARCH SCRIPT
+    ====================================================== --}}
+
     <script>
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -686,15 +833,18 @@
 
             const noResults = document.getElementById('noSearchResults');
 
+
             if (!searchInput) {
                 return;
             }
+
 
             searchInput.addEventListener('input', function () {
 
                 const searchValue = this.value.toLowerCase().trim();
 
                 let visibleRows = 0;
+
 
                 rows.forEach(function (row) {
 
@@ -704,14 +854,17 @@
                     const matches =
                         searchableText.includes(searchValue);
 
+
                     row.style.display =
                         matches ? '' : 'none';
+
 
                     if (matches) {
                         visibleRows++;
                     }
 
                 });
+
 
                 if (noResults) {
 

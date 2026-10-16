@@ -3,6 +3,18 @@
 @php
     $questionCount = $quiz ? $quiz->questions->count() : 0;
     $totalPoints = $quiz ? $quiz->questions->sum('points') : 0;
+
+    $quizCanBeModified =
+        $quizCanBeModified
+        ?? in_array(
+            strtolower(
+                trim(
+                    (string) ($lesson->course->status ?? 'draft')
+                )
+            ),
+            ['draft', 'rejected'],
+            true
+        );
 @endphp
 
 <style>
@@ -27,6 +39,13 @@
         outline: none !important;
         border-color: #8b5cf6 !important;
         box-shadow: 0 0 0 4px rgba(139, 92, 246, .10) !important;
+    }
+
+    .pw-field:disabled,
+    .pw-field[readonly] {
+        background: #f8fafc;
+        color: #64748b;
+        cursor: not-allowed;
     }
 
     .pw-question-card {
@@ -113,6 +132,48 @@
                 </a>
 
             </div>
+
+
+            {{-- LOCKED COURSE NOTICE --}}
+            @if(!$quizCanBeModified)
+
+                <div
+                    class="mt-6 flex flex-col gap-3 rounded-2xl
+                           border border-slate-200 bg-slate-100
+                           px-5 py-4 sm:flex-row
+                           sm:items-center sm:justify-between"
+                >
+
+                    <div>
+
+                        <p class="text-sm font-bold text-slate-800">
+                            🔒 Quiz content is locked
+                        </p>
+
+                        <p class="mt-1 text-xs leading-5 text-slate-500">
+                            This course is currently
+                            <span class="font-semibold">
+                                {{ ucfirst($lesson->course->status) }}
+                            </span>.
+                            Quiz settings and questions can only be changed
+                            while the course is Draft or Rejected.
+                        </p>
+
+                    </div>
+
+
+                    <span
+                        class="inline-flex self-start rounded-full
+                               bg-white px-3 py-1.5 text-xs
+                               font-semibold text-slate-500
+                               shadow-sm"
+                    >
+                        Read only
+                    </span>
+
+                </div>
+
+            @endif
 
 
 
@@ -320,6 +381,7 @@
                                     value="{{ old('title', $quiz?->title ?? $lesson->title) }}"
                                     placeholder="e.g. Accounting Fundamentals Quiz"
                                     class="pw-field mt-2.5 h-12 px-4"
+                                    @readonly(!$quizCanBeModified)
                                 >
 
                             </div>
@@ -342,6 +404,7 @@
                                     rows="5"
                                     placeholder="Give students instructions before starting this quiz..."
                                     class="pw-field mt-2.5 resize-none px-4 py-3 leading-6"
+                                    @readonly(!$quizCanBeModified)
                                 >{{ old('description', $quiz?->description ?? $lesson->content) }}</textarea>
 
                             </div>
@@ -372,6 +435,7 @@
                                             required
                                             value="{{ old('passing_score', $quiz?->passing_score ?? 75) }}"
                                             class="pw-field h-12 px-4 pr-12"
+                                            @readonly(!$quizCanBeModified)
                                         >
 
                                         <span
@@ -408,6 +472,7 @@
                                             value="{{ old('time_limit_minutes', $quiz?->time_limit_minutes) }}"
                                             placeholder="No limit"
                                             class="pw-field h-12 px-4 pr-20"
+                                            @readonly(!$quizCanBeModified)
                                         >
 
                                         <span
@@ -455,6 +520,7 @@
                                         name="is_published"
                                         value="1"
                                         class="peer sr-only"
+                                        @disabled(!$quizCanBeModified)
                                         @checked(
                                             old(
                                                 'is_published',
@@ -490,22 +556,388 @@
 
                             <div class="flex justify-end">
 
-                                <button
-                                    type="submit"
-                                    class="inline-flex h-11 items-center
-                                           justify-center rounded-xl
-                                           bg-violet-600 px-5
-                                           text-sm font-semibold text-white
-                                           transition hover:bg-violet-700"
-                                >
-                                    Save Quiz Settings
-                                </button>
+                                @if($quizCanBeModified)
+
+                                    <button
+                                        type="submit"
+                                        class="inline-flex h-11 items-center
+                                               justify-center rounded-xl
+                                               bg-violet-600 px-5
+                                               text-sm font-semibold text-white
+                                               transition hover:bg-violet-700"
+                                    >
+                                        Save Quiz Settings
+                                    </button>
+
+                                @else
+
+                                    <span
+                                        class="inline-flex h-11 items-center
+                                               justify-center gap-2 rounded-xl
+                                               border border-slate-200
+                                               bg-slate-100 px-5
+                                               text-sm font-semibold
+                                               text-slate-500"
+                                    >
+                                        🔒 Settings Locked
+                                    </span>
+
+                                @endif
 
                             </div>
 
                         </form>
 
                     </section>
+
+
+
+                    {{-- AI QUIZ GENERATOR --}}
+                    @if($quiz)
+
+                        <section class="pw-card overflow-hidden">
+
+                            <div
+                                class="border-b border-violet-100
+                                       bg-gradient-to-r from-violet-50
+                                       via-white to-fuchsia-50
+                                       px-5 py-5 sm:px-7"
+                            >
+
+                                <div
+                                    class="flex flex-col gap-4
+                                           sm:flex-row sm:items-start
+                                           sm:justify-between"
+                                >
+
+                                    <div>
+
+                                        <div class="flex items-center gap-2">
+
+                                            <span
+                                                class="inline-flex h-9 w-9
+                                                       items-center justify-center
+                                                       rounded-xl bg-violet-600
+                                                       text-base font-bold
+                                                       text-white shadow-sm"
+                                            >
+                                                ✦
+                                            </span>
+
+                                            <div>
+
+                                                <p
+                                                    class="text-[10px] font-bold
+                                                           uppercase tracking-[.13em]
+                                                           text-violet-500"
+                                                >
+                                                    Gemini AI
+                                                </p>
+
+                                                <h2
+                                                    class="mt-0.5 text-lg
+                                                           font-bold text-slate-900"
+                                                >
+                                                    Generate quiz questions
+                                                </h2>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <p
+                                            class="mt-3 max-w-2xl
+                                                   text-sm leading-6
+                                                   text-slate-500"
+                                        >
+                                            PathWise asks Gemini to create
+                                            multiple-choice questions using only
+                                            the published Reading lessons from
+                                            this course. Generated questions are
+                                            added to the current quiz and remain
+                                            fully editable.
+                                        </p>
+
+                                    </div>
+
+
+                                    <span
+                                        class="inline-flex self-start
+                                               rounded-full border
+                                               border-violet-100 bg-white
+                                               px-3 py-1.5 text-[11px]
+                                               font-semibold text-violet-600"
+                                    >
+                                        1 generation = 1 API request
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            @if($quizCanBeModified)
+
+                                <form
+                                    action="{{ route('teacher.quiz.questions.generate', $quiz) }}"
+                                    method="POST"
+                                    class="p-5 sm:p-7"
+                                    onsubmit="
+                                        const button = this.querySelector('[data-ai-generate-button]');
+                                        if (button) {
+                                            button.disabled = true;
+                                            button.textContent = 'Generating with Gemini...';
+                                        }
+                                    "
+                                >
+
+                                    @csrf
+
+
+                                    <div
+                                        class="grid grid-cols-1 gap-5
+                                               md:grid-cols-2"
+                                    >
+
+                                        <div>
+
+                                            <label
+                                                for="question_count"
+                                                class="text-sm font-semibold
+                                                       text-slate-800"
+                                            >
+                                                Number of questions
+                                            </label>
+
+                                            <select
+                                                id="question_count"
+                                                name="question_count"
+                                                required
+                                                class="pw-field mt-2.5
+                                                       h-12 px-4"
+                                            >
+                                                @foreach([2, 3, 5, 10] as $count)
+
+                                                    <option
+                                                        value="{{ $count }}"
+                                                        @selected(
+                                                            (int) old(
+                                                                'question_count',
+                                                                5
+                                                            )
+                                                            ===
+                                                            $count
+                                                        )
+                                                    >
+                                                        {{ $count }}
+                                                        questions
+                                                    </option>
+
+                                                @endforeach
+                                            </select>
+
+                                            <p
+                                                class="mt-2 text-xs
+                                                       leading-5
+                                                       text-slate-400"
+                                            >
+                                                Generate several questions in
+                                                one request to conserve the
+                                                shared Gemini quota.
+                                            </p>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <label
+                                                for="difficulty"
+                                                class="text-sm font-semibold
+                                                       text-slate-800"
+                                            >
+                                                Difficulty
+                                            </label>
+
+                                            @php
+                                                $defaultDifficulty =
+                                                    strtolower(
+                                                        (string) (
+                                                            $lesson
+                                                                ->course
+                                                                ->difficulty_level
+                                                            ?? 'beginner'
+                                                        )
+                                                    );
+
+                                                if (
+                                                    !in_array(
+                                                        $defaultDifficulty,
+                                                        [
+                                                            'beginner',
+                                                            'intermediate',
+                                                            'advanced',
+                                                        ],
+                                                        true
+                                                    )
+                                                ) {
+                                                    $defaultDifficulty =
+                                                        'beginner';
+                                                }
+                                            @endphp
+
+                                            <select
+                                                id="difficulty"
+                                                name="difficulty"
+                                                required
+                                                class="pw-field mt-2.5
+                                                       h-12 px-4"
+                                            >
+                                                @foreach([
+                                                    'beginner' => 'Beginner',
+                                                    'intermediate' => 'Intermediate',
+                                                    'advanced' => 'Advanced',
+                                                ] as $value => $label)
+
+                                                    <option
+                                                        value="{{ $value }}"
+                                                        @selected(
+                                                            old(
+                                                                'difficulty',
+                                                                $defaultDifficulty
+                                                            )
+                                                            ===
+                                                            $value
+                                                        )
+                                                    >
+                                                        {{ $label }}
+                                                    </option>
+
+                                                @endforeach
+                                            </select>
+
+                                            <p
+                                                class="mt-2 text-xs
+                                                       leading-5
+                                                       text-slate-400"
+                                            >
+                                                Difficulty changes how deeply
+                                                Gemini tests the lesson
+                                                concepts.
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="mt-6 rounded-xl border
+                                               border-violet-100
+                                               bg-violet-50/60
+                                               px-4 py-3"
+                                    >
+
+                                        <p
+                                            class="text-xs leading-5
+                                                   text-violet-700"
+                                        >
+                                            <span class="font-bold">
+                                                Quota protection:
+                                            </span>
+
+                                            PathWise allows at most
+                                            4 AI generation requests per minute
+                                            and 20 per day across this app.
+                                            One request can generate up to
+                                            10 questions.
+                                        </p>
+
+                                    </div>
+
+
+                                    <div
+                                        class="mt-6 flex flex-col gap-3
+                                               sm:flex-row
+                                               sm:items-center
+                                               sm:justify-between"
+                                    >
+
+                                        <p
+                                            class="text-xs leading-5
+                                                   text-slate-400"
+                                        >
+                                            AI questions are appended.
+                                            Existing manual questions are
+                                            never overwritten.
+                                        </p>
+
+
+                                        <button
+                                            type="submit"
+                                            data-ai-generate-button
+                                            class="inline-flex h-11
+                                                   items-center justify-center
+                                                   rounded-xl bg-violet-600
+                                                   px-5 text-sm font-semibold
+                                                   text-white transition
+                                                   hover:bg-violet-700
+                                                   disabled:cursor-not-allowed
+                                                   disabled:opacity-60"
+                                        >
+                                            ✦ Generate with Gemini
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            @else
+
+                                <div
+                                    class="flex items-start gap-3
+                                           bg-slate-50 px-5 py-5
+                                           sm:px-7"
+                                >
+
+                                    <span
+                                        class="flex h-9 w-9 shrink-0
+                                               items-center justify-center
+                                               rounded-xl bg-slate-200
+                                               text-sm"
+                                    >
+                                        🔒
+                                    </span>
+
+                                    <div>
+
+                                        <p
+                                            class="text-sm font-bold
+                                                   text-slate-700"
+                                        >
+                                            AI generation is locked
+                                        </p>
+
+                                        <p
+                                            class="mt-1 text-xs
+                                                   leading-5
+                                                   text-slate-500"
+                                        >
+                                            Questions can only be generated
+                                            while the course is Draft or
+                                            Rejected.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            @endif
+
+                        </section>
+
+                    @endif
 
 
 
@@ -608,6 +1040,7 @@
                                                     class="pw-field mt-2
                                                            resize-none
                                                            px-4 py-3"
+                                                    @readonly(!$quizCanBeModified)
                                                 >{{ $question->question }}</textarea>
 
                                             </div>
@@ -662,6 +1095,7 @@
                                                                 value="{{ $question->{$field} }}"
                                                                 {{ in_array($letter, ['A', 'B']) ? 'required' : '' }}
                                                                 class="pw-field h-11 pl-11 pr-3"
+                                                                @readonly(!$quizCanBeModified)
                                                             >
 
                                                         </div>
@@ -691,6 +1125,7 @@
                                                         name="correct_answer"
                                                         required
                                                         class="pw-field mt-2 h-11 px-4"
+                                                        @disabled(!$quizCanBeModified)
                                                     >
 
                                                         @foreach(['A', 'B', 'C', 'D'] as $answer)
@@ -727,6 +1162,7 @@
                                                         required
                                                         value="{{ $question->points }}"
                                                         class="pw-field mt-2 h-11 px-4"
+                                                        @readonly(!$quizCanBeModified)
                                                     >
 
                                                 </div>
@@ -735,52 +1171,75 @@
 
 
 
-                                            <div class="mt-5 flex justify-end">
+                                            @if($quizCanBeModified)
 
-                                                <button
-                                                    type="submit"
-                                                    class="inline-flex h-10
-                                                           items-center justify-center
-                                                           rounded-xl bg-violet-600
-                                                           px-4 text-xs font-semibold
-                                                           text-white
-                                                           hover:bg-violet-700"
-                                                >
-                                                    Save Question
-                                                </button>
+                                                <div class="mt-5 flex justify-end">
 
-                                            </div>
+                                                    <button
+                                                        type="submit"
+                                                        class="inline-flex h-10
+                                                               items-center justify-center
+                                                               rounded-xl bg-violet-600
+                                                               px-4 text-xs font-semibold
+                                                               text-white
+                                                               hover:bg-violet-700"
+                                                    >
+                                                        Save Question
+                                                    </button>
+
+                                                </div>
+
+                                            @endif
 
                                         </form>
 
 
 
                                         {{-- DELETE --}}
-                                        <form
-                                            action="{{ route('teacher.quiz.question.delete', [$quiz, $question]) }}"
-                                            method="POST"
-                                            class="mt-3"
-                                            onsubmit="return confirm('Delete this question?');"
-                                        >
+                                        @if($quizCanBeModified)
 
-                                            @csrf
-                                            @method('DELETE')
+                                            <form
+                                                action="{{ route('teacher.quiz.question.delete', [$quiz, $question]) }}"
+                                                method="POST"
+                                                class="mt-3"
+                                                onsubmit="return confirm('Delete this question?');"
+                                            >
+
+                                                @csrf
+                                                @method('DELETE')
 
 
-                                            <div class="flex justify-end">
+                                                <div class="flex justify-end">
 
-                                                <button
-                                                    type="submit"
-                                                    class="text-xs font-semibold
-                                                           text-red-500
-                                                           hover:text-red-700"
+                                                    <button
+                                                        type="submit"
+                                                        class="text-xs font-semibold
+                                                               text-red-500
+                                                               hover:text-red-700"
+                                                    >
+                                                        Delete Question
+                                                    </button>
+
+                                                </div>
+
+                                            </form>
+
+                                        @else
+
+                                            <div class="mt-4 flex justify-end">
+
+                                                <span
+                                                    class="rounded-lg bg-slate-100
+                                                           px-3 py-2 text-xs
+                                                           font-semibold
+                                                           text-slate-400"
                                                 >
-                                                    Delete Question
-                                                </button>
+                                                    🔒 Locked
+                                                </span>
 
                                             </div>
 
-                                        </form>
+                                        @endif
 
                                     </article>
 
@@ -814,6 +1273,8 @@
 
 
                         {{-- ADD QUESTION --}}
+                        @if($quizCanBeModified)
+
                         <section class="pw-card p-5 sm:p-7">
 
                             <div class="flex items-start gap-4">
@@ -1031,6 +1492,31 @@
 
                         </section>
 
+                        @else
+
+                            <section
+                                class="rounded-2xl border border-slate-200
+                                       bg-slate-100 px-6 py-8 text-center"
+                            >
+
+                                <p class="text-sm font-bold text-slate-700">
+                                    🔒 Question editing is locked
+                                </p>
+
+                                <p
+                                    class="mx-auto mt-2 max-w-md
+                                           text-xs leading-5 text-slate-500"
+                                >
+                                    Existing questions can still be reviewed,
+                                    but questions cannot be added, edited,
+                                    or deleted while the course is Pending
+                                    or Published.
+                                </p>
+
+                            </section>
+
+                        @endif
+
 
                     @else
 
@@ -1054,15 +1540,29 @@
                             </div>
 
                             <h3 class="mt-4 text-base font-bold text-slate-900">
-                                Save the quiz settings first
+                                {{
+                                    $quizCanBeModified
+                                        ? 'Save the quiz settings first'
+                                        : 'Quiz setup is locked'
+                                }}
                             </h3>
 
                             <p
                                 class="mx-auto mt-2 max-w-md
                                        text-sm leading-6 text-slate-500"
                             >
-                                After saving the quiz settings,
-                                the question builder will appear here.
+                                @if($quizCanBeModified)
+
+                                    After saving the quiz settings,
+                                    the question builder will appear here.
+
+                                @else
+
+                                    This course is Pending or Published,
+                                    so a new quiz configuration cannot
+                                    be created at this time.
+
+                                @endif
                             </p>
 
                         </section>

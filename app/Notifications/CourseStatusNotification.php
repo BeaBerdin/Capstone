@@ -12,7 +12,8 @@ class CourseStatusNotification extends Notification
     public function __construct(
         public int $courseId,
         public string $courseTitle,
-        public string $status
+        public string $status,
+        public ?string $remarks = null
     ) {
     }
 
@@ -36,8 +37,13 @@ class CourseStatusNotification extends Notification
                 'The status of your course "' . $this->courseTitle . '" has been updated.',
         };
 
+        if ($this->status === 'rejected' && filled($this->remarks)) {
+            $message .= ' Administrator feedback: ' . $this->remarks;
+        }
+
         return [
             'message' => $message,
+            'remarks' => $this->remarks,
             'course_id' => $this->courseId,
             'course_title' => $this->courseTitle,
             'status' => $this->status,

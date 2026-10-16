@@ -1067,6 +1067,13 @@
                                         )
                                     )
 
+                                        <a
+                                            href="{{ route('teacher.courses.edit', $course) }}"
+                                            class="pw-course-menu-link"
+                                        >
+                                            Edit Course Details
+                                        </a>
+
                                         <form
                                             action="{{ route('teacher.courses.submit', $course) }}"
                                             method="POST"
@@ -1298,6 +1305,22 @@
                             @endif
 
 
+
+                            {{-- ADMINISTRATOR FEEDBACK (returned courses) --}}
+                            @if($course->status === 'rejected' && filled($course->review_remarks))
+                                <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                    <p class="text-[9.5px] font-bold uppercase tracking-wide text-amber-700">
+                                        Administrator feedback
+                                    </p>
+                                    <p class="mt-0.5 text-[11px] leading-snug text-amber-800">
+                                        {{ \Illuminate\Support\Str::limit($course->review_remarks, 160) }}
+                                    </p>
+                                    <a href="{{ route('teacher.courses.edit', $course) }}"
+                                       class="mt-1 inline-block text-[10.5px] font-bold text-amber-800 underline">
+                                        Revise course details
+                                    </a>
+                                </div>
+                            @endif
 
                             {{-- ACTIONS --}}
                             <div class="mt-4 grid grid-cols-2 gap-2">

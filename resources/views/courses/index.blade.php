@@ -56,6 +56,14 @@
 
         @endif
 
+        @if(session('error') || $errors->any())
+
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                {{ session('error') ?? $errors->first() }}
+            </div>
+
+        @endif
+
 
         {{-- =========================================================
              SEARCH AND FILTERS
@@ -360,20 +368,30 @@
 
                                 {{-- REJECT --}}
 
+                                {{-- The administrator must write feedback before the
+                                     course is returned (Manuscript Figure 29). --}}
                                 <form
                                     action="{{ route('courses.reject', $course) }}"
                                     method="POST"
                                     class="flex-1"
+                                    onsubmit="
+                                        const feedback = prompt('Feedback for the teacher (what needs to be revised?):');
+                                        if (feedback === null) { return false; }
+                                        if (feedback.trim().length < 5) { alert('Please write at least 5 characters of feedback.'); return false; }
+                                        this.querySelector('input[name=remarks]').value = feedback.trim();
+                                        return true;
+                                    "
                                 >
 
                                     @csrf
 
+                                    <input type="hidden" name="remarks" value="">
+
                                     <button
                                         type="submit"
-                                        onclick="return confirm('Reject this course?')"
                                         class="w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
                                     >
-                                        Reject
+                                        Return for Revision
                                     </button>
 
                                 </form>

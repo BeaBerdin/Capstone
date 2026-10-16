@@ -4,13 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseTemplate;
+use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\LessonProgress;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+
+
 
 class CourseController extends Controller
 {
@@ -178,10 +183,34 @@ class CourseController extends Controller
 
     public function destroy(Course $course)
     {
-        if (
-            $course->thumbnail &&
-            Storage::disk('public')->exists($course->thumbnail)
-        ) {
+        if ($course->enrollments()->exists()) {
+            return redirect()
+                ->route('courses.index')
+                ->with(
+                    'error',
+                    'This course cannot be deleted because it has enrollment history.'
+                );
+        }
+
+        if ($course->transactions()->exists()) {
+            return redirect()
+                ->route('courses.index')
+                ->with(
+                    'error',
+                    'This course cannot be deleted because it has transaction history.'
+                );
+        }
+
+        if ($course->certificates()->exists()) {
+            return redirect()
+                ->route('courses.index')
+                ->with(
+                    'error',
+                    'This course cannot be deleted because it has certificate history.'
+                );
+        }
+
+        if ($course->thumbnail) {
             Storage::disk('public')->delete($course->thumbnail);
         }
 
@@ -189,7 +218,10 @@ class CourseController extends Controller
 
         return redirect()
             ->route('courses.index')
-            ->with('success', 'Course deleted successfully.');
+            ->with(
+                'success',
+                'Course deleted successfully.'
+            );
     }
 
     /*
@@ -209,7 +241,7 @@ class CourseController extends Controller
             ->get();
 
         return view(
-            'student.marketplace',
+            'Student.marketplace',
             compact('courses')
         );
     }
@@ -222,7 +254,7 @@ class CourseController extends Controller
         );
 
         return view(
-            'student.course-show',
+            'Student.course-show',
             compact('course')
         );
     }
@@ -233,6 +265,36 @@ class CourseController extends Controller
             $course->status === 'published',
             404
         );
+
+        /*
+         * SECURITY (P0 fix): this route may only enroll students in FREE
+         * courses. Paid courses must go through the PayMongo purchase
+         * route (student.transactions.store), which creates the
+         * enrollment only after the payment is verified.
+         */
+        if ((float) $course->price > 0) {
+            return redirect()
+                ->route('student.course.show', $course)
+                ->with(
+                    'error',
+                    'This is a paid course. Please complete the payment to enroll.'
+                );
+        }
+
+        $existingEnrollment = Enrollment::where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->first();
+
+        // A cancelled enrollment is not silently reused: the administrator
+        // must restore it (Admin > Enrollments).
+        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
+            return redirect()
+                ->route('student.course.show', $course)
+                ->with(
+                    'error',
+                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
+                );
+        }
 
         Enrollment::firstOrCreate(
             [
@@ -267,7 +329,7 @@ class CourseController extends Controller
             ->get();
 
         return view(
-            'student.my-courses',
+            'Student.my-courses',
             compact('enrollments')
         );
     }
@@ -338,7 +400,7 @@ class CourseController extends Controller
         )->get();
 
         return view(
-            'teacher.my-courses',
+            'Teacher.my-courses',
             compact(
                 'courses',
                 'categories'
@@ -358,9 +420,13 @@ class CourseController extends Controller
             'name'
         )->get();
 
+        $templates = CourseTemplate::active()
+            ->orderBy('name')
+            ->get();
+
         return view(
-            'teacher.courses.create',
-            compact('categories')
+            'Teacher.courses.create',
+            compact('categories', 'templates')
         );
     }
 
@@ -440,6 +506,14 @@ class CourseController extends Controller
                     'nullable',
                     'boolean',
                 ],
+
+                // Optional built-in curriculum template (must be active).
+                'template_id' => [
+                    'nullable',
+                    'integer',
+                    Rule::exists('course_templates', 'id')
+                        ->where('is_active', true),
+                ],
             ],
             [
                 'title.unique' =>
@@ -469,13 +543,55 @@ class CourseController extends Controller
                     );
         }
 
-        Course::create($validated);
+        $template = filled($validated['template_id'] ?? null)
+            ? CourseTemplate::find($validated['template_id'])
+            : null;
+
+        $validated['template_id'] = $template?->id;
+
+        /*
+         * Course templates (Manuscript: pre-designed curriculum templates).
+         * When a template is chosen, its lesson outline is copied into the
+         * new course as UNPUBLISHED text lessons. Each lesson contains
+         * writing guidance that the teacher replaces with real content.
+         * Students never see unpublished lessons.
+         */
+        $createdLessons = DB::transaction(function () use ($validated, $template) {
+            $course = Course::create($validated);
+
+            if (! $template) {
+                return 0;
+            }
+
+            $order = 1;
+
+            foreach ($template->lessonOutline() as $outline) {
+                Lesson::create([
+                    'course_id' => $course->id,
+                    'title' => $outline['title'],
+                    'content' => "[Template guide - replace this text with your lesson content, then publish the lesson.]\n\n"
+                        . $outline['guidance'],
+                    'lesson_type' => 'text',
+                    'lesson_order' => $order++,
+                    'duration_minutes' => $outline['duration_minutes'],
+                    'is_preview' => false,
+                    'is_published' => false,
+                ]);
+            }
+
+            return $order - 1;
+        });
+
+        $message = $template
+            ? 'Course created from the "' . $template->name . '" template with '
+                . $createdLessons . ' draft lessons. Open Manage Lessons to write and publish them.'
+            : 'Course created successfully and saved as draft.';
 
         return redirect()
             ->route('teacher.my-courses')
             ->with(
                 'success',
-                'Course created successfully and saved as draft.'
+                $message
             );
     }
 
@@ -489,12 +605,16 @@ class CourseController extends Controller
     {
         $this->ensureTeacherOwnsCourse($course);
 
+        if ($redirect = $this->redirectIfCourseLocked($course)) {
+            return $redirect;
+        }
+
         $categories = CourseCategory::orderBy(
             'name'
         )->get();
 
         return view(
-            'teacher.courses.edit',
+            'Teacher.courses.edit',
             compact(
                 'course',
                 'categories'
@@ -507,6 +627,10 @@ class CourseController extends Controller
         Course $course
     ) {
         $this->ensureTeacherOwnsCourse($course);
+
+        if ($redirect = $this->redirectIfCourseLocked($course)) {
+            return $redirect;
+        }
 
         $request->merge([
             'title' => trim(
@@ -671,6 +795,30 @@ class CourseController extends Controller
                 );
         }
 
+        /*
+         * A course can only be completed when every lesson is completed, so
+         * hidden (unpublished) lessons would make completion impossible.
+         * This also catches template outline lessons the teacher has not
+         * written yet (Manuscript Figure 28 precondition: "a complete
+         * course draft with lessons ready for submission").
+         */
+        $unpublishedLessons = $course
+            ->lessons()
+            ->where('is_published', false)
+            ->count();
+
+        if ($unpublishedLessons > 0) {
+            return redirect()
+                ->route(
+                    'teacher.my-courses'
+                )
+                ->with(
+                    'error',
+                    'This course has ' . $unpublishedLessons
+                    . ' unpublished lesson(s). Finish and publish them, or delete them, before submitting for approval.'
+                );
+        }
+
         $course->update([
             'status' => 'pending',
         ]);
@@ -707,7 +855,7 @@ class CourseController extends Controller
             ->get();
 
         return view(
-            'teacher.course-students',
+            'Teacher.course-students',
             compact(
                 'course',
                 'enrollments'
@@ -768,7 +916,7 @@ class CourseController extends Controller
             ->firstOrFail();
 
         return view(
-            'teacher.student-progress',
+            'Teacher.student-progress',
             compact(
                 'course',
                 'student',
@@ -847,6 +995,7 @@ class CourseController extends Controller
 
         $course->update([
             'status' => 'published',
+            'review_remarks' => null,
         ]);
 
         $teacher = $course->teacher;
@@ -869,8 +1018,17 @@ class CourseController extends Controller
             );
     }
 
-    public function reject(Course $course)
+    public function reject(Request $request, Course $course)
     {
+        $validated = $request->validate(
+            [
+                'remarks' => ['required', 'string', 'min:5', 'max:2000'],
+            ],
+            [
+                'remarks.required' => 'Please write feedback so the teacher knows what to revise.',
+            ]
+        );
+
         if ($course->status !== 'pending') {
             return redirect()
                 ->route('courses.index')
@@ -882,6 +1040,7 @@ class CourseController extends Controller
 
         $course->update([
             'status' => 'rejected',
+            'review_remarks' => trim($validated['remarks']),
         ]);
 
         $teacher = $course->teacher;
@@ -891,7 +1050,8 @@ class CourseController extends Controller
                 new CourseStatusNotification(
                     $course->id,
                     $course->title,
-                    'rejected'
+                    'rejected',
+                    $course->review_remarks
                 )
             );
         }
@@ -909,6 +1069,26 @@ class CourseController extends Controller
     | HELPER - COURSE OWNERSHIP
     |--------------------------------------------------------------------------
     */
+
+    /**
+     * Manuscript Figure 28: submitting a course "finalizes and locks the
+     * course details for review". Teachers may edit course details only
+     * while the course is a draft or has been returned for revision.
+     * (Lessons and quizzes already follow the same rule.)
+     */
+    private function redirectIfCourseLocked(Course $course)
+    {
+        if (in_array($course->status, ['draft', 'rejected'], true)) {
+            return null;
+        }
+
+        return redirect()
+            ->route('teacher.my-courses')
+            ->with(
+                'error',
+                'Course details cannot be edited while the course is pending approval or published.'
+            );
+    }
 
     private function ensureTeacherOwnsCourse(
         Course $course

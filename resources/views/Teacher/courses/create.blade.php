@@ -418,6 +418,88 @@
 
 
 
+                                {{-- Course Template (Manuscript: pre-designed curriculum templates) --}}
+                                @if(isset($templates) && $templates->isNotEmpty())
+
+                                    <div>
+
+                                        <p class="text-sm font-semibold text-slate-800">
+                                            Start from a template
+                                            <span class="font-normal text-slate-400">(optional)</span>
+                                        </p>
+
+                                        <p class="mt-1 text-xs text-slate-400">
+                                            A template adds a ready-made lesson outline to your course.
+                                            The lessons are saved as unpublished drafts with writing tips,
+                                            so you can replace the tips with your own content.
+                                        </p>
+
+                                        <div class="mt-3 grid gap-2.5">
+
+                                            <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50/60">
+                                                <input
+                                                    type="radio"
+                                                    name="template_id"
+                                                    value=""
+                                                    class="mt-1"
+                                                    @checked(blank(old('template_id')))
+                                                >
+                                                <span>
+                                                    <span class="block text-sm font-semibold text-slate-800">Blank course</span>
+                                                    <span class="block text-xs text-slate-500">Start with no lessons and build everything yourself.</span>
+                                                </span>
+                                            </label>
+
+                                            @foreach($templates as $template)
+
+                                                @php
+                                                    $outline = $template->lessonOutline();
+                                                @endphp
+
+                                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50/60">
+                                                    <input
+                                                        type="radio"
+                                                        name="template_id"
+                                                        value="{{ $template->id }}"
+                                                        class="mt-1"
+                                                        @checked((string) old('template_id') === (string) $template->id)
+                                                    >
+                                                    <span class="min-w-0">
+                                                        <span class="block text-sm font-semibold text-slate-800">
+                                                            {{ $template->name }}
+                                                            <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                                                                {{ count($outline) }} lessons
+                                                            </span>
+                                                        </span>
+
+                                                        @if($template->description)
+                                                            <span class="block text-xs text-slate-500">{{ $template->description }}</span>
+                                                        @endif
+
+                                                        <span class="mt-1.5 block text-[11px] leading-5 text-slate-500">
+                                                            @foreach($outline as $item)
+                                                                {{ $loop->iteration }}. {{ $item['title'] }}@if(! $loop->last)<br>@endif
+                                                            @endforeach
+                                                        </span>
+                                                    </span>
+                                                </label>
+
+                                            @endforeach
+
+                                        </div>
+
+                                        @error('template_id')
+                                            <p class="mt-2 text-xs text-red-600">
+                                                {{ $message }}
+                                            </p>
+                                        @enderror
+
+                                    </div>
+
+                                @endif
+
+
+
                                 {{-- Description --}}
                                 <div>
 

@@ -10,8 +10,12 @@ use App\Models\LessonProgress;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\QuizResult;
+use App\Services\GeminiQuizService;
 use App\Services\RecommendationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use Throwable;
 
 class QuizController extends Controller
 {
@@ -245,6 +249,48 @@ class QuizController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | TEACHER - COURSE MODIFICATION GUARD
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureTeacherCanModifyCourse(
+        Course $course
+    ): void {
+        if (
+            (int) $course->teacher_id
+            !==
+            (int) auth()->id()
+        ) {
+            abort(
+                403,
+                'Unauthorized'
+            );
+        }
+
+        if (
+            !in_array(
+                strtolower(
+                    trim(
+                        (string) $course->status
+                    )
+                ),
+                [
+                    'draft',
+                    'rejected',
+                ],
+                true
+            )
+        ) {
+            abort(
+                403,
+                'This quiz cannot be modified while the course is pending approval or published.'
+            );
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | TEACHER - QUIZ BUILDER
     |--------------------------------------------------------------------------
     */
@@ -294,11 +340,27 @@ class QuizController extends Controller
             ->first();
 
 
+        $quizCanBeModified =
+            in_array(
+                strtolower(
+                    trim(
+                        (string) $lesson->course->status
+                    )
+                ),
+                [
+                    'draft',
+                    'rejected',
+                ],
+                true
+            );
+
+
         return view(
-            'teacher.quiz-builder',
+            'Teacher.quiz-builder',
             compact(
                 'lesson',
-                'quiz'
+                'quiz',
+                'quizCanBeModified'
             )
         );
     }
@@ -318,16 +380,9 @@ class QuizController extends Controller
         $lesson->load('course');
 
 
-        if (
-            (int) $lesson->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(
-                403,
-                'Unauthorized'
-            );
-        }
+        $this->ensureTeacherCanModifyCourse(
+            $lesson->course
+        );
 
 
         if (
@@ -421,6 +476,465 @@ class QuizController extends Controller
 
 
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEACHER - GENERATE QUESTIONS WITH GEMINI
+    |--------------------------------------------------------------------------
+    */
+
+    public function teacherGenerateQuestions(
+        Request $request,
+        Quiz $quiz,
+        GeminiQuizService $geminiQuizService
+    ) {
+        $quiz->load([
+            'course',
+            'lesson',
+        ]);
+
+
+        $this->ensureTeacherCanModifyCourse(
+            $quiz->course
+        );
+
+
+        if (
+            !$quiz->lesson
+            ||
+            $quiz->lesson->lesson_type
+            !==
+            'quiz'
+        ) {
+            abort(
+                422,
+                'This quiz is not connected to a valid quiz lesson.'
+            );
+        }
+
+
+        $validated = $request->validate([
+            'question_count' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10',
+            ],
+
+            'difficulty' => [
+                'required',
+                'in:beginner,intermediate,advanced',
+            ],
+        ]);
+
+
+        $requestedCount =
+            (int) $validated['question_count'];
+
+
+        $existingCount =
+            $quiz
+                ->questions()
+                ->count();
+
+
+        if (
+            $existingCount
+            +
+            $requestedCount
+            >
+            50
+        ) {
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->withErrors([
+                    'question_count' =>
+                        'A quiz can contain up to 50 questions. Reduce the number of questions to generate.',
+                ]);
+        }
+
+
+        $hasSourceMaterial =
+            $quiz
+                ->course
+                ->lessons()
+                ->where(
+                    'lesson_type',
+                    'text'
+                )
+                ->where(
+                    'is_published',
+                    true
+                )
+                ->whereNotNull(
+                    'content'
+                )
+                ->where(
+                    'content',
+                    '!=',
+                    ''
+                )
+                ->exists();
+
+
+        if (!$hasSourceMaterial) {
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->with(
+                    'error',
+                    'AI generation needs at least one published Reading lesson with content in this course.'
+                );
+        }
+
+
+        /*
+         * Project-wide safety limits.
+         *
+         * These limits protect the shared Gemini quota:
+         * - at most 4 AI generation requests per minute
+         * - at most 20 AI generation requests per day
+         *
+         * One generation request may create up to 10 questions.
+         */
+        $minuteKey =
+            'pathwise:gemini:quiz:minute';
+
+
+        $dailyKey =
+            'pathwise:gemini:quiz:daily:'
+            .
+            now()->toDateString();
+
+
+        if (
+            RateLimiter::tooManyAttempts(
+                $minuteKey,
+                4
+            )
+        ) {
+            $seconds =
+                RateLimiter::availableIn(
+                    $minuteKey
+                );
+
+
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->with(
+                    'error',
+                    'AI generation is temporarily limited to protect the Gemini quota. Please try again in '
+                    .
+                    max(
+                        1,
+                        $seconds
+                    )
+                    .
+                    ' seconds.'
+                );
+        }
+
+
+        if (
+            RateLimiter::tooManyAttempts(
+                $dailyKey,
+                20
+            )
+        ) {
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->with(
+                    'error',
+                    'PathWise has reached its 20-request AI generation safety limit for today. Please try again tomorrow.'
+                );
+        }
+
+
+        RateLimiter::hit(
+            $minuteKey,
+            60
+        );
+
+
+        try {
+            $candidateCount =
+                min(
+                    10,
+                    $requestedCount + 2
+                );
+
+
+            $generatedQuestions =
+                $geminiQuizService
+                    ->generateQuestions(
+                        $quiz->course,
+                        $candidateCount,
+                        $validated['difficulty']
+                    );
+
+
+            /*
+             * Count only a successful Gemini generation
+             * against the PathWise daily safety limit.
+             */
+            $secondsUntilEndOfDay =
+                max(
+                    60,
+                    (int) now()->diffInSeconds(
+                        now()->endOfDay()
+                    )
+                );
+
+
+            RateLimiter::hit(
+                $dailyKey,
+                $secondsUntilEndOfDay
+            );
+
+
+            $existingQuestionKeys =
+                $quiz
+                    ->questions()
+                    ->pluck('question')
+                    ->mapWithKeys(
+                        function ($question) {
+                            $key =
+                                mb_strtolower(
+                                    trim(
+                                        preg_replace(
+                                            '/\s+/u',
+                                            ' ',
+                                            (string) $question
+                                        )
+                                        ??
+                                        (string) $question
+                                    )
+                                );
+
+
+                            return [
+                                $key => true,
+                            ];
+                        }
+                    );
+
+
+            $questionsToInsert = [];
+
+
+            foreach (
+                $generatedQuestions
+                as
+                $generatedQuestion
+            ) {
+                if (
+                    count($questionsToInsert)
+                    >=
+                    $requestedCount
+                ) {
+                    break;
+                }
+
+
+                $questionKey =
+                    mb_strtolower(
+                        trim(
+                            preg_replace(
+                                '/\s+/u',
+                                ' ',
+                                (string) $generatedQuestion['question']
+                            )
+                            ??
+                            (string) $generatedQuestion['question']
+                        )
+                    );
+
+
+                if (
+                    $existingQuestionKeys
+                        ->has(
+                            $questionKey
+                        )
+                ) {
+                    continue;
+                }
+
+
+                $existingQuestionKeys[
+                    $questionKey
+                ] = true;
+
+
+                $questionsToInsert[] =
+                    $generatedQuestion;
+            }
+
+
+            if (
+                empty(
+                    $questionsToInsert
+                )
+            ) {
+                return redirect()
+                    ->route(
+                        'teacher.quiz.builder',
+                        $quiz->lesson_id
+                    )
+                    ->with(
+                        'error',
+                        'Gemini generated questions that already exist in this quiz. No duplicate questions were added.'
+                    );
+            }
+
+
+            DB::transaction(
+                function () use (
+                    $quiz,
+                    $questionsToInsert
+                ) {
+                    foreach (
+                        $questionsToInsert
+                        as
+                        $question
+                    ) {
+                        QuizQuestion::create([
+                            'quiz_id' =>
+                                $quiz->id,
+
+                            'question' =>
+                                $question['question'],
+
+                            'option_a' =>
+                                $question['option_a'],
+
+                            'option_b' =>
+                                $question['option_b'],
+
+                            'option_c' =>
+                                $question['option_c'],
+
+                            'option_d' =>
+                                $question['option_d'],
+
+                            'correct_answer' =>
+                                $question['correct_answer'],
+
+                            'points' =>
+                                $question['points'],
+                        ]);
+                    }
+                }
+            );
+
+
+            $generatedCount =
+                count(
+                    $questionsToInsert
+                );
+
+
+            $successMessage =
+                $generatedCount
+                .
+                ' AI-generated '
+                .
+                (
+                    $generatedCount === 1
+                        ? 'question was'
+                        : 'questions were'
+                )
+                .
+                ' added successfully.';
+
+
+            if (
+                $generatedCount
+                <
+                $requestedCount
+            ) {
+                $successMessage .=
+                    ' Gemini returned some questions that matched existing quiz questions, so duplicates were skipped.';
+            }
+
+
+            $successMessage .=
+                ' Review and edit them before publishing the quiz.';
+
+
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->with(
+                    'success',
+                    $successMessage
+                );
+        } catch (Throwable $exception) {
+            report(
+                $exception
+            );
+
+
+            $message =
+                mb_strtolower(
+                    $exception->getMessage()
+                );
+
+
+            if (
+                str_contains(
+                    $message,
+                    '429'
+                )
+                ||
+                str_contains(
+                    $message,
+                    'quota'
+                )
+                ||
+                str_contains(
+                    $message,
+                    'rate limit'
+                )
+            ) {
+                return redirect()
+                    ->route(
+                        'teacher.quiz.builder',
+                        $quiz->lesson_id
+                    )
+                    ->with(
+                        'error',
+                        'Gemini is temporarily rate-limited. Your quiz was not changed. Please wait before trying again.'
+                    );
+            }
+
+
+            return redirect()
+                ->route(
+                    'teacher.quiz.builder',
+                    $quiz->lesson_id
+                )
+                ->with(
+                    'error',
+                    'Gemini could not generate questions right now. Your quiz was not changed. Please try again later.'
+                );
+        }
+    }
+
+
+
     /*
     |--------------------------------------------------------------------------
     | TEACHER - ADD QUESTION
@@ -434,16 +948,9 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        if (
-            (int) $quiz->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(
-                403,
-                'Unauthorized'
-            );
-        }
+        $this->ensureTeacherCanModifyCourse(
+            $quiz->course
+        );
 
 
         $validated =
@@ -513,16 +1020,9 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        if (
-            (int) $quiz->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(
-                403,
-                'Unauthorized'
-            );
-        }
+        $this->ensureTeacherCanModifyCourse(
+            $quiz->course
+        );
 
 
         if (
@@ -597,16 +1097,9 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        if (
-            (int) $quiz->course->teacher_id
-            !==
-            (int) auth()->id()
-        ) {
-            abort(
-                403,
-                'Unauthorized'
-            );
-        }
+        $this->ensureTeacherCanModifyCourse(
+            $quiz->course
+        );
 
 
         if (
@@ -717,6 +1210,100 @@ class QuizController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | STUDENT - QUIZ ACCESS GUARD
+    |--------------------------------------------------------------------------
+    */
+
+    private function ensureStudentCanAccessQuiz(
+        Quiz $quiz
+    ): void {
+        $quiz->loadMissing([
+            'course',
+            'lesson',
+        ]);
+
+        $course = $quiz->course;
+
+        if (!$course) {
+            abort(
+                404,
+                'Course not found.'
+            );
+        }
+
+        if (
+            strtolower(
+                trim(
+                    (string) $course->status
+                )
+            )
+            !==
+            'published'
+        ) {
+            abort(
+                403,
+                'This course is not currently available to students.'
+            );
+        }
+
+        if (!(bool) $quiz->is_published) {
+            abort(
+                403,
+                'This quiz is not currently available to students.'
+            );
+        }
+
+        /*
+         * If this is a lesson-linked quiz, make sure the linked lesson
+         * really belongs to the same course and is a quiz lesson.
+         */
+        if ($quiz->lesson_id) {
+            if (
+                !$quiz->lesson
+                ||
+                (int) $quiz->lesson->course_id
+                    !==
+                (int) $course->id
+                ||
+                strtolower(
+                    trim(
+                        (string) $quiz->lesson->lesson_type
+                    )
+                )
+                    !==
+                'quiz'
+            ) {
+                abort(
+                    404,
+                    'Quiz lesson not found.'
+                );
+            }
+        }
+
+        // Cancelled enrollments no longer give access (Enrollment::ACCESS_STATUSES).
+        $isEnrolled = Enrollment::where(
+                'student_id',
+                auth()->id()
+            )
+            ->where(
+                'course_id',
+                $course->id
+            )
+            ->withAccess()
+            ->exists();
+
+        if (!$isEnrolled) {
+            abort(
+                403,
+                'You must have an active enrollment in this course to access this quiz.'
+            );
+        }
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
     | STUDENT - TAKE QUIZ
     |--------------------------------------------------------------------------
     */
@@ -725,13 +1312,33 @@ class QuizController extends Controller
     {
         $quiz->load([
             'course',
+            'lesson',
             'questions',
         ]);
 
 
+        $this->ensureStudentCanAccessQuiz(
+            $quiz
+        );
+
+
+        /*
+         * Quiz time limit (Manuscript Table 13: time_limit_minutes).
+         * The start time is kept on the server, so refreshing the page
+         * does not reset the timer.
+         */
+        $deadline = $this->startOrResumeTimedAttempt(
+            $quiz
+        );
+
+        $secondsRemaining = $deadline !== null
+            ? max(0, $deadline - now()->timestamp)
+            : null;
+
+
         return view(
-            'student.take-quiz',
-            compact('quiz')
+            'Student.take-quiz',
+            compact('quiz', 'secondsRemaining')
         );
     }
 
@@ -749,9 +1356,24 @@ class QuizController extends Controller
     ) {
         $quiz->load([
             'questions',
+            'lesson',
             'course.category',
             'course.lessons',
         ]);
+
+
+        $this->ensureStudentCanAccessQuiz(
+            $quiz
+        );
+
+
+        if (
+            $redirect = $this->rejectIfTimeLimitExceeded(
+                $quiz
+            )
+        ) {
+            return $redirect;
+        }
 
 
         $score = 0;
@@ -835,6 +1457,12 @@ class QuizController extends Controller
         ]);
 
 
+        // This timed attempt is finished; the next visit starts a new one.
+        $this->forgetTimedAttempt(
+            $quiz
+        );
+
+
         app(
             RecommendationService::class
         )->generate(
@@ -862,7 +1490,7 @@ class QuizController extends Controller
             'passed'
         ) {
             $this
-                ->generateCertificateIfEligible(
+                ->syncCourseProgressAfterPassedQuiz(
                     $quiz
                 );
         }
@@ -884,6 +1512,114 @@ class QuizController extends Controller
     }
 
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUIZ TIME LIMIT HELPERS
+    |--------------------------------------------------------------------------
+    |
+    | The attempt start time is stored in the student's session when the quiz
+    | page is opened. On submit, the server checks the time itself, so the
+    | limit cannot be bypassed by changing the countdown in the browser.
+    | A short grace period covers the automatic submission's network delay.
+    */
+
+    private const QUIZ_TIME_GRACE_SECONDS = 30;
+
+    private function timedAttemptKey(
+        Quiz $quiz
+    ): string {
+        return 'quiz_attempts.' . $quiz->id . '.started_at';
+    }
+
+    /**
+     * Returns the attempt deadline as a Unix timestamp, or null when the
+     * quiz has no time limit.
+     */
+    private function startOrResumeTimedAttempt(
+        Quiz $quiz
+    ): ?int {
+        $limitMinutes = (int) $quiz->time_limit_minutes;
+
+        $key = $this->timedAttemptKey($quiz);
+
+        if ($limitMinutes <= 0) {
+            session()->forget($key);
+
+            return null;
+        }
+
+        $now = now()->timestamp;
+
+        $startedAt = session($key);
+
+        $attemptIsUsable =
+            is_int($startedAt)
+            && $now <= $startedAt
+                + ($limitMinutes * 60)
+                + self::QUIZ_TIME_GRACE_SECONDS;
+
+        if (! $attemptIsUsable) {
+            $startedAt = $now;
+
+            session()->put($key, $startedAt);
+        }
+
+        return $startedAt + ($limitMinutes * 60);
+    }
+
+    /**
+     * Returns a redirect when a timed attempt is missing or too late,
+     * otherwise null (the submission may be graded).
+     */
+    private function rejectIfTimeLimitExceeded(
+        Quiz $quiz
+    ) {
+        $limitMinutes = (int) $quiz->time_limit_minutes;
+
+        if ($limitMinutes <= 0) {
+            return null;
+        }
+
+        $key = $this->timedAttemptKey($quiz);
+
+        $startedAt = session($key);
+
+        if (! is_int($startedAt)) {
+            return redirect()
+                ->route('student.quiz.take', $quiz)
+                ->with(
+                    'error',
+                    'Your quiz session was not found or has expired. Please start the quiz again.'
+                );
+        }
+
+        $deadline = $startedAt
+            + ($limitMinutes * 60)
+            + self::QUIZ_TIME_GRACE_SECONDS;
+
+        if (now()->timestamp > $deadline) {
+            session()->forget($key);
+
+            return redirect()
+                ->route('student.quiz.take', $quiz)
+                ->with(
+                    'error',
+                    'The time limit of ' . $limitMinutes
+                    . ' minute(s) was exceeded, so this attempt was not recorded. You may start a new attempt.'
+                );
+        }
+
+        return null;
+    }
+
+    private function forgetTimedAttempt(
+        Quiz $quiz
+    ): void {
+        session()->forget(
+            $this->timedAttemptKey($quiz)
+        );
+    }
 
     private function getNextAttemptNumber(
         Quiz $quiz
@@ -917,6 +1653,47 @@ class QuizController extends Controller
         }
 
 
+        $totalLessons =
+            $course
+                ->lessons()
+                ->count();
+
+
+        $completedLessons =
+            LessonProgress::where(
+                'student_id',
+                $studentId
+            )
+                ->whereHas(
+                    'lesson',
+                    function ($query) use ($course) {
+                        $query->where(
+                            'course_id',
+                            $course->id
+                        );
+                    }
+                )
+                ->where(
+                    'status',
+                    'completed'
+                )
+                ->count();
+
+
+        $progressPercentage =
+            $totalLessons > 0
+                ? (int) round(
+                    (
+                        $completedLessons
+                        /
+                        $totalLessons
+                    )
+                    *
+                    100
+                )
+                : 0;
+
+
         Enrollment::where(
             'student_id',
             $studentId
@@ -930,13 +1707,13 @@ class QuizController extends Controller
                     'active',
 
                 'progress_percentage' =>
-                    100,
+                    $progressPercentage,
             ]);
     }
 
 
 
-    private function generateCertificateIfEligible(
+    private function syncCourseProgressAfterPassedQuiz(
         Quiz $quiz
     ): void {
         $studentId =
@@ -946,12 +1723,34 @@ class QuizController extends Controller
             $quiz->course;
 
 
-        if (
-            !$course
-            ||
-            !$course->certificate_available
-        ) {
+        if (!$course) {
             return;
+        }
+
+
+        /*
+         * If this quiz belongs to a quiz lesson, passing the quiz also
+         * completes that lesson in the persisted lesson_progress table.
+         * This keeps My Courses, teacher analytics, and the learning page
+         * synchronized instead of relying only on UI-calculated progress.
+         */
+        if ($quiz->lesson_id) {
+            LessonProgress::updateOrCreate(
+                [
+                    'student_id' =>
+                        $studentId,
+
+                    'lesson_id' =>
+                        $quiz->lesson_id,
+                ],
+                [
+                    'status' =>
+                        'completed',
+
+                    'completed_at' =>
+                        now(),
+                ]
+            );
         }
 
 
@@ -969,7 +1768,6 @@ class QuizController extends Controller
                 ->whereHas(
                     'lesson',
                     function ($query) use ($course) {
-
                         $query->where(
                             'course_id',
                             $course->id
@@ -983,18 +1781,91 @@ class QuizController extends Controller
                 ->count();
 
 
-        if (
+        $progressPercentage =
             $totalLessons > 0
-            &&
-            $completedLessons
-            <
-            $totalLessons
-        ) {
-            return;
+                ? round(
+                    (
+                        $completedLessons
+                        /
+                        $totalLessons
+                    )
+                    *
+                    100,
+                    2
+                )
+                : 0;
+
+
+        /*
+         * Match the student learning page: a course may have one optional
+         * standalone/final quiz (a published quiz with no lesson_id).
+         * The course is complete only when all lessons are complete and the
+         * latest final-quiz attempt is passed, when such a quiz exists.
+         */
+        $finalQuiz = Quiz::where(
+                'course_id',
+                $course->id
+            )
+            ->where(
+                'is_published',
+                true
+            )
+            ->whereNull(
+                'lesson_id'
+            )
+            ->first();
+
+
+        $passedFinalQuiz = true;
+
+
+        if ($finalQuiz) {
+            $latestFinalQuizResult =
+                QuizResult::where(
+                    'student_id',
+                    $studentId
+                )
+                    ->where(
+                        'quiz_id',
+                        $finalQuiz->id
+                    )
+                    ->orderByDesc(
+                        'completed_at'
+                    )
+                    ->orderByDesc(
+                        'id'
+                    )
+                    ->first();
+
+
+            $passedFinalQuiz =
+                $latestFinalQuizResult
+                &&
+                strtolower(
+                    (string) (
+                        $latestFinalQuizResult->remarks
+                        ??
+                        ''
+                    )
+                )
+                ===
+                'passed';
         }
 
 
-        Enrollment::where(
+        $allLessonsCompleted =
+            $totalLessons > 0
+            &&
+            $completedLessons >= $totalLessons;
+
+
+        $courseCompleted =
+            $allLessonsCompleted
+            &&
+            $passedFinalQuiz;
+
+
+        $enrollment = Enrollment::where(
             'student_id',
             $studentId
         )
@@ -1002,13 +1873,43 @@ class QuizController extends Controller
                 'course_id',
                 $course->id
             )
-            ->update([
-                'status' =>
-                    'completed',
+            ->first();
 
+
+        if ($enrollment) {
+            $enrollmentData = [
                 'progress_percentage' =>
-                    100,
-            ]);
+                    $progressPercentage,
+            ];
+
+
+            if ($courseCompleted) {
+                $enrollmentData['status'] =
+                    'completed';
+
+                $enrollmentData['completed_at'] =
+                    $enrollment->completed_at
+                    ??
+                    now();
+            } else {
+                $enrollmentData['status'] =
+                    'active';
+            }
+
+
+            $enrollment->update(
+                $enrollmentData
+            );
+        }
+
+
+        if (
+            !$courseCompleted
+            ||
+            !$course->certificate_available
+        ) {
+            return;
+        }
 
 
         Certificate::firstOrCreate(
@@ -1035,25 +1936,42 @@ class QuizController extends Controller
 
 
 
-    private function generateCertificateNumber(): string
-    {
-        $count =
-            Certificate::count()
-            + 1;
+   private function generateCertificateNumber(): string
+{
+    $year = now()->year;
 
+    $lastCertificate = Certificate::where(
+        'certificate_number',
+        'like',
+        "PATH-{$year}-%"
+    )
+        ->orderByDesc('id')
+        ->first();
 
-        return
-            'PATH-'
-            .
-            now()->format('Y')
-            .
-            '-'
-            .
-            str_pad(
-                $count,
-                5,
-                '0',
-                STR_PAD_LEFT
-            );
+    $nextNumber = 1;
+
+    if ($lastCertificate) {
+        $parts = explode('-', $lastCertificate->certificate_number);
+        $lastNumber = (int) end($parts);
+        $nextNumber = $lastNumber + 1;
     }
+
+    do {
+        $certificateNumber = 'PATH-' . $year . '-' . str_pad(
+            $nextNumber,
+            5,
+            '0',
+            STR_PAD_LEFT
+        );
+
+        $nextNumber++;
+    } while (
+        Certificate::where(
+            'certificate_number',
+            $certificateNumber
+        )->exists()
+    );
+
+    return $certificateNumber;
+}
 }

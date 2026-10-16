@@ -129,7 +129,7 @@ class DashboardController extends Controller
             ->pluck('percentage')
             ->values();
 
-        return view('student.dashboard', compact(
+        return view('Student.dashboard', compact(
             'enrollments',
             'recommendedCourse',
             'quizzesTaken',
@@ -154,7 +154,7 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
-        return view('student.certificates', compact('certificates'));
+        return view('Student.certificates', compact('certificates'));
     }
 
     public function teacher()
@@ -189,7 +189,7 @@ class DashboardController extends Controller
 
         $currentDate = now()->format('l, F d, Y');
 
-        return view('teacher.dashboard', compact(
+        return view('Teacher.dashboard', compact(
             'totalCourses',
             'totalLessons',
             'totalStudents',

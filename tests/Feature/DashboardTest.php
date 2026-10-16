@@ -7,10 +7,24 @@ test('guests are redirected to the login page', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('authenticated users can visit the dashboard', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+// PathWise sends each role to its own dashboard (Manuscript Figures 35-38).
+test('each role is redirected to its own dashboard', function (string $role, string $routeName) {
+    $user = pathwiseUser($role);
 
-    $response = $this->get(route('dashboard'));
-    $response->assertOk();
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertRedirect(route($routeName));
+})->with([
+    'super admin' => ['super_admin', 'super_admin.dashboard'],
+    'administrator' => ['admin', 'admin.dashboard'],
+    'teacher' => ['teacher', 'teacher.dashboard'],
+    'student' => ['student', 'student.dashboard'],
+]);
+
+test('a user without a role cannot open the dashboard', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertForbidden();
 });

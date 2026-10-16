@@ -9,56 +9,93 @@ use App\Models\Quiz;
 
 class RecommendationService
 {
-    public function generate(int $studentId, Quiz $quiz, float $percentage): void
-    {
+    public function generate(
+        int $studentId,
+        Quiz $quiz,
+        float $percentage
+    ): void {
         $currentCourse = $quiz->course;
 
         if (!$currentCourse) {
             return;
         }
 
-        // Delete previous recommendation
+        /*
+         * Remove previous recommendations for this student.
+         */
         AIRecommendation::where('student_id', $studentId)->delete();
 
-        // Exclude only completed courses and current course
+        /*
+         * Get courses that the student has already completed
+         * or is currently enrolled in.
+         */
         $completedCourseIds = Enrollment::where('student_id', $studentId)
             ->where('status', 'completed')
             ->pluck('course_id')
             ->toArray();
 
-        $excludedCourseIds = array_merge(
-            [$currentCourse->id],
-            $completedCourseIds
-        );
+        $enrolledCourseIds = Enrollment::where('student_id', $studentId)
+            ->pluck('course_id')
+            ->toArray();
 
-        // Determine target difficulty
+        /*
+         * Do not recommend:
+         * - the current course
+         * - completed courses
+         * - courses already enrolled in
+         */
+        $excludedCourseIds = array_unique(array_merge(
+            [$currentCourse->id],
+            $completedCourseIds,
+            $enrolledCourseIds
+        ));
+
+        /*
+         * Determine a suitable difficulty using the student's
+         * current quiz result only.
+         *
+         * This is ordinary application logic, not machine learning.
+         */
         if ($percentage >= 85) {
             $targetDifficulty = match ($currentCourse->difficulty_level) {
                 'beginner' => 'intermediate',
                 'intermediate' => 'advanced',
                 default => 'advanced',
             };
-
-            $fallbackReason = "Excellent work! Based on your strong performance in {$currentCourse->title}, this course is the next step to continue improving your skills.";
         } elseif ($percentage >= $quiz->passing_score) {
             $targetDifficulty = $currentCourse->difficulty_level;
-
-            $fallbackReason = "You passed {$currentCourse->title}. This course will help reinforce your knowledge before moving to more advanced topics.";
         } else {
             $targetDifficulty = 'beginner';
-
-            $fallbackReason = "Your recent quiz shows that strengthening your foundation will help you succeed. This course is recommended to improve your understanding.";
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | Priority 1
-        | Same category + target difficulty
-        |--------------------------------------------------------------------------
-        */
+         * Fallback explanation in case Gemini is unavailable.
+         */
+        if ($percentage >= $quiz->passing_score) {
+            $fallbackReason =
+                "You performed well on the quiz, and this course "
+                . "can help you continue developing your knowledge "
+                . "and skills.";
+        } else {
+            $fallbackReason =
+                "Strengthening your foundation can help you build "
+                . "the knowledge and skills needed for your next "
+                . "learning step.";
+        }
 
-        $recommendedCourse = Course::where('category_id', $currentCourse->category_id)
-            ->where('difficulty_level', $targetDifficulty)
+        /*
+         * Priority 1:
+         * Find a course with the target difficulty in the
+         * same category.
+         */
+        $recommendedCourse = Course::where(
+            'category_id',
+            $currentCourse->category_id
+        )
+            ->where(
+                'difficulty_level',
+                $targetDifficulty
+            )
             ->where('status', 'published')
             ->whereNotIn('id', $excludedCourseIds)
             ->has('lessons')
@@ -66,85 +103,97 @@ class RecommendationService
             ->first();
 
         /*
-        |--------------------------------------------------------------------------
-        | Priority 2
-        | Same category (any difficulty)
-        |--------------------------------------------------------------------------
-        */
-
+         * Priority 2:
+         * Find the closest difficulty in the same category.
+         */
         if (!$recommendedCourse) {
+            $difficultyRank = [
+                'beginner' => 1,
+                'intermediate' => 2,
+                'advanced' => 3,
+            ];
 
-            $recommendedCourse = Course::where('category_id', $currentCourse->category_id)
+            $targetRank = $difficultyRank[$targetDifficulty] ?? 2;
+
+            $recommendedCourse = Course::where(
+                'category_id',
+                $currentCourse->category_id
+            )
                 ->where('status', 'published')
                 ->whereNotIn('id', $excludedCourseIds)
                 ->has('lessons')
                 ->has('quizzes')
-                ->orderByRaw("
-                    CASE difficulty_level
-                        WHEN 'beginner' THEN 1
-                        WHEN 'intermediate' THEN 2
-                        WHEN 'advanced' THEN 3
-                    END
-                ")
+                // Standard SQL single quotes, so this works on MySQL in any
+                // mode (including ANSI_QUOTES) and on SQLite.
+                ->orderByRaw(
+                    "ABS(
+                        CASE difficulty_level
+                            WHEN 'beginner' THEN 1
+                            WHEN 'intermediate' THEN 2
+                            WHEN 'advanced' THEN 3
+                            ELSE 2
+                        END - ?
+                    )",
+                    [$targetRank]
+                )
                 ->first();
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | Priority 3
-        | Any category
-        |--------------------------------------------------------------------------
-        */
-
+         * Priority 3:
+         * If there is no suitable course in the same category,
+         * use any published course with lessons and quizzes.
+         */
         if (!$recommendedCourse) {
-
             $recommendedCourse = Course::where('status', 'published')
                 ->whereNotIn('id', $excludedCourseIds)
                 ->has('lessons')
                 ->has('quizzes')
-                ->orderByRaw("
-                    CASE difficulty_level
-                        WHEN 'beginner' THEN 1
-                        WHEN 'intermediate' THEN 2
-                        WHEN 'advanced' THEN 3
-                    END
-                ")
                 ->first();
-
-            if ($recommendedCourse) {
-                $fallbackReason = "You have completed the available courses in this learning path. We recommend exploring this course to continue developing your knowledge and skills.";
-            }
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | Priority 4
-        | Last fallback
-        |--------------------------------------------------------------------------
-        */
-
+         * Final fallback:
+         * Any published course that the student has not taken.
+         */
         if (!$recommendedCourse) {
-
             $recommendedCourse = Course::where('status', 'published')
-                ->where('id', '!=', $currentCourse->id)
+                ->whereNotIn('id', $excludedCourseIds)
                 ->first();
-
-            if ($recommendedCourse) {
-                $fallbackReason = "This course is recommended to help you continue your learning journey.";
-            }
         }
 
         if (!$recommendedCourse) {
             return;
         }
 
+        /*
+         * Ask Gemini to generate the personalized explanation.
+         *
+         * Gemini is used only for generating the recommendation
+         * explanation. No machine-learning model is involved.
+         */
         $geminiReason = app(GeminiRecommendationService::class)
-            ->generateReason($quiz, $recommendedCourse, $percentage);
+            ->generateReason(
+                $quiz,
+                $recommendedCourse,
+                $percentage
+            );
 
+        /*
+         * Recommendation score.
+         *
+         * This is simply the student's quiz percentage.
+         * It is not an ML prediction or classification score.
+         */
+        $recommendationScore = round($percentage, 2);
+
+        /*
+         * Save the recommendation.
+         */
         AIRecommendation::create([
             'student_id' => $studentId,
             'course_id' => $recommendedCourse->id,
-            'recommendation_score' => $percentage,
+            'recommendation_score' => $recommendationScore,
             'reason' => $geminiReason ?: $fallbackReason,
             'is_viewed' => false,
         ]);

@@ -9,6 +9,7 @@ class Course extends Model
     protected $fillable = [
         'teacher_id',
         'category_id',
+        'template_id',
         'title',
         'description',
         'thumbnail',
@@ -16,6 +17,7 @@ class Course extends Model
         'difficulty_level',
         'price',
         'status',
+        'review_remarks',
         'estimated_hours',
         'certificate_available',
     ];
@@ -23,6 +25,11 @@ class Course extends Model
     public function category()
  {
     return $this->belongsTo(CourseCategory::class, 'category_id');
+ }
+
+   public function template()
+ {
+    return $this->belongsTo(CourseTemplate::class, 'template_id');
  }
 
    public function teacher()
@@ -43,12 +50,22 @@ class Course extends Model
 {
     return $this->hasMany(Enrollment::class);
 }
- public function learningPaths()
+
+public function transactions()
+{
+    return $this->hasMany(Transaction::class);
+}
+
+public function certificates()
+{
+    return $this->hasMany(Certificate::class);
+}
+
+public function learningPaths()
 {
     return $this->belongsToMany(
         LearningPath::class,
         'learning_path_courses'
     );
 }
-
 }

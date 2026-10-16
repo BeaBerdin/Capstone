@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -21,23 +22,22 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $profile_photo_path
  * @property Carbon|null $email_verified_at
  * @property string $password
+ * @property bool $is_active
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property int|null $department_id
  */
 #[Fillable([
     'name',
     'email',
     'password',
-    'department_id',
     'profile_photo_path',
+    'department_id',
 ])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -52,6 +52,7 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -67,37 +68,25 @@ class User extends Authenticatable implements PasskeyUser
             ->implode('');
     }
 
-    /**
-     * Courses taught by this user.
-     */
     public function courses()
     {
         return $this->hasMany(Course::class, 'teacher_id');
     }
 
-    /**
-     * User roles.
-     */
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'user_roles');
     }
 
-    /**
-     * Check if user has a specific role.
-     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function hasRole($role)
     {
         return $this->roles()
             ->where('name', $role)
             ->exists();
-    }
-
-    /**
-     * User's department.
-     */
-    public function department()
-    {
-        return $this->belongsTo(Department::class);
     }
 }

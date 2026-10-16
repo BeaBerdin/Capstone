@@ -12,9 +12,6 @@ class Department extends Model
         'description',
     ];
 
-    /**
-     * Users assigned to this department.
-     */
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

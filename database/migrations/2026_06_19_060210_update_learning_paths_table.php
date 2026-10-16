@@ -8,8 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('learning_paths', function (Blueprint $table) {
-            $table->string('name')->after('id');
+        // SQLite (used only by the automated tests) cannot add a required
+        // column without a default value, so the column is optional there.
+        // MySQL keeps the original definition.
+        $isSqlite = Schema::getConnection()->getDriverName() === 'sqlite';
+
+        Schema::table('learning_paths', function (Blueprint $table) use ($isSqlite) {
+            $name = $table->string('name')->after('id');
+
+            if ($isSqlite) {
+                $name->nullable();
+            }
 
             $table->text('description')
                 ->nullable()

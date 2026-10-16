@@ -695,11 +695,7 @@
                                        divide-slate-100"
                             >
 
-                                @foreach(
-                                    $enrollments
-                                    as
-                                    $enrollment
-                                )
+                                @foreach($enrollments as $enrollment)
 
                                     @php
                                         $student =

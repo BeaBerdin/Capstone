@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AdminUserSeeder::class,
+            CourseTemplateSeeder::class,
         ]);
 
         $teacher = User::firstOrCreate(

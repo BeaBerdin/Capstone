@@ -40,3 +40,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Database dumps and manuscript/audit PDFs must never be committed.
+*.sql
+docs/audit/*.pdf
