@@ -35,17 +35,11 @@
         }
 
         h1 {
-            font-size: 34px;
-            letter-spacing: 8px;
+            font-size: 30px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
             color: #6b21a8;
-            margin: 5px 0 0;
-        }
-
-        h2 {
-            font-size: 18px;
-            letter-spacing: 2px;
-            color: #9333ea;
-            margin: 4px 0 12px;
+            margin: 5px 0 12px;
         }
 
         .decor {
@@ -92,6 +86,9 @@
         .details td {
             width: 50%;
             text-align: center;
+            /* Top-align both cells; the certificate-number cell has an extra
+               "Verify at" line, which pushed "Date Issued" lower. */
+            vertical-align: top;
             font-size: 12px;
         }
 
@@ -148,8 +145,13 @@
                  class="logo"
                  alt="PathWise">
 
-            <h1>CERTIFICATE</h1>
-            <h2>OF COMPLETION</h2>
+            {{-- Title, body text and signatory come from the Administrator's
+                 certificate template; everything is escaped. --}}
+            @php
+                $template = $template ?? \App\Models\CertificateSetting::current();
+            @endphp
+
+            <h1>{{ $template->title }}</h1>
 
             <div class="decor">&#10086;</div>
 
@@ -167,12 +169,7 @@
                 {{ $certificate->course->title }}
             </div>
 
-            <p class="description">
-                This certificate is proudly awarded in recognition of the learner&rsquo;s
-                dedication, commitment, and successful completion of all course
-                requirements, assessments, and learning activities under the
-                academic standards of the PathWise AI-Powered E-Learning Platform.
-            </p>
+            <p class="description">{{ $template->body_text }}</p>
 
             <table class="details">
                 <tr>
@@ -193,8 +190,8 @@
 
             <div class="signature">
                 <div class="line"></div>
-                <div class="platform">PATHWISE</div>
-                <div class="platform-sub">AI-Powered E-Learning Platform</div>
+                <div class="platform">{{ $template->signatory_name }}</div>
+                <div class="platform-sub">{{ $template->signatory_position }}</div>
             </div>
 
         </div>

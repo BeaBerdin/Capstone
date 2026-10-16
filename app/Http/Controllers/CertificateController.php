@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificate;
+use App\Models\CertificateSetting;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
@@ -248,9 +249,13 @@ class CertificateController extends Controller
             'course',
         ]);
 
+        // The Administrator's current template; the certificate's own
+        // number, date, student and course are never changed.
+        $template = CertificateSetting::current();
+
         $pdf = Pdf::loadView(
                 'Student.certificate-pdf',
-                compact('certificate')
+                compact('certificate', 'template')
             )
             ->setPaper(
                 'a4',

@@ -1611,6 +1611,7 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Enrollments', 'meta' => 'Manage and restore enrollments', 'url' => route('enrollments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Student learning paths', 'url' => route('learning-paths.index')],
             ['label' => 'Certificate Records', 'meta' => 'Issue, edit and revoke certificates', 'url' => route('certificates.index')],
+            ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'Removal Requests', 'meta' => 'Student removal requests', 'url' => route('admin.student-removal-requests.index')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommendation tools', 'url' => route('ai-recommendations.index')],
             ['label' => 'Student Progress', 'meta' => 'Learner performance', 'url' => route('student-progress.index')],
@@ -2325,6 +2326,34 @@ html.dark .pw-mobile-toggle {
 
                         <span>
                             Certificate Records
+                        </span>
+
+                    </a>
+
+
+                    {{-- Certificate Template (title, body text, signatory) --}}
+                    <a
+                        href="{{ route('certificate-template.edit') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('certificate-template.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+
+                            <path d="M13.5 6.5l3 3" />
+                        </svg>
+
+                        <span>
+                            Certificate Template
                         </span>
 
                     </a>

@@ -13,6 +13,7 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\AIRecommendationController;
 use App\Http\Controllers\StudentProgressController;
 use App\Http\Controllers\CertificateManagementController;
@@ -177,6 +178,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/certificate-management', [CertificateManagementController::class, 'index'])
             ->name('certificate-management.index');
+
+        // Certificate template used by the certificate PDF (title, body, signatory).
+        Route::get('/admin/certificate-template', [CertificateTemplateController::class, 'edit'])
+            ->name('certificate-template.edit');
+
+        Route::put('/admin/certificate-template', [CertificateTemplateController::class, 'update'])
+            ->name('certificate-template.update');
+
+        Route::get('/admin/certificate-template/preview', [CertificateTemplateController::class, 'preview'])
+            ->name('certificate-template.preview');
 
         Route::resource('admin/learning-paths', LearningPathController::class)
             ->names('learning-paths');
