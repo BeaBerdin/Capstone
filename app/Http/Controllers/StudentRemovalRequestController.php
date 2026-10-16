@@ -61,7 +61,8 @@ class StudentRemovalRequestController extends Controller
             ->where('student_id', $validated['student_id'])
             ->first();
 
-        if (!$enrollment) {
+        // A cancelled enrollment has already been removed.
+        if (!$enrollment || !$enrollment->grantsAccess()) {
             return back()
                 ->withErrors([
                     'student_id' =>
@@ -198,13 +199,18 @@ class StudentRemovalRequestController extends Controller
                     ->first();
 
                 abort_if(
-                    !$enrollment,
+                    !$enrollment || !$enrollment->grantsAccess(),
                     409,
                     'The student is no longer enrolled in this course.'
                 );
 
-                // Delete only the enrollment, never the student account.
-                $enrollment->delete();
+                // Cancel the enrollment instead of deleting it, so progress,
+                // quiz results and payment history are kept and an
+                // administrator can restore it. The student account is
+                // never touched.
+                $enrollment->update([
+                    'status' => 'cancelled',
+                ]);
             }
 
             $removalRequest->update([
