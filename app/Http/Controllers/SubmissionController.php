@@ -452,29 +452,46 @@ class SubmissionController extends Controller
                 );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | PREPARE THE STUDENT RESPONSE
+        |--------------------------------------------------------------------------
+        |
+        | Gemini only receives real text: the typed answer and/or the text of
+        | an uploaded plain-text or source file. If there is nothing readable,
+        | AI evaluation is not started.
+        |
+        */
+
+        $fileText = null;
+
+        if ($submission->file_path) {
+            $file = $this->readSubmissionFileText($submission);
+
+            if ($file['error'] !== null && blank($submission->answer_text)) {
+                return redirect()
+                    ->route('teacher.submissions.show', $submission)
+                    ->with(
+                        'error',
+                        $file['error'].' AI evaluation was not started; please grade this submission manually.'
+                    );
+            }
+
+            $fileText = $file['text'];
+        }
+
+        $studentAnswer = trim(implode("\n\n", array_filter([
+            $submission->answer_text,
+            $fileText !== null
+                ? 'Uploaded file '.basename($submission->file_path).":\n".$fileText
+                : null,
+        ])));
+
         $submission->update([
             'ai_evaluation_status' => 'processing',
         ]);
 
         try {
-            /*
-            |--------------------------------------------------------------------------
-            | PREPARE THE STUDENT RESPONSE
-            |--------------------------------------------------------------------------
-            */
-
-            $studentAnswer = $submission->answer_text;
-
-            if (
-                blank($studentAnswer)
-                && $submission->file_path
-            ) {
-                $studentAnswer =
-                    'The student submitted a file: '
-                    . $submission->file_path
-                    . '. File content extraction is not yet configured.';
-            }
-
             /*
             |--------------------------------------------------------------------------
             | REQUEST AI EVALUATION
@@ -501,7 +518,7 @@ class SubmissionController extends Controller
                     (int) $assignment->max_score,
 
                 codeLanguage:
-                    $assignment->programming_language
+                    $assignment->programmingLanguageLabel()
             );
 
             /*
@@ -754,6 +771,74 @@ class SubmissionController extends Controller
             403,
             'You may only review submissions from your own courses.'
         );
+    }
+
+    /**
+     * Read the text of an uploaded submission file for AI evaluation.
+     *
+     * Only plain-text and source files (.txt and the code-assignment file
+     * types) up to Assignment::SOURCE_FILE_MAX_KB are read. Documents such
+     * as PDF or Word files, binary files and empty files are not.
+     *
+     * @return array{text: ?string, error: ?string}
+     */
+    private function readSubmissionFileText(Submission $submission): array
+    {
+        $fileName = basename((string) $submission->file_path);
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $readableExtensions = array_values(array_unique([
+            'txt',
+            ...collect(Assignment::PROGRAMMING_LANGUAGES)->pluck('extensions')->flatten()->all(),
+        ]));
+
+        if (! in_array($extension, $readableExtensions, true)) {
+            return [
+                'text' => null,
+                'error' => 'The uploaded file ('.$fileName.') cannot be read for AI evaluation. Only text and source files ('
+                    .implode(', ', array_map(fn ($readable) => '.'.$readable, $readableExtensions)).') can be read.',
+            ];
+        }
+
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($submission->file_path)) {
+            return [
+                'text' => null,
+                'error' => 'The uploaded file ('.$fileName.') could not be found.',
+            ];
+        }
+
+        if ($disk->size($submission->file_path) > Assignment::SOURCE_FILE_MAX_KB * 1024) {
+            return [
+                'text' => null,
+                'error' => 'The uploaded file ('.$fileName.') is larger than '.Assignment::SOURCE_FILE_MAX_KB.' KB and cannot be read for AI evaluation.',
+            ];
+        }
+
+        $contents = (string) $disk->get($submission->file_path);
+
+        // Drop a UTF-8 byte-order mark.
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
+
+        if (! mb_check_encoding($contents, 'UTF-8') || str_contains($contents, "\0")) {
+            return [
+                'text' => null,
+                'error' => 'The uploaded file ('.$fileName.') is not readable text.',
+            ];
+        }
+
+        if (trim($contents) === '') {
+            return [
+                'text' => null,
+                'error' => 'The uploaded file ('.$fileName.') is empty.',
+            ];
+        }
+
+        return [
+            'text' => $contents,
+            'error' => null,
+        ];
     }
 
     private function formatAiList(array $items): string
