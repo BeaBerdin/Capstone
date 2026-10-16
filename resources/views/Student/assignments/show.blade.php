@@ -1,0 +1,608 @@
+<x-layouts::app :title="$assignment->title">
+
+    <div class="mx-auto max-w-5xl space-y-6">
+
+        {{-- SUCCESS / ERROR MESSAGES --}}
+        @if(session('success'))
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p class="font-semibold">Please fix the following:</p>
+
+                <ul class="mt-2 list-disc space-y-1 pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+
+        {{-- HEADER --}}
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+
+                <div>
+                    <p class="text-sm font-medium text-violet-600">
+                        Assignment
+                    </p>
+
+                    <h1 class="mt-1 text-2xl font-bold text-slate-900">
+                        {{ $assignment->title }}
+                    </h1>
+
+                    @if($assignment->course)
+                        <p class="mt-2 text-sm text-slate-500">
+                            {{ $assignment->course->title }}
+                        </p>
+                    @endif
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+
+                    @if($assignment->submission_type === 'code')
+
+                        <span class="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
+                            Code Submission
+                        </span>
+
+                        @if($assignment->programming_language)
+                            <span class="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                                {{ ucfirst($assignment->programming_language) }}
+                            </span>
+                        @endif
+
+                    @elseif($assignment->submission_type === 'multiple_choice')
+
+                        <span class="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700">
+                            Multiple Choice
+                        </span>
+
+                    @else
+
+                        <span class="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                            Written Response
+                        </span>
+
+                    @endif
+
+                </div>
+
+            </div>
+
+
+            {{-- ASSIGNMENT INFORMATION --}}
+            <div class="mt-6 grid gap-4 sm:grid-cols-3">
+
+                <div class="rounded-xl bg-slate-50 p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Maximum Score
+                    </p>
+
+                    <p class="mt-1 text-lg font-bold text-slate-800">
+                        {{ $assignment->max_score }}
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Due Date
+                    </p>
+
+                    <p class="mt-1 text-sm font-semibold text-slate-800">
+                        {{ $assignment->due_date?->format('M d, Y h:i A') ?? 'No deadline' }}
+                    </p>
+                </div>
+
+                <div class="rounded-xl bg-slate-50 p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        AI Evaluation
+                    </p>
+
+                    <p class="mt-1 text-sm font-semibold text-slate-800">
+                        @if($assignment->ai_evaluation_enabled)
+                            Enabled
+                        @else
+                            Not enabled
+                        @endif
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- INSTRUCTIONS --}}
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+            <div class="flex items-center gap-3">
+
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                    ℹ
+                </div>
+
+                <h2 class="text-lg font-bold text-slate-900">
+                    Instructions
+                </h2>
+
+            </div>
+
+            <div class="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">
+                {{ $assignment->description }}
+            </div>
+
+            @if($assignment->evaluation_criteria)
+
+                <div class="mt-6 rounded-xl border border-violet-100 bg-violet-50 p-4">
+
+                    <p class="text-sm font-bold text-violet-900">
+                        Evaluation Criteria
+                    </p>
+
+                    <p class="mt-2 whitespace-pre-line text-sm leading-6 text-violet-800">
+                        {{ $assignment->evaluation_criteria }}
+                    </p>
+
+                </div>
+
+            @endif
+
+        </div>
+
+
+        {{-- EXISTING SUBMISSION --}}
+        @if($submission)
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">
+                            Your Submission
+                        </h2>
+
+                        <p class="mt-1 text-xs text-slate-500">
+                            Submitted
+                            {{ $submission->submitted_at?->format('M d, Y h:i A') ?? 'recently' }}
+                        </p>
+                    </div>
+
+                    <div>
+
+                        @if($submission->status === 'graded')
+
+                            <span class="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                Graded
+                            </span>
+
+                        @else
+
+                            <span class="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700">
+                                Submitted
+                            </span>
+
+                        @endif
+
+                    </div>
+
+                </div>
+
+
+                @if($assignment->submission_type === 'code')
+
+                    {{-- EXISTING CODE --}}
+                    <div class="mt-5 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
+
+                        <div class="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2.5">
+
+                            <div class="flex items-center gap-2">
+
+                                <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
+
+                            </div>
+
+                            <span class="text-xs font-medium text-slate-400">
+                                {{ ucfirst($assignment->programming_language ?? 'Code') }}
+                            </span>
+
+                        </div>
+
+                        <pre class="overflow-x-auto p-5 font-mono text-sm leading-6 text-slate-100">{{ $submission->answer_text }}</pre>
+
+                    </div>
+
+
+                    {{-- RUN CODE --}}
+                    <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                            <div>
+
+                                <h3 class="text-sm font-bold text-slate-800">
+                                    Test Your Code
+                                </h3>
+
+                                <p class="mt-1 text-xs leading-5 text-slate-500">
+                                    Run your submitted code in a secure Docker environment
+                                    before submitting it for final evaluation.
+                                </p>
+
+                            </div>
+
+                            <form
+                                method="POST"
+                                action="{{ route('student.submissions.run-code', $submission) }}"
+                            >
+
+                                @csrf
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                >
+                                    <span>▶</span>
+                                    Run Code
+                                </button>
+
+                            </form>
+
+                        </div>
+
+
+                        {{-- EXECUTION RESULT --}}
+                        @if($submission->execution_status)
+
+                            <div class="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+
+                                <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+
+                                    <span class="text-xs font-bold uppercase tracking-wide text-slate-500">
+                                        Execution Result
+                                    </span>
+
+                                    @if($submission->execution_status === 'success')
+
+                                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                            Successful
+                                        </span>
+
+                                    @elseif($submission->execution_status === 'error')
+
+                                        <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                                            Error
+                                        </span>
+
+                                    @else
+
+                                        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                            Failed
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+
+                                {{-- OUTPUT --}}
+                                @if($submission->execution_output)
+
+                                    <div class="border-b border-slate-200 p-4">
+
+                                        <p class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+                                            Output
+                                        </p>
+
+                                        <pre class="overflow-x-auto rounded-xl bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-100">{{ $submission->execution_output }}</pre>
+
+                                    </div>
+
+                                @endif
+
+
+                                {{-- ERROR --}}
+                                @if($submission->execution_error)
+
+                                    <div class="p-4">
+
+                                        <p class="mb-2 text-xs font-bold uppercase tracking-wide text-red-500">
+                                            Error
+                                        </p>
+
+                                        <pre class="overflow-x-auto rounded-xl bg-red-950 p-4 font-mono text-sm leading-6 text-red-100">{{ $submission->execution_error }}</pre>
+
+                                    </div>
+
+                                @endif
+
+
+                                {{-- NO OUTPUT --}}
+                                @if(
+                                    ! $submission->execution_output
+                                    && ! $submission->execution_error
+                                )
+
+                                    <div class="p-4 text-sm text-slate-500">
+                                        Code executed successfully but produced no output.
+                                    </div>
+
+                                @endif
+
+                            </div>
+
+                        @endif
+
+                    </div>
+
+                @else
+
+                    {{-- EXISTING WRITTEN ANSWER --}}
+                    @if($submission->answer_text)
+
+                        <div class="mt-5 rounded-xl bg-slate-50 p-5">
+
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">
+                                Your Answer
+                            </p>
+
+                            <div class="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+                                {{ $submission->answer_text }}
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                @endif
+
+
+                {{-- SCORE --}}
+                @if($submission->score !== null)
+
+                    <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+
+                        <p class="text-xs font-bold uppercase tracking-wide text-emerald-600">
+                            Final Score
+                        </p>
+
+                        <p class="mt-1 text-3xl font-bold text-emerald-800">
+                            {{ $submission->score }}
+                            <span class="text-base font-medium">
+                                / {{ $assignment->max_score }}
+                            </span>
+                        </p>
+
+                    </div>
+
+                @endif
+
+
+                {{-- TEACHER FEEDBACK --}}
+                @if($submission->feedback)
+
+                    <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">
+                            Teacher Feedback
+                        </p>
+
+                        <p class="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">
+                            {{ $submission->feedback }}
+                        </p>
+
+                    </div>
+
+                @endif
+
+            </div>
+
+        @endif
+
+
+        {{-- SUBMISSION FORM --}}
+        @if(
+            ! $submission
+            || $submission->status !== 'graded'
+        )
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+                <div class="mb-6">
+
+                    <h2 class="text-xl font-bold text-slate-900">
+                        {{ $submission ? 'Resubmit Assignment' : 'Submit Assignment' }}
+                    </h2>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Make sure your answer is complete before submitting.
+                    </p>
+
+                </div>
+
+
+                <form
+                    method="POST"
+                    action="{{ route('student.assignments.submit', $assignment) }}"
+                    enctype="multipart/form-data"
+                    class="space-y-6"
+                >
+
+                    @csrf
+
+
+                    {{-- CODE SUBMISSION --}}
+                    @if($assignment->submission_type === 'code')
+
+                        <div>
+
+                            <div class="flex items-center justify-between gap-4">
+
+                                <div>
+
+                                    <label
+                                        for="answer_text"
+                                        class="text-sm font-semibold text-slate-700"
+                                    >
+                                        Code Submission
+                                    </label>
+
+                                    <p class="mt-1 text-xs text-slate-400">
+                                        Write your solution below and submit it for evaluation.
+                                    </p>
+
+                                </div>
+
+                                <span class="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
+                                    {{ strtoupper($assignment->programming_language ?? 'CODE') }}
+                                </span>
+
+                            </div>
+
+
+                            <div class="mt-3 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
+
+                                <div class="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2.5">
+
+                                    <div class="flex items-center gap-2">
+
+                                        <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
+                                        <span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span>
+                                        <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
+
+                                    </div>
+
+                                    <span class="text-[11px] font-medium text-slate-400">
+                                        {{ ucfirst($assignment->programming_language ?? 'Code') }}
+                                    </span>
+
+                                </div>
+
+
+                                <textarea
+                                    id="answer_text"
+                                    name="answer_text"
+                                    rows="18"
+                                    maxlength="20000"
+                                    spellcheck="false"
+                                    class="block w-full resize-y border-0 bg-slate-950 px-5 py-4 font-mono text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-600 focus:ring-0"
+                                    placeholder="@if($assignment->programming_language === 'python')Write your Python code here...@elseif($assignment->programming_language === 'javascript')Write your JavaScript code here...@elseif($assignment->programming_language === 'c')Write your C code here...@else Write your code here...@endif"
+                                >{{ old('answer_text', $submission?->answer_text) }}</textarea>
+
+                            </div>
+
+
+                            <div class="mt-2 flex items-center justify-between text-xs text-slate-400">
+
+                                <span>
+                                    Language:
+                                    <strong class="text-slate-600">
+                                        {{ ucfirst($assignment->programming_language ?? 'Not specified') }}
+                                    </strong>
+                                </span>
+
+                                <span>
+                                    Maximum 20,000 characters
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                    {{-- WRITTEN / ESSAY --}}
+                    @else
+
+                        <div>
+
+                            <label
+                                for="answer_text"
+                                class="text-sm font-semibold text-slate-700"
+                            >
+                                Written Answer
+                            </label>
+
+                            <textarea
+                                id="answer_text"
+                                name="answer_text"
+                                rows="9"
+                                maxlength="20000"
+                                class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
+                                placeholder="Write your answer here..."
+                            >{{ old('answer_text', $submission?->answer_text) }}</textarea>
+
+                        </div>
+
+
+                        {{-- FILE UPLOAD --}}
+                        <div>
+
+                            <label
+                                for="submission_file"
+                                class="text-sm font-semibold text-slate-700"
+                            >
+                                Attachment
+                            </label>
+
+                            <input
+                                id="submission_file"
+                                type="file"
+                                name="submission_file"
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
+                                class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"
+                            />
+
+                            <p class="mt-2 text-xs text-slate-400">
+                                Accepted: PDF, DOC, DOCX, PPT, PPTX, TXT, JPG, JPEG, PNG.
+                                Maximum 10 MB.
+                            </p>
+
+                            @if($submission?->file_path)
+
+                                <p class="mt-2 text-xs text-slate-500">
+                                    A previous attachment is already on your submission.
+                                    Uploading a new file will replace it.
+                                </p>
+
+                            @endif
+
+                        </div>
+
+                    @endif
+
+
+                    {{-- SUBMIT BUTTON --}}
+                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
+
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
+                        >
+                            {{ $submission ? 'Resubmit Assignment' : 'Submit Assignment' }}
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        @endif
+
+    </div>
+
+</x-layouts::app>
