@@ -56,7 +56,7 @@
                                    border border-slate-200 bg-white p-2 shadow-xl"
                         >
                             <p class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                Choose a Draft / Rejected Course
+                                Choose a Draft, Rejected or Published Course
                             </p>
                             @foreach($courses as $course)
                                 <a
@@ -73,7 +73,7 @@
                     </div>
                 @else
                     <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
-                        Create or return a course to Draft before adding assignments.
+                        Assignments can be added to Draft, Rejected or Published courses. Courses waiting for admin review are locked.
                     </div>
                 @endif
             </div>
@@ -107,7 +107,8 @@
 
                 @forelse($assignments as $assignment)
                     @php
-                        $courseLocked = !in_array($assignment->course?->status, ['draft', 'rejected'], true);
+                        // Same rule as AssignmentController: only a course pending admin review is locked.
+                        $courseLocked = ! ($assignment->course?->allowsAssignmentChanges() ?? false);
                     @endphp
 
                     <div class="border-b border-slate-100 px-5 py-5 last:border-b-0 sm:px-6">
@@ -190,7 +191,7 @@
                                     <span
                                         class="inline-flex h-9 items-center justify-center rounded-xl
                                                bg-slate-100 px-3.5 text-xs font-semibold text-slate-500"
-                                        title="Assignments are locked while the course is pending, approved, or published."
+                                        title="Assignments are locked while the course is waiting for admin review."
                                     >
                                         Content Locked
                                     </span>

@@ -6,6 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
 {
+    /**
+     * Course statuses in which the teacher may add, edit or delete
+     * assignments. Only a course waiting for admin review (pending) is
+     * locked. Used by both the assignment pages and AssignmentController.
+     */
+    public const ASSIGNMENT_EDITABLE_STATUSES = [
+        'draft',
+        'rejected',
+        'published',
+    ];
+
+    public function allowsAssignmentChanges(): bool
+    {
+        return in_array(
+            strtolower((string) $this->status),
+            self::ASSIGNMENT_EDITABLE_STATUSES,
+            true
+        );
+    }
+
     protected $fillable = [
         'teacher_id',
         'category_id',

@@ -182,11 +182,7 @@ class AssignmentController extends Controller
             )
             ->whereIn(
                 'status',
-                [
-                    'draft',
-                    'rejected',
-                    'published',
-                ]
+                Course::ASSIGNMENT_EDITABLE_STATUSES
             )
             ->orderBy('title')
             ->get();
@@ -852,15 +848,7 @@ class AssignmentController extends Controller
         Course $course
     ): void {
         abort_unless(
-            in_array(
-                $course->status,
-                [
-                    'draft',
-                    'rejected',
-                    'published',
-                ],
-                true
-            ),
+            $course->allowsAssignmentChanges(),
 
             403,
 
