@@ -1,57 +1,57 @@
 <x-layouts::app :title="__('Create Certificate')">
 
-<h1 class="text-2xl font-bold mb-6">Create Certificate</h1>
+<div class="min-h-screen bg-[#f8f9fc]">
 
-<form action="{{ route('certificates.store') }}"
-      method="POST"
-      class="space-y-4">
+    <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-    @csrf
+        <div class="mx-auto max-w-3xl">
 
-    <select name="student_id" class="w-full border rounded p-3">
-        <option value="">Select Student</option>
+            <a href="{{ route('certificates.index') }}" class="text-xs font-semibold text-violet-600 hover:text-violet-700">
+                &larr; Back to Certificates
+            </a>
 
-        @foreach($students as $student)
-            <option value="{{ $student->id }}">
-                {{ $student->name }}
-            </option>
-        @endforeach
-    </select>
+            <p class="mt-5 text-xs font-bold uppercase tracking-[.12em] text-violet-600">
+                Academic Records
+            </p>
 
-    <select name="course_id" class="w-full border rounded p-3">
-        <option value="">Select Course</option>
+            <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                Create Certificate
+            </h1>
 
-        @foreach($courses as $course)
-            <option value="{{ $course->id }}">
-                {{ $course->title }}
-            </option>
-        @endforeach
-    </select>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+                Issue a certificate to a student who has completed the course.
+            </p>
 
-    <input type="text"
-           name="certificate_number"
-           placeholder="Certificate Number"
-           class="w-full border rounded p-3">
+            <form
+                action="{{ route('certificates.store') }}"
+                method="POST"
+                class="pw-card mt-7 space-y-6 p-5 sm:p-7"
+            >
+                @csrf
 
-    <input type="date"
-           name="issued_date"
-           class="w-full border rounded p-3">
+                @include('certificates.partials.form', ['certificate' => null])
 
-    <input type="text"
-           name="certificate_file"
-           placeholder="Certificate File Path (optional)"
-           class="w-full border rounded p-3">
+                <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                    <a
+                        href="{{ route('certificates.index') }}"
+                        class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
+                    >
+                        Cancel
+                    </a>
 
-    <select name="status" class="w-full border rounded p-3">
-        <option value="issued">Issued</option>
-        <option value="revoked">Revoked</option>
-    </select>
+                    <button
+                        type="submit"
+                        class="inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                    >
+                        Save Certificate
+                    </button>
+                </div>
+            </form>
 
-    <button type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded">
-        Save Certificate
-    </button>
+        </div>
 
-</form>
+    </main>
+
+</div>
 
 </x-layouts::app>

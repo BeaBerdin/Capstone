@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\AiEvaluationException;
 use App\Models\Assignment;
 use App\Models\Submission;
+use App\Models\User;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
 use Illuminate\Http\Client\ConnectionException;
@@ -33,8 +34,9 @@ class SubmissionController extends Controller
     public function create()
     {
         $assignments = Assignment::orderBy('title')->get();
+        $students = $this->studentOptions();
 
-        return view('submissions.create', compact('assignments'));
+        return view('submissions.create', compact('assignments', 'students'));
     }
 
     public function store(Request $request)
@@ -84,11 +86,31 @@ class SubmissionController extends Controller
     public function edit(Submission $submission)
     {
         $assignments = Assignment::orderBy('title')->get();
+        $students = $this->studentOptions($submission->student_id);
 
         return view('submissions.edit', compact(
             'submission',
-            'assignments'
+            'assignments',
+            'students'
         ));
+    }
+
+    /**
+     * Students for the administrator's submission form. When editing, the
+     * submission's own student is always included, so saving never moves
+     * the submission to someone else.
+     */
+    private function studentOptions(?int $currentStudentId = null)
+    {
+        return User::where(function ($query) use ($currentStudentId) {
+            $query->whereHas('roles', fn ($roles) => $roles->where('name', 'student'));
+
+            if ($currentStudentId) {
+                $query->orWhere('id', $currentStudentId);
+            }
+        })
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function update(Request $request, Submission $submission)

@@ -1,77 +1,57 @@
 <x-layouts::app :title="__('Create Submission')">
 
-<h1 class="text-2xl font-bold mb-6">
-    Create Submission
-</h1>
+<div class="min-h-screen bg-[#f8f9fc]">
 
-<form action="{{ route('submissions.store') }}"
-      method="POST"
-      class="space-y-4">
+    <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-    @csrf
+        <div class="mx-auto max-w-3xl">
 
-    <select name="student_id"
-            class="w-full border rounded p-3">
+            <a href="{{ route('submissions.index') }}" class="text-xs font-semibold text-violet-600 hover:text-violet-700">
+                &larr; Back to Submissions
+            </a>
 
-        <option value="">Select Student</option>
+            <p class="mt-5 text-xs font-bold uppercase tracking-[.12em] text-violet-600">
+                Assessments
+            </p>
 
-        @foreach($students as $student)
-            <option value="{{ $student->id }}">
-                {{ $student->name }}
-            </option>
-        @endforeach
+            <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                Create Submission
+            </h1>
 
-    </select>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+                Record a submission for a student, for example one handed in outside PathWise.
+            </p>
 
-    <select name="assignment_id"
-            class="w-full border rounded p-3">
+            <form
+                action="{{ route('submissions.store') }}"
+                method="POST"
+                class="pw-card mt-7 space-y-6 p-5 sm:p-7"
+            >
+                @csrf
 
-        <option value="">Select Assignment</option>
+                @include('submissions.partials.form', ['submission' => null])
 
-        @foreach($assignments as $assignment)
-            <option value="{{ $assignment->id }}">
-                {{ $assignment->title }}
-            </option>
-        @endforeach
+                <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                    <a
+                        href="{{ route('submissions.index') }}"
+                        class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
+                    >
+                        Cancel
+                    </a>
 
-    </select>
+                    <button
+                        type="submit"
+                        class="inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                    >
+                        Save Submission
+                    </button>
+                </div>
+            </form>
 
-    <textarea
-        name="answer_text"
-        placeholder="Answer"
-        class="w-full border rounded p-3"></textarea>
+        </div>
 
-    <input
-        type="text"
-        name="file_path"
-        placeholder="File Path"
-        class="w-full border rounded p-3">
+    </main>
 
-    <input
-        type="number"
-        name="score"
-        placeholder="Score"
-        class="w-full border rounded p-3">
-
-    <textarea
-        name="feedback"
-        placeholder="Feedback"
-        class="w-full border rounded p-3"></textarea>
-
-    <select
-        name="status"
-        class="w-full border rounded p-3">
-
-        <option value="submitted">Submitted</option>
-        <option value="graded">Graded</option>
-        <option value="returned">Returned</option>
-
-    </select>
-
-    <button class="bg-blue-600 text-white px-4 py-2 rounded">
-        Save Submission
-    </button>
-
-</form>
+</div>
 
 </x-layouts::app>

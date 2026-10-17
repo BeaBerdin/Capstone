@@ -1,88 +1,207 @@
 <x-layouts::app :title="__('Submissions')">
 
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Submissions</h1>
+<style>
+    .pw-card {
+        background: #ffffff;
+        border: 1px solid #e7e9ef;
+        border-radius: 20px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.035);
+    }
+</style>
 
-    <a href="{{ route('submissions.create') }}"
-       class="bg-blue-600 text-white px-4 py-2 rounded">
-        Add Submission
-    </a>
+@php
+    $statusStyles = [
+        'graded' => ['bg-emerald-50 text-emerald-700', 'bg-emerald-500'],
+        'returned' => ['bg-amber-50 text-amber-700', 'bg-amber-500'],
+        'submitted' => ['bg-blue-50 text-blue-700', 'bg-blue-500'],
+    ];
+@endphp
+
+<div class="min-h-screen bg-[#f8f9fc]">
+
+    <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
+
+        <div class="mx-auto max-w-[1500px]">
+
+            {{-- =====================================================
+                HEADER
+            ====================================================== --}}
+
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
+                        Assessments
+                    </p>
+
+                    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                        Submissions
+                    </h1>
+
+                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                        All assignment submissions across PathWise courses.
+                    </p>
+                </div>
+
+                <a
+                    href="{{ route('submissions.create') }}"
+                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                >
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Add Submission
+                </a>
+
+            </div>
+
+
+            @if(session('success'))
+                <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+
+            {{-- =====================================================
+                TABLE
+            ====================================================== --}}
+
+            <section class="pw-card mt-7 overflow-hidden">
+
+                <div class="overflow-x-auto">
+
+                    <table class="w-full min-w-[760px] text-left text-sm">
+
+                        <thead class="border-b border-slate-100 bg-slate-50/80">
+                            <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                                <th class="px-6 py-4">Student</th>
+                                <th class="px-6 py-4">Assignment</th>
+                                <th class="px-6 py-4">Score</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Submitted At</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-slate-100">
+
+                            @forelse($submissions as $submission)
+
+                                @php
+                                    [$badge, $dot] = $statusStyles[$submission->status] ?? ['bg-slate-100 text-slate-600', 'bg-slate-400'];
+                                @endphp
+
+                                <tr class="transition hover:bg-slate-50/70">
+
+                                    <td class="px-6 py-5">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                                                {{ strtoupper(substr($submission->student->name ?? 'S', 0, 1)) }}
+                                            </div>
+                                            <p class="text-sm font-semibold text-slate-800">
+                                                {{ $submission->student->name ?? 'N/A' }}
+                                            </p>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-6 py-5 text-sm text-slate-600">
+                                        {{ $submission->assignment->title ?? 'N/A' }}
+                                    </td>
+
+                                    <td class="px-6 py-5 text-sm font-semibold text-slate-800">
+                                        {{ $submission->score ?? '-' }}
+                                    </td>
+
+                                    <td class="px-6 py-5">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold {{ $badge }}">
+                                            <span class="h-1.5 w-1.5 rounded-full {{ $dot }}"></span>
+                                            {{ ucfirst($submission->status) }}
+                                        </span>
+                                    </td>
+
+                                    <td class="px-6 py-5 text-xs font-semibold text-slate-600">
+                                        {{ $submission->submitted_at
+                                            ? \Carbon\Carbon::parse($submission->submitted_at)->format('M d, Y')
+                                            : '-'
+                                        }}
+                                    </td>
+
+                                    <td class="px-6 py-5">
+                                        <div class="flex items-center justify-end gap-2">
+
+                                            <a
+                                                href="{{ route('submissions.show', $submission) }}"
+                                                class="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
+                                            >
+                                                View
+                                            </a>
+
+                                            <a
+                                                href="{{ route('submissions.edit', $submission) }}"
+                                                class="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
+                                            >
+                                                Edit
+                                            </a>
+
+                                            <form
+                                                action="{{ route('submissions.destroy', $submission) }}"
+                                                method="POST"
+                                                onsubmit="return confirm('Delete submission?')"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button
+                                                    type="submit"
+                                                    class="inline-flex h-9 items-center rounded-lg border border-rose-100 bg-white px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+
+                            @empty
+
+                                <tr>
+                                    <td colspan="6" class="px-6 py-16 text-center">
+
+                                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+                                                <path d="M14 3v5h5M9 13h6M9 17h4"/>
+                                            </svg>
+                                        </div>
+
+                                        <h3 class="mt-4 text-sm font-bold text-slate-800">
+                                            No submissions found.
+                                        </h3>
+
+                                        <p class="mt-1 text-xs text-slate-400">
+                                            Submissions appear here when students hand in assignments.
+                                        </p>
+
+                                    </td>
+                                </tr>
+
+                            @endforelse
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
 </div>
-
-@if(session('success'))
-    <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
-        {{ session('success') }}
-    </div>
-@endif
-
-<table class="w-full border">
-    <thead>
-        <tr>
-            <th class="border p-2">Student</th>
-            <th class="border p-2">Assignment</th>
-            <th class="border p-2">Score</th>
-            <th class="border p-2">Status</th>
-            <th class="border p-2">Submitted At</th>
-            <th class="border p-2">Actions</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @forelse($submissions as $submission)
-            <tr>
-                <td class="border p-2">
-                    {{ $submission->student->name ?? 'N/A' }}
-                </td>
-
-                <td class="border p-2">
-                    {{ $submission->assignment->title ?? 'N/A' }}
-                </td>
-
-                <td class="border p-2">
-                    {{ $submission->score ?? '-' }}
-                </td>
-
-                <td class="border p-2">
-                    {{ ucfirst($submission->status) }}
-                </td>
-
-                <td class="border p-2">
-                    {{ $submission->submitted_at
-                        ? \Carbon\Carbon::parse($submission->submitted_at)->format('M d, Y')
-                        : '-'
-                    }}
-                </td>
-
-                <td class="border p-2">
-                    <a href="{{ route('submissions.edit', $submission) }}"
-                       class="text-blue-500 mr-2">
-                        Edit
-                    </a>
-
-                    <form action="{{ route('submissions.destroy', $submission) }}"
-                          method="POST"
-                          class="inline">
-
-                        @csrf
-                        @method('DELETE')
-
-                        <button
-                            onclick="return confirm('Delete submission?')"
-                            class="text-red-500">
-                            Delete
-                        </button>
-
-                    </form>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="6" class="border p-4 text-center">
-                    No submissions found.
-                </td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
 
 </x-layouts::app>

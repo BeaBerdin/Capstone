@@ -1,62 +1,58 @@
 <x-layouts::app :title="__('Edit Certificate')">
 
-<h1 class="text-2xl font-bold mb-6">Edit Certificate</h1>
+<div class="min-h-screen bg-[#f8f9fc]">
 
-<form action="{{ route('certificates.update', $certificate) }}"
-      method="POST"
-      class="space-y-4">
+    <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-    @csrf
-    @method('PUT')
+        <div class="mx-auto max-w-3xl">
 
-    <select name="student_id" class="w-full border rounded p-3">
-        @foreach($students as $student)
-            <option value="{{ $student->id }}"
-                {{ $certificate->student_id == $student->id ? 'selected' : '' }}>
-                {{ $student->name }}
-            </option>
-        @endforeach
-    </select>
+            <a href="{{ route('certificates.index') }}" class="text-xs font-semibold text-violet-600 hover:text-violet-700">
+                &larr; Back to Certificates
+            </a>
 
-    <select name="course_id" class="w-full border rounded p-3">
-        @foreach($courses as $course)
-            <option value="{{ $course->id }}"
-                {{ $certificate->course_id == $course->id ? 'selected' : '' }}>
-                {{ $course->title }}
-            </option>
-        @endforeach
-    </select>
+            <p class="mt-5 text-xs font-bold uppercase tracking-[.12em] text-violet-600">
+                Academic Records
+            </p>
 
-    <input type="text"
-           name="certificate_number"
-           value="{{ $certificate->certificate_number }}"
-           class="w-full border rounded p-3">
+            <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                Edit Certificate
+            </h1>
 
-    <input type="date"
-           name="issued_date"
-           value="{{ $certificate->issued_date }}"
-           class="w-full border rounded p-3">
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+                {{ $certificate->certificate_number }}
+            </p>
 
-    <input type="text"
-           name="certificate_file"
-           value="{{ $certificate->certificate_file }}"
-           class="w-full border rounded p-3">
+            <form
+                action="{{ route('certificates.update', $certificate) }}"
+                method="POST"
+                class="pw-card mt-7 space-y-6 p-5 sm:p-7"
+            >
+                @csrf
+                @method('PUT')
 
-    <select name="status" class="w-full border rounded p-3">
-        <option value="issued" {{ $certificate->status == 'issued' ? 'selected' : '' }}>
-            Issued
-        </option>
+                @include('certificates.partials.form', ['certificate' => $certificate])
 
-        <option value="revoked" {{ $certificate->status == 'revoked' ? 'selected' : '' }}>
-            Revoked
-        </option>
-    </select>
+                <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                    <a
+                        href="{{ route('certificates.index') }}"
+                        class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
+                    >
+                        Cancel
+                    </a>
 
-    <button type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded">
-        Update Certificate
-    </button>
+                    <button
+                        type="submit"
+                        class="inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                    >
+                        Update Certificate
+                    </button>
+                </div>
+            </form>
 
-</form>
+        </div>
+
+    </main>
+
+</div>
 
 </x-layouts::app>
