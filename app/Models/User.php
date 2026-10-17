@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use LogicException;
 
 /**
  * @property int $id
@@ -41,6 +42,20 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * Accounts are deactivated (is_active = false), never deleted.
+     * Deleting a user would also delete their enrollments, payments,
+     * submissions and certificates through the database's cascade rules.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (self $user): void {
+            throw new LogicException(
+                'PATHWISE accounts are deactivated, not deleted, so their records are kept.'
+            );
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

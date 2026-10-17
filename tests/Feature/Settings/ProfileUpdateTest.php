@@ -43,33 +43,35 @@ test('email verification status is unchanged when email address is unchanged', f
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can delete their account', function () {
+test('user can deactivate their account', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.delete-user-modal')
         ->set('password', 'password')
-        ->call('deleteUser');
+        ->call('deactivateAccount');
 
     $response
         ->assertHasNoErrors()
         ->assertRedirect('/');
 
-    expect($user->fresh())->toBeNull();
+    // The account still exists; it is only switched off.
+    expect($user->fresh())->not->toBeNull()
+        ->and($user->fresh()->is_active)->toBeFalse();
     expect(auth()->check())->toBeFalse();
 });
 
-test('correct password must be provided to delete account', function () {
+test('correct password must be provided to deactivate account', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.delete-user-modal')
         ->set('password', 'wrong-password')
-        ->call('deleteUser');
+        ->call('deactivateAccount');
 
     $response->assertHasErrors(['password']);
 
-    expect($user->fresh())->not->toBeNull();
+    expect($user->fresh()->is_active)->not->toBeFalse();
 });

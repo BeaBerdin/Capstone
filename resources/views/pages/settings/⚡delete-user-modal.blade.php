@@ -11,27 +11,43 @@ new class extends Component {
     public string $password = '';
 
     /**
-     * Delete the currently authenticated user.
+     * Deactivate the currently authenticated user.
+     *
+     * PATHWISE never deletes accounts: deleting a user would also delete
+     * their enrollments, payments, submissions and certificates (and, for
+     * a teacher, every student's records in their courses). The account is
+     * switched off instead and can be reactivated by the Super Admin.
      */
-    public function deleteUser(Logout $logout): void
+    public function deactivateAccount(Logout $logout): void
     {
         $this->validate([
             'password' => $this->currentPasswordRules(),
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        $user = Auth::user();
+
+        // The Super Admin could otherwise lock the EDP out of the system.
+        if ($user->hasRole('super_admin')) {
+            $this->addError('password', __('A Super Admin account cannot be deactivated from here.'));
+
+            return;
+        }
+
+        $user->forceFill(['is_active' => false])->save();
+
+        $logout();
 
         $this->redirect('/', navigate: true);
     }
 }; ?>
 
-<flux:modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
-    <form method="POST" wire:submit="deleteUser" class="space-y-6">
+<flux:modal name="confirm-user-deactivation" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
+    <form method="POST" wire:submit="deactivateAccount" class="space-y-6">
         <div>
-            <flux:heading size="lg">{{ __('Are you sure you want to delete your account?') }}</flux:heading>
+            <flux:heading size="lg">{{ __('Deactivate your account?') }}</flux:heading>
 
             <flux:subheading>
-                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                {{ __('You will be signed out and will not be able to sign in until the EDP office reactivates your account. Nothing is deleted. Please enter your password to confirm.') }}
             </flux:subheading>
         </div>
 
@@ -42,8 +58,8 @@ new class extends Component {
                 <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
             </flux:modal.close>
 
-            <flux:button variant="danger" type="submit" data-test="confirm-delete-user-button">
-                {{ __('Delete account') }}
+            <flux:button variant="danger" type="submit" data-test="confirm-deactivate-user-button">
+                {{ __('Deactivate account') }}
             </flux:button>
         </div>
     </form>
