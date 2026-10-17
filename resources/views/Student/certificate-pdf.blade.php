@@ -176,7 +176,7 @@
                     <td>
                         <div class="heading">Certificate Number</div>
                         <div class="value">{{ $certificate->certificate_number }}</div>
-                        <div class="verify">Verify at: pathwise.test</div>
+                        <div class="verify">Verify at: {{ route('certificates.verify') }}</div>
                     </td>
 
                     <td>

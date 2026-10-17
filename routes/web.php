@@ -14,6 +14,7 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
+use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\AIRecommendationController;
 use App\Http\Controllers\StudentProgressController;
 use App\Http\Controllers\CertificateManagementController;
@@ -479,6 +480,20 @@ Route::middleware('role:student')->group(function () {
 
 Route::get('/invitations/{code}', [CourseInvitationController::class, 'show'])
     ->name('course-invitations.show');
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC CERTIFICATE VERIFICATION
+|--------------------------------------------------------------------------
+|
+| The "Verify at" address printed on certificates. Public, and limited to
+| 10 lookups per minute per visitor to prevent guessing numbers.
+|
+*/
+
+Route::get('/verify-certificate', [CertificateVerificationController::class, 'show'])
+    ->middleware('throttle:10,1')
+    ->name('certificates.verify');
 // =====================================================
 // PAYMONGO WEBHOOK
 // =====================================================
