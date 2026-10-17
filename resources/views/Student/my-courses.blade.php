@@ -5,13 +5,39 @@
 
     $totalCourses = $courseEnrollments->count();
 
-    $activeCourses = $courseEnrollments
-        ->filter(fn ($item) => strtolower($item->status ?? '') === 'active')
-        ->count();
+    $activeCourses = $sections['active']->count();
 
-    $completedCourses = $courseEnrollments
-        ->filter(fn ($item) => strtolower($item->status ?? '') === 'completed')
-        ->count();
+    $completedCourses = $sections['completed']->count();
+
+    $courseSections = [
+        'active' => [
+            'title' => 'In Progress',
+            'caption' => 'Courses you are taking now',
+            'dot' => 'bg-blue-500',
+            'enrollments' => $sections['active'],
+            'empty_title' => 'No courses in progress',
+            'empty_copy' => 'Start something new from the marketplace. Courses you enroll in will show up here.',
+        ],
+        'completed' => [
+            'title' => 'Completed',
+            'caption' => 'Finished courses and certificates',
+            'dot' => 'bg-emerald-500',
+            'enrollments' => $sections['completed'],
+            'empty_title' => 'No completed courses yet',
+            'empty_copy' => 'Finish every lesson in a course and it will move here, together with your certificate.',
+        ],
+        'cancelled' => [
+            'title' => 'Cancelled',
+            'caption' => 'Enrollments that no longer give access',
+            'dot' => 'bg-slate-400',
+            'enrollments' => $sections['cancelled'],
+        ],
+    ];
+
+    // In Progress and Completed always show; Cancelled only when it has courses.
+    if ($sections['cancelled']->isEmpty()) {
+        unset($courseSections['cancelled']);
+    }
 
     $averageProgress = $totalCourses > 0
         ? (float) $courseEnrollments->avg('progress_percentage')
@@ -66,6 +92,15 @@
         transform: translateY(-3px);
         border-color: #ddd6fe;
         box-shadow: 0 14px 35px rgba(76, 29, 149, 0.07);
+    }
+
+    /* A cancelled course cannot be opened, so it does not lift on hover. */
+    .pw-course-card-cancelled,
+    .pw-course-card-cancelled:hover {
+        transform: none;
+        border-color: #e7e9ef;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.035);
+        background: #fbfbfd;
     }
 </style>
 
@@ -193,7 +228,7 @@
                         <div>
 
                             <p class="text-xs font-semibold text-slate-500">
-                                Active Courses
+                                In Progress
                             </p>
 
                             <p class="mt-2 text-3xl font-bold tracking-tight text-blue-600">
@@ -352,7 +387,7 @@
                     <div
                         class="mt-5 grid grid-cols-1 gap-3
                                md:grid-cols-2
-                               xl:grid-cols-[minmax(280px,1fr)_220px_190px_190px_auto]"
+                               xl:grid-cols-[minmax(280px,1fr)_220px_190px]"
                     >
 
 
@@ -405,28 +440,6 @@
 
 
 
-                        {{-- STATUS --}}
-                        <select
-                            id="statusFilter"
-                            class="pw-control h-11 px-3"
-                        >
-
-                            <option value="">
-                                All Status
-                            </option>
-
-                            <option value="active">
-                                Active
-                            </option>
-
-                            <option value="completed">
-                                Completed
-                            </option>
-
-                        </select>
-
-
-
                         {{-- PROGRESS --}}
                         <select
                             id="progressFilter"
@@ -464,476 +477,100 @@
 
 
             {{-- =====================================================
-                COURSES
+                COURSES: In Progress, Completed, Cancelled
             ====================================================== --}}
 
             @if($courseEnrollments->isNotEmpty())
 
-                <section
-                    id="courseGrid"
-                    class="mt-6 grid grid-cols-1 gap-5
-                           md:grid-cols-2 xl:grid-cols-3"
-                >
+                @foreach($courseSections as $key => $section)
 
-                    @foreach($courseEnrollments as $enrollment)
+                    <section
+                        class="mt-8"
+                        data-course-section="{{ $key }}"
+                        aria-labelledby="section-{{ $key }}-title"
+                    >
 
-                        @php
-                            $course = $enrollment->course;
+                        <div class="flex items-center justify-between gap-3">
 
-                            if (!$course) {
-                                continue;
-                            }
+                            <div class="flex items-center gap-2.5">
 
-                            $progress = (float) (
-                                $enrollment->progress_percentage ?? 0
-                            );
+                                <span class="h-2.5 w-2.5 shrink-0 rounded-full {{ $section['dot'] }}"></span>
 
-                            $progress = min(
-                                max($progress, 0),
-                                100
-                            );
-
-                            $status = strtolower(
-                                $enrollment->status ?? 'active'
-                            );
-
-                            $isCompleted = $status === 'completed';
-
-                            if ($progress <= 0) {
-                                $progressGroup = 'not-started';
-                            } elseif ($progress < 50) {
-                                $progressGroup = 'early';
-                            } elseif ($progress < 100) {
-                                $progressGroup = 'advanced';
-                            } else {
-                                $progressGroup = 'complete';
-                            }
-
-
-                            $thumbnail = $course->thumbnail ?? null;
-                            $thumbnailUrl = null;
-
-                            if ($thumbnail) {
-
-                                if (
-                                    \Illuminate\Support\Str::startsWith(
-                                        $thumbnail,
-                                        ['http://', 'https://']
-                                    )
-                                ) {
-                                    $thumbnailUrl = $thumbnail;
-                                } else {
-
-                                    $thumbnailUrl = asset(
-                                        'storage/' .
-                                        ltrim($thumbnail, '/')
-                                    );
-                                }
-                            }
-
-
-                            $categoryId =
-                                $course->category?->id ?? '';
-
-                            $searchText = strtolower(
-                                ($course->title ?? '') . ' ' .
-                                ($course->description ?? '') . ' ' .
-                                ($course->category?->name ?? '')
-                            );
-                        @endphp
-
-
-
-                        <article
-                            class="course-card pw-card pw-course-card overflow-hidden"
-                            data-search="{{ $searchText }}"
-                            data-category="{{ $categoryId }}"
-                            data-status="{{ $status }}"
-                            data-progress="{{ $progressGroup }}"
-                        >
-
-
-                            {{-- =========================================
-                                IMAGE
-                            ========================================== --}}
-
-                            <div class="relative h-48 overflow-hidden bg-slate-100">
-
-                                @if($thumbnailUrl)
-
-                                    <img
-                                        src="{{ $thumbnailUrl }}"
-                                        alt="{{ $course->title }}"
-                                        class="h-full w-full object-cover
-                                               transition duration-300"
-                                    >
-
-                                @else
-
-                                    <div
-                                        class="flex h-full w-full
-                                               items-center justify-center
-                                               bg-gradient-to-br
-                                               from-violet-500
-                                               via-indigo-500
-                                               to-blue-500"
-                                    >
-
-                                        <svg
-                                            class="h-12 w-12 text-white/75"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.5"
-                                        >
-                                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-
-                                            <path
-                                                d="M6.5 2H20v20H6.5A2.5 2.5
-                                                   0 014 19.5v-15A2.5 2.5
-                                                   0 016.5 2z"
-                                            ></path>
-                                        </svg>
-
-                                    </div>
-
-                                @endif
-
-
-
-                                {{-- STATUS --}}
-                                <div class="absolute left-3 top-3">
-
-                                    @if($isCompleted)
-
-                                        <span
-                                            class="inline-flex items-center gap-1.5
-                                                   rounded-full bg-emerald-500
-                                                   px-3 py-1.5
-                                                   text-[10px] font-bold text-white
-                                                   shadow-sm"
-                                        >
-
-                                            <span
-                                                class="h-1.5 w-1.5
-                                                       rounded-full bg-white"
-                                            ></span>
-
-                                            Completed
-
-                                        </span>
-
-                                    @else
-
-                                        <span
-                                            class="inline-flex items-center gap-1.5
-                                                   rounded-full bg-white/95
-                                                   px-3 py-1.5
-                                                   text-[10px] font-bold
-                                                   text-blue-700 shadow-sm
-                                                   backdrop-blur"
-                                        >
-
-                                            <span
-                                                class="h-1.5 w-1.5
-                                                       rounded-full bg-blue-500"
-                                            ></span>
-
-                                            Active
-
-                                        </span>
-
-                                    @endif
-
-                                </div>
-
-
-
-                                {{-- PROGRESS --}}
-                                <div
-                                    class="absolute bottom-3 right-3
-                                           rounded-full bg-slate-950/75
-                                           px-3 py-1.5
-                                           text-[11px] font-bold text-white
-                                           backdrop-blur"
-                                >
-                                    {{ number_format($progress, 0) }}%
-                                </div>
-
-                            </div>
-
-
-
-                            {{-- =========================================
-                                CONTENT
-                            ========================================== --}}
-
-                            <div class="p-5">
-
-
-                                {{-- CATEGORY --}}
-                                <p
-                                    class="text-[10px] font-bold uppercase
-                                           tracking-[.08em] text-violet-500"
-                                >
-                                    {{ $course->category?->name ?? 'Course' }}
-                                </p>
-
-
-
-                                {{-- TITLE --}}
                                 <h2
-                                    class="mt-2 line-clamp-2 min-h-[48px]
-                                           text-base font-bold leading-6
-                                           text-slate-900"
+                                    id="section-{{ $key }}-title"
+                                    class="text-base font-bold text-slate-900 sm:text-lg"
                                 >
-                                    {{ $course->title }}
+                                    {{ $section['title'] }}
                                 </h2>
 
-
-
-                                {{-- DESCRIPTION --}}
-                                <p
-                                    class="mt-2 line-clamp-2 min-h-[40px]
-                                           text-xs leading-5 text-slate-500"
+                                <span
+                                    class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600"
+                                    data-section-count
                                 >
-                                    {{
-                                        \Illuminate\Support\Str::limit(
-                                            $course->description
-                                                ?? 'Continue your learning journey in this course.',
-                                            110
-                                        )
-                                    }}
+                                    {{ $section['enrollments']->count() }}
+                                </span>
+
+                            </div>
+
+                            <p class="hidden text-xs text-slate-400 sm:block">
+                                {{ $section['caption'] }}
+                            </p>
+
+                        </div>
+
+
+                        @if($section['enrollments']->isNotEmpty())
+
+                            <div
+                                class="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+                                data-section-grid
+                            >
+                                @foreach($section['enrollments'] as $enrollment)
+                                    @include('Student.partials.my-course-card', [
+                                        'enrollment' => $enrollment,
+                                        'certificate' => $certificates->get($enrollment->course_id),
+                                    ])
+                                @endforeach
+                            </div>
+
+                            <p
+                                class="pw-card mt-4 hidden px-5 py-6 text-center text-xs text-slate-400"
+                                data-section-no-match
+                            >
+                                No {{ strtolower($section['title']) }} courses match your filters.
+                            </p>
+
+                        @else
+
+                            <div
+                                class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-8 text-center sm:px-6"
+                                data-section-empty
+                            >
+
+                                <p class="text-sm font-semibold text-slate-700">
+                                    {{ $section['empty_title'] }}
                                 </p>
 
+                                <p class="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">
+                                    {{ $section['empty_copy'] }}
+                                </p>
 
-
-                                {{-- INFO --}}
-                                <div class="mt-4 flex flex-wrap gap-2">
-
-                                    @if($course->difficulty_level)
-
-                                        <span
-                                            class="rounded-full bg-slate-100
-                                                   px-2.5 py-1
-                                                   text-[10px] font-semibold
-                                                   text-slate-600"
-                                        >
-                                            {{ ucfirst($course->difficulty_level) }}
-                                        </span>
-
-                                    @endif
-
-
-                                    @if($course->estimated_hours)
-
-                                        <span
-                                            class="rounded-full bg-blue-50
-                                                   px-2.5 py-1
-                                                   text-[10px] font-semibold
-                                                   text-blue-600"
-                                        >
-                                            {{ $course->estimated_hours }} hrs
-                                        </span>
-
-                                    @endif
-
-
-                                    @if($course->certificate_available)
-
-                                        <span
-                                            class="rounded-full bg-orange-50
-                                                   px-2.5 py-1
-                                                   text-[10px] font-semibold
-                                                   text-orange-600"
-                                        >
-                                            Certificate
-                                        </span>
-
-                                    @endif
-
-                                </div>
-
-
-
-                                {{-- PROGRESS --}}
-                                <div class="mt-5">
-
-                                    <div class="flex items-center justify-between">
-
-                                        <span class="text-xs font-semibold text-slate-500">
-                                            Course Progress
-                                        </span>
-
-
-                                        <span
-                                            class="text-xs font-bold
-                                                   {{ $isCompleted
-                                                       ? 'text-emerald-600'
-                                                       : 'text-violet-600'
-                                                   }}"
-                                        >
-                                            {{ number_format($progress, 0) }}%
-                                        </span>
-
-                                    </div>
-
-
-                                    <div
-                                        class="mt-2 h-2 overflow-hidden
-                                               rounded-full bg-slate-100"
-                                    >
-
-                                        <div
-                                            class="h-full rounded-full
-                                                   {{ $isCompleted
-                                                       ? 'bg-emerald-500'
-                                                       : 'bg-violet-600'
-                                                   }}"
-                                            style="width: {{ $progress }}%;"
-                                        ></div>
-
-                                    </div>
-
-                                </div>
-
-
-
-                                {{-- ENROLLMENT --}}
-                                <div
-                                    class="mt-4 flex items-center justify-between
-                                           border-t border-slate-100 pt-4"
-                                >
-
-                                    <div>
-
-                                        <p class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-                                            Enrolled
-                                        </p>
-
-                                        <p class="mt-1 text-[11px] font-semibold text-slate-600">
-
-                                            @if($enrollment->enrolled_at)
-
-                                                {{
-                                                    \Carbon\Carbon::parse(
-                                                        $enrollment->enrolled_at
-                                                    )->format('M d, Y')
-                                                }}
-
-                                            @else
-
-                                                —
-
-                                            @endif
-
-                                        </p>
-
-                                    </div>
-
-
-                                    <div class="text-right">
-
-                                        <p class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-                                            Status
-                                        </p>
-
-                                        <p
-                                            class="mt-1 text-[11px] font-bold
-                                                   {{ $isCompleted
-                                                       ? 'text-emerald-600'
-                                                       : 'text-blue-600'
-                                                   }}"
-                                        >
-                                            {{ ucfirst($status) }}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-
-                                {{-- ACTION --}}
-                                @if($isCompleted)
-
-                                    <div class="mt-5 grid grid-cols-2 gap-2">
-
-                                        <a
-                                            href="{{ route('student.learn.course', $course) }}"
-                                            class="inline-flex h-10 items-center justify-center
-                                                   rounded-xl border border-slate-200 bg-white
-                                                   px-3 text-xs font-semibold text-slate-600
-                                                   transition hover:border-violet-200
-                                                   hover:text-violet-700"
-                                        >
-                                            Review Course
-                                        </a>
-
-
-                                        @if($course->certificate_available)
-
-                                            <a
-                                                href="{{ route('student.certificates') }}"
-                                                class="inline-flex h-10 items-center justify-center
-                                                       rounded-xl bg-emerald-600
-                                                       px-3 text-xs font-semibold text-white
-                                                       transition hover:bg-emerald-700"
-                                            >
-                                                Certificate
-                                            </a>
-
-                                        @else
-
-                                            <a
-                                                href="{{ route('student.course.show', $course) }}"
-                                                class="inline-flex h-10 items-center justify-center
-                                                       rounded-xl bg-violet-600
-                                                       px-3 text-xs font-semibold text-white
-                                                       transition hover:bg-violet-700"
-                                            >
-                                                Course Details
-                                            </a>
-
-                                        @endif
-
-                                    </div>
-
-
-                                @else
-
+                                @if($key === 'active')
                                     <a
-                                        href="{{ route('student.learn.course', $course) }}"
-                                        class="mt-5 inline-flex h-10 w-full
-                                               items-center justify-center gap-2
-                                               rounded-xl bg-violet-600
-                                               text-xs font-semibold text-white
-                                               transition hover:bg-violet-700"
+                                        href="{{ route('student.marketplace') }}"
+                                        class="mt-4 inline-flex h-10 items-center justify-center rounded-xl border border-violet-200 bg-white px-4 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
                                     >
-
-                                        <svg
-                                            class="h-3.5 w-3.5"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                        >
-                                            <circle cx="12" cy="12" r="9"></circle>
-                                            <path d="m10 8 6 4-6 4z"></path>
-                                        </svg>
-
-                                        Continue Learning
+                                        Browse Courses
                                     </a>
-
                                 @endif
 
                             </div>
 
-                        </article>
+                        @endif
 
-                    @endforeach
+                    </section>
 
-                </section>
+                @endforeach
 
 
 
@@ -1076,208 +713,85 @@
 
 <script>
     function initializeMyCoursesPage() {
-
-        const searchInput =
-            document.getElementById('courseSearch');
-
-        const categoryFilter =
-            document.getElementById('categoryFilter');
-
-        const statusFilter =
-            document.getElementById('statusFilter');
-
-        const progressFilter =
-            document.getElementById('progressFilter');
-
-        const clearButton =
-            document.getElementById('clearFilters');
-
-        const emptyResetButton =
-            document.getElementById('emptyResetButton');
-
-        const counter =
-            document.getElementById('courseCounter');
-
-        const emptyState =
-            document.getElementById('noCourseResults');
-
-        const grid =
-            document.getElementById('courseGrid');
-
-        const cards = Array.from(
-            document.querySelectorAll('.course-card')
-        );
-
+        const searchInput = document.getElementById('courseSearch');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const progressFilter = document.getElementById('progressFilter');
+        const emptyResetButton = document.getElementById('emptyResetButton');
+        const counter = document.getElementById('courseCounter');
+        const emptyState = document.getElementById('noCourseResults');
+        const sections = Array.from(document.querySelectorAll('[data-course-section]'));
+        const cards = Array.from(document.querySelectorAll('.course-card'));
 
         if (!searchInput || cards.length === 0) {
             return;
         }
 
-
         function filterCourses() {
-
-            const search =
-                searchInput.value
-                    .trim()
-                    .toLowerCase();
-
-            const category =
-                categoryFilter.value;
-
-            const status =
-                statusFilter.value;
-
-            const progress =
-                progressFilter.value;
+            const search = searchInput.value.trim().toLowerCase();
+            const category = categoryFilter.value;
+            const progress = progressFilter.value;
+            const filtering = Boolean(search || category || progress);
 
             let visible = 0;
 
-
             cards.forEach(function (card) {
-
-                const matchesSearch =
-                    !search ||
-                    card.dataset.search.includes(search);
-
-                const matchesCategory =
-                    !category ||
-                    card.dataset.category === category;
-
-                const matchesStatus =
-                    !status ||
-                    card.dataset.status === status;
-
-                const matchesProgress =
-                    !progress ||
-                    card.dataset.progress === progress;
-
-
                 const show =
-                    matchesSearch &&
-                    matchesCategory &&
-                    matchesStatus &&
-                    matchesProgress;
+                    (!search || card.dataset.search.includes(search)) &&
+                    (!category || card.dataset.category === category) &&
+                    (!progress || card.dataset.progress === progress);
 
-
-                card.classList.toggle(
-                    'hidden',
-                    !show
-                );
-
+                card.classList.toggle('hidden', !show);
 
                 if (show) {
                     visible++;
                 }
-
             });
 
+            // Per section: hide the grid and say so when its courses are all
+            // filtered out. A section with no courses keeps its own message,
+            // and while filtering it is hidden to keep the results short.
+            sections.forEach(function (section) {
+                const grid = section.querySelector('[data-section-grid]');
+                const noMatch = section.querySelector('[data-section-no-match]');
+                const shown = section.querySelectorAll('.course-card:not(.hidden)').length;
+
+                if (grid) {
+                    grid.classList.toggle('hidden', shown === 0);
+                    noMatch.classList.toggle('hidden', shown !== 0);
+                }
+
+                section.classList.toggle('hidden', visible === 0 || (filtering && !grid));
+            });
 
             if (counter) {
-
-                counter.textContent =
-                    visible +
-                    (
-                        visible === 1
-                            ? ' course'
-                            : ' courses'
-                    );
-
+                counter.textContent = visible + (visible === 1 ? ' course' : ' courses');
             }
-
 
             if (emptyState) {
-
-                emptyState.classList.toggle(
-                    'hidden',
-                    visible !== 0
-                );
-
+                emptyState.classList.toggle('hidden', visible !== 0);
             }
-
-
-            if (grid) {
-
-                grid.classList.toggle(
-                    'hidden',
-                    visible === 0
-                );
-
-            }
-
         }
-
 
         function resetFilters() {
-
             searchInput.value = '';
             categoryFilter.value = '';
-            statusFilter.value = '';
             progressFilter.value = '';
-
             filterCourses();
-
         }
 
-
-        searchInput.addEventListener(
-            'input',
-            filterCourses
-        );
-
-
-        categoryFilter.addEventListener(
-            'change',
-            filterCourses
-        );
-
-
-        statusFilter.addEventListener(
-            'change',
-            filterCourses
-        );
-
-
-        progressFilter.addEventListener(
-            'change',
-            filterCourses
-        );
-
-
-        if (clearButton) {
-
-            clearButton.addEventListener(
-                'click',
-                resetFilters
-            );
-
-        }
-
+        searchInput.addEventListener('input', filterCourses);
+        categoryFilter.addEventListener('change', filterCourses);
+        progressFilter.addEventListener('change', filterCourses);
 
         if (emptyResetButton) {
-
-            emptyResetButton.addEventListener(
-                'click',
-                resetFilters
-            );
-
+            emptyResetButton.addEventListener('click', resetFilters);
         }
 
-
         filterCourses();
-
     }
 
-
-    document.addEventListener(
-        'DOMContentLoaded',
-        initializeMyCoursesPage
-    );
-
-
-    document.addEventListener(
-        'livewire:navigated',
-        initializeMyCoursesPage
-    );
+    document.addEventListener('DOMContentLoaded', initializeMyCoursesPage);
+    document.addEventListener('livewire:navigated', initializeMyCoursesPage);
 </script>
 
 

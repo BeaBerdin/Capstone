@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\CourseCategory;
 use App\Models\CourseTemplate;
@@ -367,11 +368,32 @@ class CourseController extends Controller
                 auth()->id()
             )
             ->latest()
-            ->get();
+            ->get()
+            ->filter(fn ($enrollment) => $enrollment->course)
+            ->values();
+
+        // In Progress, Completed and Cancelled sections. Any other status
+        // is treated as in progress, matching the badge on the card.
+        $sections = [
+            'active' => $enrollments->reject(
+                fn ($enrollment) => in_array($enrollment->status, ['completed', 'cancelled'], true)
+            )->values(),
+            'completed' => $enrollments
+                ->where('status', 'completed')
+                ->sortByDesc(fn ($enrollment) => $enrollment->completed_at ?? $enrollment->updated_at)
+                ->values(),
+            'cancelled' => $enrollments->where('status', 'cancelled')->values(),
+        ];
+
+        // Issued certificates by course, for the completed cards.
+        $certificates = Certificate::where('student_id', auth()->id())
+            ->where('status', 'issued')
+            ->get()
+            ->keyBy('course_id');
 
         return view(
             'Student.my-courses',
-            compact('enrollments')
+            compact('enrollments', 'sections', 'certificates')
         );
     }
 
