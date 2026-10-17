@@ -561,6 +561,12 @@
 
                     <div class="px-5 pb-5 pt-6">
 
+                        <x-chart
+                            :chart="$charts['enrollmentTrend']"
+                            :height="200"
+                            data-chart-name="enrollment-trend"
+                        >
+
                         <div
                             class="flex h-[200px]
                                    items-end gap-4"
@@ -612,6 +618,8 @@
                             @endforeach
 
                         </div>
+
+                        </x-chart>
 
                     </div>
 
@@ -674,7 +682,16 @@
 
                 @if(array_sum($scoreDistribution) > 0)
 
-                    <div class="space-y-5 p-5">
+                    <div class="p-5">
+
+                    <x-chart
+                        :chart="$charts['scoreDistribution']"
+                        type="hbar"
+                        :height="200"
+                        data-chart-name="score-distribution"
+                    >
+
+                    <div class="space-y-5">
 
                         @foreach($scoreDistribution as $label => $count)
 
@@ -717,6 +734,10 @@
                             </div>
 
                         @endforeach
+
+                    </div>
+
+                    </x-chart>
 
                     </div>
 

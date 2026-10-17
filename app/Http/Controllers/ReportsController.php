@@ -245,7 +245,33 @@ class ReportsController extends Controller
         // User engagement from lesson activity (lesson_progress).
         $engagement = app(EngagementReport::class)->build($startDate);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Charts
+        |--------------------------------------------------------------------------
+        */
+
+        $cancelledEnrollments = (clone $enrollmentQuery)
+            ->where('status', 'cancelled')
+            ->count();
+
+        $charts = [
+            'enrollmentStatus' => $this->barChart('Enrollments', [
+                'Active' => $activeEnrollments,
+                'Completed' => $completedEnrollments,
+                'Cancelled' => $cancelledEnrollments,
+            ]),
+
+            'weeklyCompletions' => $this->barChart(
+                'Lessons completed',
+                collect($engagement['weeklyCompletions'])
+                    ->pluck('completed', 'week')
+                    ->all()
+            ),
+        ];
+
         return view('reports.index', compact(
+            'charts',
             'engagement',
             'range',
             'totalStudents',
@@ -819,7 +845,20 @@ class ReportsController extends Controller
             ->take(5)
             ->values();
 
+        $charts = [
+            'enrollmentTrend' => $this->barChart(
+                'Enrollments',
+                $enrollmentTrend->pluck('count', 'label')->all()
+            ),
+
+            'scoreDistribution' => $this->barChart(
+                'Quiz attempts',
+                $scoreDistribution
+            ),
+        ];
+
         return view('Teacher.analytics', compact(
+            'charts',
             'teacherCourses',
             'selectedCourseId',
             'range',
@@ -838,5 +877,20 @@ class ReportsController extends Controller
             'coursePerformance',
             'learnerSnapshot'
         ));
+    }
+
+    /**
+     * Data for one single-series bar chart (see the x-chart component).
+     *
+     * @param  array<string, int|float>  $points  Bar label => value, in display order.
+     * @return array{label: string, labels: array<int, string>, values: array<int, int|float>}
+     */
+    private function barChart(string $label, array $points): array
+    {
+        return [
+            'label' => $label,
+            'labels' => array_map('strval', array_keys($points)),
+            'values' => array_values($points),
+        ];
     }
 }

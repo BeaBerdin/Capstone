@@ -324,6 +324,44 @@
 
                 </div>
 
+
+                {{-- Enrollments by status --}}
+                <div class="mt-4 rounded-xl border border-gray-200 bg-white">
+
+                    <div class="border-b border-gray-100 p-6">
+                        <h3 class="text-base font-bold text-gray-900">Enrollments by Status</h3>
+                        <p class="mt-1 text-sm text-gray-500">Selected report period.</p>
+                    </div>
+
+                    @if($totalEnrollments > 0)
+
+                        <x-chart
+                            :chart="$charts['enrollmentStatus']"
+                            type="hbar"
+                            :height="160"
+                            canvas-class="p-6"
+                            data-chart-name="enrollment-status"
+                        >
+                            <dl class="divide-y divide-gray-100 text-sm">
+                                @foreach(array_combine($charts['enrollmentStatus']['labels'], $charts['enrollmentStatus']['values']) as $status => $count)
+                                    <div class="flex items-center justify-between px-6 py-2.5">
+                                        <dt class="text-gray-700">{{ $status }}</dt>
+                                        <dd class="font-semibold text-gray-900">{{ number_format($count) }}</dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+                        </x-chart>
+
+                    @else
+
+                        <p class="p-6 text-sm text-gray-500">
+                            No enrollments in this period.
+                        </p>
+
+                    @endif
+
+                </div>
+
             </section>
 
 
@@ -747,6 +785,11 @@
                             <p class="mt-1 text-sm text-gray-500">Last 8 weeks.</p>
                         </div>
 
+                        <x-chart
+                            :chart="$charts['weeklyCompletions']"
+                            canvas-class="p-6"
+                            data-chart-name="weekly-completions"
+                        >
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead>
@@ -765,6 +808,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        </x-chart>
 
                     </div>
 
