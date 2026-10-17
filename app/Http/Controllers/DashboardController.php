@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\QuizResult;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -48,15 +49,105 @@ class DashboardController extends Controller
 
     $totalEnrollments = Enrollment::count();
 
+    /*
+    | Summary cards (Manuscript, Super Admin Dashboard): Total Users,
+    | Pending Role Assignments, Payments to Verify and System Status.
+    */
+    $pendingRoleAssignments = User::doesntHave('roles')->count();
+
+    $paymentsToVerify = Transaction::where('status', 'pending')->count();
+
+    // Configuration checks only; no keys or passwords are shown.
+    $systemChecks = [
+        'Database' => true,
+        'Gemini AI' => filled(config('services.gemini.api_key')),
+        'PayMongo payments' => filled(config('services.paymongo.secret_key'))
+            && filled(config('services.paymongo.public_key')),
+        'Email delivery' => ! in_array(config('mail.default'), ['log', 'array', null], true),
+    ];
+
+    $systemIssues = collect($systemChecks)->reject()->keys()->all();
+
+    $recentActivity = $this->superAdminRecentActivity();
+
     return view('super-admin.dashboard', compact(
         'totalUsers',
         'totalStudents',
         'totalTeachers',
         'totalAdmins',
         'totalCourses',
-        'totalEnrollments'
+        'totalEnrollments',
+        'pendingRoleAssignments',
+        'paymentsToVerify',
+        'systemChecks',
+        'systemIssues',
+        'recentActivity'
     ));
 }
+
+    /**
+     * The latest registrations, role assignments, enrollments and payments,
+     * newest first, each tagged with its status.
+     *
+     * @return \Illuminate\Support\Collection<int, array{type: string, title: string, detail: string, status: string, at: \Carbon\CarbonInterface}>
+     */
+    private function superAdminRecentActivity(int $limit = 8)
+    {
+        $registrations = User::latest()->take($limit)->get()
+            ->map(fn (User $user) => [
+                'type' => 'Registration',
+                'title' => $user->name,
+                'detail' => 'New account',
+                'status' => $user->hasVerifiedEmail() ? 'Verified' : 'Pending',
+                'at' => $user->created_at,
+            ]);
+
+        $roleAssignments = DB::table('user_roles')
+            ->join('users', 'users.id', '=', 'user_roles.user_id')
+            ->join('roles', 'roles.id', '=', 'user_roles.role_id')
+            ->whereNotNull('user_roles.created_at')
+            ->orderByDesc('user_roles.created_at')
+            ->take($limit)
+            ->get(['users.name', 'roles.name as role', 'user_roles.created_at'])
+            ->map(fn ($row) => [
+                'type' => 'Role assignment',
+                'title' => $row->name,
+                'detail' => 'Assigned role: '.str_replace('_', ' ', $row->role),
+                'status' => 'Verified',
+                'at' => \Illuminate\Support\Carbon::parse($row->created_at),
+            ]);
+
+        $enrollments = Enrollment::with(['student', 'course'])->latest()->take($limit)->get()
+            ->map(fn (Enrollment $enrollment) => [
+                'type' => 'Enrollment',
+                'title' => $enrollment->student?->name ?? 'Student',
+                'detail' => $enrollment->course?->title ?? 'Course',
+                'status' => ucfirst((string) $enrollment->status),
+                'at' => $enrollment->created_at,
+            ]);
+
+        $payments = Transaction::with(['student', 'course'])->latest()->take($limit)->get()
+            ->map(fn (Transaction $transaction) => [
+                'type' => 'Payment',
+                'title' => $transaction->student?->name ?? 'Student',
+                'detail' => '₱'.number_format((float) $transaction->amount, 2).' · '.($transaction->course?->title ?? 'Course'),
+                'status' => match ($transaction->status) {
+                    'approved' => 'Verified',
+                    'rejected' => 'Rejected',
+                    default => 'Pending',
+                },
+                'at' => $transaction->created_at,
+            ]);
+
+        return $registrations
+            ->concat($roleAssignments)
+            ->concat($enrollments)
+            ->concat($payments)
+            ->filter(fn (array $item) => $item['at'] !== null)
+            ->sortByDesc(fn (array $item) => $item['at']->getTimestamp())
+            ->take($limit)
+            ->values();
+    }
     public function student()
     {
         $studentId = auth()->id();

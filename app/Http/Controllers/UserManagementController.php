@@ -106,6 +106,59 @@ class UserManagementController extends Controller
     }
 
     /**
+     * Mark a user's email address as verified (Manuscript FR (n): the
+     * Super Admin can verify user accounts). The EDP vouches for the address,
+     * for example when the user did not receive the verification email.
+     */
+    public function verifyEmail(User $user)
+    {
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('success', $user->name.'\'s email is already verified.');
+        }
+
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        return back()->with('success', $user->name.'\'s email has been marked as verified.');
+    }
+
+    /**
+     * Edit a user's name and email. Accounts are never deleted here.
+     */
+    public function edit(User $user)
+    {
+        return view('users.edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'name' => $this->nameRules(),
+            // RFC format check only (no DNS lookup), like account creation.
+            'email' => [
+                'required',
+                'string',
+                'email:rfc',
+                'max:255',
+                Rule::unique(User::class)->ignore($user->id),
+            ],
+        ]);
+
+        $emailChanged = strcasecmp($validated['email'], $user->email) !== 0;
+
+        $user->forceFill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            // A new address entered by the EDP is treated as verified, like
+            // accounts the EDP creates, so the user is not locked out.
+            'email_verified_at' => $emailChanged ? now() : $user->email_verified_at,
+        ])->save();
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', $user->name.'\'s details have been updated.');
+    }
+
+    /**
      * Activate or deactivate an account.
      *
      * A deactivated user cannot use the system: EnsureUserIsActive logs

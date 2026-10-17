@@ -90,7 +90,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class, 'user_roles');
+        // Timestamps record when a role was assigned (shown in the Super
+        // Admin dashboard's Recent Activity).
+        return $this->belongsToMany(Role::class, 'user_roles')->withTimestamps();
     }
 
     public function department()

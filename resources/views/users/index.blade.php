@@ -709,8 +709,33 @@
                                             </div>
 
                                             @if(! $user->hasVerifiedEmail())
-                                                <p class="mt-1 text-[10px] text-amber-600">Email not verified</p>
+                                                <div class="mt-1.5 flex items-center gap-2">
+                                                    <p class="text-[10px] text-amber-600">Email not verified</p>
+
+                                                    <form
+                                                        action="{{ route('users.verify-email', $user) }}"
+                                                        method="POST"
+                                                        onsubmit="return confirm('Mark this email address as verified?')"
+                                                    >
+                                                        @csrf
+                                                        @method('PATCH')
+
+                                                        <button
+                                                            type="submit"
+                                                            class="h-7 rounded-lg border border-amber-200 px-2 text-[10px] font-bold text-amber-700 transition hover:bg-amber-50"
+                                                        >
+                                                            Mark verified
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             @endif
+
+                                            <a
+                                                href="{{ route('users.edit', $user) }}"
+                                                class="mt-1.5 inline-flex h-7 items-center rounded-lg border border-violet-200 px-2.5 text-[10px] font-bold text-violet-700 transition hover:bg-violet-50"
+                                            >
+                                                Edit name / email
+                                            </a>
 
                                         </td>
 

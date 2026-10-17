@@ -74,10 +74,60 @@
 
 
             {{-- =====================================================
+                SUMMARY (Manuscript: Total Users, Pending Role
+                Assignments, Payments to Verify, System Status)
+            ====================================================== --}}
+
+            <section class="mt-7" data-dashboard-section="summary">
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+                    <a href="{{ route('users.index') }}" class="sa-card sa-hover block p-5">
+                        <p class="text-xs font-semibold text-slate-500">Total Users</p>
+                        <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">{{ number_format($totalUsers) }}</p>
+                        <p class="mt-2 text-xs text-slate-400">All accounts, any role</p>
+                    </a>
+
+                    <a href="{{ route('users.index') }}" class="sa-card sa-hover block p-5">
+                        <p class="text-xs font-semibold text-slate-500">Pending Role Assignments</p>
+                        <p class="mt-2 text-3xl font-bold tracking-tight {{ ($pendingRoleAssignments ?? 0) > 0 ? 'text-amber-600' : 'text-slate-950' }}">
+                            {{ number_format($pendingRoleAssignments ?? 0) }}
+                        </p>
+                        <p class="mt-2 text-xs text-slate-400">Accounts without a role</p>
+                    </a>
+
+                    <a href="{{ route('super_admin.transactions.index') }}" class="sa-card sa-hover block p-5">
+                        <p class="text-xs font-semibold text-slate-500">Payments to Verify</p>
+                        <p class="mt-2 text-3xl font-bold tracking-tight {{ ($paymentsToVerify ?? 0) > 0 ? 'text-amber-600' : 'text-slate-950' }}">
+                            {{ number_format($paymentsToVerify ?? 0) }}
+                        </p>
+                        <p class="mt-2 text-xs text-slate-400">Pending transactions</p>
+                    </a>
+
+                    <div class="sa-card p-5" data-system-status>
+                        <p class="text-xs font-semibold text-slate-500">System Status</p>
+
+                        @if(empty($systemIssues ?? []))
+                            <p class="mt-2 text-2xl font-bold tracking-tight text-emerald-600">Operational</p>
+                            <p class="mt-2 text-xs text-slate-400">All services configured</p>
+                        @else
+                            <p class="mt-2 text-2xl font-bold tracking-tight text-amber-600">Needs attention</p>
+                            <p class="mt-2 text-xs text-slate-500">
+                                Not configured: {{ implode(', ', $systemIssues) }}
+                            </p>
+                        @endif
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {{-- =====================================================
                 SYSTEM OVERVIEW
             ====================================================== --}}
 
-            <section class="mt-7">
+            <section class="mt-6">
 
                 <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
 
@@ -534,6 +584,61 @@
                     </a>
 
                 </div>
+
+            </section>
+
+
+            {{-- =====================================================
+                RECENT ACTIVITY
+            ====================================================== --}}
+
+            <section class="mt-6 sa-card overflow-hidden" data-dashboard-section="recent-activity">
+
+                <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+                    <h2 class="text-lg font-bold text-slate-900">Recent Activity</h2>
+                    <p class="mt-1 text-xs text-slate-500">
+                        Latest registrations, role assignments, enrollments and payments.
+                    </p>
+                </div>
+
+                <ul class="divide-y divide-slate-100">
+                    @forelse(($recentActivity ?? collect()) as $activity)
+                        @php
+                            $tagClass = match ($activity['status']) {
+                                'Verified', 'Active', 'Completed' => 'bg-emerald-50 text-emerald-700',
+                                'Pending' => 'bg-amber-50 text-amber-700',
+                                default => 'bg-red-50 text-red-600',
+                            };
+                        @endphp
+
+                        <li class="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-bold uppercase tracking-wide text-indigo-600">
+                                    {{ $activity['type'] }}
+                                </p>
+                                <p class="mt-0.5 truncate text-sm font-semibold text-slate-800">
+                                    {{ $activity['title'] }}
+                                </p>
+                                <p class="mt-0.5 truncate text-xs text-slate-500">
+                                    {{ $activity['detail'] }}
+                                </p>
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-3">
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold {{ $tagClass }}">
+                                    {{ $activity['status'] }}
+                                </span>
+                                <span class="text-xs text-slate-400">
+                                    {{ $activity['at']->diffForHumans() }}
+                                </span>
+                            </div>
+                        </li>
+                    @empty
+                        <li class="px-5 py-10 text-center text-sm text-slate-500 sm:px-6">
+                            No activity yet.
+                        </li>
+                    @endforelse
+                </ul>
 
             </section>
 

@@ -96,6 +96,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/super-admin/users/{user}/status', [UserManagementController::class, 'updateStatus'])
             ->name('users.update-status');
 
+        Route::patch('/super-admin/users/{user}/verify-email', [UserManagementController::class, 'verifyEmail'])
+            ->name('users.verify-email');
+
+        Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
+            ->name('users.edit');
+
+        Route::put('/super-admin/users/{user}', [UserManagementController::class, 'update'])
+            ->name('users.update');
+
         Route::get('/super-admin/transactions', [TransactionController::class, 'adminIndex'])
             ->name('super_admin.transactions.index');
 
