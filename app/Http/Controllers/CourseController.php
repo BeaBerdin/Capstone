@@ -11,6 +11,7 @@ use App\Models\LessonProgress;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
+use App\Notifications\PathwiseNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -326,7 +327,7 @@ class CourseController extends Controller
                 );
         }
 
-        Enrollment::firstOrCreate(
+        $enrollment = Enrollment::firstOrCreate(
             [
                 'student_id' => auth()->id(),
                 'course_id' => $course->id,
@@ -337,6 +338,16 @@ class CourseController extends Controller
                 'progress_percentage' => 0,
             ]
         );
+
+        // In-app notification, plus email when mail is configured.
+        if ($enrollment->wasRecentlyCreated) {
+            auth()->user()->notify(new PathwiseNotification(
+                title: 'Enrollment confirmed',
+                message: 'You are now enrolled in "'.$course->title.'".',
+                type: 'enrollment_activated',
+                courseId: $course->id
+            ));
+        }
 
         return redirect()
             ->route('student.dashboard')

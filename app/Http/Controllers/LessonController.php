@@ -564,7 +564,7 @@ class LessonController extends Controller
             &&
             $course->certificate_available
         ) {
-            Certificate::firstOrCreate(
+            $certificate = Certificate::firstOrCreate(
                 [
                     'student_id' =>
                         $studentId,
@@ -583,6 +583,11 @@ class LessonController extends Controller
                         'issued',
                 ]
             );
+
+            // Only a newly issued certificate notifies the student.
+            if ($certificate->wasRecentlyCreated) {
+                $certificate->notifyStudent();
+            }
         }
 
         return back()->with(

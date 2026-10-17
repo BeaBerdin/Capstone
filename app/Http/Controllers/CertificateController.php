@@ -7,7 +7,6 @@ use App\Models\CertificateSetting;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
-use App\Notifications\PathwiseNotification;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -285,49 +284,8 @@ class CertificateController extends Controller
     private function notifyStudentAboutIssuedCertificate(
         Certificate $certificate
     ): void {
-        try {
-            $certificate->loadMissing([
-                'student',
-                'course',
-            ]);
-
-            $student =
-                $certificate->student;
-
-            $course =
-                $certificate->course;
-
-            if (
-                ! $student
-                ||
-                ! $course
-                ||
-                strtolower(
-                    trim(
-                        (string) $certificate->status
-                    )
-                )
-                !==
-                'issued'
-            ) {
-                return;
-            }
-
-            $student->notify(
-                new PathwiseNotification(
-                    title: 'Certificate available',
-                    message:
-                        'Your certificate for "'
-                        . $course->title
-                        . '" is now available.',
-                    type: 'certificate_issued',
-                    courseId: $course->id,
-                    certificateId: $certificate->id
-                )
-            );
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        // Shared with automatic certificates (lesson and quiz completion).
+        $certificate->notifyStudent();
     }
 
 

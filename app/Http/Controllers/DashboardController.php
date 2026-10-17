@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Models\QuizResult;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\MailSettings;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -63,7 +64,8 @@ class DashboardController extends Controller
         'Gemini AI' => filled(config('services.gemini.api_key')),
         'PayMongo payments' => filled(config('services.paymongo.secret_key'))
             && filled(config('services.paymongo.public_key')),
-        'Email delivery' => ! in_array(config('mail.default'), ['log', 'array', null], true),
+        // Same check the email notifications use.
+        'Email delivery' => MailSettings::isConfigured(),
     ];
 
     $systemIssues = collect($systemChecks)->reject()->keys()->all();

@@ -296,6 +296,15 @@ if (! empty($validated['expires_at'])) {
             'accepted_by' => auth()->id(),
         ]);
 
+        // In-app notification, plus email when mail is configured.
+        auth()->user()->notify(new PathwiseNotification(
+            title: 'Enrollment confirmed',
+            message: 'You joined "'.$course->title.'" through an invitation.',
+            type: 'enrollment_activated',
+            courseId: $course->id,
+            invitationId: $invitation->id
+        ));
+
         return redirect()
             ->route('student.my-courses')
             ->with(

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\PathwiseNotification;
 use Illuminate\Database\Eloquent\Model;
 
 class Certificate extends Model
@@ -23,6 +24,36 @@ class Certificate extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * Tell the student their certificate is ready: an in-app notification,
+     * plus an email when mail is configured. Only issued certificates
+     * notify, and a notification problem never stops the certificate.
+     */
+    public function notifyStudent(): void
+    {
+        try {
+            $this->loadMissing(['student', 'course']);
+
+            if (
+                ! $this->student
+                || ! $this->course
+                || strtolower(trim((string) $this->status)) !== 'issued'
+            ) {
+                return;
+            }
+
+            $this->student->notify(new PathwiseNotification(
+                title: 'Certificate available',
+                message: 'Your certificate for "'.$this->course->title.'" is now available.',
+                type: 'certificate_issued',
+                courseId: $this->course->id,
+                certificateId: $this->id
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

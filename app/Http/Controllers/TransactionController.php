@@ -152,6 +152,8 @@ if ($invitation->isExpired()) {
                 ]);
             }
 
+            // In-app notification, plus email when mail is configured
+            // (sent once per course; see PathwiseNotification).
             auth()->user()->notify(
                 new PathwiseNotification(
                     title: 'Enrollment activated',
@@ -1269,12 +1271,28 @@ if ($invitation->isExpired()) {
         ?string $paymentId = null,
         ?string $paymongoMethod = null
     ): void {
+        $alreadyApproved = false;
+
         DB::transaction(
             function () use (
                 $transaction,
                 $paymentId,
-                $paymongoMethod
+                $paymongoMethod,
+                &$alreadyApproved
             ) {
+
+                // The success page and the webhook can confirm the same
+                // payment at the same time; only the first one approves it
+                // and notifies the student.
+                $current = Transaction::whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $current || $current->status === 'approved') {
+                    $alreadyApproved = true;
+
+                    return;
+                }
 
                 $remarks =
                     'Payment securely verified through PayMongo.';
@@ -1342,6 +1360,10 @@ if ($invitation->isExpired()) {
         | Notify student after successful payment
         |--------------------------------------------------------------------------
         */
+
+        if ($alreadyApproved) {
+            return;
+        }
 
         $this->notifyStudentAboutApprovedTransaction(
             $transaction->fresh()

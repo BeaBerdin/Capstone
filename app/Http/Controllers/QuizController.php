@@ -1916,7 +1916,7 @@ class QuizController extends Controller
         }
 
 
-        Certificate::firstOrCreate(
+        $certificate = Certificate::firstOrCreate(
             [
                 'student_id' =>
                     $studentId,
@@ -1935,5 +1935,10 @@ class QuizController extends Controller
                     'issued',
             ]
         );
+
+        // Only a newly issued certificate notifies the student.
+        if ($certificate->wasRecentlyCreated) {
+            $certificate->notifyStudent();
+        }
     }
 }
