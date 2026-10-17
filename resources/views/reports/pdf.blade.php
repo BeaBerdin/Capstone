@@ -823,6 +823,69 @@
 
         </div>
 
+        {{-- User engagement (lesson activity from lesson_progress) --}}
+        <div class="section">
+
+            <div class="section-title">
+                User Engagement
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Measure</th>
+                        <th class="number">Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>Active learners (opened or completed a lesson)</td>
+                        <td class="number">{{ number_format($engagement['activeLearners']) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Lessons opened</td>
+                        <td class="number">{{ number_format($engagement['lessonsStarted']) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Lessons completed</td>
+                        <td class="number">{{ number_format($engagement['lessonsCompleted']) }} ({{ $engagement['completionRatio'] }}%)</td>
+                    </tr>
+                    <tr>
+                        <td>Average lessons completed per active learner</td>
+                        <td class="number">{{ $engagement['averageCompletedPerLearner'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Inactive learners (enrolled, no lesson activity)</td>
+                        <td class="number">{{ number_format($engagement['inactiveLearners']) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            @if($engagement['topCourses']->isNotEmpty())
+                <table class="data-table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th>Most active course</th>
+                            <th class="number">Learners</th>
+                            <th class="number">Lessons completed</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach($engagement['topCourses'] as $course)
+                            <tr>
+                                <td>{{ $course->title }}</td>
+                                <td class="number">{{ number_format($course->learners) }}</td>
+                                <td class="number">{{ number_format($course->lessons_completed) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+
+        </div>
+
         <div class="section">
 
             <div class="section-title">

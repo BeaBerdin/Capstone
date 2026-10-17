@@ -645,6 +645,135 @@
 
 
             {{-- =========================================================
+                 USER ENGAGEMENT (lesson activity from lesson_progress)
+            ========================================================== --}}
+            <section data-report-section="engagement">
+
+                <div class="mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">
+                        User Engagement
+                    </h2>
+
+                    <p class="mt-1 text-sm text-gray-500">
+                        Lesson activity by students in the selected report period.
+                    </p>
+                </div>
+
+
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+                    <div class="rounded-xl border border-gray-200 bg-white p-5">
+                        <p class="text-sm text-gray-500">Active Learners</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">
+                            {{ number_format($engagement['activeLearners']) }}
+                        </p>
+                        <p class="mt-2 text-xs text-gray-400">Opened or completed a lesson</p>
+                    </div>
+
+                    <div class="rounded-xl border border-gray-200 bg-white p-5">
+                        <p class="text-sm text-gray-500">Lessons Completed</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">
+                            {{ number_format($engagement['lessonsCompleted']) }}
+                        </p>
+                        <p class="mt-2 text-xs text-gray-400">
+                            {{ number_format($engagement['lessonsStarted']) }} lessons opened
+                            ({{ $engagement['completionRatio'] }}% completed)
+                        </p>
+                    </div>
+
+                    <div class="rounded-xl border border-gray-200 bg-white p-5">
+                        <p class="text-sm text-gray-500">Lessons per Active Learner</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">
+                            {{ $engagement['averageCompletedPerLearner'] }}
+                        </p>
+                        <p class="mt-2 text-xs text-gray-400">Average lessons completed</p>
+                    </div>
+
+                    <div class="rounded-xl border border-gray-200 bg-white p-5">
+                        <p class="text-sm text-gray-500">Inactive Learners</p>
+                        <p class="mt-2 text-2xl font-bold text-gray-900">
+                            {{ number_format($engagement['inactiveLearners']) }}
+                        </p>
+                        <p class="mt-2 text-xs text-gray-400">Enrolled, but no lesson activity</p>
+                    </div>
+
+                </div>
+
+
+                <div class="mt-6 grid gap-6 lg:grid-cols-2">
+
+                    {{-- Most engaged courses --}}
+                    <div class="rounded-xl border border-gray-200 bg-white">
+
+                        <div class="border-b border-gray-100 p-6">
+                            <h3 class="text-base font-bold text-gray-900">Most Active Courses</h3>
+                            <p class="mt-1 text-sm text-gray-500">Courses with the most lessons completed.</p>
+                        </div>
+
+                        <div class="divide-y divide-gray-100">
+                            @forelse($engagement['topCourses'] as $index => $course)
+                                <div class="flex items-center gap-4 px-6 py-4">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-sm font-bold text-purple-600">
+                                        {{ $index + 1 }}
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-semibold text-gray-900">{{ $course->title }}</p>
+                                        <p class="mt-1 text-xs text-gray-400">
+                                            {{ number_format($course->learners) }} {{ \Illuminate\Support\Str::plural('learner', $course->learners) }}
+                                        </p>
+                                    </div>
+
+                                    <div class="text-right">
+                                        <p class="text-sm font-bold text-gray-900">{{ number_format($course->lessons_completed) }}</p>
+                                        <p class="text-xs text-gray-400">lessons completed</p>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="p-10 text-center">
+                                    <p class="text-sm text-gray-500">No lessons were completed in this period.</p>
+                                </div>
+                            @endforelse
+                        </div>
+
+                    </div>
+
+
+                    {{-- Weekly lesson completions --}}
+                    <div class="rounded-xl border border-gray-200 bg-white">
+
+                        <div class="border-b border-gray-100 p-6">
+                            <h3 class="text-base font-bold text-gray-900">Lessons Completed per Week</h3>
+                            <p class="mt-1 text-sm text-gray-500">Last 8 weeks.</p>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-xs uppercase tracking-wide text-gray-400">
+                                        <th class="px-6 py-3 font-semibold">Week of</th>
+                                        <th class="px-6 py-3 text-right font-semibold">Lessons completed</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($engagement['weeklyCompletions'] as $week)
+                                        <tr>
+                                            <td class="px-6 py-2.5 text-gray-700">{{ $week['week'] }}</td>
+                                            <td class="px-6 py-2.5 text-right font-semibold text-gray-900">{{ number_format($week['completed']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {{-- =========================================================
                  COURSES + QUIZ RESULTS
             ========================================================== --}}
             <section class="grid gap-6 lg:grid-cols-2">

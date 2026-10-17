@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\QuizResult;
 use App\Models\Submission;
 use App\Models\User;
+use App\Services\EngagementReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -241,7 +242,11 @@ class ReportsController extends Controller
             ->take(5)
             ->get();
 
+        // User engagement from lesson activity (lesson_progress).
+        $engagement = app(EngagementReport::class)->build($startDate);
+
         return view('reports.index', compact(
+            'engagement',
             'range',
             'totalStudents',
             'totalTeachers',
@@ -454,9 +459,12 @@ class ReportsController extends Controller
             default => 'All Time',
         };
 
+        $engagement = app(EngagementReport::class)->build($startDate);
+
         $pdf = Pdf::loadView(
             'reports.pdf',
             compact(
+                'engagement',
                 'reportPeriod',
                 'users',
                 'courses',
