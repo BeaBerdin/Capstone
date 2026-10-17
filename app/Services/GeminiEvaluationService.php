@@ -19,10 +19,8 @@ class GeminiEvaluationService
     ): array {
         $apiKey = config('services.gemini.api_key');
 
-        $model = config(
-            'services.gemini.model',
-            'gemini-3.8-flash'
-        );
+        // gemini-2.5-flash (Manuscript) when GEMINI_MODEL is missing or empty.
+        $model = config('services.gemini.model') ?: 'gemini-2.5-flash';
 
         $endpoint = config(
             'services.gemini.endpoint',

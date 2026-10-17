@@ -9,7 +9,7 @@ use RuntimeException;
 
 class GeminiQuizService
 {
-    private const DEFAULT_MODEL = 'gemini-3.8-flash';
+    private const DEFAULT_MODEL = 'gemini-2.5-flash';
 
     private const DEFAULT_ENDPOINT =
         'https://generativelanguage.googleapis.com/v1beta/interactions';
@@ -72,11 +72,9 @@ class GeminiQuizService
         }
 
         $payload = [
+            // DEFAULT_MODEL when GEMINI_MODEL is missing or empty.
             'model' =>
-                (string) config(
-                    'services.gemini.model',
-                    self::DEFAULT_MODEL
-                ),
+                (string) (config('services.gemini.model') ?: self::DEFAULT_MODEL),
 
             'system_instruction' =>
                 $this->systemInstruction(),

@@ -12,7 +12,8 @@ class GeminiRecommendationService
     public function generateReason(Quiz $quiz, Course $recommendedCourse, float $percentage): ?string
     {
         $apiKey = config('services.gemini.api_key');
-        $model = config('services.gemini.model', 'gemini-2.5-flash');
+        // gemini-2.5-flash (Manuscript) when GEMINI_MODEL is missing or empty.
+        $model = config('services.gemini.model') ?: 'gemini-2.5-flash';
 
         if (!$apiKey) {
             return null;

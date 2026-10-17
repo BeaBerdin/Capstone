@@ -40,7 +40,7 @@ return [
 
         'model' => env(
             'GEMINI_MODEL',
-            'gemini-3.8-flash'
+            'gemini-2.5-flash'
         ),
 
         'endpoint' => env(
