@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Laravel\Fortify\Features;
 use RuntimeException;
@@ -38,9 +39,20 @@ abstract class TestCase extends BaseTestCase
         return $app;
     }
 
+    /**
+     * Every test starts at this fixed moment, with the clock stopped, so
+     * results never depend on when the suite runs (second boundaries,
+     * midnight, New Year). Tests that need time to pass use
+     * $this->travel(...) or $this->travelTo(...) from here.
+     * 10:00 UTC is 18:00 in Manila, the same calendar day in both.
+     */
+    public const FROZEN_NOW = '2026-06-15 10:00:00';
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->travelTo(Carbon::parse(self::FROZEN_NOW, 'UTC'));
 
         // Safety net: tests may never call real external services
         // (Gemini, PayMongo). Tests that need them use Http::fake().

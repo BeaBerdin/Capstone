@@ -155,3 +155,26 @@ test('an existing unverified account is not verified by seeding in production', 
     expect($superAdmin->email_verified_at)->toBeNull()
         ->and(Hash::check('my-own-live-password', $superAdmin->password))->toBeTrue();
 });
+
+test('a generated password with console-tag symbols is printed exactly', function () {
+    config(['auth.seed_super_admin_password' => null]);
+
+    // Symbols that the console would otherwise read as colour tags.
+    $tricky = 'Ab1</>cd<info>x\y9';
+
+    $this->app->bind(SuperAdminSeeder::class, fn () => new class($tricky) extends SuperAdminSeeder
+    {
+        public function __construct(private string $fixed) {}
+
+        protected function generatePassword(): string
+        {
+            return $this->fixed;
+        }
+    });
+
+    $this->seed(RoleSeeder::class);
+    $output = runSeeder(SuperAdminSeeder::class);
+
+    expect($output)->toContain('shown only once): '.$tricky)
+        ->and(Hash::check($tricky, User::where('email', SuperAdminSeeder::EMAIL)->sole()->password))->toBeTrue();
+});
