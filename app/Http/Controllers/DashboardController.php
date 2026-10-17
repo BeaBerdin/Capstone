@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\QuizResult;
+use App\Models\Submission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Support\MailSettings;
@@ -282,13 +283,49 @@ class DashboardController extends Controller
 
         $currentDate = now()->format('l, F d, Y');
 
+        /*
+        | AI evaluations awaiting the teacher's review (Manuscript Fig. 19:
+        | the Teacher Dashboard shows AI evaluations awaiting approval).
+        | Only the teacher's own courses; a submission counts while it is
+        | still "submitted" (not yet graded or returned).
+        */
+        $ungradedInMyCourses = fn () => Submission::where('status', 'submitted')
+            ->whereHas('assignment.course', fn ($query) => $query->where('teacher_id', $teacherId));
+
+        $aiAwaitingCount = $ungradedInMyCourses()
+            ->where('ai_evaluation_status', 'completed')
+            ->count();
+
+        $aiAwaitingSubmissions = $ungradedInMyCourses()
+            ->where('ai_evaluation_status', 'completed')
+            ->with(['student:id,name', 'assignment:id,course_id,title,max_score', 'assignment.course:id,title'])
+            ->orderByDesc('ai_evaluated_at')
+            ->orderByDesc('id')
+            ->take(5)
+            ->get();
+
+        // Failed, or still "processing" long after the request should have ended.
+        $aiUnfinished = $ungradedInMyCourses()
+            ->where(function ($query) {
+                $query->where('ai_evaluation_status', 'failed')
+                    ->orWhere(function ($query) {
+                        $query->where('ai_evaluation_status', 'processing')
+                            ->where('updated_at', '<', now()->subMinutes(Submission::AI_PROCESSING_TIMEOUT_MINUTES));
+                    });
+            })
+            ->orderByDesc('updated_at')
+            ->get(['id', 'updated_at']);
+
         return view('Teacher.dashboard', compact(
             'totalCourses',
             'totalLessons',
             'totalStudents',
             'totalEnrollments',
             'greeting',
-            'currentDate'
+            'currentDate',
+            'aiAwaitingCount',
+            'aiAwaitingSubmissions',
+            'aiUnfinished'
         ));
     }
 }

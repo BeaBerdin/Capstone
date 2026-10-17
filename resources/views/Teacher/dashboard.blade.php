@@ -1151,6 +1151,94 @@
 
 
         {{-- =====================================================
+             AI EVALUATIONS AWAITING REVIEW
+        ====================================================== --}}
+
+        <section class="pw-dashboard-card mb-4" data-dashboard-section="ai-awaiting-review">
+
+            <div class="pw-card-header px-5 pb-3 pt-5 sm:px-6">
+
+                <div>
+                    <div class="pw-section-heading">
+                        AI Evaluations Awaiting Review
+                    </div>
+
+                    <div class="pw-section-subheading">
+                        Suggested scores the students cannot see until you grade them
+                    </div>
+                </div>
+
+                <div class="pw-mini-chip" data-ai-awaiting-count>
+                    {{ number_format($aiAwaitingCount ?? 0) }} awaiting
+                </div>
+
+            </div>
+
+
+            @if(($aiUnfinished ?? collect())->isNotEmpty())
+                <div class="mx-5 mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 sm:mx-6" data-ai-unfinished>
+                    {{ $aiUnfinished->count() }} {{ \Illuminate\Support\Str::plural('AI evaluation', $aiUnfinished->count()) }} did not finish (failed or interrupted). Open
+                    <a href="{{ route('teacher.submissions.show', $aiUnfinished->first()->id) }}" class="font-semibold underline">
+                        the latest one
+                    </a>
+                    to retry, or grade manually.
+                </div>
+            @endif
+
+
+            @if(($aiAwaitingSubmissions ?? collect())->isEmpty())
+
+                <div class="px-5 pb-6 pt-2 text-center text-sm text-slate-500 sm:px-6">
+                    No AI evaluations are waiting for your review.
+                </div>
+
+            @else
+
+                <ul class="divide-y divide-slate-100">
+                    @foreach($aiAwaitingSubmissions as $awaiting)
+                        <li class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-800">
+                                    {{ $awaiting->student?->name ?? 'Student' }}
+                                </p>
+                                <p class="mt-0.5 truncate text-xs text-slate-500">
+                                    {{ $awaiting->assignment?->title ?? 'Assignment' }}
+                                    · {{ $awaiting->assignment?->course?->title ?? 'Course' }}
+                                </p>
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-3">
+                                <span class="inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700">
+                                    AI: {{ $awaiting->ai_score }} / {{ $awaiting->assignment?->max_score }}
+                                </span>
+
+                                <a
+                                    href="{{ route('teacher.submissions.show', $awaiting) }}"
+                                    class="inline-flex h-9 items-center justify-center rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
+                                >
+                                    Review
+                                </a>
+                            </div>
+
+                        </li>
+                    @endforeach
+                </ul>
+
+                @if(($aiAwaitingCount ?? 0) > $aiAwaitingSubmissions->count())
+                    <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500 sm:px-6">
+                        Showing the latest {{ $aiAwaitingSubmissions->count() }} of {{ number_format($aiAwaitingCount) }}.
+                        Open an assignment's submissions to see the rest.
+                    </p>
+                @endif
+
+            @endif
+
+        </section>
+
+
+
+        {{-- =====================================================
              OVERVIEW + UPCOMING
         ====================================================== --}}
 
