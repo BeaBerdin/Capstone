@@ -167,3 +167,24 @@ test('a submission returned for revision shows no AI data either', function () {
 
     assertNoAiShown($this, $student, $assignment);
 });
+
+test('the course teacher can review the AI evaluation before grading', function () {
+    [$teacher, , , $submission] = aiVisibilitySetup();
+
+    $this->actingAs($teacher)
+        ->get(route('teacher.submissions.show', $submission))
+        ->assertOk()
+        ->assertSee('AI Suggested Score')
+        ->assertSee('73')
+        ->assertSee(AI_FEEDBACK_MARKER)
+        ->assertSee(AI_STRENGTH_MARKER)
+        ->assertSee(AI_IMPROVEMENT_MARKER);
+});
+
+test('another teacher cannot open the AI evaluation', function () {
+    [, , , $submission] = aiVisibilitySetup();
+
+    $this->actingAs(pathwiseUser('teacher'))
+        ->get(route('teacher.submissions.show', $submission))
+        ->assertForbidden();
+});
