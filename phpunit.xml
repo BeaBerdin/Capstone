@@ -18,7 +18,16 @@
         </include>
     </source>
     <php>
+        <!-- Enough memory for the whole suite on any computer (default PHP CLI is often 128M). -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
+        <!--
+            Tests check status codes, not Laravel's debug error page. With debug on,
+            expected errors without their own page (e.g. 405, 409) render the large
+            debug page, which uses a lot of memory. The exception is still available
+            to failing tests.
+        -->
+        <env name="APP_DEBUG" value="false"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
