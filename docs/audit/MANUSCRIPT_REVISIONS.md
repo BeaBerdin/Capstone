@@ -33,7 +33,7 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 | MR-14 | Fig. 19, Definition of Terms, FR (r) | AI quiz generation and the Draft course | Revise |
 | MR-15 | Super Admin Dashboard, Logic | Accounts are deactivated, never deleted | Revise |
 | MR-16 | Scope and Limitations | Upload and AI evaluation limits | Add |
-| MR-17 | Code languages | Python is also offered | **Team decision** |
+| MR-17 | Scope and Limitations, Fig. 19 | Add Python to the code languages | Revise (decided) |
 | MR-18 | FR (h), View and Download Certificate | Current template, public verification | Revise |
 | MR-19 | Enroll in Course use case | Marketplace behaviour | Revise |
 | MR-20 | Definition of Terms, Payment Gateway; Transactions table | Revenue distribution; payment method shown | Revise |
@@ -270,7 +270,7 @@ and `updated_at`. Add them if the manuscript lists every column; the
 |---|---|---|---|---|
 | submission_type | Not Null | varchar | No | Essay or Code |
 | answer_format | Not Null | varchar | No | How students answer: typed text, file upload, or either |
-| programming_language | Null | varchar | Yes | For code assignments: HTML/CSS/JavaScript, Java, C, or PHP |
+| programming_language | Null | varchar | Yes | For code assignments: HTML/CSS/JavaScript, Java, C, PHP, or Python |
 | evaluation_criteria | Null | text | Yes | Criteria the AI evaluator and the teacher grade against |
 | ai_evaluation_enabled | Not Null | tinyint | No | Whether AI output evaluation is turned on for this assignment |
 
@@ -517,7 +517,7 @@ code submissions."
 > files to 20 MB (PDF, Word, PowerPoint, Excel, or text), and course
 > thumbnails and payment receipts to 5 MB (images only). For AI output
 > evaluation, the system reads typed answers and plain-text or source-code
-> files (.txt, .html, .htm, .css, .js, .java, .c, .h, and .php), and sends at
+> files (.txt, .html, .htm, .css, .js, .java, .c, .h, .php, and .py), and sends at
 > most 256 KB of file text to the Gemini API. PDF and Word submissions, and
 > files over that limit, are not read by the AI and are graded manually by
 > the teacher.
@@ -529,19 +529,42 @@ code submissions."
 only `.txt` and the code-language extensions and refuses larger files with a
 message to grade manually.
 
-## MR-17 — Code languages: Python is also offered — Team decision
+## MR-17 — Code languages: add Python
 
-The DOCX limits code submissions to HTML/CSS/JavaScript, Java, C, and PHP.
-The system also lists **Python** (`Assignment::PROGRAMMING_LANGUAGES`, kept
-"so older assignments still work"), and the teacher's assignment form shows
-it for new assignments too. With Python, `.py` files are also read for AI
-evaluation.
+**Decided (October 17, 2026):** add Python to the manuscript's supported
+languages; no code change.
 
-- **Option A — manuscript:** add Python to the Scope and Limitations
-  sentence and to MR-16's file list (`.py`).
-- **Option B — system:** keep Python for existing assignments but hide it
-  from the form for new ones (a small code change with a test). The
-  manuscript then stays as written.
+The system offers HTML/CSS/JavaScript, Java, C, PHP and **Python**
+(`Assignment::PROGRAMMING_LANGUAGES`), and the teacher's assignment form
+shows all five. `.py` files are read for AI evaluation like the others
+(already included in MR-16's file list).
+
+**Scope and Limitations — current text**
+
+> Code submissions are limited to HTML/CSS/JavaScript, Java, C, and PHP, and
+> are submitted as pasted code or a single file.
+
+**Replacement text**
+
+> Code submissions are limited to HTML/CSS/JavaScript, Java, C, PHP, and
+> Python, and are submitted as pasted code or a single file.
+
+**Figure 19 paragraph (Output Evaluation module) — current text**
+
+> For code written in HTML/CSS/JavaScript, Java, C, or PHP, the evaluator
+> reads the source code and comments on correctness, basic code quality,
+> possible efficiency concerns, and improvements.
+
+**Replacement text**
+
+> For code written in HTML/CSS/JavaScript, Java, C, PHP, or Python, the
+> evaluator reads the source code and comments on correctness, basic code
+> quality, possible efficiency concerns, and improvements.
+
+The comment in `Assignment::PROGRAMMING_LANGUAGES` and the header of
+`tests/Feature/Pathwise/CodeAssignmentLanguageTest.php` still describe
+Python as kept only for older assignments; update that wording the next
+time those files change.
 
 ## MR-18 — Certificates: current template and public verification
 
@@ -661,14 +684,15 @@ dictionary needs this change.
 
 ## Already accurate — no change needed
 
-Checked against the system; leave as written.
+Checked against the system; leave as written, apart from the items noted.
 
 - **Scope and Limitations**: Gemini API, no own model training, output
-  evaluation limited to essays and HTML/CSS/JavaScript, Java, C and PHP code,
+  evaluation limited to essays and code (add Python, see MR-17),
   code never executed, teacher approval required.
 - **Figure 19, AI System Architecture** (Data Processing, AI Processing,
   Analytics and Decision, Presentation layers): matches the system, including
-  "AI evaluations work as suggestions only" and the Teacher Dashboard showing
+  "AI evaluations work as suggestions only" (only the quiz generation and
+  code language sentences change, see MR-14 and MR-17) and the Teacher Dashboard showing
   "AI evaluations awaiting approval".
 - **Definition of Terms, "Output Evaluation"** and **Functional Requirement
   s**: students see AI results only after the teacher approves or overrides
