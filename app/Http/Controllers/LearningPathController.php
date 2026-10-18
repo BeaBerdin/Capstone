@@ -33,11 +33,7 @@ class LearningPathController extends Controller
 
     public function create()
     {
-        $courses = Course::where(
-                'is_free',
-                false
-            )
-            ->orderBy('title')
+        $courses = Course::orderBy('title')
             ->get();
 
         return view(
@@ -108,11 +104,7 @@ class LearningPathController extends Controller
     public function edit(
         LearningPath $learningPath
     ) {
-        $courses = Course::where(
-                'is_free',
-                false
-            )
-            ->orderBy('title')
+        $courses = Course::orderBy('title')
             ->get();
 
         $selectedCourses = $learningPath
@@ -203,7 +195,7 @@ class LearningPathController extends Controller
             (int) auth()->id();
 
         /*
-         * Only use quiz results from currently published paid courses and
+         * Only use quiz results from currently published courses and
          * published quizzes. Stale results from draft/rejected/unpublished
          * content must not drive a student's generated path.
          */
@@ -226,10 +218,6 @@ class LearningPathController extends Controller
                             'course',
                             function ($courseQuery) {
                                 $courseQuery
-                                    ->where(
-                                        'is_free',
-                                        false
-                                    )
                                     ->where(
                                         'status',
                                         'published'
@@ -254,7 +242,7 @@ class LearningPathController extends Controller
                 )
                 ->with(
                     'error',
-                    'No eligible quiz results found. Complete a published paid-course quiz first to generate your learning path.'
+                    'No eligible quiz results found. Complete a quiz in a published course first to generate your learning path.'
                 );
         }
 
@@ -275,10 +263,6 @@ class LearningPathController extends Controller
                             'course',
                             function ($courseQuery) {
                                 $courseQuery
-                                    ->where(
-                                        'is_free',
-                                        false
-                                    )
                                     ->where(
                                         'status',
                                         'published'
@@ -355,10 +339,6 @@ class LearningPathController extends Controller
                 'status',
                 'published'
             )
-            ->where(
-                'is_free',
-                false
-            )
             ->whereHas(
                 'lessons',
                 function ($query) {
@@ -392,10 +372,6 @@ class LearningPathController extends Controller
             $additionalCourses = Course::where(
                     'status',
                     'published'
-                )
-                ->where(
-                    'is_free',
-                    false
                 )
                 ->whereNotIn(
                     'id',
@@ -537,10 +513,6 @@ class LearningPathController extends Controller
                     function ($query) {
                         $query
                             ->where(
-                                'is_free',
-                                false
-                            )
-                            ->where(
                                 'status',
                                 'published'
                             );
@@ -579,10 +551,6 @@ class LearningPathController extends Controller
             'courses' =>
                 function ($query) {
                     $query
-                        ->where(
-                            'is_free',
-                            false
-                        )
                         ->where(
                             'status',
                             'published'
