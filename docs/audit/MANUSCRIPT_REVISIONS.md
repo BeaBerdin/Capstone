@@ -37,6 +37,13 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 | MR-18 | FR (h), View and Download Certificate | Current template, public verification | Revise |
 | MR-19 | Enroll in Course use case | Marketplace behaviour | Revise |
 | MR-20 | Definition of Terms, Payment Gateway; Transactions table | Revenue distribution; payment method shown | Revise |
+| MR-21 | Review of Related Literature, Conceptual Framework | Adaptive learning claims | Revise |
+| MR-22 | Review of Related Literature, Conceptual Framework | Gamification and achievements | Revise |
+| MR-23 | Conceptual Framework | "User training module" | Revise |
+| MR-24 | Functional Requirement c | Who publishes a course | Revise |
+| MR-25 | Functional Requirement i | Learning paths and recommendations | Revise |
+| MR-26 | Data dictionary, Course_Reviews table | Unused placeholder table | Revise (reserved for future use) |
+| MR-27 | Data dictionary, Courses table | `is_free` must not be documented | Note |
 
 Already accurate (no change needed) is listed near the end, followed by the
 main differences between the September 27 PDF and the October 6 DOCX.
@@ -515,17 +522,23 @@ code submissions."
 
 > Uploads are limited in size: assignment submission files to 25 MB, lesson
 > files to 20 MB (PDF, Word, PowerPoint, Excel, or text), and course
-> thumbnails and payment receipts to 5 MB (images only). For AI output
-> evaluation, the system reads typed answers and plain-text or source-code
-> files (.txt, .html, .htm, .css, .js, .java, .c, .h, .php, and .py), and sends at
-> most 256 KB of file text to the Gemini API. PDF and Word submissions, and
-> files over that limit, are not read by the AI and are graded manually by
-> the teacher.
+> thumbnails and payment receipts to 5 MB (images only). Essay submissions
+> may be uploaded as PDF, Word (.doc, .docx), PowerPoint (.ppt, .pptx),
+> JPG/PNG images, or plain text (.txt); code submissions as one source file
+> of the assignment's language or a .txt file. For AI output evaluation, the
+> system reads typed answers and plain-text or source-code files (.txt,
+> .html, .htm, .css, .js, .java, .c, .h, .php, and .py), and sends at most
+> 256 KB of file text to the Gemini API. PDF, Word, PowerPoint and image
+> submissions, and files over that limit, are not read by the AI and are
+> graded manually by the teacher.
 
 **Why.** `Assignment::UPLOAD_MAX_KB = 25600` and `AI_TEXT_MAX_KB = 256`;
 `LessonController` (`max:20480`, `mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,txt`);
 `CourseController` thumbnails and `TransactionController` receipts
-(`max:5120`, images); `SubmissionController::readSubmissionFileText` reads
+(`max:5120`, images); `SubmissionController::studentStore` accepts essay
+files `mimes:pdf,doc,docx,ppt,pptx,txt,jpg,jpeg,png` and code files by
+`Assignment::sourceFileExtensions()` plus `.txt`;
+`SubmissionController::readSubmissionFileText` reads
 only `.txt` and the code-language extensions and refuses larger files with a
 message to grade manually.
 
@@ -680,6 +693,258 @@ reject actions both set `approved_by`; the PayMongo confirmation does not.
 The DOCX describes no receipt or transaction screen, so only the data
 dictionary needs this change.
 
+## MR-21 — Adaptive learning claims
+
+PATHWISE does not learn from data and does not change the order or pace of
+lessons: the teacher sets the lesson order. The recommendation rules run
+again after each quiz result, and a learning path is rebuilt from the quiz
+results whenever the student generates it (see MR-1, MR-25).
+
+**Review of Related Literature, Adaptive Learning Systems (relevance) —
+current text**
+
+> Adaptive learning is relevant to PATHWISE as the proposed AI recommender
+> module is designed to operate adaptively—continuously learning from
+> student performance data and adjusting course recommendations
+> accordingly. By providing learners with a dynamically evolving set of
+> course suggestions based on their individual progress, PATHWISE applies
+> adaptive principles to support personalized and continuous learning
+> journeys.
+
+**Replacement text**
+
+> Adaptive learning is relevant to PATHWISE as the AI recommender module
+> applies adaptive principles: after each quiz, it uses the student's latest
+> result, completed courses, and course difficulty levels to update the
+> suggested next course. By providing learners with course suggestions that
+> follow their individual progress, PATHWISE supports personalized and
+> continuous learning journeys, without training or adjusting a
+> machine-learning model.
+
+**Conceptual Framework — current text** (one sentence of the Figure 1
+paragraph)
+
+> Adaptive Learning, as identified by Du Plooy et al. (2024), allows the
+> platform to adjust content sequencing and pacing based on real-time
+> performance data, while learner engagement in self-paced settings,
+> supported by Ramaswami et al. (2023) and Tzeng et al. (2023), is
+> reinforced through visible progress tracking that encourages
+> learner-driven progression through course material.
+
+**Replacement text**
+
+> Adaptive Learning, as identified by Du Plooy et al. (2024), informs how
+> the platform updates each student's course recommendations from their
+> quiz performance, while learner engagement in self-paced settings,
+> supported by Ramaswami et al. (2023) and Tzeng et al. (2023), is
+> reinforced through visible progress tracking that encourages
+> learner-driven progression through course material.
+
+**Review of Related Literature, Idika and Saihi (2025) (Figure 4) —
+current text**
+
+> This study is directly relevant to PATHWISE because it demonstrates a
+> working, technically validated model for two of PATHWISE's core AI
+> features: adaptive learning and gamification. Where Du Plooy et al. (2024)
+> is cited in PATHWISE's conceptual framework mainly for the theoretical
+> basis of adjusting content sequencing and pacing, Idika and Saihi (2025)
+> contribute an actual implemented adaptive-difficulty engine with measured
+> performance benchmarks, giving PATHWISE's developers a concrete point of
+> comparison for how its own AI Recommendation Engine and Adaptive Learning
+> module might be technically structured and evaluated.
+
+**Replacement text**
+
+> This study is relevant to PATHWISE because it demonstrates a working,
+> technically validated model of adaptive learning and gamification, two
+> ideas that inform PATHWISE's design. Where Du Plooy et al. (2024) is cited
+> in PATHWISE's conceptual framework for the theoretical basis of
+> personalizing a learner's path, Idika and Saihi (2025) contribute an
+> implemented adaptive-difficulty engine with measured performance
+> benchmarks. PATHWISE takes a simpler approach: its AI Recommendation
+> Engine uses rules on quiz results and course difficulty to suggest the
+> next course, with explanations written by the Google Gemini API, and it
+> does not adjust question difficulty or include game elements.
+
+**Why.** `RecommendationService` and `LearningPathController::generateForStudent`
+use fixed rules, run when a quiz is submitted or a path is generated; lesson
+order comes from `lessons.lesson_order` set by the teacher. Covered by
+`RecommendationSelectionTest` and `LearningPathGenerationTest`.
+
+## MR-22 — Gamification and achievements
+
+PATHWISE has no points, badges, leaderboards, streaks or achievements. It
+motivates learners through certificates and visible progress (progress
+bars, completion rates, dashboards).
+
+**Review of Related Literature, Gamification in E-Learning (relevance) —
+current text**
+
+> Gamification is relevant to PATHWISE as its findings inform the
+> motivational design of the platform's certificate and
+> performance-tracking features. Rather than functioning as plain
+> completion records, PATHWISE's digital certificates and progress
+> dashboards are designed with achievement-oriented elements that reinforce
+> learner motivation and encourage sustained engagement throughout a
+> course, consistent with the engagement principles identified in the
+> literature.
+
+**Replacement text**
+
+> Gamification is relevant to PATHWISE as its findings inform the
+> motivational design of the platform's certificate and
+> performance-tracking features. PATHWISE does not add game elements such
+> as points, badges, or leaderboards; instead, verifiable digital
+> certificates and visible progress bars, completion rates, and dashboards
+> give learners clear goals and feedback that encourage sustained
+> engagement throughout a course, consistent with the engagement principles
+> identified in the literature.
+
+**Conceptual Framework — current text** (first sentence of the second
+paragraph)
+
+> Engagement within the system is reinforced by Gamification, which Duterte
+> (2024) found to produce measurable gains in motivation and academic
+> performance, and by Digital Credentials, whose credibility Johan et al.
+> (2025) linked to the quality-assurance processes of the issuing platform.
+
+**Replacement text**
+
+> Engagement within the system is reinforced by visible progress tracking,
+> informed by the gamification research of Duterte (2024), who found
+> measurable gains in motivation and academic performance, and by Digital
+> Credentials, whose credibility Johan et al. (2025) linked to the
+> quality-assurance processes of the issuing platform.
+
+The Figure 4 paragraph is covered by MR-21. If Figure 1 (Conceptual
+Framework) has a "Gamification" box, relabel it, for example "Progress
+Tracking (informed by gamification research)".
+
+**Why.** No gamification code exists. The student dashboard's certificate
+card said "View earned achievements" and only opened the Certificates page;
+it now says "View your certificates" (dashboards commit).
+
+## MR-23 — Conceptual Framework: "user training module"
+
+PATHWISE has no training module inside the platform. What it does have is
+separate, role-based access: instructors and students sign in to different
+dashboards with different permissions.
+
+**Current text** (first sentence of the Figure 1 paragraph)
+
+> The PATHWISE Conceptual Framework consists of a learning portal, an
+> AI-driven course delivery engine, a user training module, and a set of
+> reference concepts.
+
+**Replacement text**
+
+> The PATHWISE Conceptual Framework consists of a learning portal, an
+> AI-driven course delivery engine, role-based user access, and a set of
+> reference concepts.
+
+**Current text** (last sentence of the second paragraph)
+
+> Access to these features is mediated through User Training, since Xue et
+> al. (2024) and Bayaga and du Plessis (2024) found that performance
+> expectancy, effort expectancy, and facilitating conditions shape whether
+> instructors and students adopt a new educational platform, which is why
+> PATHWISE separates Instructor Access from Student Access within its
+> training module.
+
+**Replacement text**
+
+> Access to these features is organized by user role, since Xue et al.
+> (2024) and Bayaga and du Plessis (2024) found that performance
+> expectancy, effort expectancy, and facilitating conditions shape whether
+> instructors and students adopt a new educational platform, which is why
+> PATHWISE separates Instructor Access from Student Access, each with its
+> own dashboard and permissions.
+
+If the team runs orientation or training sessions for users outside the
+system, say that separately; do not describe it as a module of PATHWISE.
+Relabel the matching box in Figure 1 ("User Training") to "Role-Based
+Access".
+
+**Why.** Roles are enforced by `RoleMiddleware` (`role:teacher`,
+`role:student`, `role:admin`, `role:super_admin` route groups), each with
+its own dashboard; no training pages, routes or views exist.
+
+## MR-24 — Functional Requirement c: who publishes a course
+
+**Current text**
+
+> c. Course Management Process. The teachers can create, edit, and publish
+> courses with lessons and quizzes.
+
+**Replacement text**
+
+> c. Course Management Process. The teachers can create and edit courses
+> with lessons and quizzes and submit them for approval; a course is
+> published when the administrator approves it.
+
+**Why.** Teachers use `CourseController::submitForApproval` and cannot set
+the status themselves. A course becomes Published through
+`CourseController::approve` (`CourseApprovalWorkflowTest`), or when an
+administrator sets the status on the admin course form
+(`CourseController::store`/`update`, administrators only). This also removes
+the overlap with Functional Requirement k.
+
+## MR-25 — Functional Requirement i: learning paths and recommendations
+
+**Current text**
+
+> i. AI Recommendation Process. The system provides personalized learning
+> path recommendations using a hybrid rule-based and AI approach.
+
+**Replacement text**
+
+> i. AI Recommendation Process. The system recommends a suitable next
+> course using rule-based selection, with an explanation generated by the
+> Google Gemini API, and generates a rule-based learning path from the
+> student's quiz results.
+
+**Why.** Next course: `RecommendationService` (rules) plus
+`GeminiRecommendationService` (explanation only, with a fixed fallback).
+Learning path: `LearningPathController::generateForStudent`. The best quiz
+result picks the category, the average quiz score picks the difficulty
+(85% and above advanced, 70% and above intermediate, otherwise beginner),
+and published courses with published lessons and quizzes are listed from
+beginner to advanced. No Gemini call is made for learning paths. Covered by
+`RecommendationSelectionTest` and `LearningPathGenerationTest`.
+
+## MR-26 — Data dictionary: Course_Reviews table
+
+**Decided (October 17, 2026):** mark it reserved for future use; no schema
+change.
+
+The Course_Reviews table exists with only `id`, `created_at` and
+`updated_at` (as the manuscript lists). No model, page or route uses it;
+students cannot review courses in this version.
+
+**Current text** (the paragraph after the Course_Reviews table)
+
+> illustrates the data dictionary of the Course_Reviews table, which stores
+> the course review records within the PATHWISE platform. It serves as the
+> repository for feedback and evaluation data submitted for courses.
+
+**Replacement text**
+
+> illustrates the data dictionary of the Course_Reviews table, which is
+> reserved for future use. Course reviews are not collected in this version
+> of PATHWISE.
+
+## MR-27 — Data dictionary: do not document `courses.is_free`
+
+`courses.is_free` must **not** be added to the Courses table in the
+manuscript. No migration creates it, and since the learning-path fix the
+code no longer uses it. A free course is one with a price of 0
+(`courses.price`).
+
+Some existing databases (including the development database) may still
+have an `is_free` column left over from an earlier schema. It is unused and
+harmless; it can be dropped later, but no migration is needed for the
+system to work.
+
 ---
 
 ## Already accurate — no change needed
@@ -712,6 +977,14 @@ Checked against the system; leave as written, apart from the items noted.
   evaluation.
 - **View and Download Certificate steps**: "Go to the My Courses page and
   select a completed course. Click View Certificate." matches My Courses.
+- **Dashboard summary cards (Figures 35–38)**: Super Admin (Total Users,
+  Pending Role Assignments, Payments to Verify, System Status) and
+  Administrator (Course Categories, Courses for Approval, Certificates
+  Issued, Active Learning Paths) already matched. The Teacher dashboard (My
+  Courses, Total Lessons, Enrolled Students, Avg. Quiz Score) and the
+  Student dashboard (Enrolled Courses, Quizzes Taken, Certificates Earned,
+  Average Score) were changed to match; the Student dashboard also shows
+  Average Progress (`DashboardSummaryCardsTest`).
 
 ---
 
