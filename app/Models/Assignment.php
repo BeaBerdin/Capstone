@@ -9,9 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Assignment extends Model
 {
     /**
-     * Languages a code assignment can use (Manuscript Scope: HTML/CSS/
-     * JavaScript, Java, C and PHP; Python is kept so older assignments still
-     * work). The stored key "javascript" covers HTML, CSS and JavaScript.
+     * Languages a code assignment can use (Manuscript Scope, with MR-17:
+     * HTML/CSS/JavaScript, Java, C, PHP and Python). The stored key
+     * "javascript" covers HTML, CSS and JavaScript.
      * "extensions" lists the source files a student may upload instead of
      * typing the code (.txt is always allowed as well).
      */

@@ -163,6 +163,23 @@ test('a typed answer is still evaluated when its attachment cannot be read', fun
     Http::assertSent(fn (Request $request) => str_contains($request->body(), 'UNIQUE-TYPED-MARKER'));
 });
 
+test('the text of an uploaded .py file is sent to Gemini as Python', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('assignment-submissions/1/main.py', 'print("UNIQUE-PYTHON-MARKER")');
+    fakeGeminiEvaluation();
+
+    [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/main.py'], 'code', 'python');
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertSessionHas('success');
+
+    expect($submission->fresh()->ai_evaluation_status)->toBe('completed');
+
+    Http::assertSent(fn (Request $request) => str_contains($request->body(), 'UNIQUE-PYTHON-MARKER')
+        && str_contains($request->body(), 'Python'));
+});
+
 test('Gemini is told the language by its display name', function () {
     fakeGeminiEvaluation();
 

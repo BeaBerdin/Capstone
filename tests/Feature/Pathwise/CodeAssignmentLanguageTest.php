@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 /*
-| Manuscript Scope (PATHWISE-UPDATES): output evaluation covers HTML/CSS/
-| JavaScript, Java, C and PHP, as pasted code or a single source file.
-| Python is kept so assignments created earlier keep working.
+| Manuscript Scope (PATHWISE-UPDATES, with MR-17): output evaluation covers
+| HTML/CSS/JavaScript, Java, C, PHP and Python, as pasted code or a single
+| source file.
 */
 
 function codeAssignmentSetup(string $language = 'java'): array
@@ -39,7 +39,7 @@ function codeAssignmentSetup(string $language = 'java'): array
     return [$teacher, $student, $course, $assignment];
 }
 
-test('a teacher can create a code assignment in each manuscript language and Python', function (string $language) {
+test('a teacher can create a code assignment in each manuscript language', function (string $language) {
     $teacher = pathwiseUser('teacher');
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
@@ -110,6 +110,39 @@ test('a student can submit a code assignment as one source file', function () {
         ->and($submission->file_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($submission->file_path);
+});
+
+test('a student can submit a Python assignment as a .py file', function () {
+    Storage::fake('public');
+    Notification::fake();
+
+    [, $student, , $assignment] = codeAssignmentSetup('python');
+
+    $this->actingAs($student)
+        ->post(route('student.assignments.submit', $assignment), [
+            'submission_file' => UploadedFile::fake()->createWithContent('main.py', 'print("Hi")'),
+        ])
+        ->assertSessionHasNoErrors();
+
+    $submission = Submission::sole();
+
+    expect($submission->file_path)->toEndWith('.py');
+
+    Storage::disk('public')->assertExists($submission->file_path);
+});
+
+test('a Python assignment rejects a source file of another language', function () {
+    Storage::fake('public');
+
+    [, $student, , $assignment] = codeAssignmentSetup('python');
+
+    $this->actingAs($student)
+        ->post(route('student.assignments.submit', $assignment), [
+            'submission_file' => UploadedFile::fake()->createWithContent('Main.java', 'class Main {}'),
+        ])
+        ->assertSessionHasErrors('submission_file');
+
+    expect(Submission::count())->toBe(0);
 });
 
 test('a .txt file is accepted for any code language', function () {
