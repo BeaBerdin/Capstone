@@ -324,12 +324,9 @@
 
                                         <a
                                             href="{{
-                                                asset(
-                                                    'storage/' .
-                                                    ltrim(
-                                                        $submission->file_path,
-                                                        '/'
-                                                    )
+                                                route(
+                                                    'files.submission',
+                                                    $submission
                                                 )
                                             }}"
                                             target="_blank"

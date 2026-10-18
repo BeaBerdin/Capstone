@@ -70,7 +70,7 @@
 
                 @if($submission->file_path)
                     <a
-                        href="{{ asset('storage/' . $submission->file_path) }}"
+                        href="{{ route('files.submission', $submission) }}"
                         target="_blank"
                         rel="noopener"
                         class="mt-6 inline-flex h-10 items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"

@@ -8,9 +8,9 @@ use App\Models\Submission;
 use App\Models\User;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
+use App\Support\PrivateFiles;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -147,9 +147,7 @@ class SubmissionController extends Controller
 
     public function destroy(Submission $submission)
     {
-        if ($submission->file_path) {
-            Storage::disk('public')->delete($submission->file_path);
-        }
+        PrivateFiles::delete($submission->file_path);
 
         $submission->delete();
 
@@ -308,18 +306,16 @@ class SubmissionController extends Controller
             && ! $request->hasFile('submission_file')
             && $filePath
         ) {
-            Storage::disk('public')->delete($filePath);
+            PrivateFiles::delete($filePath);
             $filePath = null;
         }
 
         if ($request->hasFile('submission_file')) {
-            if ($filePath) {
-                Storage::disk('public')->delete($filePath);
-            }
+            PrivateFiles::delete($filePath);
 
             $filePath = $request->file('submission_file')->store(
                 'assignment-submissions/' . $assignment->id,
-                'public'
+                PrivateFiles::DISK
             );
         }
 
@@ -897,9 +893,9 @@ class SubmissionController extends Controller
             ];
         }
 
-        $disk = Storage::disk('public');
+        $disk = PrivateFiles::diskFor($submission->file_path);
 
-        if (! $disk->exists($submission->file_path)) {
+        if (! $disk) {
             return [
                 'text' => null,
                 'error' => 'The uploaded file ('.$fileName.') could not be found.',

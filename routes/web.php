@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\StudentRemovalRequestController;
 
@@ -71,6 +72,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read-all',
         [NotificationController::class, 'readAll'])
         ->name('notifications.read-all');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRIVATE FILES
+    |--------------------------------------------------------------------------
+    | Payment receipts, assignment submissions and lesson files. Access is
+    | checked in PrivateFileController.
+    */
+
+    Route::get('/files/receipts/{transaction}', [PrivateFileController::class, 'receipt'])
+        ->name('files.receipt');
+
+    Route::get('/files/submissions/{submission}', [PrivateFileController::class, 'submission'])
+        ->name('files.submission');
+
+    Route::get('/files/lessons/{lesson}', [PrivateFileController::class, 'lesson'])
+        ->name('files.lesson');
 
 
     /*

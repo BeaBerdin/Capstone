@@ -200,13 +200,9 @@
     if ($filePath) {
 
         $fileUrl =
-            asset(
-                'storage/'
-                .
-                ltrim(
-                    $filePath,
-                    '/'
-                )
+            route(
+                'files.lesson',
+                $lesson
             );
 
         $fileExtension =

@@ -67,8 +67,8 @@ function fakeGeminiEvaluation(): void
 }
 
 test('the text of an uploaded source file is sent to Gemini', function () {
-    Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/Main.java', 'class Main { /* UNIQUE-SOURCE-MARKER */ }');
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/Main.java', 'class Main { /* UNIQUE-SOURCE-MARKER */ }');
     fakeGeminiEvaluation();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Main.java']);
@@ -85,8 +85,8 @@ test('the text of an uploaded source file is sent to Gemini', function () {
 });
 
 test('a .txt attachment on an essay is sent to Gemini', function () {
-    Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/essay.txt', 'My essay about UNIQUE-ESSAY-MARKER.');
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/essay.txt', 'My essay about UNIQUE-ESSAY-MARKER.');
     fakeGeminiEvaluation();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/essay.txt'], 'essay');
@@ -99,8 +99,8 @@ test('a .txt attachment on an essay is sent to Gemini', function () {
 });
 
 test('a file-only submission without readable text is not sent to Gemini', function (string $path, string $contents, string $reason) {
-    Storage::fake('public');
-    Storage::disk('public')->put($path, $contents);
+    fakeFileDisks();
+    Storage::disk('local')->put($path, $contents);
     Http::fake();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => $path], 'essay');
@@ -120,8 +120,8 @@ test('a file-only submission without readable text is not sent to Gemini', funct
 ]);
 
 test('a source file over the size limit is not sent to Gemini', function () {
-    Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/Big.java', str_repeat('a', Assignment::AI_TEXT_MAX_KB * 1024 + 1));
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/Big.java', str_repeat('a', Assignment::AI_TEXT_MAX_KB * 1024 + 1));
     Http::fake();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Big.java']);
@@ -134,7 +134,7 @@ test('a source file over the size limit is not sent to Gemini', function () {
 });
 
 test('a missing file is reported instead of being sent to Gemini', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Http::fake();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Gone.java']);
@@ -147,8 +147,8 @@ test('a missing file is reported instead of being sent to Gemini', function () {
 });
 
 test('a typed answer is still evaluated when its attachment cannot be read', function () {
-    Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/report.pdf', '%PDF-1.4 binary');
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/report.pdf', '%PDF-1.4 binary');
     fakeGeminiEvaluation();
 
     [$teacher, $submission] = aiEvaluationSetup([
@@ -164,8 +164,8 @@ test('a typed answer is still evaluated when its attachment cannot be read', fun
 });
 
 test('the text of an uploaded .py file is sent to Gemini as Python', function () {
-    Storage::fake('public');
-    Storage::disk('public')->put('assignment-submissions/1/main.py', 'print("UNIQUE-PYTHON-MARKER")');
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/main.py', 'print("UNIQUE-PYTHON-MARKER")');
     fakeGeminiEvaluation();
 
     [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/main.py'], 'code', 'python');
@@ -191,4 +191,18 @@ test('Gemini is told the language by its display name', function () {
 
     Http::assertSent(fn (Request $request) => str_contains($request->body(), 'HTML\/CSS\/JavaScript')
         || str_contains($request->body(), 'HTML/CSS/JavaScript'));
+});
+
+test('a source file not moved to the private disk yet is still sent to Gemini', function () {
+    fakeFileDisks();
+    Storage::disk('public')->put('assignment-submissions/1/Old.java', 'class Old { /* UNIQUE-LEGACY-MARKER */ }');
+    fakeGeminiEvaluation();
+
+    [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Old.java']);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertSessionHas('success');
+
+    Http::assertSent(fn (Request $request) => str_contains($request->body(), 'UNIQUE-LEGACY-MARKER'));
 });

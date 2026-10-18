@@ -90,7 +90,7 @@ test('the teacher form lists the languages with their display names', function (
 });
 
 test('a student can submit a code assignment as one source file', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
 
     [, $student, , $assignment] = codeAssignmentSetup('java');
@@ -109,11 +109,11 @@ test('a student can submit a code assignment as one source file', function () {
     expect($submission->answer_text)->toBeNull()
         ->and($submission->file_path)->not->toBeNull();
 
-    Storage::disk('public')->assertExists($submission->file_path);
+    Storage::disk('local')->assertExists($submission->file_path);
 });
 
 test('a student can submit a Python assignment as a .py file', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
 
     [, $student, , $assignment] = codeAssignmentSetup('python');
@@ -128,11 +128,11 @@ test('a student can submit a Python assignment as a .py file', function () {
 
     expect($submission->file_path)->toEndWith('.py');
 
-    Storage::disk('public')->assertExists($submission->file_path);
+    Storage::disk('local')->assertExists($submission->file_path);
 });
 
 test('a Python assignment rejects a source file of another language', function () {
-    Storage::fake('public');
+    fakeFileDisks();
 
     [, $student, , $assignment] = codeAssignmentSetup('python');
 
@@ -146,7 +146,7 @@ test('a Python assignment rejects a source file of another language', function (
 });
 
 test('a .txt file is accepted for any code language', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
 
     [, $student, , $assignment] = codeAssignmentSetup('php');
@@ -161,7 +161,7 @@ test('a .txt file is accepted for any code language', function () {
 });
 
 test('a source file of another language is rejected', function () {
-    Storage::fake('public');
+    fakeFileDisks();
 
     [, $student, , $assignment] = codeAssignmentSetup('java');
 
@@ -175,7 +175,7 @@ test('a source file of another language is rejected', function () {
 });
 
 test('a source file larger than 25 MB is rejected', function () {
-    Storage::fake('public');
+    fakeFileDisks();
 
     [, $student, , $assignment] = codeAssignmentSetup('c');
 
@@ -199,7 +199,7 @@ test('a code submission needs typed code or a source file', function () {
 });
 
 test('typed code still works and replaces an earlier uploaded file', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
 
     [, $student, , $assignment] = codeAssignmentSetup('c');
@@ -221,7 +221,7 @@ test('typed code still works and replaces an earlier uploaded file', function ()
     expect($submission->answer_text)->toBe('int main(void) { return 1; }')
         ->and($submission->file_path)->toBeNull();
 
-    Storage::disk('public')->assertMissing($oldPath);
+    Storage::disk('local')->assertMissing($oldPath);
 });
 
 test('the student page shows the language label and the source file upload', function () {

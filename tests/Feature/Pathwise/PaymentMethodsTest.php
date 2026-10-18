@@ -5,7 +5,6 @@ use App\Support\PaymentMethods;
 use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 /*
 | B3: PayMongo payment methods come from PAYMONGO_PAYMENT_METHODS
@@ -125,7 +124,7 @@ test('the student purchase page lists the enabled methods with their labels', fu
 ]);
 
 test('the manual payment-proof form and validation use the same list', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     config(['services.paymongo.payment_methods' => 'gcash,card']);
 
     $student = pathwiseUser('student');

@@ -170,7 +170,7 @@ test('AI feedback keeps its indentation and is escaped', function () {
 */
 
 test('files up to 25 MB are accepted and larger files are rejected', function (string $type, string $file, int $kilobytes, bool $accepted) {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
 
     [, $student, $assignment] = requirementsSetup([
@@ -199,12 +199,12 @@ test('files up to 25 MB are accepted and larger files are rejected', function (s
 ]);
 
 test('a file over 256 KB is kept for manual grading and not sent to Gemini', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Http::fake();
 
     [$teacher, $student, $assignment] = requirementsSetup();
 
-    Storage::disk('public')->put('assignment-submissions/1/Main.java', str_repeat('a', 300 * 1024));
+    Storage::disk('local')->put('assignment-submissions/1/Main.java', str_repeat('a', 300 * 1024));
 
     $submission = Submission::create([
         'assignment_id' => $assignment->id,
@@ -220,7 +220,7 @@ test('a file over 256 KB is kept for manual grading and not sent to Gemini', fun
             && str_contains($error, 'grade this submission manually'));
 
     Http::assertNothingSent();
-    Storage::disk('public')->assertExists('assignment-submissions/1/Main.java');
+    Storage::disk('local')->assertExists('assignment-submissions/1/Main.java');
 });
 
 /*
@@ -230,7 +230,7 @@ test('a file over 256 KB is kept for manual grading and not sent to Gemini', fun
 */
 
 test('a typed-only assignment accepts code and refuses a file', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
     [, $student, $assignment] = requirementsSetup(['answer_format' => 'text']);
 
@@ -257,7 +257,7 @@ test('a typed-only assignment accepts code and refuses a file', function () {
 });
 
 test('a file-only assignment accepts a file and refuses typed text', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
     [, $student, $assignment] = requirementsSetup(['answer_format' => 'file']);
 
@@ -284,7 +284,7 @@ test('a file-only assignment accepts a file and refuses typed text', function ()
 });
 
 test('an either assignment accepts typed text or a file', function (string $type) {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
     [, $student, $assignment] = requirementsSetup([
         'submission_type' => $type,
@@ -311,7 +311,7 @@ test('an either assignment accepts typed text or a file', function (string $type
 })->with(['code', 'essay']);
 
 test('an essay can be typed-only or file-only too', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
     [, $student, $typedOnly] = requirementsSetup([
         'submission_type' => 'essay',
@@ -382,7 +382,7 @@ test('a teacher can choose and change the answer format', function () {
 });
 
 test('due dates, resubmission and grading still work', function () {
-    Storage::fake('public');
+    fakeFileDisks();
     Notification::fake();
     [$teacher, $student, $assignment] = requirementsSetup(['answer_format' => 'file']);
 
@@ -398,7 +398,7 @@ test('due dates, resubmission and grading still work', function () {
 
     $submission = Submission::sole();
     expect($submission->file_path)->not->toBe($firstPath);
-    Storage::disk('public')->assertMissing($firstPath);
+    Storage::disk('local')->assertMissing($firstPath);
 
     // The teacher grades it manually.
     $this->actingAs($teacher)

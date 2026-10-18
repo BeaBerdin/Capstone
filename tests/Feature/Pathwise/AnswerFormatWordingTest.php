@@ -3,7 +3,6 @@
 use App\Models\Assignment;
 use App\Models\Enrollment;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 /*
 | The "How Students Answer" labels follow the submission type: essays say
@@ -97,7 +96,7 @@ test('the student page shows the same wording', function (string $type, string $
 ]);
 
 test('the server messages use the same wording', function (string $type, string $format, array $input, string $field, string $message) {
-    Storage::fake('public');
+    fakeFileDisks();
     [, $student, , $assignment] = wordingAssignment($type, $format);
 
     $payload = array_map(

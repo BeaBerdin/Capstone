@@ -146,10 +146,10 @@
                             Uploaded Receipt
                         </p>
 
-                        <a href="{{ asset('storage/' . $transaction->payment_proof) }}"
+                        <a href="{{ route('files.receipt', $transaction) }}"
                            target="_blank"
                            class="inline-block">
-                            <img src="{{ asset('storage/' . $transaction->payment_proof) }}"
+                            <img src="{{ route('files.receipt', $transaction) }}"
                                  alt="Payment Proof"
                                  class="max-h-72 w-auto max-w-full rounded-xl border border-slate-200 object-contain shadow-sm">
                         </a>

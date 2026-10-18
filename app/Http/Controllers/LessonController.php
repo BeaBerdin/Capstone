@@ -11,7 +11,7 @@ use App\Models\Certificate;
 use App\Models\AIRecommendation;
 use App\Models\Quiz;
 use App\Models\QuizResult;
-use Illuminate\Support\Facades\Storage;
+use App\Support\PrivateFiles;
 
 class LessonController extends Controller
 {
@@ -116,12 +116,7 @@ class LessonController extends Controller
 
     public function destroy(Lesson $lesson)
     {
-        if (
-            $lesson->file_path &&
-            Storage::disk('public')->exists($lesson->file_path)
-        ) {
-            Storage::disk('public')->delete($lesson->file_path);
-        }
+        PrivateFiles::delete($lesson->file_path);
 
         $lesson->delete();
 
@@ -855,7 +850,7 @@ class LessonController extends Controller
                 ->file('lesson_file')
                 ->store(
                     'lesson-files/' . $course->id,
-                    'public'
+                    PrivateFiles::DISK
                 );
         }
 
@@ -1046,22 +1041,14 @@ class LessonController extends Controller
 
         if ($request->hasFile('lesson_file')) {
 
-            if (
-                $lesson->file_path
-                &&
-                Storage::disk('public')
-                    ->exists($lesson->file_path)
-            ) {
-                Storage::disk('public')
-                    ->delete($lesson->file_path);
-            }
+            PrivateFiles::delete($lesson->file_path);
 
             $filePath = $request
                 ->file('lesson_file')
                 ->store(
                     'lesson-files/'
                     . $lesson->course_id,
-                    'public'
+                    PrivateFiles::DISK
                 );
         }
 
@@ -1078,13 +1065,7 @@ class LessonController extends Controller
             $lesson->file_path
         ) {
 
-            if (
-                Storage::disk('public')
-                    ->exists($lesson->file_path)
-            ) {
-                Storage::disk('public')
-                    ->delete($lesson->file_path);
-            }
+            PrivateFiles::delete($lesson->file_path);
 
             $filePath = null;
         }
@@ -1168,15 +1149,7 @@ class LessonController extends Controller
         $course = $lesson->course;
 
 
-        if (
-            $lesson->file_path
-            &&
-            Storage::disk('public')
-                ->exists($lesson->file_path)
-        ) {
-            Storage::disk('public')
-                ->delete($lesson->file_path);
-        }
+        PrivateFiles::delete($lesson->file_path);
 
 
         $lesson->delete();

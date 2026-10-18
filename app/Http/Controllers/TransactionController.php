@@ -8,6 +8,7 @@ use App\Models\Enrollment;
 use App\Models\Transaction;
 use App\Notifications\PathwiseNotification;
 use App\Support\PaymentMethods;
+use App\Support\PrivateFiles;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -613,7 +614,7 @@ if ($invitation->isExpired()) {
             ->file('payment_proof')
             ->store(
                 'payment-proofs',
-                'public'
+                PrivateFiles::DISK
             );
 
         $transaction->update([

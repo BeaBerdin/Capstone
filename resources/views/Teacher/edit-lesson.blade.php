@@ -881,7 +881,7 @@
 
 
                                     <a
-                                        href="{{ asset('storage/' . $lesson->file_path) }}"
+                                        href="{{ route('files.lesson', $lesson) }}"
                                         target="_blank"
                                         class="inline-flex h-9
                                                items-center justify-center

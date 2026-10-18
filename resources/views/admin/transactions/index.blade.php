@@ -449,7 +449,7 @@
                                     @if($transaction->payment_proof)
 
                                         <a
-                                            href="{{ asset('storage/' . $transaction->payment_proof) }}"
+                                            href="{{ route('files.receipt', $transaction) }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[10px] font-bold text-violet-600 transition hover:bg-violet-100"

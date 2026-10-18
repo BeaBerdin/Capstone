@@ -82,3 +82,14 @@ function pathwiseCourse(App\Models\User $teacher, array $attributes = []): App\M
         'certificate_available' => true,
     ], $attributes));
 }
+
+/**
+ * Fake the private disk (receipts, submissions, lesson files) and the
+ * public disk (thumbnails, photos, and private files not moved yet), so
+ * tests never touch the real storage folders.
+ */
+function fakeFileDisks(): void
+{
+    Illuminate\Support\Facades\Storage::fake('local');
+    Illuminate\Support\Facades\Storage::fake('public');
+}
