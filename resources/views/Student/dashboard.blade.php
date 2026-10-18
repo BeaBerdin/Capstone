@@ -134,13 +134,15 @@
             {{-- =========================================================
                 SUMMARY CARDS
             ========================================================== --}}
-            <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {{-- Manuscript Fig. 38: Enrolled Courses, Quizzes Taken, Certificates
+                 Earned and Average Score, plus Average Progress. --}}
+            <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5" data-student-summary>
 
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-xs font-semibold text-slate-500">
-                                My Courses
+                                Enrolled Courses
                             </p>
 
                             <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
@@ -156,6 +158,86 @@
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
                                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500">
+                                Quizzes Taken
+                            </p>
+
+                            <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                                {{ $quizCount }}
+                            </p>
+
+                            <p class="mt-2 text-xs text-slate-400">
+                                Quiz {{ \Illuminate\Support\Str::plural('attempt', $quizCount) }} so far
+                            </p>
+                        </div>
+
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+
+                <a
+                    href="{{ route('student.certificates') }}"
+                    class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
+                >
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500">
+                                Certificates Earned
+                            </p>
+
+                            <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                                {{ $certificateCount }}
+                            </p>
+
+                            <p class="mt-2 text-xs text-slate-400">
+                                View your certificates
+                            </p>
+                        </div>
+
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 transition group-hover:bg-violet-50 group-hover:text-violet-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="5"></circle>
+                                <path d="M8.5 12.5 7 21l5-2 5 2-1.5-8.5"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500">
+                                Average Score
+                            </p>
+
+                            <p class="mt-2 text-3xl font-bold tracking-tight text-emerald-600">
+                                {{ number_format($averageScoreValue, 1) }}%
+                            </p>
+
+                            <p class="mt-2 text-xs text-slate-400">
+                                Across all quiz attempts
+                            </p>
+                        </div>
+
+                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m5 12 4 4L19 6"></path>
                             </svg>
                         </div>
                     </div>
@@ -193,61 +275,6 @@
                         ></div>
                     </div>
                 </div>
-
-
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500">
-                                Average Quiz Score
-                            </p>
-
-                            <p class="mt-2 text-3xl font-bold tracking-tight text-emerald-600">
-                                {{ number_format($averageScoreValue, 1) }}%
-                            </p>
-
-                            <p class="mt-2 text-xs text-slate-400">
-                                {{ $quizCount }}
-                                {{ \Illuminate\Support\Str::plural('attempt', $quizCount) }}
-                            </p>
-                        </div>
-
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m5 12 4 4L19 6"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-
-                <a
-                    href="{{ route('student.certificates') }}"
-                    class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
-                >
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <p class="text-xs font-semibold text-slate-500">
-                                Certificates
-                            </p>
-
-                            <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                                {{ $certificateCount }}
-                            </p>
-
-                            <p class="mt-2 text-xs text-slate-400">
-                                View earned achievements
-                            </p>
-                        </div>
-
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 transition group-hover:bg-violet-50 group-hover:text-violet-600">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="8" r="5"></circle>
-                                <path d="M8.5 12.5 7 21l5-2 5 2-1.5-8.5"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </a>
 
             </section>
 

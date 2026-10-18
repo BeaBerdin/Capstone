@@ -26,17 +26,6 @@
         )->avg('progress_percentage') ?? 0
     );
 
-    $totalAssignments = \App\Models\Assignment::whereHas(
-        'course',
-        fn ($q) => $q->where('teacher_id', $teacherId)
-    )->count();
-
-    $pendingGrading = \App\Models\Submission::whereHas(
-        'assignment.course',
-        fn ($q) => $q->where('teacher_id', $teacherId)
-    )
-        ->where('status', 'submitted')
-        ->count();
 
     $upcomingAssignments = \App\Models\Assignment::with('course')
         ->whereHas(
@@ -310,14 +299,32 @@
 
 
         [
-            'label' => 'Total Students',
+            'label' => 'Total Lessons',
+            'value' => $totalLessons,
+            'sub' => 'Across your courses',
+
+            'icon' =>
+                'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+
+            'tone' => 'blue',
+
+            'route' =>
+                'teacher.lessons.index',
+
+            'link' =>
+                'View lessons',
+        ],
+
+
+        [
+            'label' => 'Enrolled Students',
             'value' => $totalStudents,
             'sub' => 'Across all courses',
 
             'icon' =>
                 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
 
-            'tone' => 'blue',
+            'tone' => 'emerald',
 
             'route' =>
                 'teacher.student-progress.index',
@@ -328,34 +335,13 @@
 
 
         [
-            'label' => 'Assignments',
-            'value' => $totalAssignments,
-
-            'sub' =>
-                $pendingGrading
-                . ' need grading',
-
-            'icon' =>
-                'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
-
-            'tone' => 'emerald',
-
-            'route' =>
-                'teacher.my-courses',
-
-            'link' =>
-                'View courses',
-        ],
-
-
-        [
-            'label' => 'Avg. Class Progress',
+            'label' => 'Avg. Quiz Score',
 
             'value' =>
-                $averageProgress . '%',
+                $averageScore . '%',
 
             'sub' =>
-                'Across all enrollments',
+                'Across all quiz attempts',
 
             'icon' =>
                 'M4 19V9m5 10V5m5 14v-7m5 7V3',
@@ -363,10 +349,10 @@
             'tone' => 'orange',
 
             'route' =>
-                'teacher.student-progress.index',
+                'teacher.quiz-results.index',
 
             'link' =>
-                'View report',
+                'View results',
         ],
     ];
 @endphp
