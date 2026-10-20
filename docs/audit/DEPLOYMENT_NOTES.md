@@ -81,3 +81,17 @@ A11 code is deployed:
 If something is wrong, restore the files from the backup in step 1
 (`tar -xzf ~/pathwise-public-files-backup-<date>.tar.gz`). The old paths
 work again because the stored paths in the database never changed.
+
+## Existing accounts and email verification
+
+After pulling, run `php artisan users:verify-existing --dry-run`, then
+without `--dry-run`, so existing accounts aren't blocked by email
+verification.
+
+- The command only sets `email_verified_at` for accounts where it is empty
+  and that were created before the command started. Passwords, roles and
+  all other columns are not changed.
+- Accounts that are already verified keep their original date. Running it
+  again is safe.
+- Users who register afterwards must still verify their email.
+- It is not a migration, so it never runs automatically on the live server.

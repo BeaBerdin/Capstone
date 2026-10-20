@@ -1,0 +1,127 @@
+<?php
+
+use App\Models\User;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+
+/*
+| Accounts that already exist count as verified; only users who register
+| from now on must verify their email (`php artisan users:verify-existing`).
+*/
+
+test('existing unverified users become verified and nothing else changes', function () {
+    $student = pathwiseUser('student', ['email_verified_at' => null, 'email' => 'old-student@example.com']);
+    $teacher = pathwiseUser('teacher', ['email_verified_at' => null]);
+    $before = DB::table('users')->where('id', $student->id)->first();
+
+    $this->travel(1)->minutes();
+
+    $this->artisan('users:verify-existing')
+        ->expectsOutputToContain('Accounts marked as verified: 2')
+        ->assertSuccessful();
+
+    $after = DB::table('users')->where('id', $student->id)->first();
+
+    expect($student->fresh()->hasVerifiedEmail())->toBeTrue()
+        ->and($teacher->fresh()->hasVerifiedEmail())->toBeTrue()
+        ->and($student->fresh()->email_verified_at->equalTo(now()))->toBeTrue()
+        ->and($after->password)->toBe($before->password)
+        ->and($after->updated_at)->toBe($before->updated_at)
+        ->and(collect((array) $after)->except('email_verified_at')->all())
+        ->toBe(collect((array) $before)->except('email_verified_at')->all())
+        ->and($student->fresh()->hasRole('student'))->toBeTrue()
+        ->and($teacher->fresh()->hasRole('teacher'))->toBeTrue()
+        ->and(Hash::check('password', $student->fresh()->password))->toBeTrue();
+});
+
+test('already verified users keep their original date', function () {
+    $verifiedAt = now()->subYear();
+    $user = pathwiseUser('student', ['email_verified_at' => $verifiedAt]);
+
+    $this->travel(1)->minutes();
+
+    $this->artisan('users:verify-existing')
+        ->expectsOutputToContain('Accounts marked as verified: 0')
+        ->assertSuccessful();
+
+    expect($user->fresh()->email_verified_at->equalTo($verifiedAt))->toBeTrue();
+});
+
+test('--dry-run lists the accounts and changes nothing', function () {
+    $user = pathwiseUser('student', ['email_verified_at' => null, 'email' => 'waiting@example.com']);
+    pathwiseUser('student', ['email' => 'done@example.com']);
+
+    $this->travel(1)->minutes();
+
+    $this->artisan('users:verify-existing --dry-run')
+        ->expectsOutputToContain('Accounts that would be marked as verified: 1')
+        ->expectsOutputToContain('waiting@example.com')
+        ->doesntExpectOutputToContain('done@example.com')
+        ->assertSuccessful();
+
+    expect($user->fresh()->email_verified_at)->toBeNull();
+});
+
+test('running it twice is safe', function () {
+    $user = pathwiseUser('student', ['email_verified_at' => null]);
+
+    $this->travel(1)->minutes();
+    $this->artisan('users:verify-existing')->assertSuccessful();
+    $firstDate = $user->fresh()->email_verified_at;
+
+    $this->travel(1)->days();
+    $this->artisan('users:verify-existing')
+        ->expectsOutputToContain('Accounts marked as verified: 0')
+        ->assertSuccessful();
+
+    expect($user->fresh()->email_verified_at->equalTo($firstDate))->toBeTrue();
+});
+
+test('an account without a created_at date counts as existing', function () {
+    $user = pathwiseUser('student', ['email_verified_at' => null]);
+    DB::table('users')->where('id', $user->id)->update(['created_at' => null]);
+
+    $this->artisan('users:verify-existing')->assertSuccessful();
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+test('a user who registers after the command still has to verify their email', function () {
+    $this->seed(RoleSeeder::class);
+    Notification::fake();
+
+    $existing = pathwiseUser('student', ['email_verified_at' => null]);
+
+    $this->travel(1)->minutes();
+    $this->artisan('users:verify-existing')->assertSuccessful();
+
+    $this->travel(1)->minutes();
+
+    $this->post(route('register.store'), [
+        'name' => 'New Student',
+        'email' => 'new-student@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'role' => 'student',
+    ])->assertSessionHasNoErrors();
+
+    $newUser = User::where('email', 'new-student@example.com')->sole();
+
+    expect($existing->fresh()->hasVerifiedEmail())->toBeTrue()
+        ->and($newUser->hasVerifiedEmail())->toBeFalse();
+
+    $this->get(route('student.dashboard'))->assertRedirect(route('verification.notice'));
+});
+
+test('an account created when the command starts is not changed', function () {
+    // The clock is stopped, so this user is created at the command's start time.
+    $user = pathwiseUser('student', ['email_verified_at' => null]);
+
+    $this->artisan('users:verify-existing')
+        ->expectsOutputToContain('Accounts marked as verified: 0')
+        ->assertSuccessful();
+
+    expect($user->fresh()->email_verified_at)->toBeNull();
+});
