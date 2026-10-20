@@ -128,4 +128,7 @@ return [
 
     'seed_super_admin_password' => env('SEED_SUPERADMIN_PASSWORD'),
 
+    // Password of the demo accounts created by DemoDataSeeder (local only).
+    'seed_demo_password' => env('DEMO_SEED_PASSWORD'),
+
 ];
