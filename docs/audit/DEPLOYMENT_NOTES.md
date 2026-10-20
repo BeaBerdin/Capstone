@@ -95,3 +95,90 @@ verification.
   again is safe.
 - Users who register afterwards must still verify their email.
 - It is not a migration, so it never runs automatically on the live server.
+
+## Testing a backup restore on your laptop
+
+A backup only helps if it can be restored. Practise on your laptop with a
+**separate test database**. Never restore into your real `pathwise`
+database: the backup file starts each table with `DROP TABLE`, so it would
+replace your data.
+
+Use PowerShell in the PATHWISE folder.
+
+1. **Make sure the MySQL tools can be found.**
+
+   ```
+   mysqldump --version
+   ```
+
+   If PowerShell says it is not recognized, add MySQL to this window's path
+   (adjust the folder if your MySQL version is different), then try again:
+
+   ```
+   $env:Path += ";C:\Program Files\MySQL\MySQL Server 8.0\bin"
+   ```
+
+2. **Make a fresh database backup.**
+
+   ```
+   php artisan backup:run --only-db
+   ```
+
+   It should end with "Backup completed!".
+
+3. **Find the backup file.** Backups are saved in
+   `storage\app\private\<APP_NAME>\`, where `<APP_NAME>` is the `APP_NAME`
+   value in `.env` (for example `storage\app\private\Laravel\`). The newest
+   `.zip` file is the one you just made:
+
+   ```
+   Get-ChildItem storage\app\private\*\*.zip | Sort-Object LastWriteTime | Select-Object -Last 1
+   ```
+
+4. **Unzip it into a test folder.**
+
+   ```
+   Expand-Archive storage\app\private\Laravel\<file>.zip -DestinationPath $HOME\restore-test
+   ```
+
+   The database dump is `$HOME\restore-test\db-dumps\mysql-pathwise.sql`.
+   If `BACKUP_ARCHIVE_PASSWORD` is set in `.env`, the zip is encrypted; open
+   it with 7-Zip and that password instead.
+
+5. **Create the separate test database.** It must have a different name
+   from your real database:
+
+   ```
+   mysql -u root -p -e "CREATE DATABASE pathwise_restore_test"
+   ```
+
+6. **Restore the dump into the test database only.** Check that the
+   command says `pathwise_restore_test`, not `pathwise`, before pressing
+   Enter:
+
+   ```
+   cmd /c "mysql -u root -p pathwise_restore_test < %USERPROFILE%\restore-test\db-dumps\mysql-pathwise.sql"
+   ```
+
+7. **Check the restored data.** Compare a few counts between the test
+   database and your real one (these commands only read):
+
+   ```
+   mysql -u root -p -e "SELECT COUNT(*) FROM pathwise_restore_test.users; SELECT COUNT(*) FROM pathwise_restore_test.courses; SELECT COUNT(*) FROM pathwise_restore_test.enrollments; SELECT COUNT(*) FROM pathwise_restore_test.transactions;"
+   mysql -u root -p -e "SELECT COUNT(*) FROM pathwise.users; SELECT COUNT(*) FROM pathwise.courses; SELECT COUNT(*) FROM pathwise.enrollments; SELECT COUNT(*) FROM pathwise.transactions;"
+   ```
+
+   The numbers should match, unless records were added after the backup.
+   You can also open `pathwise_restore_test` in MySQL Workbench and look
+   at a few tables.
+
+8. **Clean up.** Delete the test database and the unzipped files. Check
+   the name twice: it must be `pathwise_restore_test`.
+
+   ```
+   mysql -u root -p -e "DROP DATABASE pathwise_restore_test"
+   Remove-Item -Recurse $HOME\restore-test
+   ```
+
+The backup contains the database only (`--only-db`). Uploaded files such as
+receipts and lesson files are in the weekly full backup (`backup:run`).
