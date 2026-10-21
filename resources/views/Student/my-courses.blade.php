@@ -529,6 +529,7 @@
                                     @include('Student.partials.my-course-card', [
                                         'enrollment' => $enrollment,
                                         'certificate' => $certificates->get($enrollment->course_id),
+                                        'hasReviewed' => in_array($enrollment->course_id, $reviewedCourseIds, true),
                                     ])
                                 @endforeach
                             </div>

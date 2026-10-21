@@ -88,4 +88,17 @@ public function learningPaths()
         'learning_path_courses'
     );
 }
+
+public function reviews()
+{
+    return $this->hasMany(CourseReview::class);
+}
+
+/**
+ * Reviews counted in the average and shown publicly (not hidden).
+ */
+public function visibleReviews()
+{
+    return $this->hasMany(CourseReview::class)->where('is_hidden', false);
+}
 }

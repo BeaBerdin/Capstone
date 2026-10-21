@@ -1613,6 +1613,7 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Certificate Records', 'meta' => 'Issue, edit and revoke certificates', 'url' => route('certificates.index')],
             ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'Removal Requests', 'meta' => 'Student removal requests', 'url' => route('admin.student-removal-requests.index')],
+            ['label' => 'Course Reviews', 'meta' => 'Hide or unhide student reviews', 'url' => route('admin.course-reviews.index')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommendation tools', 'url' => route('ai-recommendations.index')],
             ['label' => 'Student Progress', 'meta' => 'Learner performance', 'url' => route('student-progress.index')],
             ['label' => 'Certificates', 'meta' => 'Certificate management', 'url' => route('certificate-management.index')],
@@ -1628,6 +1629,7 @@ html.dark .pw-mobile-toggle {
             ['label' => 'Student Progress', 'meta' => 'Track learners', 'url' => route('teacher.student-progress.index')],
             ['label' => 'Student Invitations', 'meta' => 'Invite learners via unique links', 'url' => route('course-invitations.index')],
             ['label' => 'Performance Analytics', 'meta' => 'Reports and learner performance', 'url' => route('teacher.analytics')],
+            ['label' => 'Course Reviews', 'meta' => 'Reviews of your courses', 'url' => route('teacher.course-reviews.index')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
         ]);
     } elseif ($pwUser->hasRole('student')) {
@@ -2428,6 +2430,32 @@ html.dark .pw-mobile-toggle {
 
                     </a>
 
+
+                    {{-- Course Reviews (moderation) --}}
+                    <a
+                        href="{{ route('admin.course-reviews.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('admin.course-reviews.*') ? 'is-active' : '' }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z" />
+                        </svg>
+
+                        <span>
+                            Course Reviews
+                        </span>
+
+                    </a>
+
                 </section>
 
 
@@ -2746,6 +2774,35 @@ html.dark .pw-mobile-toggle {
 
                         <span>
                             Performance Analytics
+                        </span>
+
+                    </a>
+
+
+                    <a
+                        href="{{ route('teacher.course-reviews.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{
+                            request()->routeIs('teacher.course-reviews.*', 'teacher.courses.reviews')
+                                ? 'is-active'
+                                : ''
+                        }}"
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z" />
+                        </svg>
+
+                        <span>
+                            Course Reviews
                         </span>
 
                     </a>

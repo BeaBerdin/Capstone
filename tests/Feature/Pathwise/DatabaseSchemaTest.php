@@ -26,22 +26,25 @@ test('new users are active by default', function () {
     expect($user->is_active)->toBeTrue();
 });
 
-test('the unused payments and course_reviews tables do not exist after migrating', function (string $table) {
-    expect(Schema::hasTable($table))->toBeFalse();
-})->with(['payments', 'course_reviews']);
+test('the unused payments table does not exist after migrating', function () {
+    expect(Schema::hasTable('payments'))->toBeFalse();
+});
 
-test('rolling back the drop migration recreates both tables as they were', function () {
+test('course_reviews is the real reviews table after migrating', function () {
+    // The empty placeholder was dropped (2026_10_21_000001) and the real
+    // table created again (2026_10_21_000002).
+    expect(Schema::getColumnListing('course_reviews'))->toEqualCanonicalizing([
+        'id', 'course_id', 'student_id', 'rating', 'comment',
+        'is_hidden', 'hidden_reason', 'hidden_by', 'created_at', 'updated_at',
+    ]);
+});
+
+test('rolling back the drop migration recreates payments as it was and leaves course_reviews alone', function () {
     $migration = require database_path('migrations/2026_10_21_000001_drop_unused_payments_and_course_reviews_tables.php');
 
     $migration->down();
 
-    foreach (['payments', 'course_reviews'] as $table) {
-        expect(Schema::hasTable($table))->toBeTrue()
-            ->and(Schema::getColumnListing($table))->toEqualCanonicalizing(['id', 'created_at', 'updated_at']);
-    }
-
-    $migration->up();
-
-    expect(Schema::hasTable('payments'))->toBeFalse()
-        ->and(Schema::hasTable('course_reviews'))->toBeFalse();
+    expect(Schema::hasTable('payments'))->toBeTrue()
+        ->and(Schema::getColumnListing('payments'))->toEqualCanonicalizing(['id', 'created_at', 'updated_at'])
+        ->and(Schema::hasColumn('course_reviews', 'rating'))->toBeTrue();
 });

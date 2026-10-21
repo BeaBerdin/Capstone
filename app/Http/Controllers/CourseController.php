@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseReview;
 use App\Models\CourseTemplate;
 use App\Models\Lesson;
 use App\Models\Enrollment;
@@ -247,10 +248,13 @@ class CourseController extends Controller
             ->filter(fn ($status) => in_array($status, Enrollment::ACCESS_STATUSES, true))
             ->keys();
 
+        // Average rating and number of reviews; hidden reviews do not count.
         $courses = Course::with([
             'category',
             'teacher',
         ])
+            ->withCount('visibleReviews')
+            ->withAvg('visibleReviews', 'rating')
             ->where('status', 'published')
             ->whereNotIn('id', $ownedCourseIds)
             ->latest()
@@ -285,9 +289,28 @@ class CourseController extends Controller
             404
         );
 
+        /*
+        | Reviews: the average and count leave out hidden reviews, and so
+        | does the public list. The student's own review is loaded
+        | separately so they also see it when it is hidden.
+        */
+        $reviewSummary = CourseReviewController::summary($course);
+
+        $reviews = $course->visibleReviews()
+            ->with('student:id,name')
+            ->latest()
+            ->paginate(5, ['*'], 'reviews_page')
+            ->fragment('reviews');
+
+        $myReview = CourseReview::where('course_id', $course->id)
+            ->where('student_id', auth()->id())
+            ->first();
+
+        $canReview = CourseReview::studentCanReview(auth()->user(), $course);
+
         return view(
             'Student.course-show',
-            compact('course')
+            compact('course', 'reviewSummary', 'reviews', 'myReview', 'canReview')
         );
     }
 
@@ -391,9 +414,15 @@ class CourseController extends Controller
             ->get()
             ->keyBy('course_id');
 
+        // Courses the student has already reviewed ("Your review" instead
+        // of "Rate this course" on the card).
+        $reviewedCourseIds = CourseReview::where('student_id', auth()->id())
+            ->pluck('course_id')
+            ->all();
+
         return view(
             'Student.my-courses',
-            compact('enrollments', 'sections', 'certificates')
+            compact('enrollments', 'sections', 'certificates', 'reviewedCourseIds')
         );
     }
 
@@ -405,11 +434,15 @@ class CourseController extends Controller
 
     public function teacherCourses(Request $request)
     {
+        // Review average and count: visible reviews only, like the public
+        // course page.
         $query = Course::with('category')
             ->withCount([
                 'lessons',
                 'enrollments',
+                'visibleReviews',
             ])
+            ->withAvg('visibleReviews', 'rating')
             ->where(
                 'teacher_id',
                 auth()->id()

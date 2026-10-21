@@ -677,6 +677,22 @@
                                 </div>
 
 
+                                {{-- RATING (hidden reviews are not counted) --}}
+                                <div class="mt-3 flex items-center gap-2" data-review-summary>
+                                    @if($course->visible_reviews_count > 0)
+                                        <x-rating-stars :rating="$course->visible_reviews_avg_rating" size="h-3.5 w-3.5" />
+                                        <span class="text-xs font-semibold text-slate-700">
+                                            {{ number_format((float) $course->visible_reviews_avg_rating, 1) }}
+                                        </span>
+                                        <span class="text-xs text-slate-400">
+                                            ({{ $course->visible_reviews_count }} {{ \Illuminate\Support\Str::plural('review', $course->visible_reviews_count) }})
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-slate-400">No reviews yet</span>
+                                    @endif
+                                </div>
+
+
 
                                 {{-- INFO --}}
                                 <div

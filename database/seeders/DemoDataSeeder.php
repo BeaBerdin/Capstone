@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
@@ -249,7 +250,50 @@ class DemoDataSeeder extends Seeder
             'status' => 'submitted',
         ]);
 
+        /*
+        | Course reviews from enrolled students; one is hidden by an
+        | administrator, so it is left out of the course rating.
+        */
+        $this->review($web, $students[0], 5, 'Clear lessons and good examples. I built my first web page in one afternoon.');
+        $this->review($web, $students[1], 4, 'Very helpful for beginners. More exercises on CSS would be nice.');
+        $this->review($web, $students[2], 5, null);
+        $this->review($python, $students[5], 5, 'The grade calculator exercise was fun and practical.');
+        $this->review($python, $students[6], 4, 'Good pace. The loops lesson could use one more example.');
+        $this->review($accountingCourse, $students[8], 4, 'The journal entries lesson finally made debits and credits clear to me.');
+        $this->review($communication, $students[10], 5, 'I use the email template from this course at work now.');
+        $this->review(
+            $communication,
+            $students[11],
+            1,
+            'This is spam. Visit my page for cheap followers!',
+            'Advertising and spam are not allowed in reviews.'
+        );
+
         $this->command?->info('Demo data is ready: 3 teachers, 15 students, 6 courses (password from DEMO_SEED_PASSWORD).');
+    }
+
+    private function review(Course $course, User $student, int $rating, ?string $comment, ?string $hiddenReason = null): void
+    {
+        $exists = CourseReview::where('course_id', $course->id)
+            ->where('student_id', $student->id)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $review = new CourseReview([
+            'rating' => $rating,
+            'comment' => $comment,
+        ]);
+        $review->course_id = $course->id;
+        $review->student_id = $student->id;
+        $review->forceFill([
+            'is_hidden' => $hiddenReason !== null,
+            'hidden_reason' => $hiddenReason,
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(2),
+        ])->save();
     }
 
     /**

@@ -39,7 +39,7 @@ function demoTableCounts(): array
     return collect([
         'users', 'user_roles', 'course_categories', 'courses', 'lessons', 'quizzes',
         'quiz_questions', 'quiz_results', 'assignments', 'submissions', 'enrollments',
-        'lesson_progress', 'certificates', 'transactions', 'notifications',
+        'lesson_progress', 'certificates', 'transactions', 'notifications', 'course_reviews',
     ])->mapWithKeys(fn ($table) => [$table => DB::table($table)->count()])->all();
 }
 
@@ -190,6 +190,22 @@ test('it does nothing without DEMO_SEED_PASSWORD', function (?string $password) 
 
     expect(demoTableCounts())->toBe($before);
 })->with(['not set' => null, 'empty' => '']);
+
+test('it adds sample reviews, one of them hidden', function () {
+    runDemoSeeder();
+
+    expect(App\Models\CourseReview::count())->toBe(8)
+        ->and(App\Models\CourseReview::where('is_hidden', true)->count())->toBe(1)
+        ->and(App\Models\CourseReview::where('is_hidden', true)->sole()->hidden_reason)->not->toBeEmpty();
+
+    // Every reviewer has an enrollment that gives access to the course.
+    foreach (App\Models\CourseReview::all() as $review) {
+        expect(Enrollment::where('student_id', $review->student_id)
+            ->where('course_id', $review->course_id)
+            ->withAccess()
+            ->exists())->toBeTrue();
+    }
+});
 
 test('no emails or notifications are sent', function () {
     runDemoSeeder();

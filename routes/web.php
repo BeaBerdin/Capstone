@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CourseCategoryController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseInvitationController;
+use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizQuestionController;
@@ -224,6 +225,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/admin/student-removal-requests',[StudentRemovalRequestController::class, 'departmentHeadIndex'])
             ->name('admin.student-removal-requests.index');
 
+        // Course review moderation
+        Route::get('/course-reviews', [CourseReviewController::class, 'adminIndex'])
+            ->name('admin.course-reviews.index');
+
+        Route::post('/course-reviews/{courseReview}/hide', [CourseReviewController::class, 'hide'])
+            ->name('admin.course-reviews.hide');
+
+        Route::post('/course-reviews/{courseReview}/unhide', [CourseReviewController::class, 'unhide'])
+            ->name('admin.course-reviews.unhide');
+
         Route::post('/admin/student-removal-requests/{studentRemovalRequest}/review',[StudentRemovalRequestController::class, 'review'])
             ->name('admin.student-removal-requests.review');
 
@@ -246,6 +257,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/teacher/my-courses', [CourseController::class, 'teacherCourses'])
             ->name('teacher.my-courses');
+
+        Route::get('/teacher/courses/{course}/reviews', [CourseReviewController::class, 'teacherIndex'])
+            ->name('teacher.courses.reviews');
+
+        Route::get('/teacher/course-reviews', [CourseReviewController::class, 'teacherAll'])
+            ->name('teacher.course-reviews.index');
 
         Route::get('/teacher/courses/create', [CourseController::class, 'teacherCreateCourse'])
             ->name('teacher.courses.create');
@@ -411,6 +428,18 @@ Route::middleware('role:student')->group(function () {
 
     Route::post('/marketplace/{course}/enroll', [CourseController::class, 'enroll'])
         ->name('student.enroll');
+
+    // Course reviews: limited to 5 changes per minute per student.
+    Route::middleware('throttle:5,1')->group(function () {
+        Route::post('/marketplace/{course}/reviews', [CourseReviewController::class, 'store'])
+            ->name('student.reviews.store');
+
+        Route::put('/reviews/{courseReview}', [CourseReviewController::class, 'update'])
+            ->name('student.reviews.update');
+
+        Route::delete('/reviews/{courseReview}', [CourseReviewController::class, 'destroy'])
+            ->name('student.reviews.destroy');
+    });
 
     Route::get('/my-courses', [CourseController::class, 'myCourses'])
         ->name('student.my-courses');

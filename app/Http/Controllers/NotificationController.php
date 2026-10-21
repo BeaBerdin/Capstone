@@ -66,6 +66,13 @@ class NotificationController extends Controller
                 }
                 break;
 
+            case 'course_review':
+                if ($user->hasRole('teacher') && $courseId) {
+                    return redirect()
+                        ->route('teacher.courses.reviews', $courseId);
+                }
+                break;
+
             case 'assignment_published':
             case 'assignment_graded':
             case 'assignment_grade_updated':
