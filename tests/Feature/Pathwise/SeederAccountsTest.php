@@ -178,3 +178,30 @@ test('a generated password with console-tag symbols is printed exactly', functio
     expect($output)->toContain('shown only once): '.$tricky)
         ->and(Hash::check($tricky, User::where('email', SuperAdminSeeder::EMAIL)->sole()->password))->toBeTrue();
 });
+
+test('the printed password is exact even with backslashes and angle brackets', function () {
+    config(['auth.seed_super_admin_password' => null]);
+    $this->seed(RoleSeeder::class);
+
+    // A backslash right before "<" or ">", "<<", and a trailing backslash:
+    // console escaping used to drop a backslash here.
+    $tricky = 'Ab1\\<x<<y>\\z\\>q\\';
+
+    app()->bind(SuperAdminSeeder::class, fn () => new class($tricky) extends SuperAdminSeeder
+    {
+        public function __construct(private string $fixed) {}
+
+        protected function generatePassword(): string
+        {
+            return $this->fixed;
+        }
+    });
+
+    $output = runSeeder(SuperAdminSeeder::class);
+
+    preg_match('/shown only once\): (\S+)/', $output, $matches);
+
+    expect(strlen($tricky))->toBe(16)
+        ->and($matches[1] ?? null)->toBe($tricky)
+        ->and(Hash::check($tricky, User::where('email', SuperAdminSeeder::EMAIL)->sole()->password))->toBeTrue();
+});

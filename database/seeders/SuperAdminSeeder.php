@@ -6,7 +6,7 @@ use App\Models\User;
 use Database\Seeders\Concerns\SeedsAccounts;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /*
 | Super Admin (EDP) account (Manuscript Fig. 22/35). Without it a fresh
@@ -39,11 +39,12 @@ class SuperAdminSeeder extends Seeder
         );
 
         if ($isNew && $generatedPassword !== null) {
-            // Escaped so symbols such as "</>" in the password are printed
-            // as they are instead of being read as console colour tags.
-            $this->command?->warn(
+            // Printed raw so every character (for example "\<" or "<<") is
+            // shown exactly; escaping could drop a backslash.
+            $this->command?->getOutput()->writeln(
                 'Super Admin '.self::EMAIL.' was created with this password (shown only once): '
-                .OutputFormatter::escape($generatedPassword)
+                .$generatedPassword,
+                OutputInterface::OUTPUT_RAW
             );
         }
     }
