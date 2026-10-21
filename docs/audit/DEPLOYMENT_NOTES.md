@@ -182,3 +182,49 @@ Use PowerShell in the PATHWISE folder.
 
 The backup contains the database only (`--only-db`). Uploaded files such as
 receipts and lesson files are in the weekly full backup (`backup:run`).
+
+## Dropping the unused payments and course_reviews tables
+
+The migration `2026_10_21_000001_drop_unused_payments_and_course_reviews_tables`
+removes two empty placeholder tables that nothing in PATHWISE uses
+(payments are stored in `transactions`). On the live server:
+
+1. **Back up the database first:**
+
+   ```
+   php artisan backup:run --only-db
+   ```
+
+   Check that it ends with "Backup completed!".
+
+2. **Run the migration:**
+
+   ```
+   php artisan migrate
+   ```
+
+   It should list only the new migration as run.
+
+If it ever has to be undone, `php artisan migrate:rollback --step=1`
+recreates both tables exactly as they were (empty, with `id` and
+timestamps).
+
+## Backups on Windows: mysqldump must be on the PATH
+
+`php artisan backup:run` uses MySQL's `mysqldump` program. On Windows it is
+often not on the PATH, and the backup then fails. Check it first:
+
+```
+mysqldump --version
+```
+
+If PowerShell says it is not recognized, add MySQL to the PATH for this
+window (adjust the folder if your MySQL version is different), then run the
+backup again:
+
+```
+$env:Path += ";C:\Program Files\MySQL\MySQL Server 8.0\bin"
+```
+
+This only lasts until the window is closed. To make it permanent, add the
+same folder to the Path in Windows' Environment Variables settings.

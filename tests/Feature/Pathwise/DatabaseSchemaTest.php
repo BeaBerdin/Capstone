@@ -25,3 +25,23 @@ test('new users are active by default', function () {
 
     expect($user->is_active)->toBeTrue();
 });
+
+test('the unused payments and course_reviews tables do not exist after migrating', function (string $table) {
+    expect(Schema::hasTable($table))->toBeFalse();
+})->with(['payments', 'course_reviews']);
+
+test('rolling back the drop migration recreates both tables as they were', function () {
+    $migration = require database_path('migrations/2026_10_21_000001_drop_unused_payments_and_course_reviews_tables.php');
+
+    $migration->down();
+
+    foreach (['payments', 'course_reviews'] as $table) {
+        expect(Schema::hasTable($table))->toBeTrue()
+            ->and(Schema::getColumnListing($table))->toEqualCanonicalizing(['id', 'created_at', 'updated_at']);
+    }
+
+    $migration->up();
+
+    expect(Schema::hasTable('payments'))->toBeFalse()
+        ->and(Schema::hasTable('course_reviews'))->toBeFalse();
+});
