@@ -7,7 +7,8 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 - Each item quotes the **current text** exactly, then gives **replacement
   text**. Locations use the manuscript's section, figure and table names;
   table numbers are given only where the manuscript's own label is clear.
-- Nothing here changes the system. Where the system and the manuscript can be
+- Nothing here changes the system, except MR-12 and MR-26: those two tables
+  were dropped by a migration (October 21). Where the system and the manuscript can be
   aligned either way, the item is marked **Team decision** and lists the
   options.
 - "Why" points to the code that shows the current behaviour, so the claim can
@@ -28,7 +29,7 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 | MR-9 | Data dictionary, several tables | Fields missing from the manuscript | Add rows |
 | MR-10 | Data dictionary, several tables | "Allow Nulls" that are wrong | Correct |
 | MR-11 | Data dictionary | Tables missing from the manuscript | Add tables |
-| MR-12 | Data dictionary, Payments table | Unused placeholder table | Revise (decided: keep, "reserved for future use") |
+| MR-12 | Data dictionary, Payments table (Table 18) | Unused table, dropped from the database | Remove (decided October 21) |
 | MR-13 | Functional Decomposition, Administrator role | Department Head scope | Optional |
 | MR-14 | Fig. 19, Definition of Terms, FR (r) | AI quiz generation and the Draft course | Revise |
 | MR-15 | Super Admin Dashboard, Logic | Accounts are deactivated, never deleted | Revise |
@@ -42,8 +43,9 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 | MR-23 | Conceptual Framework | "User training module" | Revise |
 | MR-24 | Functional Requirement c | Who publishes a course | Revise |
 | MR-25 | Functional Requirement i | Learning paths and recommendations | Revise |
-| MR-26 | Data dictionary, Course_Reviews table | Unused placeholder table | Revise (reserved for future use) |
+| MR-26 | Data dictionary, Course_Reviews table (Table 21) | Unused table, dropped from the database | Remove (decided October 21) |
 | MR-27 | Data dictionary, Courses table | `is_free` must not be documented | Note |
+| MR-28 | Future Work (or Scope and Limitations) | Course reviews | Add |
 
 Already accurate (no change needed) is listed near the end, followed by the
 main differences between the September 27 PDF and the October 6 DOCX.
@@ -393,26 +395,25 @@ password_reset_tokens, notifications, passkeys) are normally left out of a
 data dictionary. If the team wants Functional Requirement p (notifications)
 backed by a table, `notifications` is the one to add.
 
-## MR-12 — Data dictionary: Payments table
+## MR-12 — Data dictionary: remove the Payments table (Table 18)
 
-**Decided (October 17, 2026):** keep the table, marked reserved for future
-use; no schema change.
+**Decided (October 21, 2026):** the table is removed from the system and
+from the manuscript. This replaces the October 17 decision to keep it as
+"reserved for future use".
 
-The Payments table exists in the database with only `id`, `created_at` and
-`updated_at`, which is also all the manuscript lists. No part of the system
-reads or writes it; payments are stored in the Transactions table.
+The Payments table only had `id`, `created_at` and `updated_at`, and no part
+of the system used it: all payment records, including PayMongo payments and
+uploaded receipts, are stored in the Transactions table. It is dropped by
+the migration `2026_10_21_000001_drop_unused_payments_and_course_reviews_tables`.
 
-**Current text** (the paragraph after the Payments table)
+**Change in the manuscript**
 
-> illustrates the data dictionary of the Payments table, which stores the
-> payment records maintained by the PATHWISE platform. It serves as a
-> reference for managing payment-related information within the system.
-
-**Replacement text**
-
-> illustrates the data dictionary of the Payments table, which is reserved
-> for future use. In this version, all payment records, including PayMongo
-> payments and uploaded receipts, are stored in the Transactions table.
+- Remove **Table 18 (DATA DICTIONARY OF PAYMENTS TABLE)** and the paragraph
+  after it ("…illustrates the data dictionary of the Payments table…").
+- Remove the Payments entity from the **Entity Relationship Diagram** and
+  from **Figure 39 (Database Design)**.
+- Renumber the tables, the List of Tables, and every "Table N" reference in
+  the text, together with MR-26. See **Table renumbering** under MR-26.
 
 ## MR-13 — Functional Decomposition: Administrator (Department Head) scope — Optional
 
@@ -912,26 +913,48 @@ and published courses with published lessons and quizzes are listed from
 beginner to advanced. No Gemini call is made for learning paths. Covered by
 `RecommendationSelectionTest` and `LearningPathGenerationTest`.
 
-## MR-26 — Data dictionary: Course_Reviews table
+## MR-26 — Data dictionary: remove the Course_Reviews table (Table 21)
 
-**Decided (October 17, 2026):** mark it reserved for future use; no schema
-change.
+**Decided (October 21, 2026):** the table is removed from the system and
+from the manuscript. This replaces the October 17 decision to keep it as
+"reserved for future use". Course reviews become a Future Work item
+(MR-28).
 
-The Course_Reviews table exists with only `id`, `created_at` and
-`updated_at` (as the manuscript lists). No model, page or route uses it;
-students cannot review courses in this version.
+The Course_Reviews table only had `id`, `created_at` and `updated_at`. No
+model, page or route used it; students cannot review courses in this
+version. It is dropped by the same migration as the Payments table (MR-12).
 
-**Current text** (the paragraph after the Course_Reviews table)
+**Change in the manuscript**
 
-> illustrates the data dictionary of the Course_Reviews table, which stores
-> the course review records within the PATHWISE platform. It serves as the
-> repository for feedback and evaluation data submitted for courses.
+- Remove **Table 21 (DATA DICTIONARY OF COURSE_REVIEWS TABLE)** and the
+  paragraph after it ("…illustrates the data dictionary of the
+  Course_Reviews table…").
+- Remove the Course_Reviews entity from the **Entity Relationship Diagram**
+  and from **Figure 39 (Database Design)**.
 
-**Replacement text**
+**Table renumbering** (for MR-12 and MR-26 together)
 
-> illustrates the data dictionary of the Course_Reviews table, which is
-> reserved for future use. Course reviews are not collected in this version
-> of PATHWISE.
+Renumber the captions, the List of Tables, and every "Table N" reference in
+the text (for example at the start of each "illustrates the data dictionary
+of…" paragraph). The page numbers in the List of Tables change as well.
+
+| Current | New | Table |
+|---|---|---|
+| 1–17 | 1–17 | unchanged |
+| 18 | removed | Payments |
+| 19 | 18 | Transactions |
+| 20 | 19 | Certificates |
+| 21 | removed | Course_Reviews |
+| 22 | 20 | Learning_Paths |
+| 23 | 21 | Learning_Path_Courses |
+| 24 | 22 | AI_Recommendations |
+| 24 | 23 | List of Modules |
+
+The DOCX currently numbers both AI_Recommendations and LIST OF MODULES as
+"Table 24"; the renumbering above also fixes that. The tables that MR-11
+adds (for example Departments and Course_Invitations) change these numbers
+again, depending on where they are inserted, so do the final numbering
+after MR-11.
 
 ## MR-27 — Data dictionary: do not document `courses.is_free`
 
@@ -944,6 +967,32 @@ Some existing databases (including the development database) may still
 have an `is_free` column left over from an earlier schema. It is unused and
 harmless; it can be dropped later, but no migration is needed for the
 system to work.
+
+## MR-28 — Future Work: course reviews
+
+**Decided (October 21, 2026):** course reviews are not part of this version
+(see MR-26) and are listed as Future Work.
+
+The October 6 DOCX has no Future Work or Recommendations chapter yet; it
+ends with Chapter III and the appendices. Add this item when that chapter is
+written, or as a sentence in **Scope and Limitations of the Study**.
+
+**Suggested Future Work item**
+
+> Course reviews and ratings. Future versions of PATHWISE may allow students
+> who have completed a course to rate it and write a short review. Reviews
+> would be shown on the course page in the marketplace to help other
+> students choose courses, and would give teachers feedback for improving
+> their courses.
+
+**Suggested limitation sentence** (if added to Scope and Limitations)
+
+> The system does not include course ratings or reviews; this is left for
+> future work.
+
+The survey item in the appendix ("Course reviews and evaluations would help
+me make better decisions when choosing courses") can stay: it asks for the
+respondents' opinion and supports listing reviews as future work.
 
 ---
 
