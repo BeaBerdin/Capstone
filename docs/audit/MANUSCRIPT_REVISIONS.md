@@ -7,8 +7,9 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 - Each item quotes the **current text** exactly, then gives **replacement
   text**. Locations use the manuscript's section, figure and table names;
   table numbers are given only where the manuscript's own label is clear.
-- Nothing here changes the system, except MR-12 and MR-26: those two tables
-  were dropped by a migration (October 21). Where the system and the manuscript can be
+- Nothing here changes the system, except two October 21 decisions: the
+  Payments table was dropped (MR-12), and course reviews were built
+  (MR-26, MR-29 to MR-36). Where the system and the manuscript can be
   aligned either way, the item is marked **Team decision** and lists the
   options.
 - "Why" points to the code that shows the current behaviour, so the claim can
@@ -43,9 +44,17 @@ built. Source: `PATHWISE-UPDATES.docx` (October 6, 2026), compared with the
 | MR-23 | Conceptual Framework | "User training module" | Revise |
 | MR-24 | Functional Requirement c | Who publishes a course | Revise |
 | MR-25 | Functional Requirement i | Learning paths and recommendations | Revise |
-| MR-26 | Data dictionary, Course_Reviews table (Table 21) | Unused table, dropped from the database | Remove (decided October 21) |
+| MR-26 | Data dictionary, Course_Reviews table (Table 21) | Course reviews implemented: real columns | Revise (decided October 21) |
 | MR-27 | Data dictionary, Courses table | `is_free` must not be documented | Note |
-| MR-28 | Future Work (or Scope and Limitations) | Course reviews | Add |
+| MR-28 | Future Work | Course reviews | Withdrawn (implemented instead) |
+| MR-29 | Scope and Limitations | Course reviews and their moderation | Revise |
+| MR-30 | Functional Requirements | Add (t) Course Review Process | Add |
+| MR-31 | Definition of Terms | Average Rating, Course Review | Add |
+| MR-32 | Use Case Diagram (Figure 20) | Three course review use cases | Revise |
+| MR-33 | Use Case Descriptions | Rate and Review, View Reviews, Moderate Reviews | Add |
+| MR-34 | Database Design (Figure 39), ERD (Figure 40) | Course_Reviews relationships | Revise |
+| MR-35 | List of Modules (Table 24) | Two course review modules | Add |
+| MR-36 | Storyboard | Marketplace, course page and teacher Course Reviews screens | Add |
 
 Already accurate (no change needed) is listed near the end, followed by the
 main differences between the September 27 PDF and the October 6 DOCX.
@@ -410,10 +419,36 @@ the migration `2026_10_21_000001_drop_unused_payments_and_course_reviews_tables`
 
 - Remove **Table 18 (DATA DICTIONARY OF PAYMENTS TABLE)** and the paragraph
   after it ("…illustrates the data dictionary of the Payments table…").
-- Remove the Payments entity from the **Entity Relationship Diagram** and
-  from **Figure 39 (Database Design)**.
+- Remove the Payments entity from **Figure 39 (Database Design of
+  PATHWISE)** and **Figure 40 (Entity Relationship Diagram of PATHWISE)**.
 - Renumber the tables, the List of Tables, and every "Table N" reference in
-  the text, together with MR-26. See **Table renumbering** under MR-26.
+  the text. Course_Reviews (Table 21) is **not** removed; it is updated
+  (MR-26).
+
+**Table renumbering** (Payments removed; every other table stays)
+
+| Current | New | Table |
+|---|---|---|
+| 1–17 | 1–17 | unchanged |
+| 18 | removed | Payments |
+| 19 | 18 | Transactions |
+| 20 | 19 | Certificates |
+| 21 | 20 | Course_Reviews |
+| 22 | 21 | Learning_Paths |
+| 23 | 22 | Learning_Path_Courses |
+| 24 | 23 | AI_Recommendations |
+| 24 | 24 | List of Modules |
+
+The DOCX currently numbers both AI_Recommendations and LIST OF MODULES as
+"Table 24"; the renumbering above also fixes that.
+
+**Renumber only once, after MR-11.** MR-11 adds new data dictionary tables
+(for example Departments and Course_Invitations), which shifts these numbers
+again depending on where they are inserted. Add MR-11's tables first, remove
+Table 18, and then renumber all tables, the List of Tables (including page
+numbers) and every "Table N" reference in one pass, so the team renumbers
+only once. The table above shows the result if MR-11's tables are not
+inserted before them.
 
 ## MR-13 — Functional Decomposition: Administrator (Department Head) scope — Optional
 
@@ -913,48 +948,61 @@ and published courses with published lessons and quizzes are listed from
 beginner to advanced. No Gemini call is made for learning paths. Covered by
 `RecommendationSelectionTest` and `LearningPathGenerationTest`.
 
-## MR-26 — Data dictionary: remove the Course_Reviews table (Table 21)
+## MR-26 — Data dictionary: update the Course_Reviews table (Table 21)
 
-**Decided (October 21, 2026):** the table is removed from the system and
-from the manuscript. This replaces the October 17 decision to keep it as
-"reserved for future use". Course reviews become a Future Work item
-(MR-28).
+**Decided (October 21, 2026):** course reviews are implemented, so Table 21
+stays and is updated with the real columns. This replaces the earlier
+decisions to mark it "reserved for future use" and to remove it.
 
-The Course_Reviews table only had `id`, `created_at` and `updated_at`. No
-model, page or route used it; students cannot review courses in this
-version. It is dropped by the same migration as the Payments table (MR-12).
+The empty placeholder table was dropped
+(`2026_10_21_000001_drop_unused_payments_and_course_reviews_tables`) and
+created again with real columns
+(`2026_10_21_000002_create_course_reviews_table`). Table 21 becomes Table 20
+after the renumbering in MR-12.
 
-**Change in the manuscript**
+**Current text** (Table 21, DATA DICTIONARY OF COURSE_REVIEWS TABLE)
 
-- Remove **Table 21 (DATA DICTIONARY OF COURSE_REVIEWS TABLE)** and the
-  paragraph after it ("…illustrates the data dictionary of the
-  Course_Reviews table…").
-- Remove the Course_Reviews entity from the **Entity Relationship Diagram**
-  and from **Figure 39 (Database Design)**.
+| Field Name | Constraints | Data Type | Allow Nulls | Description |
+|---|---|---|---|---|
+| id | PK | bigint | No | Course review identification |
+| created_at | Null | timestamp | Yes | Record creation date and time |
+| updated_at | Null | timestamp | Yes | Record last updated date and time |
 
-**Table renumbering** (for MR-12 and MR-26 together)
+**Replacement table**
 
-Renumber the captions, the List of Tables, and every "Table N" reference in
-the text (for example at the start of each "illustrates the data dictionary
-of…" paragraph). The page numbers in the List of Tables change as well.
+| Field Name | Constraints | Data Type | Allow Nulls | Description |
+|---|---|---|---|---|
+| id | PK | bigint | No | Course review identification |
+| course_id | FK | bigint | No | Course being reviewed (Courses table); the review is deleted with its course |
+| student_id | FK | bigint | No | Student who wrote the review (Users table) |
+| rating | Not Null | tinyint | No | Star rating from 1 to 5 |
+| comment | Null | text | Yes | Optional comment, at most 1,000 characters |
+| is_hidden | Not Null | boolean | No | Whether an administrator hid the review (default: not hidden) |
+| hidden_reason | Null | varchar | Yes | Reason for hiding |
+| hidden_by | FK | bigint | Yes | Administrator who hid the review (Users table) |
+| created_at | Null | timestamp | Yes | Record creation date and time |
+| updated_at | Null | timestamp | Yes | Record last updated date and time |
 
-| Current | New | Table |
-|---|---|---|
-| 1–17 | 1–17 | unchanged |
-| 18 | removed | Payments |
-| 19 | 18 | Transactions |
-| 20 | 19 | Certificates |
-| 21 | removed | Course_Reviews |
-| 22 | 20 | Learning_Paths |
-| 23 | 21 | Learning_Path_Courses |
-| 24 | 22 | AI_Recommendations |
-| 24 | 23 | List of Modules |
+Unique constraint: (course_id, student_id), so a student can review a course
+only once.
 
-The DOCX currently numbers both AI_Recommendations and LIST OF MODULES as
-"Table 24"; the renumbering above also fixes that. The tables that MR-11
-adds (for example Departments and Course_Invitations) change these numbers
-again, depending on where they are inserted, so do the final numbering
-after MR-11.
+**Current text** (the paragraph after the table)
+
+> illustrates the data dictionary of the Course_Reviews table, which stores
+> the course review records within the PATHWISE platform. It serves as the
+> repository for feedback and evaluation data submitted for courses.
+
+**Replacement text**
+
+> illustrates the data dictionary of the Course_Reviews table, which stores
+> the ratings and comments that students give to the courses they are
+> enrolled in. Each student can review a course only once, with a rating
+> from 1 to 5 and an optional comment. An administrator can hide an
+> inappropriate review with a reason; hidden reviews are not included in
+> the course's average rating or in the reviews shown to other users.
+
+**Why.** `app/Models/CourseReview.php`, `CourseReviewController`,
+`tests/Feature/Pathwise/CourseReviewsTest.php`.
 
 ## MR-27 — Data dictionary: do not document `courses.is_free`
 
@@ -968,31 +1016,303 @@ have an `is_free` column left over from an earlier schema. It is unused and
 harmless; it can be dropped later, but no migration is needed for the
 system to work.
 
-## MR-28 — Future Work: course reviews
+## MR-28 — Future Work: course reviews (withdrawn)
 
-**Decided (October 21, 2026):** course reviews are not part of this version
-(see MR-26) and are listed as Future Work.
+**Withdrawn (October 21, 2026):** course reviews are implemented, so they
+are **not** listed as Future Work. Do not add the Future Work item or the
+limitation sentence that this item suggested earlier. The survey question in
+the appendix ("Course reviews and evaluations would help me make better
+decisions when choosing courses") stays as it is. The number is kept so the
+items after it do not change.
 
-The October 6 DOCX has no Future Work or Recommendations chapter yet; it
-ends with Chapter III and the appendices. Add this item when that chapter is
-written, or as a sentence in **Scope and Limitations of the Study**.
+## MR-29 — Scope and Limitations: course reviews
 
-**Suggested Future Work item**
+**Current text** (Scope and Limitations of the Study, second paragraph)
 
-> Course reviews and ratings. Future versions of PATHWISE may allow students
-> who have completed a course to rate it and write a short review. Reviews
-> would be shown on the course page in the marketplace to help other
-> students choose courses, and would give teachers feedback for improving
-> their courses.
+> …the automated generation of digital certificates upon course completion,
+> an integrated payment system for course monetization, an AI-based
+> recommender system that suggests the next appropriate course to each
+> learner, AI-assisted quiz generation for teachers, and an optional
+> AI-assisted evaluation of student essay and code submissions that
+> requires teacher approval.
 
-**Suggested limitation sentence** (if added to Scope and Limitations)
+**Replacement text**
 
-> The system does not include course ratings or reviews; this is left for
-> future work.
+> …the automated generation of digital certificates upon course completion,
+> an integrated payment system for course monetization, course ratings and
+> reviews from enrolled students, an AI-based recommender system that
+> suggests the next appropriate course to each learner, AI-assisted quiz
+> generation for teachers, and an optional AI-assisted evaluation of student
+> essay and code submissions that requires teacher approval.
 
-The survey item in the appendix ("Course reviews and evaluations would help
-me make better decisions when choosing courses") can stay: it asks for the
-respondents' opinion and supports listing reviews as future work.
+**Current text** (fifth paragraph, last sentence)
+
+> Additionally, the content moderation process within the administrator
+> module will be conducted manually in this version, as automated AI-based
+> content quality assessment falls outside the current development scope.
+
+**Replacement text**
+
+> Additionally, the content moderation process within the administrator
+> module, including the hiding of inappropriate course reviews, will be
+> conducted manually in this version, as automated AI-based content quality
+> assessment falls outside the current development scope. Only students
+> with an active or completed enrollment can review a course, once per
+> course, with a rating from 1 to 5 and an optional comment of up to 1,000
+> characters.
+
+## MR-30 — Functional Requirements: add (t) Course Review Process
+
+**Current text** (last functional requirement)
+
+> s. AI Output Evaluation Process. When enabled by the teacher, the system
+> generates a suggested score and feedback for a submission, which the
+> teacher approves or overrides before the student can see it.
+
+**Add after it**
+
+> t. Course Review Process. Students can rate (1 to 5 stars) and review the
+> courses they are enrolled in, once per course, and can edit or delete
+> their review. The course page and the course marketplace show each
+> course's average rating and number of reviews. Teachers can view the
+> reviews of their own courses, on their course cards and on a Course
+> Reviews page for all their courses, and administrators can hide
+> inappropriate reviews with a reason.
+
+## MR-31 — Definition of Terms: Average Rating and Course Review
+
+The terms are in alphabetical order. Add **Average Rating** after "Adaptive
+Learning" (before "College of Computer Studies") and **Course Review** after
+"Course Marketplace" (before "Course Template"). Same style as the existing
+terms: a general definition, then what it means in PATHWISE.
+
+**Add**
+
+> Average Rating - An average rating is generally understood as the mean of
+> the scores that users give to a product or service. It refers to the mean
+> of the 1-to-5 star ratings of a course in PATHWISE, shown with the number
+> of reviews on the course page and in the course marketplace. Reviews
+> hidden by an administrator are not included.
+
+> Course Review - A course review is commonly described as a learner's
+> evaluation of a course, usually a rating with an optional written comment.
+> It refers to the rating from 1 to 5 stars and optional comment that a
+> student with an active or completed enrollment gives to a course in
+> PATHWISE, limited to one review per student per course.
+
+## MR-32 — Use Case Diagram (Figure 20): course review use cases
+
+Add three use cases to **Figure 20 (Use Case Diagram of PATHWISE)**:
+
+- **Rate and Review Course**, connected to the Student
+- **View Course Reviews**, connected to the Teacher
+- **Moderate Course Reviews**, connected to the Administrator
+
+**Current text** (the paragraph after Figure 20, last sentence)
+
+> Students may browse the marketplace, enroll in courses, learn and complete
+> lessons, receive AI-recommended courses, and take quizzes to earn
+> certificates upon course completion.
+
+**Replacement text**
+
+> Students may browse the marketplace, enroll in courses, learn and complete
+> lessons, receive AI-recommended courses, take quizzes to earn certificates
+> upon course completion, and rate and review the courses they are enrolled
+> in. Teachers can view the reviews of their own courses, both as the
+> average rating on each of their course cards and on a Course Reviews page
+> that lists the reviews of all their courses, and administrators can
+> moderate course reviews by hiding inappropriate ones.
+
+## MR-33 — Use Case Descriptions: three new use cases
+
+Add after the last use case description (Figure 31, Manage User Accounts and
+Roles), in the same format. Each needs its own System Use Case Model figure
+(new Figures 32 to 34); see **Figure renumbering** in MR-36.
+
+**Figure 32: System Use Case Model - RATE AND REVIEW COURSE**
+
+> Use Case Name: Rate and Review Course
+> Purpose: To allow students to rate and review the courses they are
+> enrolled in.
+> Triggering Actor: Student
+> Brief Description: This lets the student give a course a rating from 1 to
+> 5 stars with an optional comment, and edit or delete that review later.
+> Precondition: The student must be logged in and have an active or
+> completed enrollment in the published course, and must not have a review
+> that was hidden by an administrator.
+> Post-Condition: The review is saved and included in the course's average
+> rating and number of reviews.
+> Steps:
+> USER: 1. Open My Courses and click "Rate this course" on an enrolled
+> course. 2. Choose a rating from 1 to 5 stars and optionally write a
+> comment. 3. Click "Post Review" (or "Save Changes" when editing).
+> SYSTEM: 1.1 Display the course page with the review form, or the
+> student's existing review. 2.1 Check that the rating is from 1 to 5 and
+> that the comment is at most 1,000 characters. 3.1 Save the review, update
+> the course's average rating and number of reviews, and notify the course's
+> teacher of a new review.
+
+**Figure 33: System Use Case Model - VIEW COURSE REVIEWS**
+
+> Use Case Name: View Course Reviews
+> Purpose: To allow teachers to read the reviews of their own courses.
+> Triggering Actor: Teacher
+> Brief Description: This lets the teacher see the average rating and
+> number of reviews of each of their courses on the My Courses page, read
+> the students' ratings and comments for one course, and read the reviews
+> of all their courses together on the Course Reviews page, filtered by
+> course.
+> Precondition: The teacher must be logged in. Only the teacher's own
+> courses are shown.
+> Post-Condition: The visible reviews of the teacher's courses are
+> displayed. Reviews hidden by an administrator are not shown.
+> Steps:
+> USER: 1. Open My Courses and click the star rating on a course card (or
+> open the course menu and click "View Reviews"). 2. Alternatively, click
+> "Course Reviews" in the sidebar and choose a course in the filter, or
+> "All my courses".
+> SYSTEM: 1.1 Display each course card with its average rating and number
+> of reviews, or "No reviews yet". 1.2 Display the average rating, the
+> number of reviews, and the visible reviews of the selected course, newest
+> first. 2.1 Display the visible reviews of all the teacher's courses (or
+> of the chosen course), newest first, ten per page.
+
+**Figure 34: System Use Case Model - MODERATE COURSE REVIEWS**
+
+> Use Case Name: Moderate Course Reviews
+> Purpose: To allow administrators to hide inappropriate course reviews.
+> Triggering Actor: Administrator
+> Brief Description: This lets the administrator view all course reviews,
+> hide an inappropriate review with a reason, and show a hidden review
+> again.
+> Precondition: The administrator must be logged in.
+> Post-Condition: The review is hidden from the course's average rating,
+> number of reviews and public lists, or shown again.
+> Steps:
+> USER: 1. Open Course Reviews. 2. Write the reason and click "Hide" on a
+> review, or click "Unhide" on a hidden review.
+> SYSTEM: 1.1 Display the course reviews, with a filter for visible and
+> hidden reviews. 2.1 Check that a reason was given for hiding. 2.2 Hide
+> the review (or show it again) and update the course's average rating and
+> number of reviews.
+
+## MR-34 — Database Design (Figure 39) and ERD (Figure 40): Course_Reviews
+
+In **Figure 39 (Database Design of PATHWISE)** and **Figure 40 (Entity
+Relationship Diagram of PATHWISE)**:
+
+- Update the Course_Reviews entity with the columns in MR-26.
+- Add the relationships:
+  - **Courses 1 → many Course_Reviews** (`course_id`; a course has many
+    reviews, a review belongs to one course)
+  - **Users 1 → many Course_Reviews** (`student_id`; a student writes many
+    reviews, at most one per course)
+  - **Users 1 → many Course_Reviews** (`hidden_by`, optional; the
+    administrator who hid the review)
+- Remove the Payments entity (MR-12).
+
+The figure numbers here are the current DOCX numbers; after the new
+figures in MR-33 and MR-36 are added they become Figures 45 and 46 (see
+**Figure renumbering** in MR-36).
+
+## MR-35 — List of Modules (Table 24): course review modules
+
+Add to **Table 24 (LIST OF MODULES)**:
+
+- Under **Learning and Assessment Modules**: **Rate and Review Courses**,
+  with * in the Student column, and **View Course Reviews**, with * in the
+  Teacher column (the ratings on the teacher's course cards and the Course
+  Reviews page in the teacher's sidebar).
+- Under **Administrator Modules**: **Moderate Course Reviews**, with * in the
+  Administrator column.
+
+Update the "No. of point (1 point per module)" rows of those two groups:
+Learning and Assessment Modules becomes **6 / 3 / 0 / 0** (Student / Teacher
+/ Administrator / Super Admin), and Administrator Modules becomes
+**0 / 0 / 6 / 0**. Decide as a team which proponent is listed for the new
+modules.
+
+## MR-36 — Storyboard: course marketplace, course page and teacher reviews screens
+
+The storyboard currently has screens for the log-in page, forgot password,
+registration and the four dashboards, ending with Screen 8 (Student
+Dashboard, Figure 38); it has no marketplace, course page or course
+reviews screens. Add three screens after Screen 8 (Student Dashboard), in
+the same format (Module Name, Screen No, Screen Name, Description, figure,
+then the ITEMS table).
+
+**Screen 9**
+
+> Module Name: Course Enrollment Process
+> Screen No: 9
+> Screen Name: Course Marketplace
+> Description: This is the page where students browse the published courses
+> they are not yet enrolled in. Each course card shows the course title,
+> category, instructor, price, and the course's average rating as stars
+> with the number of reviews, or "No reviews yet" when the course has no
+> reviews.
+
+**Screen 10**
+
+> Module Name: Course Review Process
+> Screen No: 10
+> Screen Name: Course Page and Reviews
+> Description: This is the course page, which shows the course details, the
+> enrollment option and the Reviews section. The Reviews section shows the
+> average rating, the number of reviews and the latest reviews, five per
+> page. Students with an active or completed enrollment see a "Write a
+> Review" form with a 1-to-5 star rating and an optional comment, or "Edit
+> your review" if they already reviewed the course. A review hidden by an
+> administrator is shown only to its author, marked "Hidden by an
+> administrator" with the reason.
+
+Suggested ITEMS for Screen 10:
+
+| ITEMS | TYPE | REQUIRED | DATA TYPE | SIZE |
+|---|---|---|---|---|
+| Rating | Radio button (1–5 stars) | Yes | Integer | 1 |
+| Comment | Text area | No | Text | 1,000 |
+| Post Review / Save Changes | Button | — | — | — |
+| Delete my review | Button | — | — | — |
+
+**Screen 11**
+
+> Module Name: Course Review Process
+> Screen No: 11
+> Screen Name: Teacher Course Reviews
+> Description: These are the places where teachers see the reviews of their
+> own courses. On the My Courses page, each course card shows the course's
+> average rating as stars with the number of reviews (for example "★ 4.5
+> (8 reviews)"), or "No reviews yet"; clicking it opens that course's
+> reviews, which can also be opened with "View Reviews" in the course menu.
+> The "Course Reviews" item in the teacher's sidebar opens one page with the
+> reviews from all of the teacher's courses, newest first and ten per page,
+> with a course filter. Only the teacher's own courses and only visible
+> reviews are shown; reviews hidden by an administrator are left out.
+
+Suggested ITEMS for Screen 11:
+
+| ITEMS | TYPE | REQUIRED | DATA TYPE | SIZE |
+|---|---|---|---|---|
+| Course rating on each course card | Link | — | — | — |
+| Course | Drop-down list (All my courses, or one course) | No | Integer | — |
+| Filter | Button | — | — | — |
+
+**Figure renumbering.** The three new use case figures (MR-33) and the three
+new storyboard figures shift every later figure number: the current
+Figures 32 to 38 become 35 to 41, the three new storyboard screens become
+Figures 42 to 44, and the current Figures 39 onward move up by 6 (for
+example Database Design 39 → 45 and ERD 40 → 46). Update the List of Figures
+and every "Figure N" reference in the text in one pass, after all new
+figures are added.
+
+## Wording check: "self-phased"
+
+The October 6 DOCX does not contain "self-phased". All 16 occurrences are
+already spelled "self-paced" (for example "self-paced learning" in the
+Scope and Limitations and "Self - Paced Learning" in the Definition of
+Terms). No change is needed.
 
 ---
 
