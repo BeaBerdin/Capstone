@@ -361,7 +361,7 @@
                                                 class="h-32 w-full shrink-0 rounded-2xl object-cover sm:h-24 sm:w-36"
                                             >
                                         @else
-                                            <div class="flex h-32 w-full shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 via-indigo-50 to-sky-100 text-violet-600 sm:h-24 sm:w-36">
+                                            <div class="flex h-32 w-full shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-violet-100 via-indigo-50 to-sky-100 text-violet-600 sm:h-24 sm:w-36">
                                                 <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                                     <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
                                                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
@@ -373,7 +373,7 @@
                                         <div class="min-w-0 flex-1">
                                             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                 <div class="min-w-0">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                                    <p class="text-[10px] font-bold uppercase tracking-widest text-violet-500">
                                                         {{ $course?->category?->name ?? 'Course' }}
                                                     </p>
 
@@ -499,7 +499,7 @@
                         <div class="mt-6 rounded-2xl border border-violet-100 bg-violet-50/70 p-5">
                             <div class="flex items-end justify-between gap-4">
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                    <p class="text-[10px] font-bold uppercase tracking-widest text-violet-500">
                                         Completion Rate
                                     </p>
 
@@ -548,7 +548,7 @@
 
                     <a
                         href="{{ route('student.learning-paths') }}"
-                        class="group block rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-600 to-indigo-600 p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        class="group block rounded-2xl border border-violet-100 bg-linear-to-br from-violet-600 to-indigo-600 p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>
@@ -605,7 +605,7 @@
 
                         {{-- DESKTOP TABLE --}}
                         <div class="hidden overflow-x-auto md:block">
-                            <table class="w-full min-w-[680px] text-left">
+                            <table class="w-full min-w-170 text-left">
                                 <thead class="border-b border-slate-100 bg-slate-50/80">
                                     <tr class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
                                         <th class="px-6 py-4">Assessment</th>
@@ -637,11 +637,11 @@
 
                                         <tr class="transition hover:bg-slate-50/70">
                                             <td class="px-6 py-5">
-                                                <p class="max-w-[220px] truncate text-sm font-semibold text-slate-800">
+                                                <p class="max-w-55 truncate text-sm font-semibold text-slate-800">
                                                     {{ $result->quiz?->title ?? 'Quiz' }}
                                                 </p>
 
-                                                <p class="mt-1 max-w-[220px] truncate text-[11px] text-slate-400">
+                                                <p class="mt-1 max-w-55 truncate text-[11px] text-slate-400">
                                                     {{ $result->quiz?->course?->title ?? 'Course' }}
                                                 </p>
                                             </td>
@@ -885,7 +885,7 @@
                                             class="h-full w-full object-cover"
                                         >
                                     @else
-                                        <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500">
+                                        <div class="flex h-full w-full items-center justify-center bg-linear-to-br from-violet-500 via-indigo-500 to-blue-500">
                                             <svg class="h-9 w-9 text-white/85" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                                 <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
                                                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
@@ -894,7 +894,7 @@
                                     @endif
                                 </div>
 
-                                <p class="mt-4 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                <p class="mt-4 text-[10px] font-bold uppercase tracking-widest text-violet-500">
                                     {{ $recommended->category?->name ?? 'Recommended Course' }}
                                 </p>
 

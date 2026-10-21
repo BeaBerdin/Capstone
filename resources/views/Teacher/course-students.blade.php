@@ -85,7 +85,7 @@
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-        <div class="mx-auto max-w-[1500px]">
+        <div class="mx-auto max-w-375">
 
 
             {{-- =====================================================
@@ -247,7 +247,7 @@
 
                     {{-- THUMBNAIL --}}
                     <div
-                        class="relative min-h-[190px]
+                        class="relative min-h-47.5
                                overflow-hidden"
                     >
 
@@ -262,7 +262,7 @@
 
                             <div
                                 class="absolute inset-0
-                                       bg-gradient-to-t
+                                       bg-linear-to-t
                                        from-slate-950/50
                                        via-transparent
                                        to-transparent"
@@ -272,10 +272,10 @@
 
                             <div
                                 class="flex h-full
-                                       min-h-[190px]
+                                       min-h-47.5
                                        items-center
                                        justify-center
-                                       bg-gradient-to-br
+                                       bg-linear-to-br
                                        from-violet-500
                                        via-indigo-500
                                        to-blue-500"
@@ -964,7 +964,7 @@
 
                         <table
                             class="w-full
-                                   min-w-[1050px]
+                                   min-w-262.5
                                    text-left"
                         >
 
@@ -1156,7 +1156,7 @@
                                                 <div class="min-w-0">
 
                                                     <p
-                                                        class="max-w-[220px]
+                                                        class="max-w-55
                                                                truncate
                                                                text-sm
                                                                font-semibold
@@ -1168,7 +1168,7 @@
 
                                                     <p
                                                         class="mt-0.5
-                                                               max-w-[220px]
+                                                               max-w-55
                                                                truncate
                                                                text-[11px]
                                                                text-slate-400"
@@ -1190,7 +1190,7 @@
                                         {{-- PROGRESS --}}
                                         <td class="px-6 py-5">
 
-                                            <div class="w-[220px]">
+                                            <div class="w-55">
 
                                                 <div
                                                     class="mb-2 flex
