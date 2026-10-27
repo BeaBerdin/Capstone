@@ -19,60 +19,50 @@
     $questionCount = $quiz->questions->count();
 @endphp
 
-<div class="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
+<div class="sad-page min-h-screen">
+<main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+<div class="mx-auto w-full max-w-3xl space-y-6">
 
     {{-- HEADER --}}
-    {{-- Header card, as on My Certificates. --}}
-    <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
-        <div class="relative px-6 py-6 sm:px-7">
-            <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+    <x-pw.form-header
+        :crumbs="[$quiz->course->title => route('student.learn.course', $quiz->course), $quiz->title => null]"
+        :title="$quiz->title"
+        :subtitle="$quiz->course->title"
+        :back-url="route('student.learn.course', $quiz->course)"
+        back-label="Back to Course"
+        :required="false"
+    />
 
-    <div class="relative">
-        <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
-            Quiz
-        </p>
-
-        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            {{ $quiz->title }}
-        </h1>
-
-        <p class="mt-1 text-sm text-slate-500">
-            {{ $quiz->course->title }}
-        </p>
-
-        @if($quiz->description)
-            <p class="mt-3 whitespace-pre-line text-sm text-slate-600">{{ $quiz->description }}</p>
-        @endif
-    </div>
-        </div>
-    </section>
+    @if($quiz->description)
+        <p class="whitespace-pre-line text-sm text-slate-600">{{ $quiz->description }}</p>
+    @endif
 
     {{-- MESSAGES --}}
     @if(session('error'))
-        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700" role="alert">
             {{ session('error') }}
         </div>
     @endif
 
     @if(session('success'))
-        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700" role="status">
             {{ session('success') }}
         </div>
     @endif
 
     {{-- QUIZ DETAILS --}}
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div class="sad-card rounded-xl border border-slate-200 bg-white p-4">
+        <div class="sad-card p-4">
             <p class="text-xs font-semibold text-slate-500">Passing score</p>
             <p class="mt-1 text-xl font-bold text-slate-900">{{ $quiz->passing_score }}%</p>
         </div>
 
-        <div class="sad-card rounded-xl border border-slate-200 bg-white p-4">
+        <div class="sad-card p-4">
             <p class="text-xs font-semibold text-slate-500">Questions</p>
             <p class="mt-1 text-xl font-bold text-slate-900">{{ $questionCount }}</p>
         </div>
 
-        <div class="sad-card rounded-xl border border-slate-200 bg-white p-4">
+        <div class="sad-card p-4">
             <p class="text-xs font-semibold text-slate-500">Time limit</p>
             <p class="mt-1 text-xl font-bold text-slate-900">
                 {{ $hasTimeLimit ? $quiz->time_limit_minutes . ' min' : 'None' }}
@@ -84,7 +74,7 @@
     @if($hasTimeLimit)
         <div
             id="quizTimer"
-            class="sticky top-2 z-20 flex items-center justify-between gap-3 rounded-xl border border-violet-200 bg-violet-50/95 px-4 py-3 shadow-sm backdrop-blur"
+            class="sticky top-2 z-20 flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50/95 px-4 py-3 shadow-sm backdrop-blur"
             aria-live="polite"
         >
             <span class="text-sm font-semibold text-violet-800">
@@ -100,7 +90,7 @@
     {{-- QUESTIONS --}}
     @if($questionCount === 0)
 
-        <div class="sad-card rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
+        <div class="sad-card p-6 text-center text-sm text-slate-500">
             This quiz has no questions yet.
         </div>
 
@@ -116,13 +106,13 @@
 
             @foreach($quiz->questions as $question)
 
-                <fieldset class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <fieldset class="sad-card p-5 sm:p-6">
 
                     <legend class="sr-only">Question {{ $loop->iteration }}</legend>
 
-                    <p class="font-semibold text-slate-900">
-                        <span class="text-violet-600">{{ $loop->iteration }}.</span>
-                        {{ $question->question }}
+                    <p class="flex gap-3 font-semibold text-slate-900">
+                        <span class="sad-section-icon shrink-0 text-xs" aria-hidden="true">{{ $loop->iteration }}</span>
+                        <span class="pt-1">{{ $question->question }}</span>
                     </p>
 
                     <div class="mt-4 space-y-2">
@@ -132,12 +122,12 @@
                             {{-- Options C and D are optional in the database, so empty ones are hidden. --}}
                             @if(filled($optionText))
 
-                                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
+                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 transition hover:border-violet-200 hover:bg-violet-50/40 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50">
                                     <input
                                         type="radio"
                                         name="question_{{ $question->id }}"
                                         value="{{ $letter }}"
-                                        class="mt-0.5"
+                                        class="mt-0.5 border-slate-300 text-violet-600 focus:ring-violet-500"
                                         @checked(old('question_' . $question->id) === $letter)
                                     >
                                     <span>
@@ -156,26 +146,28 @@
 
             @endforeach
 
-            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <a
-                    href="{{ route('student.learn.course', $quiz->course) }}"
-                    class="text-center text-sm font-semibold text-slate-500 hover:text-slate-700"
-                >
-                    Back to course
-                </a>
-
+            <div class="sad-card flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
                 <button
                     id="quizSubmitButton"
                     type="submit"
-                    class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="sad-btn sad-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Submit Quiz
                 </button>
+
+                <a
+                    href="{{ route('student.learn.course', $quiz->course) }}"
+                    class="sad-btn sad-btn-light border border-slate-200"
+                >
+                    Back to course
+                </a>
             </div>
         </form>
 
     @endif
 
+</div>
+</main>
 </div>
 
 <script>

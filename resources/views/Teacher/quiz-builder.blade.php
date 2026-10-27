@@ -19,27 +19,25 @@
 @endphp
 
 <style>
-    .pw-card {
-        background: #ffffff;
-        border: 1px solid #e7e9ef;
-        border-radius: 20px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, .035);
-    }
-
+    /* Cards come from .sad-card; fields match .sad-field in partials.soft3d. */
     .pw-field {
         width: 100%;
-        border: 1px solid #dfe2e9;
-        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: .75rem;
         background: #ffffff;
-        color: #172033;
-        font-size: 14px;
-        transition: all 160ms ease;
+        color: #0f172a;
+        font-size: .875rem;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .pw-field::placeholder {
+        color: #94a3b8;
     }
 
     .pw-field:focus {
         outline: none !important;
-        border-color: #8b5cf6 !important;
-        box-shadow: 0 0 0 4px rgba(139, 92, 246, .10) !important;
+        border-color: #c4b5fd !important;
+        box-shadow: 0 0 0 4px #ede9fe !important;
     }
 
     .pw-field:disabled,

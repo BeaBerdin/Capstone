@@ -776,38 +776,22 @@
 
 
                 {{-- RIGHT SIDE: TEACHER EVALUATION --}}
-                <section
-                    class="sad-card h-fit overflow-hidden rounded-2xl
-                           border border-slate-200 bg-white shadow-sm"
+                <form
+                    method="POST"
+                    action="{{ route('teacher.submissions.grade', $submission) }}"
+                    class="sad-card h-fit overflow-hidden lg:sticky lg:top-24"
                 >
+                    @csrf
+                    @method('PUT')
 
-                    <div class="border-b border-slate-100 px-5 py-4">
+                    <x-pw.form-section title="Teacher Evaluation" first>
+                        <x-slot:icon>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"></path><path d="m8.5 12.5 2.5 2.5 4.5-5"></path></svg>
+                        </x-slot:icon>
 
-                        <h2 class="text-sm font-bold text-slate-800">
-                            Teacher Evaluation
-                        </h2>
-
-                        <p class="mt-1 text-xs text-slate-500">
+                        <p class="-mt-2 text-xs text-slate-500">
                             Review the AI suggestion and assign the final grade.
                         </p>
-
-                    </div>
-
-
-                    <form
-                        method="POST"
-                        action="{{
-                            route(
-                                'teacher.submissions.grade',
-                                $submission
-                            )
-                        }}"
-                        class="space-y-5 p-5"
-                    >
-
-                        @csrf
-                        @method('PUT')
-
 
                         {{-- AI score shortcut --}}
                         @if(
@@ -815,176 +799,77 @@
                             && $submission->ai_evaluation_status === 'completed'
                             && $submission->ai_score !== null
                         )
-
-                            <div
-                                class="rounded-xl border
-                                       border-violet-100
-                                       bg-violet-50 p-4"
-                            >
-
-                                <p
-                                    class="text-xs font-semibold
-                                           uppercase tracking-wider
-                                           text-violet-500"
-                                >
+                            <div class="rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-violet-500">
                                     AI Suggestion
                                 </p>
 
-                                <div
-                                    class="mt-2 flex items-center
-                                           justify-between gap-3"
-                                >
-
+                                <div class="mt-2 flex items-center justify-between gap-3">
                                     <p class="text-sm text-violet-800">
-
                                         Suggested:
-
-                                        <strong>
-                                            {{ $submission->ai_score }}
-                                            /
-                                            {{ $assignment->max_score }}
-                                        </strong>
-
+                                        <strong>{{ $submission->ai_score }} / {{ $assignment->max_score }}</strong>
                                     </p>
-
 
                                     <button
                                         type="button"
-                                        onclick="
-                                            document.getElementById('score').value =
-                                            '{{ $submission->ai_score }}'
-                                        "
-                                        class="rounded-lg border
-                                               border-violet-200
-                                               bg-white px-3 py-1.5
-                                               text-xs font-semibold
-                                               text-violet-700
-                                               hover:bg-violet-100"
+                                        onclick="document.getElementById('score').value = '{{ $submission->ai_score }}'"
+                                        class="rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100"
                                     >
                                         Use AI Score
                                     </button>
-
                                 </div>
-
                             </div>
-
                         @endif
 
-
                         {{-- Score --}}
-                        <div>
-
-                            <label
-                                for="score"
-                                class="text-sm font-semibold text-slate-700"
-                            >
-                                Final Score
-                            </label>
-
-
-                            <div class="mt-2 flex items-center gap-2">
-
+                        <x-pw.field label="Final Score" for="score">
+                            <div class="flex items-center gap-2">
                                 <input
                                     id="score"
                                     name="score"
                                     type="number"
                                     min="0"
                                     max="{{ $assignment->max_score }}"
-                                    value="{{
-                                        old(
-                                            'score',
-                                            $submission->score
-                                        )
-                                    }}"
-                                    class="h-11 min-w-0 flex-1 rounded-xl
-                                           border border-slate-200 px-4
-                                           text-sm outline-none
-                                           focus:border-violet-300
-                                           focus:ring-4
-                                           focus:ring-violet-100"
+                                    value="{{ old('score', $submission->score) }}"
+                                    class="sad-field min-w-0 flex-1"
                                     placeholder="0"
                                 >
 
-
-                                <span
-                                    class="shrink-0 text-sm
-                                           font-semibold text-slate-500"
-                                >
+                                <span class="mt-2 shrink-0 text-sm font-semibold text-slate-500">
                                     / {{ $assignment->max_score }}
                                 </span>
-
                             </div>
-
-                        </div>
-
+                        </x-pw.field>
 
                         {{-- Feedback --}}
-                        <div>
-
-                            <label
-                                for="feedback"
-                                class="text-sm font-semibold text-slate-700"
-                            >
-                                Final Feedback
-                            </label>
-
-
+                        <x-pw.field label="Final Feedback" for="feedback" hint="The student sees this with their grade.">
                             <textarea
                                 id="feedback"
                                 name="feedback"
                                 rows="7"
                                 maxlength="10000"
-                                class="mt-2 w-full rounded-xl
-                                       border border-slate-200
-                                       px-4 py-3 text-sm
-                                       outline-none
-                                       focus:border-violet-300
-                                       focus:ring-4
-                                       focus:ring-violet-100"
+                                class="sad-field"
                                 placeholder="Write feedback for the student..."
                             >{{ old('feedback', $submission->feedback) }}</textarea>
+                        </x-pw.field>
+                    </x-pw.form-section>
 
-                        </div>
+                    {{-- Buttons --}}
+                    <div class="grid gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-6">
+                        <button type="submit" name="status" value="graded" class="sad-btn sad-btn-primary w-full">
+                            Save Final Grade
+                        </button>
 
-
-                        {{-- Buttons --}}
-                        <div class="grid gap-3">
-
-                            <button
-                                type="submit"
-                                name="status"
-                                value="graded"
-                                class="inline-flex h-11 items-center
-                                       justify-center rounded-xl
-                                       bg-linear-to-r from-violet-600
-                                       to-indigo-600 px-5 text-sm
-                                       font-semibold text-white
-                                       shadow-md shadow-violet-200
-                                       transition hover:-translate-y-0.5"
-                            >
-                                Save Final Grade
-                            </button>
-
-
-                            <button
-                                type="submit"
-                                name="status"
-                                value="returned"
-                                class="inline-flex h-11 items-center
-                                       justify-center rounded-xl
-                                       border border-amber-200
-                                       bg-amber-50 px-5 text-sm
-                                       font-semibold text-amber-700
-                                       transition hover:bg-amber-100"
-                            >
-                                Return for Revision
-                            </button>
-
-                        </div>
-
-                    </form>
-
-                </section>
+                        <button
+                            type="submit"
+                            name="status"
+                            value="returned"
+                            class="sad-btn w-full border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                        >
+                            Return for Revision
+                        </button>
+                    </div>
+                </form>
 
             </div>
 
