@@ -1,95 +1,103 @@
 <x-layouts::app :title="__('Assignments')">
+@include('partials.soft3d')
+<div class="space-y-6 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-<div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold">
-        Assignments
-    </h1>
+<x-pw.page-header title="Assignments">
+    <x-slot:actions>
+        <a href="{{ route('assignments.create') }}"
+           class="sad-btn-primary inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+            Add Assignment
+        </a>
+    </x-slot:actions>
+</x-pw.page-header>
 
-    <a href="{{ route('assignments.create') }}"
-       class="bg-blue-600 text-white px-4 py-2 rounded">
-        Add Assignment
-    </a>
-</div>
-
-@if(session('success')) <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
-{{ session('success') }} </div>
+@if(session('success'))
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        {{ session('success') }}
+    </div>
 @endif
 
-<table class="w-full border">
-    <thead>
+<div class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full min-w-[820px] text-left text-sm">
+    <thead class="border-b border-slate-200 bg-slate-50">
         <tr>
-            <th class="border p-2">Course</th>
-            <th class="border p-2">Lesson</th>
-            <th class="border p-2">Title</th>
-            <th class="border p-2">Due Date</th>
-            <th class="border p-2">Max Score</th>
-            <th class="border p-2">Status</th>
-            <th class="border p-2">Actions</th>
+            <th class="pw-table-head px-5 py-3">Course</th>
+            <th class="pw-table-head px-5 py-3">Lesson</th>
+            <th class="pw-table-head px-5 py-3">Title</th>
+            <th class="pw-table-head px-5 py-3">Due Date</th>
+            <th class="pw-table-head px-5 py-3">Max Score</th>
+            <th class="pw-table-head px-5 py-3">Status</th>
+            <th class="pw-table-head px-5 py-3">Actions</th>
         </tr>
     </thead>
 
-```
-<tbody>
+<tbody class="divide-y divide-slate-100">
     @forelse($assignments as $assignment)
-        <tr>
-            <td class="border p-2">
+        <tr class="transition hover:bg-slate-50/70">
+            <td class="px-5 py-4 text-slate-700">
                 {{ $assignment->course->title ?? 'No course' }}
             </td>
 
-            <td class="border p-2">
+            <td class="px-5 py-4 text-slate-700">
                 {{ $assignment->lesson->title ?? 'No lesson' }}
             </td>
 
-            <td class="border p-2">
+            <td class="px-5 py-4 font-medium text-slate-900">
                 {{ $assignment->title }}
             </td>
 
-            <td class="border p-2">
+            <td class="px-5 py-4 whitespace-nowrap text-slate-600">
                 {{ $assignment->due_date
                     ? \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y')
                     : 'No due date'
                 }}
             </td>
 
-            <td class="border p-2">
+            <td class="px-5 py-4 text-slate-700">
                 {{ $assignment->max_score }}
             </td>
 
-            <td class="border p-2">
-                {{ $assignment->is_published ? 'Published' : 'Draft' }}
+            <td class="px-5 py-4">
+                <x-pw.badge :tone="$assignment->is_published ? 'success' : 'neutral'">{{ $assignment->is_published ? 'Published' : 'Draft' }}</x-pw.badge>
             </td>
 
-            <td class="border p-2">
-                <a href="{{ route('assignments.edit', $assignment) }}"
-                   class="text-blue-500 mr-2">
-                    Edit
-                </a>
+            <td class="px-5 py-4">
+                <div class="flex items-center gap-4 whitespace-nowrap">
+                    <a href="{{ route('assignments.edit', $assignment) }}"
+                       class="text-sm font-semibold text-violet-600 hover:text-violet-700">
+                        Edit
+                    </a>
 
-                <form action="{{ route('assignments.destroy', $assignment) }}"
-                      method="POST"
-                      class="inline">
+                    <form action="{{ route('assignments.destroy', $assignment) }}"
+                          method="POST"
+                          class="inline">
 
-                    @csrf
-                    @method('DELETE')
+                        @csrf
+                        @method('DELETE')
 
-                    <button onclick="return confirm('Delete this assignment?')"
-                            class="text-red-500">
-                        Delete
-                    </button>
+                        <button onclick="return confirm('Delete this assignment?')"
+                                class="text-sm font-semibold text-red-600 hover:text-red-700">
+                            Delete
+                        </button>
 
-                </form>
+                    </form>
+                </div>
             </td>
         </tr>
     @empty
         <tr>
-            <td colspan="7" class="border p-4 text-center">
-                No assignments found.
+            <td colspan="7">
+                <x-pw.empty-state title="No assignments found." />
             </td>
         </tr>
     @endforelse
 </tbody>
-```
 
 </table>
+</div>
+</div>
+
+</div>
 
 </x-layouts::app>

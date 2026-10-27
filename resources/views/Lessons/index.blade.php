@@ -1,29 +1,35 @@
 <x-layouts::app :title="__('Lessons')">
+@include('partials.soft3d')
 
-    <div class="space-y-8">
+    <div class="space-y-8 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
         {{-- =========================================================
              PAGE HEADER
         ========================================================== --}}
 
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {{-- Header card, as on My Certificates. --}}
+        <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <div class="relative px-6 py-6 sm:px-7">
+                <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+        <div class="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
-                <p class="text-sm font-medium text-purple-600 dark:text-purple-400">
+                <p class="text-sm font-medium text-violet-600">
                     Course Management
                 </p>
 
-                <h1 class="mt-1 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">
                     Lessons
                 </h1>
 
-                <p class="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-2 max-w-2xl text-sm text-slate-500">
                     Manage course lessons, content type, and lesson order.
                 </p>
             </div>
 
             <a href="{{ route('lessons.create') }}"
-               class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700">
+               class="sad-btn-primary inline-flex items-center justify-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
 
                 <svg class="mr-2 h-4 w-4"
                      fill="none"
@@ -42,6 +48,8 @@
             </a>
 
         </div>
+            </div>
+        </section>
 
 
         {{-- =========================================================
@@ -50,7 +58,7 @@
 
         @if(session('success'))
 
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-300">
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
 
                 {{ session('success') }}
 
@@ -77,25 +85,25 @@
         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
             {{-- Total Lessons --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Total Lessons
                         </p>
 
-                        <h2 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                        <h2 class="mt-2 text-3xl font-bold text-slate-900">
                             {{ $totalLessons }}
                         </h2>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             All lessons created
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                    <div class="sad-chip sad-violet flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
 
                         <svg class="h-6 w-6"
                              fill="none"
@@ -117,25 +125,25 @@
 
 
             {{-- Courses Covered --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Courses Covered
                         </p>
 
-                        <h2 class="mt-2 text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        <h2 class="mt-2 text-3xl font-bold text-violet-600">
                             {{ $courseCount }}
                         </h2>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             With lesson content
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                    <div class="sad-chip sad-violet flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
 
                         <svg class="h-6 w-6"
                              fill="none"
@@ -157,25 +165,25 @@
 
 
             {{-- Text Lessons --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Text Lessons
                         </p>
 
-                        <h2 class="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        <h2 class="mt-2 text-3xl font-bold text-blue-600">
                             {{ $textLessons }}
                         </h2>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             Reading materials
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
+                    <div class="sad-chip sad-sky flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
 
                         <svg class="h-6 w-6"
                              fill="none"
@@ -197,25 +205,25 @@
 
 
             {{-- Video Lessons --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Video Lessons
                         </p>
 
-                        <h2 class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
+                        <h2 class="mt-2 text-3xl font-bold text-green-600">
                             {{ $videoLessons }}
                         </h2>
 
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             Video content
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400">
+                    <div class="sad-chip sad-emerald flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600">
 
                         <svg class="h-6 w-6"
                              fill="none"
@@ -242,7 +250,7 @@
              SEARCH AND FILTERS
         ========================================================== --}}
 
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div class="sad-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 
             <div class="flex flex-col gap-3 lg:flex-row">
 
@@ -250,7 +258,7 @@
                 <div class="relative flex-1">
 
                     <svg
-                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -269,7 +277,7 @@
                         id="lessonSearch"
                         type="text"
                         placeholder="Search lessons..."
-                        class="w-full rounded-lg border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-lg border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:ring-violet-500"
                     >
 
                 </div>
@@ -278,7 +286,7 @@
                 {{-- Course Filter --}}
                 <select
                     id="courseFilter"
-                    class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    class="rounded-lg border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-violet-500 focus:ring-violet-500"
                 >
 
                     <option value="all">
@@ -299,7 +307,7 @@
                 {{-- Type Filter --}}
                 <select
                     id="typeFilter"
-                    class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    class="rounded-lg border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-violet-500 focus:ring-violet-500"
                 >
 
                     <option value="all">
@@ -337,11 +345,11 @@
 
             <div>
 
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 class="text-xl font-semibold text-slate-900">
                     All Lessons
                 </h2>
 
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-sm text-slate-500">
 
                     <span id="lessonCount">
                         {{ $totalLessons }}
@@ -368,16 +376,16 @@
             @forelse($lessons->groupBy(fn ($lesson) => $lesson->course->title ?? 'No Course') as $courseTitle => $courseLessons)
 
                 <div
-                    class="lesson-course-group rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                    class="sad-card lesson-course-group rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
                     data-course-id="{{ $courseLessons->first()->course_id ?? '' }}"
                 >
 
                     {{-- Course Header --}}
-                    <div class="flex flex-col gap-3 border-b border-gray-100 pb-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
 
                         <div class="flex items-center gap-3">
 
-                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-sm font-bold text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                            <div class="sad-chip sad-violet flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600">
 
                                 {{ strtoupper(substr($courseTitle, 0, 1)) }}
 
@@ -385,13 +393,13 @@
 
                             <div>
 
-                                <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                                <h2 class="text-lg font-bold text-slate-900">
 
                                     {{ $courseTitle }}
 
                                 </h2>
 
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                <p class="text-sm text-slate-500">
 
                                     <span class="group-count">
                                         {{ $courseLessons->count() }}
@@ -405,7 +413,7 @@
 
                         </div>
 
-                        <span class="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+                        <span class="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
 
                             Course Lessons
 
@@ -426,19 +434,19 @@
                                 $typeClass = match ($type) {
 
                                     'video' =>
-                                        'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+                                        'bg-violet-100 text-violet-700',
 
                                     'text' =>
-                                        'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+                                        'bg-blue-100 text-blue-700',
 
                                     'document' =>
-                                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
+                                        'bg-amber-100 text-amber-700',
 
                                     'quiz' =>
-                                        'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+                                        'bg-green-100 text-green-700',
 
                                     default =>
-                                        'bg-gray-100 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400',
+                                        'bg-slate-100 text-slate-600',
 
                                 };
 
@@ -446,7 +454,7 @@
 
 
                             <div
-                                class="lesson-card flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-purple-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/60 dark:hover:border-purple-700"
+                                class="lesson-card flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-violet-300 hover:shadow-sm"
                                 data-title="{{ strtolower($lesson->title) }}"
                                 data-course-id="{{ $lesson->course_id }}"
                                 data-type="{{ $type }}"
@@ -457,7 +465,7 @@
                                     <div class="flex items-start gap-3">
 
                                         {{-- Order --}}
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-gray-600 shadow-sm dark:bg-gray-700 dark:text-gray-300">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-600 shadow-sm">
 
                                             {{ $lesson->lesson_order }}
 
@@ -466,7 +474,7 @@
 
                                         <div>
 
-                                            <h3 class="font-semibold text-gray-900 dark:text-white">
+                                            <h3 class="font-semibold text-slate-900">
 
                                                 {{ $lesson->title }}
 
@@ -486,7 +494,7 @@
                                                 {{-- Duration --}}
                                                 @if($lesson->duration_minutes)
 
-                                                    <span class="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                                    <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
 
                                                         {{ $lesson->duration_minutes }} mins
 
@@ -498,7 +506,7 @@
                                                 {{-- Preview --}}
                                                 @if($lesson->is_preview)
 
-                                                    <span class="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-500/10 dark:text-purple-400">
+                                                    <span class="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
 
                                                         Preview
 
@@ -510,7 +518,7 @@
                                                 {{-- Published --}}
                                                 @if($lesson->is_published)
 
-                                                    <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                                                    <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
 
                                                         Published
 
@@ -518,7 +526,7 @@
 
                                                 @else
 
-                                                    <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-500/10 dark:text-gray-400">
+                                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
 
                                                         Draft
 
@@ -538,7 +546,7 @@
 
                                         <a
                                             href="{{ route('lessons.edit', $lesson) }}"
-                                            class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                                         >
 
                                             Edit
@@ -557,7 +565,7 @@
                                             <button
                                                 type="submit"
                                                 onclick="return confirm('Delete this lesson?')"
-                                                class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                                                class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                                             >
 
                                                 Delete
@@ -584,9 +592,9 @@
                      EMPTY STATE
                 ====================================================== --}}
 
-                <div class="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-900">
+                <div class="sad-card rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
 
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600">
 
                         <svg class="h-7 w-7"
                              fill="none"
@@ -602,13 +610,13 @@
 
                     </div>
 
-                    <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mt-4 text-lg font-semibold text-slate-900">
 
                         No lessons found
 
                     </h3>
 
-                    <p class="mx-auto mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mx-auto mt-1 max-w-md text-sm text-slate-500">
 
                         Lessons will appear here once they are created.
 
@@ -616,7 +624,7 @@
 
                     <a
                         href="{{ route('lessons.create') }}"
-                        class="mt-5 inline-flex rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700"
+                        class="sad-btn-primary mt-5 inline-flex rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
                     >
 
                         Add Lesson
@@ -634,10 +642,10 @@
 
             <div
                 id="noResults"
-                class="hidden rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-900"
+                class="sad-card hidden rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"
             >
 
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
 
                     <svg class="h-7 w-7"
                          fill="none"
@@ -653,13 +661,13 @@
 
                 </div>
 
-                <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 class="mt-4 text-lg font-semibold text-slate-900">
 
                     No lessons found
 
                 </h3>
 
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-sm text-slate-500">
 
                     Try changing your search or filters.
 

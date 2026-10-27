@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Course Students'">
+@include('partials.soft3d')
 
 @php
     $totalStudents = $enrollments->count();
@@ -81,7 +82,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -95,7 +96,7 @@
             <div
                 class="mb-5 flex flex-wrap
                        items-center gap-2
-                       text-xs text-slate-400"
+                       text-xs text-slate-500"
             >
 
                 <a
@@ -197,7 +198,7 @@
 
                     <a
                         href="{{ route('teacher.my-courses') }}"
-                        class="inline-flex h-11
+                        class="sad-btn-primary inline-flex h-11
                                items-center justify-center
                                rounded-xl
                                bg-violet-600 px-4
@@ -236,7 +237,7 @@
             ====================================================== --}}
 
             <section
-                class="pw-card mt-7 overflow-hidden"
+                class="sad-card pw-card mt-7 overflow-hidden"
             >
 
                 <div
@@ -328,7 +329,7 @@
                                     class="rounded-full
                                            bg-violet-50
                                            px-2.5 py-1
-                                           text-[10px]
+                                           text-xs
                                            font-bold uppercase
                                            tracking-wide
                                            text-violet-700"
@@ -345,7 +346,7 @@
                                     class="rounded-full
                                            bg-slate-100
                                            px-2.5 py-1
-                                           text-[10px]
+                                           text-xs
                                            font-semibold
                                            text-slate-600"
                                 >
@@ -371,7 +372,7 @@
                                            )
                                        }}
                                        px-2.5 py-1
-                                       text-[10px]
+                                       text-xs
                                        font-semibold"
                             >
                                 {{
@@ -482,7 +483,7 @@
 
 
                 {{-- TOTAL --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div
                         class="flex items-start
@@ -511,7 +512,7 @@
 
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-violet flex h-10 w-10
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -551,7 +552,7 @@
 
                     <p
                         class="mt-2 text-xs
-                               text-slate-400"
+                               text-slate-500"
                     >
                         Total course enrollments
                     </p>
@@ -561,7 +562,7 @@
 
 
                 {{-- ACTIVE --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div
                         class="flex items-start
@@ -590,7 +591,7 @@
 
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-sky flex h-10 w-10
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -623,7 +624,7 @@
 
                     <p
                         class="mt-2 text-xs
-                               text-slate-400"
+                               text-slate-500"
                     >
                         Currently taking the course
                     </p>
@@ -633,7 +634,7 @@
 
 
                 {{-- COMPLETED --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div
                         class="flex items-start
@@ -662,7 +663,7 @@
 
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -678,7 +679,7 @@
 
                     <p
                         class="mt-2 text-xs
-                               text-slate-400"
+                               text-slate-500"
                     >
                         Finished the course
                     </p>
@@ -688,7 +689,7 @@
 
 
                 {{-- AVERAGE --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div
                         class="flex items-start
@@ -722,7 +723,7 @@
 
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-amber flex h-10 w-10
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -748,7 +749,7 @@
 
                     <p
                         class="mt-2 text-xs
-                               text-slate-400"
+                               text-slate-500"
                     >
                         Overall learner progress
                     </p>
@@ -764,7 +765,7 @@
             ====================================================== --}}
 
             <section
-                class="pw-card mt-6
+                class="sad-card pw-card mt-6
                        overflow-hidden"
             >
 
@@ -809,7 +810,7 @@
                             id="studentCounter"
                             class="text-xs
                                    font-semibold
-                                   text-slate-400"
+                                   text-slate-500"
                         >
                             {{ $totalStudents }}
 
@@ -844,7 +845,7 @@
                                            absolute left-3.5
                                            top-1/2 h-4 w-4
                                            -translate-y-1/2
-                                           text-slate-400"
+                                           text-slate-500"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
@@ -975,10 +976,10 @@
                             >
 
                                 <tr
-                                    class="text-[10px]
+                                    class="text-xs
                                            font-bold uppercase
                                            tracking-[.08em]
-                                           text-slate-400"
+                                           text-slate-500"
                                 >
 
                                     <th class="px-6 py-4">
@@ -1170,8 +1171,8 @@
                                                         class="mt-0.5
                                                                max-w-55
                                                                truncate
-                                                               text-[11px]
-                                                               text-slate-400"
+                                                               text-xs
+                                                               text-slate-500"
                                                     >
                                                         {{
                                                             $studentEmail
@@ -1219,7 +1220,7 @@
                                                     @if($progress >= 100)
 
                                                         <span
-                                                            class="text-[10px]
+                                                            class="text-xs
                                                                    font-semibold
                                                                    text-emerald-600"
                                                         >
@@ -1229,9 +1230,9 @@
                                                     @elseif($progress > 0)
 
                                                         <span
-                                                            class="text-[10px]
+                                                            class="text-xs
                                                                    font-medium
-                                                                   text-slate-400"
+                                                                   text-slate-500"
                                                         >
                                                             In progress
                                                         </span>
@@ -1239,9 +1240,9 @@
                                                     @else
 
                                                         <span
-                                                            class="text-[10px]
+                                                            class="text-xs
                                                                    font-medium
-                                                                   text-slate-400"
+                                                                   text-slate-500"
                                                         >
                                                             Not started
                                                         </span>
@@ -1292,7 +1293,7 @@
                                                            rounded-full
                                                            bg-emerald-50
                                                            px-3 py-1.5
-                                                           text-[11px]
+                                                           text-xs
                                                            font-bold
                                                            text-emerald-700"
                                                 >
@@ -1318,7 +1319,7 @@
                                                            rounded-full
                                                            bg-blue-50
                                                            px-3 py-1.5
-                                                           text-[11px]
+                                                           text-xs
                                                            font-bold
                                                            text-blue-700"
                                                 >
@@ -1342,7 +1343,7 @@
                                                            rounded-full
                                                            bg-slate-100
                                                            px-3 py-1.5
-                                                           text-[11px]
+                                                           text-xs
                                                            font-bold
                                                            text-slate-600"
                                                 >
@@ -1383,8 +1384,8 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[10px]
-                                                           text-slate-400"
+                                                           text-xs
+                                                           text-slate-500"
                                                 >
                                                     {{
                                                         \Carbon\Carbon::parse(
@@ -1401,7 +1402,7 @@
 
                                                 <span
                                                     class="text-xs
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     —
                                                 </span>
@@ -1433,8 +1434,8 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[10px]
-                                                           text-slate-400"
+                                                           text-xs
+                                                           text-slate-500"
                                                 >
                                                     {{
                                                         $enrollment
@@ -1447,7 +1448,7 @@
 
                                                 <span
                                                     class="text-xs
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     —
                                                 </span>
@@ -1559,7 +1560,7 @@
                                    justify-center
                                    rounded-full
                                    bg-slate-100
-                                   text-slate-400"
+                                   text-slate-500"
                         >
 
                             <svg
@@ -1593,7 +1594,7 @@
 
                         <p
                             class="mt-1 text-xs
-                                   text-slate-400"
+                                   text-slate-500"
                         >
                             Try changing the
                             search or filters.
@@ -1680,7 +1681,7 @@
 
                         <a
                             href="{{ route('teacher.lessons', $course) }}"
-                            class="mt-5 inline-flex
+                            class="sad-btn-primary mt-5 inline-flex
                                    h-11 items-center
                                    justify-center
                                    rounded-xl

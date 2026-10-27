@@ -14,7 +14,7 @@
 <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-0.5']) }} role="img" aria-label="{{ $label }}">
     @for ($star = 1; $star <= 5; $star++)
         <svg
-            class="{{ $size }} {{ $star <= $filled ? 'text-amber-400' : 'text-slate-300 dark:text-zinc-600' }}"
+            class="{{ $size }} {{ $star <= $filled ? 'text-amber-400' : 'text-slate-300' }}"
             viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"

@@ -1,4 +1,5 @@
 <x-layouts::app :title="__('Student Progress')">
+@include('partials.soft3d')
 
     @php
         $totalEnrollments = $enrollments->count();
@@ -29,7 +30,7 @@
         }
     </style>
 
-    <div class="min-h-screen bg-[#f8f9fc]">
+    <div class="sad-page min-h-screen bg-[#f8f9fc]">
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -40,7 +41,12 @@
                     HEADER
                 ====================================================== --}}
 
-                <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                {{-- Header card, as on My Certificates. --}}
+                <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                    <div class="relative px-6 py-6 sm:px-7">
+                        <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+                <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                     <div>
 
@@ -59,6 +65,8 @@
                     </div>
 
                 </div>
+                    </div>
+                </section>
 
 
 
@@ -70,7 +78,7 @@
 
 
                     {{-- TOTAL ENROLLMENTS --}}
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -86,7 +94,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                            <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
 
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"></path>
@@ -98,7 +106,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             All students
                         </p>
 
@@ -107,7 +115,7 @@
 
 
                     {{-- ACTIVE --}}
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -123,7 +131,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <div class="sad-chip sad-chip-sm sad-sky flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
 
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="9"></circle>
@@ -134,7 +142,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Currently learning
                         </p>
 
@@ -143,7 +151,7 @@
 
 
                     {{-- COMPLETED --}}
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -159,13 +167,13 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <div class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                                 ✓
                             </div>
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Finished courses
                         </p>
 
@@ -174,7 +182,7 @@
 
 
                     {{-- AVERAGE PROGRESS --}}
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -190,7 +198,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                            <div class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
 
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 3v18h18"></path>
@@ -201,7 +209,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Across all enrollments
                         </p>
 
@@ -215,7 +223,7 @@
                     ENROLLMENT TABLE
                 ====================================================== --}}
 
-                <section class="pw-card mt-6 overflow-hidden">
+                <section class="sad-card pw-card mt-6 overflow-hidden">
 
                     <div class="border-b border-slate-100 px-6 py-5">
 
@@ -243,7 +251,7 @@
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 
-                                <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                                <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
 
                                     <th class="px-6 py-4">Student</th>
                                     <th class="px-6 py-4">Course</th>
@@ -281,7 +289,7 @@
                                                         {{ $enrollment->student->name ?? 'Student' }}
                                                     </p>
 
-                                                    <p class="mt-0.5 text-[11px] text-slate-400">
+                                                    <p class="mt-0.5 text-xs text-slate-500">
                                                         Learner
                                                     </p>
 
@@ -324,14 +332,14 @@
 
                                             @if($isCompleted)
 
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700">
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                                     Completed
                                                 </span>
 
                                             @else
 
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-700">
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                                                     Active
                                                 </span>
@@ -348,7 +356,7 @@
 
                                         <td colspan="4" class="px-6 py-16 text-center">
 
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                            <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
 
                                                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"></path>
@@ -362,7 +370,7 @@
                                                 No student progress yet
                                             </h3>
 
-                                            <p class="mt-1 text-xs text-slate-400">
+                                            <p class="mt-1 text-xs text-slate-500">
                                                 Student progress will appear once students enroll in courses.
                                             </p>
 

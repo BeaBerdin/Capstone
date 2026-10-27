@@ -1,4 +1,5 @@
 <x-layouts::app :title="__('Submission')">
+@include('partials.soft3d')
 
 {{-- Administrator - submission details (route: submissions.show) --}}
 
@@ -11,7 +12,7 @@
     }
 </style>
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -30,27 +31,27 @@
             </h1>
 
 
-            <section class="pw-card mt-7 p-5 sm:p-7">
+            <section class="sad-card pw-card mt-7 p-5 sm:p-7">
 
                 <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Student</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Student</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">{{ $submission->student?->name ?? '—' }}</dd>
                     </div>
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Status</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Status</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">{{ ucfirst((string) $submission->status) }}</dd>
                     </div>
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Submitted</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Submitted</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">{{ $submission->submitted_at?->format('M d, Y h:i A') ?? '—' }}</dd>
                     </div>
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Score</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Score</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">
                             {{ $submission->score !== null ? $submission->score . ' / ' . ($submission->assignment?->max_score ?? '?') : 'Not graded yet' }}
                         </dd>

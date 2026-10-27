@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Performance Analytics'">
+@include('partials.soft3d')
 
 <style>
     .pw-analytics-page {
@@ -251,15 +252,20 @@
     <main class="pw-analytics-shell">
 
         {{-- HEADER --}}
+        {{-- Header card, as on My Certificates. --}}
+        <section class="sad-banner mb-5 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <div class="relative px-6 py-6 sm:px-7">
+                <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
         <div
-            class="mb-5 flex flex-col gap-4
-                   lg:flex-row lg:items-end lg:justify-between"
+            class="relative flex flex-col gap-4
+                   lg:flex-row lg:items-center lg:justify-between"
         >
 
             <div>
 
                 <div
-                    class="text-[10px] font-bold uppercase
+                    class="text-xs font-bold uppercase
                            tracking-[.14em] text-violet-600"
                 >
                     Analytics
@@ -342,6 +348,8 @@
             </form>
 
         </div>
+            </div>
+        </section>
 
 
 
@@ -589,7 +597,7 @@
                                 >
 
                                     <div
-                                        class="mb-2 text-[9px]
+                                        class="mb-2 text-xs
                                                font-bold text-slate-500"
                                     >
                                         {{ $month['count'] }}
@@ -607,8 +615,8 @@
 
 
                                     <div
-                                        class="mt-2 text-[9px]
-                                               font-semibold text-slate-400"
+                                        class="mt-2 text-xs
+                                               font-semibold text-slate-500"
                                     >
                                         {{ $month['label'] }}
                                     </div>
@@ -707,14 +715,14 @@
                                            items-center justify-between"
                                 >
                                     <span
-                                        class="text-[10px]
+                                        class="text-xs
                                                font-semibold text-slate-600"
                                     >
                                         {{ $label }}
                                     </span>
 
                                     <span
-                                        class="text-[10px]
+                                        class="text-xs
                                                font-bold text-slate-900"
                                     >
                                         {{ $count }}
@@ -849,7 +857,7 @@
                                     @if($course['students'] > 0)
                                         {{ $course['students'] }}
                                     @else
-                                        <span class="text-slate-400">0</span>
+                                        <span class="text-slate-500">0</span>
                                     @endif
                                 </td>
 
@@ -935,8 +943,8 @@
 
                                         <div
                                             class="mt-1
-                                                   text-[9px]
-                                                   text-slate-400"
+                                                   text-xs
+                                                   text-slate-500"
                                         >
                                             {{ $student['email'] }}
                                         </div>
@@ -1002,7 +1010,7 @@
                                px-4 py-3"
                     >
                         <span
-                            class="text-[10px]
+                            class="text-xs
                                    font-semibold text-slate-500"
                         >
                             Assignments
@@ -1024,7 +1032,7 @@
                                px-4 py-3"
                     >
                         <span
-                            class="text-[10px]
+                            class="text-xs
                                    font-semibold text-amber-700"
                         >
                             Need grading
@@ -1046,7 +1054,7 @@
                                px-4 py-3"
                     >
                         <span
-                            class="text-[10px]
+                            class="text-xs
                                    font-semibold text-violet-700"
                         >
                             Quiz pass rate

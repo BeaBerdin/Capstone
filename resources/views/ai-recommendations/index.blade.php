@@ -1,4 +1,5 @@
 <x-layouts::app :title="__('AI Recommendations')">
+@include('partials.soft3d')
 
     @php
         $totalRecommendations = $recommendations->count();
@@ -18,7 +19,7 @@
         }
     </style>
 
-    <div class="min-h-screen bg-[#f8f9fc]">
+    <div class="sad-page min-h-screen bg-[#f8f9fc]">
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -29,7 +30,12 @@
                     HEADER
                 ====================================================== --}}
 
-                <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                {{-- Header card, as on My Certificates. --}}
+                <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                    <div class="relative px-6 py-6 sm:px-7">
+                        <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+                <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                     <div>
 
@@ -50,7 +56,7 @@
 
                     <a
                         href="{{ route('ai-recommendations.create') }}"
-                        class="inline-flex h-11 self-start items-center justify-center
+                        class="sad-btn-primary inline-flex h-11 self-start lg:self-auto items-center justify-center
                                gap-2 rounded-xl bg-violet-600 px-5
                                text-sm font-semibold text-white transition
                                hover:bg-violet-700"
@@ -59,6 +65,8 @@
                     </a>
 
                 </div>
+                    </div>
+                </section>
 
 
 
@@ -70,7 +78,7 @@
 
 
                     {{-- TOTAL --}}
-                    <div class="pw-card p-5">
+                    <div class="sad-card pw-card p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -86,7 +94,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                            <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -102,7 +110,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             AI-generated suggestions
                         </p>
 
@@ -111,7 +119,7 @@
 
 
                     {{-- AVERAGE SCORE --}}
-                    <div class="pw-card p-5">
+                    <div class="sad-card pw-card p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -127,7 +135,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                            <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -144,7 +152,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Confidence level
                         </p>
 
@@ -153,7 +161,7 @@
 
 
                     {{-- VIEWED --}}
-                    <div class="pw-card p-5">
+                    <div class="sad-card pw-card p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -169,7 +177,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <div class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -186,7 +194,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Seen by students
                         </p>
 
@@ -195,7 +203,7 @@
 
 
                     {{-- NOT VIEWED --}}
-                    <div class="pw-card p-5">
+                    <div class="sad-card pw-card p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -211,7 +219,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                            <div class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
 
                                 <svg
                                     class="h-5 w-5"
@@ -228,7 +236,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Pending review
                         </p>
 
@@ -281,7 +289,7 @@
                     TABLE SECTION
                 ====================================================== --}}
 
-                <section class="pw-card overflow-hidden">
+                <section class="sad-card pw-card overflow-hidden">
 
 
                     {{-- TABLE HEADER --}}
@@ -322,7 +330,7 @@
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 
-                                <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                                <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
 
                                     <th class="px-6 py-4">Student</th>
                                     <th class="px-6 py-4">Recommended Course</th>
@@ -345,11 +353,11 @@
 
                                         $scoreClass = $score >= 85
                                             ? 'bg-emerald-500'
-                                            : ($score >= 70 ? 'bg-yellow-500' : 'bg-red-500');
+                                            : ($score >= 70 ? 'bg-amber-500' : 'bg-red-500');
 
                                         $scoreTextClass = $score >= 85
                                             ? 'text-emerald-600'
-                                            : ($score >= 70 ? 'text-yellow-600' : 'text-red-600');
+                                            : ($score >= 70 ? 'text-amber-600' : 'text-red-600');
                                     @endphp
 
                                     <tr class="transition hover:bg-slate-50/70">
@@ -358,7 +366,7 @@
 
                                             <div class="flex items-center gap-3">
 
-                                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
+                                                <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
                                                     {{ strtoupper(substr($recommendation->student->name ?? 'S', 0, 1)) }}
                                                 </div>
 
@@ -368,7 +376,7 @@
                                                         {{ $recommendation->student->name ?? 'N/A' }}
                                                     </p>
 
-                                                    <p class="mt-0.5 text-[11px] text-slate-400">
+                                                    <p class="mt-0.5 text-xs text-slate-500">
                                                         Learner
                                                     </p>
 
@@ -384,7 +392,7 @@
                                                 {{ $recommendation->course->title ?? 'N/A' }}
                                             </p>
 
-                                            <p class="mt-0.5 text-[11px] text-slate-400">
+                                            <p class="mt-0.5 text-xs text-slate-500">
                                                 Recommended Course
                                             </p>
 
@@ -419,7 +427,7 @@
 
                                             @if($recommendation->is_viewed)
 
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-bold text-emerald-700">
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
 
                                                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
 
@@ -429,7 +437,7 @@
 
                                             @else
 
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1.5 text-[10px] font-bold text-orange-600">
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-600">
 
                                                     <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span>
 
@@ -454,7 +462,7 @@
 
                                                 <button
                                                     type="submit"
-                                                    class="h-8 rounded-lg bg-red-600 px-3 text-[11px] font-bold text-white transition hover:bg-red-700"
+                                                    class="h-8 rounded-lg bg-red-600 px-3 text-xs font-bold text-white transition hover:bg-red-700"
                                                     onclick="return confirm('Delete recommendation?')"
                                                 >
                                                     Delete
@@ -472,7 +480,7 @@
 
                                         <td colspan="6" class="px-6 py-16 text-center">
 
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                            <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
 
                                                 <svg
                                                     class="h-6 w-6"
@@ -490,7 +498,7 @@
                                                 No recommendations found
                                             </h3>
 
-                                            <p class="mt-1 text-xs text-slate-400">
+                                            <p class="mt-1 text-xs text-slate-500">
                                                 Generate recommendations after students have quiz results.
                                             </p>
 

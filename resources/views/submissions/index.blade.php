@@ -1,4 +1,5 @@
 <x-layouts::app :title="__('Submissions')">
+@include('partials.soft3d')
 
 <style>
     .pw-card {
@@ -17,7 +18,7 @@
     ];
 @endphp
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -45,7 +46,7 @@
 
                 <a
                     href="{{ route('submissions.create') }}"
-                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                    class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"/>
@@ -67,14 +68,14 @@
                 TABLE
             ====================================================== --}}
 
-            <section class="pw-card mt-7 overflow-hidden">
+            <section class="sad-card pw-card mt-7 overflow-hidden">
 
                 <div class="overflow-x-auto">
 
                     <table class="w-full min-w-[760px] text-left text-sm">
 
                         <thead class="border-b border-slate-100 bg-slate-50/80">
-                            <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                            <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
                                 <th class="px-6 py-4">Student</th>
                                 <th class="px-6 py-4">Assignment</th>
                                 <th class="px-6 py-4">Score</th>
@@ -114,7 +115,7 @@
                                     </td>
 
                                     <td class="px-6 py-5">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold {{ $badge }}">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold {{ $badge }}">
                                             <span class="h-1.5 w-1.5 rounded-full {{ $dot }}"></span>
                                             {{ ucfirst($submission->status) }}
                                         </span>
@@ -170,7 +171,7 @@
                                 <tr>
                                     <td colspan="6" class="px-6 py-16 text-center">
 
-                                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                        <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                                             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
                                                 <path d="M14 3v5h5M9 13h6M9 17h4"/>
@@ -181,7 +182,7 @@
                                             No submissions found.
                                         </h3>
 
-                                        <p class="mt-1 text-xs text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             Submissions appear here when students hand in assignments.
                                         </p>
 

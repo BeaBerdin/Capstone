@@ -1,4 +1,5 @@
 <x-layouts::app :title="$learningPath->name">
+@include('partials.soft3d')
 
 @php
     $studentId = auth()->id();
@@ -29,7 +30,7 @@
 @endphp
 
 
-<div class="min-h-screen bg-slate-50/70">
+<div class="sad-page min-h-screen bg-slate-50/70">
 
     <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
 
@@ -50,7 +51,7 @@
                 HERO
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
 
                 <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px]">
 
@@ -65,7 +66,7 @@
                             <div class="flex flex-wrap items-center gap-2">
 
                                 @if($learningPath->is_generated)
-                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-violet-700">
                                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                         </svg>
@@ -74,7 +75,7 @@
                                 @endif
 
                                 @if($learningPath->difficulty_level)
-                                    <span class="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-semibold text-slate-600">
+                                    <span class="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
                                         {{ ucfirst($learningPath->difficulty_level) }}
                                     </span>
                                 @endif
@@ -103,7 +104,7 @@
                     {{-- RIGHT --}}
                     <div class="border-t border-violet-100 bg-violet-50/70 p-6 lg:border-l lg:border-t-0">
 
-                        <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                        <p class="text-xs font-bold uppercase tracking-[0.12em] text-violet-500">
                             Path Progress
                         </p>
 
@@ -129,7 +130,7 @@
                         <div class="mt-5 grid grid-cols-2 gap-3">
 
                             <div class="rounded-xl bg-white p-3 shadow-sm">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">
                                     Completed
                                 </p>
 
@@ -140,7 +141,7 @@
 
 
                             <div class="rounded-xl bg-white p-3 shadow-sm">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                                <p class="text-xs font-bold uppercase tracking-wide text-slate-500">
                                     Total Courses
                                 </p>
 
@@ -163,11 +164,11 @@
                 LEARNING SEQUENCE
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section class="sad-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5 sm:px-7">
 
-                    <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                    <p class="text-xs font-bold uppercase tracking-[0.12em] text-violet-500">
                         Your Journey
                     </p>
 
@@ -252,7 +253,7 @@
 
 
                                 {{-- COURSE CARD --}}
-                                <article class="flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-violet-200 hover:shadow-sm">
+                                <article class="sad-card flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-violet-200 hover:shadow-sm">
 
                                     <div class="grid grid-cols-1 lg:grid-cols-[150px_minmax(0,1fr)_170px]">
 
@@ -288,11 +289,11 @@
 
                                             <div class="flex flex-wrap items-center gap-2">
 
-                                                <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-500">
+                                                <span class="text-xs font-bold uppercase tracking-[0.1em] text-violet-500">
                                                     Step {{ $index + 1 }}
                                                 </span>
 
-                                                <span class="rounded-full px-2.5 py-1 text-[10px] font-bold {{ $statusClass }}">
+                                                <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $statusClass }}">
                                                     {{ $statusLabel }}
                                                 </span>
 
@@ -304,7 +305,7 @@
                                             </h3>
 
 
-                                            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-medium text-slate-400">
+                                            <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-slate-500">
 
                                                 <span>
                                                     {{ $course->category->name ?? 'No Category' }}
@@ -347,7 +348,7 @@
 
                                                 <a
                                                     href="{{ route('student.learn.course', $course) }}"
-                                                    class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
+                                                    class="sad-btn-primary inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
                                                 >
                                                     Continue Learning
 
@@ -387,7 +388,7 @@
 
                         <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center">
 
-                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                            <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                                 <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                     <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
                                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>

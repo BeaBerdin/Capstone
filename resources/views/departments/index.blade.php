@@ -1,26 +1,32 @@
 ```blade
 <x-layouts::app :title="'Department Management'">
 
-<div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
+@include('partials.soft3d')
+<div class="sad-page min-h-screen bg-slate-50">
 
     {{-- Header --}}
-    <div class="border-b border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+    <div>
         <div class="mx-auto max-w-7xl px-6 py-8">
 
-            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
                 <div>
-                    <div class="mb-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div class="mb-2 flex items-center gap-2 text-sm text-slate-500">
                         <span>Superadmin</span>
                         <span>/</span>
                         <span>Departments</span>
                     </div>
 
-                    <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold tracking-tight text-slate-900">
                         Department Management
                     </h1>
 
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    <p class="mt-2 text-slate-600">
                         Create departments and manage department assignments for admins and instructors.
                     </p>
                 </div>
@@ -29,7 +35,7 @@
 
                     {{-- Assign Department --}}
                     <a href="{{ route('departments.assign') }}"
-                       class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-200 dark:hover:bg-neutral-700">
+                       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
@@ -43,7 +49,7 @@
 
                     {{-- Create Department --}}
                     <a href="{{ route('departments.create') }}"
-                       class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700">
+                       class="sad-btn-primary inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
@@ -57,6 +63,8 @@
 
                 </div>
             </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -66,13 +74,13 @@
 
         {{-- Flash Messages --}}
         @if(session('success'))
-            <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-300">
+            <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                 {{ session('success') }}
             </div>
         @endif
 
         @if(session('error'))
-            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {{ session('error') }}
             </div>
         @endif
@@ -81,20 +89,20 @@
         {{-- Statistics --}}
         <div class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Total Departments
                         </p>
 
-                        <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-2 text-3xl font-bold text-slate-900">
                             {{ $departments->count() }}
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                    <div class="sad-chip sad-violet flex h-11 w-11 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
                                   stroke-linejoin="round"
@@ -107,20 +115,20 @@
             </div>
 
 
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Assigned Users
                         </p>
 
-                        <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-2 text-3xl font-bold text-slate-900">
                             {{ $departments->sum('users_count') }}
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                    <div class="sad-chip sad-violet flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
                                   stroke-linejoin="round"
@@ -133,20 +141,20 @@
             </div>
 
 
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <p class="text-sm font-medium text-slate-500">
                             Unassigned Users
                         </p>
 
-                        <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+                        <p class="mt-2 text-3xl font-bold text-slate-900">
                             {{ \App\Models\User::whereNull('department_id')->count() }}
                         </p>
                     </div>
 
-                    <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                    <div class="sad-chip sad-amber flex h-11 w-11 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
                                   stroke-linejoin="round"
@@ -162,18 +170,18 @@
 
 
         {{-- Departments --}}
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="sad-card rounded-xl border border-slate-200 bg-white shadow-sm">
 
-            <div class="border-b border-gray-200 px-6 py-5 dark:border-neutral-800">
+            <div class="border-b border-slate-200 px-6 py-5">
 
                 <div class="flex items-center justify-between">
 
                     <div>
-                        <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                        <h2 class="text-lg font-bold text-slate-900">
                             Departments
                         </h2>
 
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-sm text-slate-500">
                             Manage your organization's departments.
                         </p>
                     </div>
@@ -185,17 +193,17 @@
 
             @if($departments->count())
 
-                <div class="divide-y divide-gray-200 dark:divide-neutral-800">
+                <div class="divide-y divide-slate-200">
 
                     @foreach($departments as $department)
 
-                        <div class="px-6 py-5 transition hover:bg-gray-50 dark:hover:bg-neutral-800/40">
+                        <div class="px-6 py-5 transition hover:bg-slate-50">
 
                             <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                                 <div class="flex items-start gap-4">
 
-                                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                                    <div class="sad-chip sad-violet flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
 
                                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round"
@@ -207,17 +215,17 @@
                                     </div>
 
                                     <div>
-                                        <h3 class="text-base font-bold text-gray-900 dark:text-white">
+                                        <h3 class="text-base font-bold text-slate-900">
                                             {{ $department->name }}
                                         </h3>
 
-                                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="mt-1 max-w-2xl text-sm text-slate-500">
                                             {{ $department->description ?: 'No description provided.' }}
                                         </p>
 
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
 
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-neutral-800 dark:text-gray-300">
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
 
                                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round"
@@ -241,12 +249,12 @@
                                 <div class="flex shrink-0 items-center gap-2">
 
                                     <a href="{{ route('departments.assign') }}"
-                                       class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-800">
+                                       class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
                                         Assign
                                     </a>
 
                                     <a href="{{ route('departments.edit', $department) }}"
-                                       class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-neutral-700 dark:text-gray-300 dark:hover:bg-neutral-800">
+                                       class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
                                         Edit
                                     </a>
 
@@ -258,7 +266,7 @@
                                         @method('DELETE')
 
                                         <button type="submit"
-                                                class="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30">
+                                                class="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50">
                                             Delete
                                         </button>
 
@@ -278,7 +286,7 @@
 
                 <div class="px-6 py-16 text-center">
 
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600">
 
                         <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
@@ -289,16 +297,16 @@
 
                     </div>
 
-                    <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mt-4 text-lg font-semibold text-slate-900">
                         No departments yet
                     </h3>
 
-                    <p class="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mx-auto mt-2 max-w-md text-sm text-slate-500">
                         Create your first department to start organizing admins and instructors.
                     </p>
 
                     <a href="{{ route('departments.create') }}"
-                       class="mt-5 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700">
+                       class="sad-btn-primary mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"

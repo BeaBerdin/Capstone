@@ -1,6 +1,7 @@
 <x-layouts::app :title="'Learning Paths'">
+@include('partials.soft3d')
 
-<div class="min-h-screen bg-slate-50/70">
+<div class="sad-page min-h-screen bg-slate-50/70">
 
     <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
 
@@ -11,7 +12,7 @@
                 HEADER
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
 
                 <div class="relative px-6 py-7 sm:px-8">
 
@@ -22,7 +23,7 @@
 
                         <div class="max-w-2xl">
 
-                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">
+                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M4 6h5l2 3h9"></path>
                                     <path d="M4 18h5l2-3h9"></path>
@@ -51,7 +52,7 @@
 
                             <button
                                 type="submit"
-                                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                                class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
                             >
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
@@ -102,7 +103,7 @@
                             : 'Flexible';
                     @endphp
 
-                    <article class="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md">
+                    <article class="sad-card group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md">
 
                         <div class="grid min-h-[250px] grid-cols-1 md:grid-cols-[150px_minmax(0,1fr)]">
 
@@ -125,7 +126,7 @@
 
                                 @if($path->is_generated)
                                     <div class="absolute left-3 top-3">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-violet-700 shadow-sm">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-violet-700 shadow-sm">
                                             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                             </svg>
@@ -142,11 +143,11 @@
                             <div class="flex flex-col p-6">
 
                                 <div class="flex flex-wrap gap-2">
-                                    <span class="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-semibold text-violet-700">
+                                    <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
                                         {{ $difficulty }}
                                     </span>
 
-                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold text-slate-600">
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
                                         {{ $courseCount }}
                                         {{ \Illuminate\Support\Str::plural('course', $courseCount) }}
                                     </span>
@@ -168,13 +169,13 @@
                                     <div class="mb-4 flex items-center gap-2">
 
                                         @for($i = 0; $i < min($courseCount, 5); $i++)
-                                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-violet-50 text-[10px] font-bold text-violet-600 ring-2 ring-white">
+                                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-600 ring-2 ring-white">
                                                 {{ $i + 1 }}
                                             </div>
                                         @endfor
 
                                         @if($courseCount > 5)
-                                            <span class="text-[11px] font-semibold text-slate-400">
+                                            <span class="text-xs font-semibold text-slate-500">
                                                 +{{ $courseCount - 5 }} more
                                             </span>
                                         @endif
@@ -184,7 +185,7 @@
 
                                     <a
                                         href="{{ route('student.learning-paths.show', $path) }}"
-                                        class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
+                                        class="sad-btn-primary inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
                                     >
                                         View Learning Path
 
@@ -207,7 +208,7 @@
 
                     <div class="xl:col-span-2">
 
-                        <section class="overflow-hidden rounded-3xl border border-dashed border-violet-200 bg-white shadow-sm">
+                        <section class="sad-card overflow-hidden rounded-3xl border border-dashed border-violet-200 bg-white shadow-sm">
 
                             <div class="grid min-h-[360px] grid-cols-1 lg:grid-cols-[1fr_360px]">
 
@@ -215,7 +216,7 @@
 
                                     <div class="max-w-xl">
 
-                                        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                        <div class="sad-chip sad-violet flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                                             <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                                 <path d="M5 4v16"></path>
                                                 <path d="M5 6h7l2 3h5"></path>
@@ -243,7 +244,7 @@
 
                                             <button
                                                 type="submit"
-                                                class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                                class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
                                             >
                                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>

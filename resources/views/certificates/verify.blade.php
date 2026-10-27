@@ -2,14 +2,14 @@
     <div class="flex flex-col gap-6">
 
         <div class="text-center">
-            <h1 class="text-xl font-bold text-slate-900 dark:text-white">Verify a Certificate</h1>
-            <p class="mt-1 text-sm text-slate-500 dark:text-zinc-400">
+            <h1 class="text-xl font-bold text-slate-900">Verify a Certificate</h1>
+            <p class="mt-1 text-sm text-slate-500">
                 Enter the certificate number printed on a PATHWISE certificate.
             </p>
         </div>
 
         <form method="GET" action="{{ route('certificates.verify') }}" class="flex flex-col gap-3">
-            <label for="number" class="text-sm font-semibold text-slate-700 dark:text-zinc-200">
+            <label for="number" class="text-sm font-semibold text-slate-700">
                 Certificate number
             </label>
 

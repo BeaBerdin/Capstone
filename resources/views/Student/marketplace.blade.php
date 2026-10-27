@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Course Marketplace'">
+@include('partials.soft3d')
 
 @php
     $courseCollection = collect($courses ?? []);
@@ -59,7 +60,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -70,7 +71,12 @@
                 HEADER
             ====================================================== --}}
 
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                 <div>
 
@@ -92,7 +98,7 @@
 
                 <a
                     href="{{ route('student.my-courses') }}"
-                    class="inline-flex h-11 self-start items-center justify-center
+                    class="inline-flex h-11 self-start lg:self-auto items-center justify-center
                            gap-2 rounded-xl border border-slate-200
                            bg-white px-4 text-sm font-semibold text-slate-600
                            transition hover:border-violet-200
@@ -114,6 +120,8 @@
                 </a>
 
             </div>
+                </div>
+            </section>
 
 
 
@@ -125,7 +133,7 @@
 
 
                 {{-- AVAILABLE --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -143,7 +151,7 @@
 
 
                         <div
-                            class="flex h-10 w-10 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-violet-50 text-violet-600"
                         >
 
@@ -162,7 +170,7 @@
 
                     </div>
 
-                    <p class="mt-2 text-xs text-slate-400">
+                    <p class="mt-2 text-xs text-slate-500">
                         Published learning courses
                     </p>
 
@@ -171,7 +179,7 @@
 
 
                 {{-- CATEGORIES --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -189,7 +197,7 @@
 
 
                         <div
-                            class="flex h-10 w-10 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-sky flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-blue-50 text-blue-600"
                         >
 
@@ -210,7 +218,7 @@
 
                     </div>
 
-                    <p class="mt-2 text-xs text-slate-400">
+                    <p class="mt-2 text-xs text-slate-500">
                         Areas you can explore
                     </p>
 
@@ -219,7 +227,7 @@
 
 
                 {{-- FREE --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -237,7 +245,7 @@
 
 
                         <div
-                            class="flex h-10 w-10 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-emerald-50 font-bold text-emerald-600"
                         >
                             ₱0
@@ -245,7 +253,7 @@
 
                     </div>
 
-                    <p class="mt-2 text-xs text-slate-400">
+                    <p class="mt-2 text-xs text-slate-500">
                         Start learning at no cost
                     </p>
 
@@ -254,7 +262,7 @@
 
 
                 {{-- PREMIUM --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -272,7 +280,7 @@
 
 
                         <div
-                            class="flex h-10 w-10 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-orange-50 text-orange-500"
                         >
 
@@ -290,7 +298,7 @@
 
                     </div>
 
-                    <p class="mt-2 text-xs text-slate-400">
+                    <p class="mt-2 text-xs text-slate-500">
                         Premium learning options
                     </p>
 
@@ -304,7 +312,7 @@
                 SEARCH AND FILTERS
             ====================================================== --}}
 
-            <section class="pw-card mt-6 p-5 sm:p-6">
+            <section class="sad-card pw-card mt-6 p-5 sm:p-6">
 
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -323,7 +331,7 @@
 
                     <p
                         id="courseCounter"
-                        class="text-xs font-semibold text-slate-400"
+                        class="text-xs font-semibold text-slate-500"
                     >
                         {{ $totalCourses }}
                         {{ \Illuminate\Support\Str::plural('course', $totalCourses) }}
@@ -345,7 +353,7 @@
 
                         <svg
                             class="pointer-events-none absolute left-3.5 top-1/2
-                                   h-4 w-4 -translate-y-1/2 text-slate-400"
+                                   h-4 w-4 -translate-y-1/2 text-slate-500"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -498,7 +506,7 @@
 
 
                         <article
-                            class="course-card pw-card pw-course-card overflow-hidden"
+                            class="sad-card course-card pw-card pw-course-card overflow-hidden"
                             data-search="{{ $searchText }}"
                             data-category="{{ $categoryId }}"
                             data-difficulty="{{ $difficulty }}"
@@ -557,7 +565,7 @@
                                         <span
                                             class="inline-flex rounded-full
                                                    bg-emerald-500 px-3 py-1.5
-                                                   text-[10px] font-bold
+                                                   text-xs font-bold
                                                    text-white shadow-sm"
                                         >
                                             FREE
@@ -568,7 +576,7 @@
                                         <span
                                             class="inline-flex rounded-full
                                                    bg-white/95 px-3 py-1.5
-                                                   text-[11px] font-bold
+                                                   text-xs font-bold
                                                    text-slate-900
                                                    shadow-sm backdrop-blur"
                                         >
@@ -587,7 +595,7 @@
                                     <span
                                         class="inline-flex rounded-full
                                                bg-slate-950/70 px-2.5 py-1
-                                               text-[10px] font-semibold
+                                               text-xs font-semibold
                                                text-white backdrop-blur"
                                     >
                                         {{ ucfirst($difficulty) }}
@@ -606,7 +614,7 @@
                             <div class="p-5">
 
                                 <p
-                                    class="text-[10px] font-bold uppercase
+                                    class="text-xs font-bold uppercase
                                            tracking-[.08em] text-violet-500"
                                 >
                                     {{ $course->category?->name ?? 'General' }}
@@ -643,7 +651,7 @@
                                         class="flex h-8 w-8 shrink-0 items-center
                                                justify-center rounded-full
                                                bg-violet-100
-                                               text-[10px] font-bold
+                                               text-xs font-bold
                                                text-violet-700"
                                     >
                                         {{
@@ -661,7 +669,7 @@
 
                                     <div class="min-w-0">
 
-                                        <p class="text-[10px] text-slate-400">
+                                        <p class="text-xs text-slate-500">
                                             Instructor
                                         </p>
 
@@ -684,11 +692,11 @@
                                         <span class="text-xs font-semibold text-slate-700">
                                             {{ number_format((float) $course->visible_reviews_avg_rating, 1) }}
                                         </span>
-                                        <span class="text-xs text-slate-400">
+                                        <span class="text-xs text-slate-500">
                                             ({{ $course->visible_reviews_count }} {{ \Illuminate\Support\Str::plural('review', $course->visible_reviews_count) }})
                                         </span>
                                     @else
-                                        <span class="text-xs text-slate-400">No reviews yet</span>
+                                        <span class="text-xs text-slate-500">No reviews yet</span>
                                     @endif
                                 </div>
 
@@ -705,7 +713,7 @@
                                                px-3 py-2.5"
                                     >
 
-                                        <p class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                             Duration
                                         </p>
 
@@ -725,7 +733,7 @@
                                                px-3 py-2.5"
                                     >
 
-                                        <p class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                             Certificate
                                         </p>
 
@@ -752,7 +760,7 @@
                                 @if($isCancelledEnrollment)
                                     <p
                                         class="mt-5 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2.5
-                                               text-[11px] font-semibold leading-5 text-rose-700"
+                                               text-xs font-semibold leading-5 text-rose-700"
                                         data-enrollment-cancelled
                                     >
                                         Your enrollment was cancelled. Contact the course administrator.
@@ -764,13 +772,13 @@
                                         class="mt-5 rounded-xl border border-orange-100 bg-orange-50 px-3 py-2.5"
                                         data-payment-pending
                                     >
-                                        <p class="text-[11px] font-bold text-orange-800">
+                                        <p class="text-xs font-bold text-orange-800">
                                             Payment pending
                                         </p>
 
                                         <a
                                             href="{{ $pendingPayment->checkout_url ?: route('student.transactions.show', $pendingPayment) }}"
-                                            class="mt-1 inline-block text-[11px] font-semibold text-orange-700 underline hover:text-orange-800"
+                                            class="mt-1 inline-block text-xs font-semibold text-orange-700 underline hover:text-orange-800"
                                         >
                                             Continue payment
                                         </a>
@@ -780,7 +788,7 @@
                                 {{-- BUTTON --}}
                                 <a
                                     href="{{ route('student.course.show', $course) }}"
-                                    class="mt-5 inline-flex h-10 w-full
+                                    class="sad-btn-primary mt-5 inline-flex h-10 w-full
                                            items-center justify-center gap-2
                                            rounded-xl bg-violet-600
                                            text-xs font-semibold text-white
@@ -817,13 +825,13 @@
 
                 <section
                     id="noCourseResults"
-                    class="pw-card mt-6 hidden px-6 py-16 text-center"
+                    class="sad-card pw-card mt-6 hidden px-6 py-16 text-center"
                 >
 
                     <div
-                        class="mx-auto flex h-14 w-14 items-center
+                        class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center
                                justify-center rounded-2xl
-                               bg-slate-100 text-slate-400"
+                               bg-slate-100 text-slate-500"
                     >
 
                         <svg
@@ -845,7 +853,7 @@
                     </h3>
 
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Try changing your search or filters.
                     </p>
 
@@ -872,7 +880,7 @@
                     NO PUBLISHED COURSES
                 ================================================== --}}
 
-                <section class="pw-card mt-6 px-6 py-20 text-center">
+                <section class="sad-card pw-card mt-6 px-6 py-20 text-center">
 
                     <div
                         class="mx-auto flex h-16 w-16 items-center
@@ -911,7 +919,7 @@
 
                     <a
                         href="{{ route('student.dashboard') }}"
-                        class="mt-5 inline-flex h-11 items-center justify-center
+                        class="sad-btn-primary mt-5 inline-flex h-11 items-center justify-center
                                rounded-xl bg-violet-600 px-5
                                text-sm font-semibold text-white
                                transition hover:bg-violet-700"

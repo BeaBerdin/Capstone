@@ -235,7 +235,7 @@ new #[Title('Security settings')] class extends Component {
 }; ?>
 
 
-<section class="min-h-screen w-full bg-[#f7f8fc] px-6 py-7 text-zinc-900 transition-colors dark:bg-neutral-950 dark:text-zinc-100 lg:px-8">
+<section class="min-h-screen w-full bg-[#f7f8fc] px-6 py-7 text-zinc-900 transition-colors lg:px-8">
 
     @include('partials.settings-heading')
 
@@ -257,16 +257,16 @@ new #[Title('Security settings')] class extends Component {
 
         <section
             class="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5
-                   dark:border-neutral-700 dark:bg-neutral-800/60"
+"
         >
 
             <div class="mb-6">
 
-                <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 class="text-base font-semibold text-zinc-900">
                     Update password
                 </h3>
 
-                <p class="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                <p class="mt-1 text-sm leading-6 text-zinc-500">
                     Use a strong and unique password to help keep your account secure.
                 </p>
 
@@ -337,7 +337,7 @@ new #[Title('Security settings')] class extends Component {
 
             <section
                 class="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5
-                       dark:border-neutral-700 dark:bg-neutral-800/60"
+"
             >
 
                 <div class="mb-5">
@@ -346,11 +346,11 @@ new #[Title('Security settings')] class extends Component {
 
                         <div>
 
-                            <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                            <h3 class="text-base font-semibold text-zinc-900">
                                 Two-factor authentication
                             </h3>
 
-                            <p class="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                            <p class="mt-1 text-sm leading-6 text-zinc-500">
                                 Add an additional verification step when signing in.
                             </p>
 
@@ -362,7 +362,7 @@ new #[Title('Security settings')] class extends Component {
                             <span
                                 class="rounded-full bg-green-100 px-3 py-1
                                        text-xs font-semibold text-green-700
-                                       dark:bg-green-950 dark:text-green-300"
+"
                             >
                                 Enabled
                             </span>
@@ -372,7 +372,7 @@ new #[Title('Security settings')] class extends Component {
                             <span
                                 class="rounded-full bg-zinc-200 px-3 py-1
                                        text-xs font-semibold text-zinc-600
-                                       dark:bg-neutral-700 dark:text-zinc-300"
+"
                             >
                                 Disabled
                             </span>
@@ -393,7 +393,7 @@ new #[Title('Security settings')] class extends Component {
 
                         <div class="space-y-5">
 
-                            <p class="leading-6 text-zinc-600 dark:text-zinc-400">
+                            <p class="leading-6 text-zinc-600">
                                 {{ __('You will be prompted for a secure, random pin during login, which you can retrieve from the TOTP-supported application on your phone.') }}
                             </p>
 
@@ -416,7 +416,7 @@ new #[Title('Security settings')] class extends Component {
 
                         <div class="space-y-5">
 
-                            <p class="leading-6 text-zinc-600 dark:text-zinc-400">
+                            <p class="leading-6 text-zinc-600">
                                 {{ __('When you enable two-factor authentication, you will be prompted for a secure pin during login. This pin can be retrieved from a TOTP-supported application on your phone.') }}
                             </p>
 
@@ -459,16 +459,16 @@ new #[Title('Security settings')] class extends Component {
 
             <section
                 class="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5
-                       dark:border-neutral-700 dark:bg-neutral-800/60"
+"
             >
 
                 <div class="mb-5">
 
-                    <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 class="text-base font-semibold text-zinc-900">
                         Passkeys
                     </h3>
 
-                    <p class="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                    <p class="mt-1 text-sm leading-6 text-zinc-500">
                         Manage secure passwordless sign-in methods for your account.
                     </p>
 
@@ -482,7 +482,7 @@ new #[Title('Security settings')] class extends Component {
 
                     <div
                         class="overflow-hidden rounded-xl border border-zinc-200
-                               bg-white dark:border-neutral-700 dark:bg-neutral-900"
+                               bg-white"
                     >
 
                         @forelse ($passkeys as $passkey)
@@ -490,7 +490,7 @@ new #[Title('Security settings')] class extends Component {
                             <div
                                 class="flex items-center justify-between gap-4 p-4
                                        {{ ! $loop->last
-                                            ? 'border-b border-zinc-200 dark:border-neutral-700'
+                                            ? 'border-b border-zinc-200'
                                             : '' }}"
                             >
 
@@ -499,11 +499,11 @@ new #[Title('Security settings')] class extends Component {
                                     <div
                                         class="flex h-10 w-10 shrink-0 items-center justify-center
                                                rounded-xl bg-zinc-100
-                                               dark:bg-neutral-800"
+"
                                     >
 
                                         <flux:icon.key
-                                            class="size-5 text-zinc-500 dark:text-zinc-400"
+                                            class="size-5 text-zinc-500"
                                         />
 
                                     </div>
@@ -513,7 +513,7 @@ new #[Title('Security settings')] class extends Component {
 
                                         <div class="flex flex-wrap items-center gap-2">
 
-                                            <p class="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                            <p class="truncate text-sm font-semibold text-zinc-900">
                                                 {{ $passkey['name'] }}
                                             </p>
 
@@ -529,7 +529,7 @@ new #[Title('Security settings')] class extends Component {
                                         </div>
 
 
-                                        <p class="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                                        <p class="mt-1 text-xs leading-5 text-zinc-500">
 
                                             {{ __('Added :time', [
                                                 'time' => $passkey['created_at_diff']
@@ -561,7 +561,7 @@ new #[Title('Security settings')] class extends Component {
                                     icon="trash"
                                     icon:variant="outline"
                                     wire:click="confirmDelete({{ $passkey['id'] }})"
-                                    class="text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                    class="text-red-500 hover:bg-red-50 hover:text-red-600"
                                 />
 
                             </div>
@@ -574,22 +574,22 @@ new #[Title('Security settings')] class extends Component {
                                 <div
                                     class="mx-auto mb-4 flex h-14 w-14
                                            items-center justify-center rounded-2xl
-                                           bg-zinc-100 dark:bg-neutral-800"
+                                           bg-zinc-100"
                                 >
 
                                     <flux:icon.key
-                                        class="size-7 text-zinc-400 dark:text-zinc-500"
+                                        class="size-7 text-zinc-400"
                                     />
 
                                 </div>
 
 
-                                <p class="font-semibold text-zinc-900 dark:text-zinc-100">
+                                <p class="font-semibold text-zinc-900">
                                     {{ __('No passkeys yet') }}
                                 </p>
 
 
-                                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                <p class="mt-1 text-sm text-zinc-500">
                                     {{ __('Add a passkey to sign in without entering a password.') }}
                                 </p>
 

@@ -1,4 +1,5 @@
 <x-layouts::app :title="$course->title">
+@include('partials.soft3d')
 
 @php
     $studentId = auth()->id();
@@ -298,7 +299,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -309,7 +310,7 @@
                 BREADCRUMB
             ====================================================== --}}
 
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
 
                 <a
                     href="{{ route('student.my-courses') }}"
@@ -338,7 +339,12 @@
                 PAGE HEADER
             ====================================================== --}}
 
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                 <div>
 
@@ -375,7 +381,7 @@
 
                     <a
                         href="{{ route('student.my-courses') }}"
-                        class="inline-flex h-11 items-center justify-center gap-2
+                        class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2
                                rounded-xl bg-violet-600 px-4
                                text-sm font-semibold text-white
                                transition hover:bg-violet-700"
@@ -386,6 +392,8 @@
                 </div>
 
             </div>
+                </div>
+            </section>
 
 
 
@@ -393,7 +401,7 @@
                 COURSE HERO
             ====================================================== --}}
 
-            <section class="pw-card mt-7 overflow-hidden">
+            <section class="sad-card pw-card mt-7 overflow-hidden">
 
                 <div class="grid grid-cols-1 lg:grid-cols-[290px_minmax(0,1fr)]">
 
@@ -456,7 +464,7 @@
                                 <span
                                     class="rounded-full bg-violet-50
                                            px-2.5 py-1
-                                           text-[10px] font-bold
+                                           text-xs font-bold
                                            uppercase tracking-wide
                                            text-violet-700"
                                 >
@@ -469,7 +477,7 @@
                             <span
                                 class="rounded-full bg-slate-100
                                        px-2.5 py-1
-                                       text-[10px] font-semibold
+                                       text-xs font-semibold
                                        text-slate-600"
                             >
                                 {{
@@ -487,7 +495,7 @@
                                     class="inline-flex items-center gap-1.5
                                            rounded-full bg-emerald-50
                                            px-2.5 py-1
-                                           text-[10px] font-bold
+                                           text-xs font-bold
                                            text-emerald-700"
                                 >
                                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
@@ -500,7 +508,7 @@
                                     class="inline-flex items-center gap-1.5
                                            rounded-full bg-blue-50
                                            px-2.5 py-1
-                                           text-[10px] font-bold
+                                           text-xs font-bold
                                            text-blue-700"
                                 >
                                     <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
@@ -585,7 +593,7 @@
 
 
                 {{-- TOTAL LESSONS --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Total Lessons
@@ -599,7 +607,7 @@
 
 
                         <div
-                            class="flex h-9 w-9 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-violet flex h-9 w-9 items-center justify-center
                                    rounded-xl bg-violet-50 text-violet-600"
                         >
                             <svg
@@ -621,7 +629,7 @@
 
 
                 {{-- COMPLETED --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Completed
@@ -635,7 +643,7 @@
 
 
                         <div
-                            class="flex h-9 w-9 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-emerald flex h-9 w-9 items-center justify-center
                                    rounded-xl bg-emerald-50
                                    font-bold text-emerald-600"
                         >
@@ -649,7 +657,7 @@
 
 
                 {{-- IN PROGRESS --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p class="text-xs font-semibold text-slate-500">
                         In Progress
@@ -663,7 +671,7 @@
 
 
                         <div
-                            class="flex h-9 w-9 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-sky flex h-9 w-9 items-center justify-center
                                    rounded-xl bg-blue-50 text-blue-600"
                         >
                             <svg
@@ -685,7 +693,7 @@
 
 
                 {{-- TIME --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Course Duration
@@ -696,14 +704,14 @@
                         <p class="text-3xl font-bold text-orange-500">
                             {{ $totalMinutes }}
 
-                            <span class="text-sm font-semibold text-slate-400">
+                            <span class="text-sm font-semibold text-slate-500">
                                 min
                             </span>
                         </p>
 
 
                         <div
-                            class="flex h-9 w-9 items-center justify-center
+                            class="sad-chip sad-chip-sm sad-amber flex h-9 w-9 items-center justify-center
                                    rounded-xl bg-orange-50 text-orange-500"
                         >
                             <svg
@@ -740,7 +748,7 @@
                     LESSONS
                 ================================================== --}}
 
-                <section class="pw-card overflow-hidden">
+                <section class="sad-card pw-card overflow-hidden">
 
 
                     {{-- LESSON HEADER --}}
@@ -958,10 +966,10 @@
                                                 <div class="flex flex-wrap items-center gap-2">
 
                                                     <p
-                                                        class="text-[10px]
+                                                        class="text-xs
                                                                font-bold uppercase
                                                                tracking-[.08em]
-                                                               text-slate-400"
+                                                               text-slate-500"
                                                     >
                                                         Lesson
                                                         {{ $lesson->lesson_order }}
@@ -974,7 +982,7 @@
                                                             class="rounded-full
                                                                    bg-violet-50
                                                                    px-2 py-0.5
-                                                                   text-[9px]
+                                                                   text-xs
                                                                    font-bold uppercase
                                                                    text-violet-600"
                                                         >
@@ -999,8 +1007,8 @@
                                                     class="mt-2
                                                            flex flex-wrap
                                                            items-center gap-2
-                                                           text-[11px]
-                                                           text-slate-400"
+                                                           text-xs
+                                                           text-slate-500"
                                                 >
 
                                                     <span>
@@ -1048,7 +1056,7 @@
                                                 @if($lessonType === 'quiz' && $linkedQuizResult)
 
                                                     <p
-                                                        class="mt-2 text-[11px]
+                                                        class="mt-2 text-xs
                                                                font-semibold
                                                                {{
                                                                    strtolower($linkedQuizResult->remarks ?? '') === 'passed'
@@ -1089,7 +1097,7 @@
                                                            gap-1.5 rounded-full
                                                            bg-emerald-50
                                                            px-3 py-1.5
-                                                           text-[10px] font-bold
+                                                           text-xs font-bold
                                                            text-emerald-700"
                                                 >
                                                     <span
@@ -1108,7 +1116,7 @@
                                                            gap-1.5 rounded-full
                                                            bg-red-50
                                                            px-3 py-1.5
-                                                           text-[10px] font-bold
+                                                           text-xs font-bold
                                                            text-red-600"
                                                 >
                                                     <span
@@ -1127,7 +1135,7 @@
                                                            gap-1.5 rounded-full
                                                            bg-blue-50
                                                            px-3 py-1.5
-                                                           text-[10px] font-bold
+                                                           text-xs font-bold
                                                            text-blue-700"
                                                 >
                                                     <span
@@ -1146,7 +1154,7 @@
                                                            gap-1.5 rounded-full
                                                            bg-slate-100
                                                            px-3 py-1.5
-                                                           text-[10px] font-bold
+                                                           text-xs font-bold
                                                            text-slate-500"
                                                 >
                                                     <span
@@ -1170,7 +1178,7 @@
                                                            items-center justify-center
                                                            rounded-lg bg-slate-100
                                                            px-3 text-xs font-semibold
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     Quiz unavailable
                                                 </span>
@@ -1196,7 +1204,7 @@
 
                                                 <a
                                                     href="{{ $lessonUrl }}"
-                                                    class="inline-flex h-9
+                                                    class="sad-btn-primary inline-flex h-9
                                                            items-center justify-center
                                                            gap-1.5 rounded-lg
                                                            bg-violet-600
@@ -1260,7 +1268,7 @@
                         <div class="px-6 py-16 text-center">
 
                             <div
-                                class="mx-auto flex h-14 w-14
+                                class="sad-chip sad-violet mx-auto flex h-14 w-14
                                        items-center justify-center
                                        rounded-2xl bg-violet-50
                                        text-violet-600"
@@ -1283,7 +1291,7 @@
                             </h3>
 
 
-                            <p class="mt-1 text-xs text-slate-400">
+                            <p class="mt-1 text-xs text-slate-500">
                                 Course lessons will appear here once published.
                             </p>
 
@@ -1303,7 +1311,7 @@
 
 
                     {{-- LEARNING PROGRESS --}}
-                    <section class="pw-card p-5">
+                    <section class="sad-card pw-card p-5">
 
                         <div class="flex items-start justify-between gap-3">
 
@@ -1321,7 +1329,7 @@
 
 
                             <div
-                                class="flex h-9 w-9
+                                class="sad-chip sad-chip-sm sad-violet flex h-9 w-9
                                        items-center justify-center
                                        rounded-xl bg-violet-50
                                        text-violet-600"
@@ -1345,7 +1353,7 @@
                         <div class="mt-5 rounded-2xl bg-violet-50/70 p-5">
 
                             <p
-                                class="text-[10px] font-bold
+                                class="text-xs font-bold
                                        uppercase tracking-[.08em]
                                        text-violet-500"
                             >
@@ -1388,7 +1396,7 @@
                                     {{ $completedLessons }}
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold text-slate-400">
+                                <p class="mt-1 text-xs font-semibold text-slate-500">
                                     Done
                                 </p>
 
@@ -1401,7 +1409,7 @@
                                     {{ $inProgressLessons }}
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold text-slate-400">
+                                <p class="mt-1 text-xs font-semibold text-slate-500">
                                     Active
                                 </p>
 
@@ -1414,7 +1422,7 @@
                                     {{ $notStartedLessons }}
                                 </p>
 
-                                <p class="mt-1 text-[9px] font-semibold text-slate-400">
+                                <p class="mt-1 text-xs font-semibold text-slate-500">
                                     Remaining
                                 </p>
 
@@ -1427,7 +1435,7 @@
 
 
                     {{-- COURSE REQUIREMENTS --}}
-                    <section class="pw-card p-5">
+                    <section class="sad-card pw-card p-5">
 
                         <h2 class="text-sm font-bold text-slate-900">
                             Course Requirements
@@ -1464,7 +1472,7 @@
                                         Complete all lessons
                                     </p>
 
-                                    <p class="mt-1 text-[10px] text-slate-400">
+                                    <p class="mt-1 text-xs text-slate-500">
                                         {{ $completedLessons }}
                                         of
                                         {{ $totalLessons }}
@@ -1506,7 +1514,7 @@
                                             Pass final assessment
                                         </p>
 
-                                        <p class="mt-1 text-[10px] text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             Passing score:
                                             {{ $finalQuiz->passing_score }}%
                                         </p>
@@ -1557,7 +1565,7 @@
                                             Earn certificate
                                         </p>
 
-                                        <p class="mt-1 text-[10px] text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             Complete all course requirements.
                                         </p>
 
@@ -1584,7 +1592,7 @@
 
             @if($finalQuiz)
 
-                <section class="pw-card mt-6 overflow-hidden">
+                <section class="sad-card pw-card mt-6 overflow-hidden">
 
                     <div
                         class="flex flex-col gap-4
@@ -1599,7 +1607,7 @@
                         <div class="flex items-center gap-3">
 
                             <div
-                                class="flex h-10 w-10
+                                class="sad-chip sad-chip-sm sad-amber flex h-10 w-10
                                        items-center justify-center
                                        rounded-xl bg-orange-50
                                        text-orange-500"
@@ -1611,7 +1619,7 @@
                             <div>
 
                                 <p
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
                                            uppercase tracking-[.08em]
                                            text-orange-500"
                                 >
@@ -1630,7 +1638,7 @@
                         <span
                             class="self-start rounded-full
                                    bg-slate-100 px-3 py-1.5
-                                   text-[10px] font-semibold
+                                   text-xs font-semibold
                                    text-slate-600"
                         >
                             Passing Score:
@@ -1700,7 +1708,7 @@
 
                                     <span
                                         class="rounded-full px-3 py-1.5
-                                               text-[10px] font-bold
+                                               text-xs font-bold
                                                {{
                                                    $passedFinalQuiz
                                                    ? 'bg-emerald-100 text-emerald-700'
@@ -1795,7 +1803,7 @@
                                         Final quiz locked
                                     </p>
 
-                                    <p class="mt-1 text-[11px] leading-5 text-orange-700">
+                                    <p class="mt-1 text-xs leading-5 text-orange-700">
                                         Complete all course lessons before taking
                                         the final assessment.
                                     </p>
@@ -1821,7 +1829,7 @@
             @if($courseCompleted)
 
                 <section
-                    class="pw-card mt-6
+                    class="sad-card pw-card mt-6
                            border-emerald-200
                            bg-emerald-50/50
                            p-5 sm:p-6"
@@ -1837,7 +1845,7 @@
                         <div class="flex items-start gap-4">
 
                             <div
-                                class="flex h-12 w-12 shrink-0
+                                class="sad-chip sad-emerald flex h-12 w-12 shrink-0
                                        items-center justify-center
                                        rounded-2xl
                                        bg-emerald-100
@@ -1851,7 +1859,7 @@
                             <div>
 
                                 <p
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
                                            uppercase tracking-widest
                                            text-emerald-600"
                                 >
@@ -1971,7 +1979,7 @@
                 @endphp
 
 
-                <section class="pw-card mt-6 overflow-hidden">
+                <section class="sad-card pw-card mt-6 overflow-hidden">
 
                     <div
                         class="border-b border-slate-100
@@ -1983,7 +1991,7 @@
                             <div>
 
                                 <p
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
                                            uppercase tracking-widest
                                            text-violet-600"
                                 >
@@ -2002,7 +2010,7 @@
 
 
                             <div
-                                class="flex h-10 w-10
+                                class="sad-chip sad-chip-sm sad-violet flex h-10 w-10
                                        items-center justify-center
                                        rounded-xl bg-violet-50
                                        text-violet-600"
@@ -2070,7 +2078,7 @@
                         <div>
 
                             <p
-                                class="text-[10px] font-bold
+                                class="text-xs font-bold
                                        uppercase tracking-[.08em]
                                        text-violet-500"
                             >
@@ -2111,9 +2119,9 @@
                                 >
 
                                     <span
-                                        class="text-[10px]
+                                        class="text-xs
                                                font-semibold
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         Recommendation match
                                     </span>
@@ -2158,7 +2166,7 @@
 
                             <a
                                 href="{{ route('student.course.show', $recommendedCourse) }}"
-                                class="mt-5 inline-flex h-10
+                                class="sad-btn-primary mt-5 inline-flex h-10
                                        items-center justify-center
                                        gap-2 rounded-xl
                                        bg-violet-600 px-4

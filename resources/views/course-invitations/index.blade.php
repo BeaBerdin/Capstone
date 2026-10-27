@@ -1,42 +1,50 @@
 <x-layouts::app :title="__('Student Invitations')">
-    <div class="min-h-screen bg-gray-50 dark:bg-zinc-900">
+@include('partials.soft3d')
+    <div class="sad-page min-h-screen bg-slate-50">
         <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
             {{-- Header --}}
-            <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner mb-8 overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-2xl font-bold text-slate-900">
                         Student Invitations
                     </h1>
 
-                    <p class="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                    <p class="mt-1 text-sm text-slate-600">
                         Create invitation links and allow students to join your courses.
                     </p>
                 </div>
             </div>
+                </div>
+            </section>
 
             {{-- Success message --}}
             @if (session('success'))
-                <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+                <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                     {{ session('success') }}
                 </div>
             @endif
 
             {{-- Error message --}}
             @if (session('error'))
-                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {{ session('error') }}
                 </div>
             @endif
 
             {{-- Create invitation --}}
-            <div class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+            <div class="sad-card mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="mb-5">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h2 class="text-lg font-semibold text-slate-900">
                         Create Invitation
                     </h2>
 
-                    <p class="mt-1 text-sm text-gray-500 dark:text-zinc-400">
+                    <p class="mt-1 text-sm text-slate-500">
                         Generate a unique invitation code for one of your courses.
                     </p>
                 </div>
@@ -49,7 +57,7 @@
                         <div>
                             <label
                                 for="course_id"
-                                class="mb-2 block text-sm font-medium text-gray-700 dark:text-zinc-300"
+                                class="mb-2 block text-sm font-medium text-slate-700"
                             >
                                 Course
                             </label>
@@ -58,7 +66,7 @@
                                 id="course_id"
                                 name="course_id"
                                 required
-                                class="block w-full rounded-lg border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-violet-500 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                class="block w-full rounded-lg border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                             >
                                 <option value="">Select a course</option>
 
@@ -83,7 +91,7 @@
                         <div>
                             <label
                                 for="expires_at"
-                                class="mb-2 block text-sm font-medium text-gray-700 dark:text-zinc-300"
+                                class="mb-2 block text-sm font-medium text-slate-700"
                             >
                                 Expiration
                             </label>
@@ -93,10 +101,10 @@
                                 type="datetime-local"
                                 name="expires_at"
                                 value="{{ old('expires_at') }}"
-                                class="block w-full rounded-lg border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-violet-500 focus:ring-violet-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                class="block w-full rounded-lg border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-violet-500 focus:ring-violet-500"
                             >
 
-                            <p class="mt-1 text-xs text-gray-500 dark:text-zinc-400">
+                            <p class="mt-1 text-xs text-slate-500">
                                 Leave blank if the invitation should not expire.
                             </p>
 
@@ -111,7 +119,7 @@
                     <div class="mt-5">
                         <button
                             type="submit"
-                            class="inline-flex items-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                            class="sad-btn-primary inline-flex items-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                         >
                             Generate Invitation
                         </button>
@@ -120,78 +128,78 @@
             </div>
 
             {{-- Invitation list --}}
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                <div class="border-b border-gray-200 px-6 py-5 dark:border-zinc-700">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+            <div class="sad-card overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-6 py-5">
+                    <h2 class="text-lg font-semibold text-slate-900">
                         Your Invitations
                     </h2>
                 </div>
 
                 @if ($invitations->isEmpty())
                     <div class="px-6 py-12 text-center">
-                        <p class="text-sm text-gray-500 dark:text-zinc-400">
+                        <p class="text-sm text-slate-500">
                             You have not created any course invitations yet.
                         </p>
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-                            <thead class="bg-gray-50 dark:bg-zinc-900/50">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Course
                                     </th>
 
-                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Invitation Code
                                     </th>
 
-                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Status
                                     </th>
 
-                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Expires
                                     </th>
 
-                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
 
-                            <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                            <tbody class="divide-y divide-slate-200">
                                 @foreach ($invitations as $invitation)
                                     <tr>
                                         <td class="whitespace-nowrap px-6 py-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                            <div class="text-sm font-medium text-slate-900">
                                                 {{ $invitation->course->title ?? 'Course unavailable' }}
                                             </div>
                                         </td>
 
                                         <td class="whitespace-nowrap px-6 py-4">
-                                            <code class="rounded bg-gray-100 px-2 py-1 text-sm font-semibold text-violet-700 dark:bg-zinc-700 dark:text-violet-300">
+                                            <code class="rounded bg-slate-100 px-2 py-1 text-sm font-semibold text-violet-700">
                                                 {{ $invitation->code }}
                                             </code>
                                         </td>
 
                                         <td class="whitespace-nowrap px-6 py-4">
                                             @if ($invitation->isAccepted())
-                                                <span class="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                                <span class="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
                                                     Accepted
                                                 </span>
                                             @elseif ($invitation->isExpired())
-                                                <span class="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                                <span class="inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
                                                     Expired
                                                 </span>
                                             @else
-                                                <span class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                <span class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
                                                     Active
                                                 </span>
                                             @endif
                                         </td>
 
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600 dark:text-zinc-400">
+                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
                                            {{ $invitation->expires_at?->timezone('Asia/Manila')->format('M d, Y h:i A') ?? 'Never' }}
                                         </td>
 
@@ -216,12 +224,12 @@
                                                         value="{{ $searchInvitationId === $invitation->id ? $searchTerm : '' }}"
                                                         placeholder="Student name or email"
                                                         aria-label="Search student by name or email"
-                                                        class="w-48 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+                                                        class="w-48 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
                                                     >
 
                                                     <button
                                                         type="submit"
-                                                        class="rounded-lg border border-purple-300 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
+                                                        class="rounded-lg border border-violet-300 px-3 py-2 text-xs font-medium text-violet-700 hover:bg-violet-50"
                                                     >
                                                         Find Student
                                                     </button>
@@ -238,7 +246,7 @@
 
                                                     <button
                                                         type="submit"
-                                                        class="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
+                                                        class="rounded-lg border border-red-300 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
                                                     >
                                                         Delete
                                                     </button>
@@ -250,16 +258,16 @@
 
                                     @if ($searchInvitationId === $invitation->id)
                                         <tr>
-                                            <td colspan="5" class="bg-gray-50 px-6 py-4 dark:bg-zinc-900/40">
+                                            <td colspan="5" class="bg-slate-50 px-6 py-4">
                                                 @if ($searchError)
-                                                    <p class="text-sm text-gray-600 dark:text-zinc-400">
+                                                    <p class="text-sm text-slate-600">
                                                         {{ $searchError }}
                                                     </p>
                                                 @else
                                                     <ul class="space-y-2">
                                                         @foreach ($searchResults as $student)
                                                             <li class="flex items-center justify-between gap-4">
-                                                                <span class="text-sm text-gray-800 dark:text-zinc-200">
+                                                                <span class="text-sm text-slate-800">
                                                                     {{ $student->name }} — {{ $student->email }}
                                                                 </span>
 
@@ -273,7 +281,7 @@
 
                                                                     <button
                                                                         type="submit"
-                                                                        class="rounded-lg bg-purple-600 px-3 py-2 text-xs font-medium text-white hover:bg-purple-700"
+                                                                        class="sad-btn-primary rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-700"
                                                                     >
                                                                         Send Invitation
                                                                     </button>

@@ -1,4 +1,5 @@
 <x-layouts::app :title="$course->title . ' - Lessons'">
+@include('partials.soft3d')
 
 @php
 
@@ -110,7 +111,7 @@
 
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -128,7 +129,7 @@
 
                 class="mb-5 flex flex-wrap items-center
 
-                       gap-2 text-xs text-slate-400"
+                       gap-2 text-xs text-slate-500"
 
             >
 
@@ -329,7 +330,7 @@
 
             <section
 
-                class="mt-7 overflow-hidden rounded-2xl
+                class="sad-card mt-7 overflow-hidden rounded-2xl
 
                        border border-slate-200 bg-white
 
@@ -677,7 +678,7 @@
 
                                 <p
 
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
 
                                            uppercase tracking-wide
 
@@ -715,7 +716,7 @@
 
                                 <p
 
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
 
                                            uppercase tracking-wide
 
@@ -753,7 +754,7 @@
 
                                 <p
 
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
 
                                            uppercase tracking-wide
 
@@ -791,7 +792,7 @@
 
                                 <p
 
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
 
                                            uppercase tracking-wide
 
@@ -837,7 +838,7 @@
 
             <section
 
-                class="mt-6 rounded-2xl border
+                class="sad-card mt-6 rounded-2xl border
 
                        border-slate-200 bg-white
 
@@ -863,7 +864,7 @@
 
                                    -translate-y-1/2
 
-                                   text-slate-400"
+                                   text-slate-500"
 
                             viewBox="0 0 24 24"
 
@@ -1425,7 +1426,7 @@
 
                                     <span
 
-                                        class="text-[10px]
+                                        class="text-xs
 
                                                font-bold uppercase
 
@@ -1449,7 +1450,7 @@
 
                                                    bg-blue-50 px-2
 
-                                                   py-0.5 text-[10px]
+                                                   py-0.5 text-xs
 
                                                    font-semibold
 
@@ -1513,7 +1514,7 @@
 
                                         class="mt-1 text-xs
 
-                                               text-slate-400"
+                                               text-slate-500"
 
                                     >
 
@@ -1749,7 +1750,7 @@
 
                                             class="text-xs
 
-                                                   text-slate-400"
+                                                   text-slate-500"
 
                                         >
 
@@ -1769,7 +1770,7 @@
 
                                                    items-center gap-1
 
-                                                   text-[10px]
+                                                   text-xs
 
                                                    font-semibold
 
@@ -1799,11 +1800,11 @@
 
                                                    items-center gap-1
 
-                                                   text-[10px]
+                                                   text-xs
 
                                                    font-semibold
 
-                                                   text-slate-400"
+                                                   text-slate-500"
 
                                         >
 
@@ -1844,7 +1845,7 @@
 
                                         <a
                                             href="{{ route('teacher.quiz.builder', $lesson) }}"
-                                            class="inline-flex h-10
+                                            class="sad-btn-primary inline-flex h-10
                                                    items-center justify-center
                                                    gap-1.5 rounded-xl
                                                    bg-violet-600 px-4
@@ -1896,7 +1897,7 @@
                                                    rounded-xl
                                                    border
                                                    border-slate-200
-                                                   text-slate-400
+                                                   text-slate-500
                                                    transition
                                                    hover:border-red-200
                                                    hover:bg-red-50
@@ -1954,7 +1955,7 @@
                                                    rounded-lg bg-slate-100
                                                    px-3 text-xs
                                                    font-semibold
-                                                   text-slate-400"
+                                                   text-slate-500"
                                             title="Course content is locked while pending approval or published."
                                         >
                                             <svg
@@ -1982,7 +1983,7 @@
                                             class="inline-flex items-center gap-1.5
                                                    rounded-lg bg-slate-100
                                                    px-3 py-2 text-xs
-                                                   font-semibold text-slate-400"
+                                                   font-semibold text-slate-500"
                                         >
                                             <svg
                                                 class="h-3.5 w-3.5"
@@ -2096,7 +2097,7 @@
 
                             href="{{ route('teacher.lessons.create', $course) }}"
 
-                            class="mt-6 inline-flex h-11
+                            class="sad-btn-primary mt-6 inline-flex h-11
 
                                    items-center gap-2
 
@@ -2146,7 +2147,7 @@
 
                 </p>
 
-                <p class="mt-1 text-xs text-slate-400">
+                <p class="mt-1 text-xs text-slate-500">
 
                     Try changing the search, type, or status.
 

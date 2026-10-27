@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Review Submission - ' . ($submission->student?->name ?? 'Student')">
+@include('partials.soft3d')
 
 @php
     $assignment = $submission->assignment;
@@ -40,14 +41,14 @@
     };
 @endphp
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
         <div class="mx-auto max-w-6xl">
 
             {{-- Breadcrumb --}}
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
 
                 <a
                     href="{{ route('teacher.assignments.index') }}"
@@ -163,7 +164,7 @@
 
                     {{-- Assignment --}}
                     <section
-                        class="overflow-hidden rounded-2xl border
+                        class="sad-card overflow-hidden rounded-2xl border
                                border-slate-200 bg-white shadow-sm"
                     >
 
@@ -247,7 +248,7 @@
 
                     {{-- Student Answer --}}
                     <section
-                        class="overflow-hidden rounded-2xl border
+                        class="sad-card overflow-hidden rounded-2xl border
                                border-slate-200 bg-white shadow-sm"
                     >
 
@@ -280,7 +281,7 @@
 
                             @else
 
-                                <p class="text-sm text-slate-400">
+                                <p class="text-sm text-slate-500">
                                     No written answer submitted.
                                 </p>
 
@@ -331,7 +332,7 @@
                                             }}"
                                             target="_blank"
                                             rel="noopener"
-                                            class="inline-flex h-9 items-center
+                                            class="sad-btn-primary inline-flex h-9 items-center
                                                    justify-center rounded-xl
                                                    bg-violet-600 px-4 text-xs
                                                    font-semibold text-white
@@ -347,7 +348,7 @@
                             @endif
 
 
-                            <p class="mt-4 text-xs text-slate-400">
+                            <p class="mt-4 text-xs text-slate-500">
 
                                 Submitted
 
@@ -368,7 +369,7 @@
                     @if($assignment->ai_evaluation_enabled)
 
                         <section
-                            class="overflow-hidden rounded-2xl border
+                            class="sad-card overflow-hidden rounded-2xl border
                                    border-violet-200 bg-white shadow-sm"
                         >
 
@@ -607,7 +608,7 @@
                                             <p
                                                 class="text-xs font-semibold
                                                        uppercase tracking-wider
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Evaluation Status
                                             </p>
@@ -621,7 +622,7 @@
 
                                             @if($submission->ai_evaluated_at)
 
-                                                <p class="mt-1 text-xs text-slate-400">
+                                                <p class="mt-1 text-xs text-slate-500">
 
                                                     {{
                                                         $submission->ai_evaluated_at
@@ -776,7 +777,7 @@
 
                 {{-- RIGHT SIDE: TEACHER EVALUATION --}}
                 <section
-                    class="h-fit overflow-hidden rounded-2xl
+                    class="sad-card h-fit overflow-hidden rounded-2xl
                            border border-slate-200 bg-white shadow-sm"
                 >
 
@@ -786,7 +787,7 @@
                             Teacher Evaluation
                         </h2>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             Review the AI suggestion and assign the final grade.
                         </p>
 

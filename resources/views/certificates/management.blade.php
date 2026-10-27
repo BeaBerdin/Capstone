@@ -12,7 +12,7 @@
         </p>
     </div>
 
-    <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
+    <div class="rounded-xl border bg-white p-6 shadow-sm">
 
         <table class="w-full">
             <thead>

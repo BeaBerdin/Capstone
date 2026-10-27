@@ -1,4 +1,5 @@
 <x-layouts::app title="My Assignments">
+@include('partials.soft3d')
 
 @php
     $totalAssignments = $assignments->count();
@@ -18,7 +19,7 @@
 @endphp
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -28,7 +29,7 @@
             {{-- BREADCRUMB --}}
             <div
                 class="mb-5 flex flex-wrap items-center
-                       gap-2 text-xs text-slate-400"
+                       gap-2 text-xs text-slate-500"
             >
 
                 <a
@@ -48,9 +49,14 @@
 
 
             {{-- HEADER --}}
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
             <div
-                class="flex flex-col gap-4
-                       lg:flex-row lg:items-end
+                class="relative flex flex-col gap-4
+                       lg:flex-row lg:items-center
                        lg:justify-between"
             >
 
@@ -89,6 +95,8 @@
                 </a>
 
             </div>
+                </div>
+            </section>
 
 
             {{-- SUCCESS --}}
@@ -114,15 +122,15 @@
             >
 
                 <div
-                    class="rounded-2xl border
+                    class="sad-card rounded-2xl border
                            border-slate-200
                            bg-white p-5 shadow-sm"
                 >
 
                     <p
-                        class="text-[11px] font-bold
+                        class="text-xs font-bold
                                uppercase tracking-wider
-                               text-slate-400"
+                               text-slate-500"
                     >
                         Total
                     </p>
@@ -144,7 +152,7 @@
                 >
 
                     <p
-                        class="text-[11px] font-bold
+                        class="text-xs font-bold
                                uppercase tracking-wider
                                text-violet-600"
                     >
@@ -168,7 +176,7 @@
                 >
 
                     <p
-                        class="text-[11px] font-bold
+                        class="text-xs font-bold
                                uppercase tracking-wider
                                text-blue-600"
                     >
@@ -189,7 +197,7 @@
 
             {{-- ASSIGNMENTS --}}
             <section
-                class="mt-6 overflow-hidden
+                class="sad-card mt-6 overflow-hidden
                        rounded-2xl border
                        border-slate-200
                        bg-white shadow-sm"
@@ -251,7 +259,7 @@
                                         class="rounded-full
                                                bg-violet-50
                                                px-2.5 py-1
-                                               text-[11px]
+                                               text-xs
                                                font-semibold
                                                text-violet-700"
                                     >
@@ -270,7 +278,7 @@
                                             class="rounded-full
                                                    bg-rose-50
                                                    px-2.5 py-1
-                                                   text-[11px]
+                                                   text-xs
                                                    font-semibold
                                                    text-rose-700"
                                         >
@@ -283,7 +291,7 @@
                                             class="rounded-full
                                                    bg-blue-50
                                                    px-2.5 py-1
-                                                   text-[11px]
+                                                   text-xs
                                                    font-semibold
                                                    text-blue-700"
                                         >
@@ -296,7 +304,7 @@
                                             class="rounded-full
                                                    bg-slate-100
                                                    px-2.5 py-1
-                                                   text-[11px]
+                                                   text-xs
                                                    font-semibold
                                                    text-slate-600"
                                         >
@@ -421,7 +429,7 @@
                     <div class="px-6 py-16 text-center">
 
                         <div
-                            class="mx-auto flex h-14 w-14
+                            class="sad-chip sad-violet mx-auto flex h-14 w-14
                                    items-center justify-center
                                    rounded-2xl
                                    bg-violet-50"

@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Quiz Results'">
+@include('partials.soft3d')
 
 @php
     $totalAttempts   = $results->count();
@@ -40,12 +41,17 @@
     }
 </style>
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div class="mx-auto max-w-[1500px]">
 
             {{-- Header --}}
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">Student Performance</p>
                     <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">Quiz Results</h1>
@@ -53,11 +59,13 @@
                         Review student quiz attempts, scores, pass rates, and assessment performance across your courses.
                     </p>
                 </div>
-                <a href="{{ $courseContentUrl }}" class="inline-flex h-11 self-start items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
+                <a href="{{ $courseContentUrl }}" class="inline-flex h-11 self-start lg:self-auto items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                     Course Content
                 </a>
             </div>
+                </div>
+            </section>
 
             @if(session('success'))
                 <div class="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
@@ -77,7 +85,7 @@
                     ];
                 @endphp
                 @foreach($stats as $s)
-                    <div class="pw-card p-5">
+                    <div class="sad-card pw-card p-5">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p class="text-xs font-semibold text-slate-500">{{ $s['label'] }}</p>
@@ -91,20 +99,20 @@
                                 @endif
                             </div>
                         </div>
-                        <p class="mt-2 text-xs text-slate-400">{{ $s['sub'] }}</p>
+                        <p class="mt-2 text-xs text-slate-500">{{ $s['sub'] }}</p>
                     </div>
                 @endforeach
             </section>
 
             {{-- Results Table --}}
-            <section class="pw-card mt-6 overflow-hidden">
+            <section class="sad-card pw-card mt-6 overflow-hidden">
                 <div class="border-b border-slate-100 p-5 sm:p-6">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                             <h2 class="text-lg font-bold text-slate-900">Assessment Records</h2>
                             <p class="mt-1 text-xs text-slate-500">Student attempts from your course quizzes.</p>
                         </div>
-                        <p id="resultCounter" class="text-xs font-semibold text-slate-400">
+                        <p id="resultCounter" class="text-xs font-semibold text-slate-500">
                             {{ $totalAttempts }} {{ \Illuminate\Support\Str::plural('result', $totalAttempts) }}
                         </p>
                     </div>
@@ -112,7 +120,7 @@
                     {{-- Filters --}}
                     <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_200px_200px_160px_auto]">
                         <div class="relative">
-                            <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                             <input type="search" id="resultSearch" placeholder="Search student or quiz..." class="pw-control h-11 pl-10 pr-4">
                         </div>
                         <select id="courseFilter" class="pw-control h-11 px-3">
@@ -140,7 +148,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[1050px] text-left">
                             <thead class="border-b border-slate-100 bg-slate-50/80">
-                                <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                                <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
                                     <th class="px-6 py-4">Student</th>
                                     <th class="px-6 py-4">Assessment</th>
                                     <th class="px-6 py-4">Attempt</th>
@@ -177,7 +185,7 @@
                                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{{ $initials }}</div>
                                                 <div class="min-w-0">
                                                     <p class="max-w-[190px] truncate text-sm font-semibold text-slate-800">{{ $studentName }}</p>
-                                                    <p class="mt-0.5 max-w-[190px] truncate text-[11px] text-slate-400">{{ $studentEmail ?: 'Student' }}</p>
+                                                    <p class="mt-0.5 max-w-[190px] truncate text-xs text-slate-500">{{ $studentEmail ?: 'Student' }}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -185,7 +193,7 @@
                                         {{-- Assessment --}}
                                         <td class="px-6 py-5">
                                             <p class="max-w-[220px] truncate text-sm font-semibold text-slate-800">{{ $quiz?->title ?? 'Quiz' }}</p>
-                                            <p class="mt-1 max-w-[220px] truncate text-[11px] text-slate-400">{{ $course?->title ?? 'Course unavailable' }}</p>
+                                            <p class="mt-1 max-w-[220px] truncate text-xs text-slate-500">{{ $course?->title ?? 'Course unavailable' }}</p>
                                         </td>
 
                                         {{-- Attempt --}}
@@ -195,7 +203,7 @@
 
                                         {{-- Score --}}
                                         <td class="px-6 py-5">
-                                            <p class="text-sm font-bold text-slate-800">{{ $result->score ?? 0 }}<span class="font-medium text-slate-400"> / {{ $result->total_items ?? 0 }}</span></p>
+                                            <p class="text-sm font-bold text-slate-800">{{ $result->score ?? 0 }}<span class="font-medium text-slate-500"> / {{ $result->total_items ?? 0 }}</span></p>
                                         </td>
 
                                         {{-- Performance --}}
@@ -211,9 +219,9 @@
                                         {{-- Status --}}
                                         <td class="px-6 py-5">
                                             @if($isPassed)
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Passed</span>
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Passed</span>
                                             @else
-                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Failed</span>
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600"><span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>Failed</span>
                                             @endif
                                         </td>
 
@@ -221,9 +229,9 @@
                                         <td class="px-6 py-5">
                                             @if($completedAt)
                                                 <p class="text-xs font-semibold text-slate-600">{{ $completedAt->format('M d, Y') }}</p>
-                                                <p class="mt-1 text-[11px] text-slate-400">{{ $completedAt->format('g:i A') }}</p>
+                                                <p class="mt-1 text-xs text-slate-500">{{ $completedAt->format('g:i A') }}</p>
                                             @else
-                                                <span class="text-xs text-slate-400">—</span>
+                                                <span class="text-xs text-slate-500">—</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -233,11 +241,11 @@
                     </div>
 
                     <div id="noFilteredResults" class="hidden border-t border-slate-100 px-6 py-14 text-center">
-                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                         </div>
                         <h3 class="mt-3 text-sm font-bold text-slate-800">No matching results</h3>
-                        <p class="mt-1 text-xs text-slate-400">Try changing your search or filters.</p>
+                        <p class="mt-1 text-xs text-slate-500">Try changing your search or filters.</p>
                     </div>
 
                 @else
@@ -248,7 +256,7 @@
                         </div>
                         <h3 class="mt-4 text-base font-bold text-slate-900">No quiz results yet</h3>
                         <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Student quiz attempts will automatically appear here after learners complete assessments from your courses.</p>
-                        <a href="{{ $courseContentUrl }}" class="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700">Manage Course Content</a>
+                        <a href="{{ $courseContentUrl }}" class="sad-btn-primary mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700">Manage Course Content</a>
                     </div>
                 @endif
             </section>

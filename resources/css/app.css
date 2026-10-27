@@ -6,7 +6,8 @@
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* PathWise is light mode only: dark: utilities (including Flux's) never match. */
+@custom-variant dark (&:not(*));
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -36,6 +37,17 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    /* Visible keyboard focus. Only shows for keyboard navigation, and a
+       component's own focus utilities still take precedence. */
+    a:focus-visible,
+    button:focus-visible,
+    summary:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:not([tabindex="-1"]):focus-visible {
+        outline: 2px solid #7c3aed;
+        outline-offset: 2px;
+    }
 }
 
 [data-flux-field]:not(ui-radio, ui-checkbox) {
@@ -52,22 +64,6 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
-/* PATHWISE — active sidebar item highlight */
-.dark [data-flux-navlist-item][data-current] {
-    background-image: linear-gradient(90deg, rgb(168 85 247 / 0.22), rgb(99 102 241 / 0.10)) !important;
-    color: #ffffff !important;
-    border-color: rgb(168 85 247 / 0.35) !important;
-    box-shadow: inset 3px 0 0 rgb(168 85 247) !important;
-}
-
-.dark [data-flux-navlist-item][data-current] svg {
-    color: rgb(192 132 252) !important;
-}
-
-.dark [data-flux-navlist-item]:hover:not([data-current]) {
-    background-color: rgb(255 255 255 / 0.06) !important;
-    color: #ffffff !important;
-}
 /* =========================================================
    PATHWISE GLOBAL DESIGN SYSTEM
    Shared by Teacher / Student / Admin / Super Admin
@@ -78,11 +74,13 @@ select:focus[data-flux-control] {
     --pw-surface: #ffffff;
     --pw-surface-soft: #fafafa;
 
-    --pw-border: #e7e9ef;
+    /* --pw-border and --pw-text were also set in the app layout, whose values
+       are the ones pages have always rendered with; they now live here only. */
+    --pw-border: #eceef3;
     --pw-border-soft: #eef0f4;
 
     --pw-heading: #0f172a;
-    --pw-text: #334155;
+    --pw-text: #111827;
     --pw-muted: #64748b;
     --pw-soft: #94a3b8;
 
@@ -91,29 +89,6 @@ select:focus[data-flux-control] {
     --pw-primary-soft: #f5f3ff;
 
     --pw-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-
-/* DARK / SYSTEM-DARK */
-
-html.dark {
-    --pw-page: #09090b;
-    --pw-surface: #18181b;
-    --pw-surface-soft: #202024;
-
-    --pw-border: #2f2f35;
-    --pw-border-soft: #27272a;
-
-    --pw-heading: #fafafa;
-    --pw-text: #d4d4d8;
-    --pw-muted: #a1a1aa;
-    --pw-soft: #71717a;
-
-    --pw-primary: #a78bfa;
-    --pw-primary-hover: #c4b5fd;
-    --pw-primary-soft: rgba(124, 58, 237, 0.14);
-
-    --pw-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 
@@ -236,6 +211,57 @@ html.dark {
     border-color: #a78bfa;
     color: var(--pw-primary);
     background: var(--pw-surface-soft);
+}
+
+
+/* SHARED BUTTON SIZE AND TABLE HEADER
+   Not used by any page yet. In the components layer so a page's own
+   utilities still win. Pair .pw-btn with .pw-btn-primary or .pw-btn-secondary. */
+
+@layer components {
+    .pw-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        height: 40px;
+        padding: 0 16px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .pw-btn:disabled,
+    .pw-btn[aria-disabled="true"] {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .pw-btn-primary {
+        border: 1px solid transparent;
+        background: var(--pw-primary);
+        color: #ffffff;
+
+        transition: background-color 160ms ease;
+    }
+
+    .pw-btn-primary:hover {
+        background: var(--pw-primary-hover);
+    }
+
+    .pw-table-head {
+        color: var(--pw-muted);
+
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
 }
 
 

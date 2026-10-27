@@ -1,4 +1,5 @@
 <x-layouts::app :title="$lesson->title">
+@include('partials.soft3d')
 
 @php
     $studentId = auth()->id();
@@ -374,7 +375,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -388,7 +389,7 @@
             <div
                 class="mb-5 flex flex-wrap
                        items-center gap-2
-                       text-xs text-slate-400"
+                       text-xs text-slate-500"
             >
 
                 <a
@@ -430,10 +431,15 @@
                 HEADER
             ====================================================== --}}
 
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
             <div
-                class="flex flex-col gap-5
+                class="relative flex flex-col gap-5
                        lg:flex-row
-                       lg:items-end
+                       lg:items-center
                        lg:justify-between"
             >
 
@@ -458,7 +464,7 @@
                             class="rounded-full
                                    bg-slate-100
                                    px-2.5 py-1
-                                   text-[10px]
+                                   text-xs
                                    font-semibold
                                    text-slate-600"
                         >
@@ -474,7 +480,7 @@
                                        rounded-full
                                        bg-emerald-50
                                        px-2.5 py-1
-                                       text-[10px]
+                                       text-xs
                                        font-bold
                                        text-emerald-700"
                             >
@@ -495,7 +501,7 @@
                                        rounded-full
                                        bg-blue-50
                                        px-2.5 py-1
-                                       text-[10px]
+                                       text-xs
                                        font-bold
                                        text-blue-700"
                             >
@@ -537,7 +543,7 @@
                 <a
                     href="{{ route('student.learn.course', $course) }}"
                     class="inline-flex h-11
-                           self-start
+                           self-start lg:self-auto
                            items-center
                            justify-center
                            gap-2 rounded-xl
@@ -565,6 +571,8 @@
                 </a>
 
             </div>
+                </div>
+            </section>
 
 
 
@@ -692,7 +700,7 @@
                     @if($lessonType === 'video')
 
                         <section
-                            class="pw-card overflow-hidden"
+                            class="sad-card pw-card overflow-hidden"
                         >
 
                             <div
@@ -706,7 +714,7 @@
                                 <div>
 
                                     <p
-                                        class="text-[10px]
+                                        class="text-xs
                                                font-bold
                                                uppercase
                                                tracking-[.1em]
@@ -727,7 +735,7 @@
 
 
                                 <div
-                                    class="flex h-10 w-10
+                                    class="sad-chip sad-chip-sm sad-violet flex h-10 w-10
                                            items-center
                                            justify-center
                                            rounded-xl
@@ -884,7 +892,7 @@
                                                 href="{{ $videoUrl }}"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                class="mt-4
+                                                class="sad-btn-primary mt-4
                                                        inline-flex h-10
                                                        items-center
                                                        justify-center
@@ -913,13 +921,13 @@
                                 >
 
                                     <div
-                                        class="mx-auto flex
+                                        class="sad-chip sad-violet mx-auto flex
                                                h-12 w-12
                                                items-center
                                                justify-center
                                                rounded-2xl
                                                bg-slate-100
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         ▶
                                     </div>
@@ -937,7 +945,7 @@
                                     <p
                                         class="mt-1
                                                text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         This lesson currently
                                         has no video link.
@@ -960,7 +968,7 @@
                     @if($lessonType === 'document')
 
                         <section
-                            class="pw-card overflow-hidden"
+                            class="sad-card pw-card overflow-hidden"
                         >
 
                             <div
@@ -979,7 +987,7 @@
                                 >
 
                                     <div
-                                        class="flex h-10 w-10
+                                        class="sad-chip sad-chip-sm sad-sky flex h-10 w-10
                                                shrink-0
                                                items-center
                                                justify-center
@@ -1009,7 +1017,7 @@
                                     <div>
 
                                         <p
-                                            class="text-[10px]
+                                            class="text-xs
                                                    font-bold uppercase
                                                    tracking-[.1em]
                                                    text-blue-500"
@@ -1036,7 +1044,7 @@
                                         href="{{ $fileUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="inline-flex h-10
+                                        class="sad-btn-primary inline-flex h-10
                                                self-start
                                                items-center
                                                justify-center
@@ -1144,7 +1152,7 @@
 
                                         <p
                                             class="mt-1 text-xs
-                                                   text-slate-400"
+                                                   text-slate-500"
                                         >
                                             {{
                                                 strtoupper(
@@ -1160,7 +1168,7 @@
                                             href="{{ $fileUrl }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="mt-5
+                                            class="sad-btn-primary mt-5
                                                    inline-flex h-10
                                                    items-center
                                                    justify-center
@@ -1187,13 +1195,13 @@
                                 >
 
                                     <div
-                                        class="mx-auto flex
+                                        class="sad-chip sad-violet mx-auto flex
                                                h-14 w-14
                                                items-center
                                                justify-center
                                                rounded-2xl
                                                bg-slate-100
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         ▤
                                     </div>
@@ -1210,7 +1218,7 @@
                                     <p
                                         class="mt-1
                                                text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         No file has been
                                         attached to this lesson.
@@ -1233,7 +1241,7 @@
                     @if($lessonType === 'quiz')
 
                         <section
-                            class="pw-card overflow-hidden"
+                            class="sad-card pw-card overflow-hidden"
                         >
 
                             <div
@@ -1248,7 +1256,7 @@
                                 >
 
                                     <div
-                                        class="flex h-11 w-11
+                                        class="sad-chip sad-amber flex h-11 w-11
                                                shrink-0
                                                items-center
                                                justify-center
@@ -1264,7 +1272,7 @@
                                     <div>
 
                                         <p
-                                            class="text-[10px]
+                                            class="text-xs
                                                    font-bold uppercase
                                                    tracking-[.1em]
                                                    text-orange-500"
@@ -1344,10 +1352,10 @@
                                         >
 
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Questions
                                             </p>
@@ -1373,10 +1381,10 @@
                                         >
 
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Passing
                                             </p>
@@ -1403,10 +1411,10 @@
                                         >
 
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Time Limit
                                             </p>
@@ -1502,7 +1510,7 @@
                                                 <span
                                                     class="rounded-full
                                                            px-3 py-1.5
-                                                           text-[10px]
+                                                           text-xs
                                                            font-bold
                                                            {{
                                                                $quizPassed
@@ -1527,7 +1535,7 @@
 
                                     <a
                                         href="{{ route('student.quiz.take', $linkedQuiz) }}"
-                                        class="mt-5
+                                        class="sad-btn-primary mt-5
                                                inline-flex h-11
                                                items-center
                                                justify-center
@@ -1569,7 +1577,7 @@
                                     >
 
                                         <div
-                                            class="mx-auto flex
+                                            class="sad-chip sad-amber mx-auto flex
                                                    h-14 w-14
                                                    items-center
                                                    justify-center
@@ -1594,7 +1602,7 @@
                                         <p
                                             class="mt-1
                                                    text-xs
-                                                   text-slate-400"
+                                                   text-slate-500"
                                         >
                                             The instructor has not
                                             published this quiz yet.
@@ -1623,7 +1631,7 @@
                     )
 
                         <section
-                            class="pw-card overflow-hidden"
+                            class="sad-card pw-card overflow-hidden"
                         >
 
                             <div
@@ -1637,7 +1645,7 @@
                                 <div>
 
                                     <p
-                                        class="text-[10px]
+                                        class="text-xs
                                                font-bold uppercase
                                                tracking-[.1em]
                                                text-violet-500"
@@ -1661,7 +1669,7 @@
 
 
                                 <div
-                                    class="flex h-10 w-10
+                                    class="sad-chip sad-chip-sm sad-violet flex h-10 w-10
                                            items-center
                                            justify-center
                                            rounded-xl
@@ -1696,19 +1704,19 @@
                     )
 
                         <section
-                            class="pw-card
+                            class="sad-card pw-card
                                    px-6 py-16
                                    text-center"
                         >
 
                             <div
-                                class="mx-auto flex
+                                class="sad-chip sad-violet mx-auto flex
                                        h-14 w-14
                                        items-center
                                        justify-center
                                        rounded-2xl
                                        bg-slate-100
-                                       text-slate-400"
+                                       text-slate-500"
                             >
                                 Aa
                             </div>
@@ -1726,7 +1734,7 @@
                             <p
                                 class="mt-1
                                        text-xs
-                                       text-slate-400"
+                                       text-slate-500"
                             >
                                 This lesson currently
                                 has no written content.
@@ -1744,7 +1752,7 @@
 
                     @if($lessonType !== 'quiz')
 
-                        <section class="pw-card p-5 sm:p-6">
+                        <section class="sad-card pw-card p-5 sm:p-6">
 
                             @if($isCompleted)
 
@@ -1804,7 +1812,7 @@
 
                                         <a
                                             href="{{ $nextUrl }}"
-                                            class="inline-flex h-10
+                                            class="sad-btn-primary inline-flex h-10
                                                    self-start
                                                    items-center
                                                    justify-center
@@ -1877,7 +1885,7 @@
 
                                         <button
                                             type="submit"
-                                            class="inline-flex h-11
+                                            class="sad-btn-primary inline-flex h-11
                                                    items-center
                                                    justify-center
                                                    gap-2 rounded-xl
@@ -1975,7 +1983,7 @@
 
                                 <a
                                     href="{{ $nextUrl }}"
-                                    class="inline-flex h-11
+                                    class="sad-btn-primary inline-flex h-11
                                            items-center
                                            justify-center
                                            gap-2 rounded-xl
@@ -2053,7 +2061,7 @@
 
                     {{-- LESSON INFO --}}
                     <section
-                        class="pw-card p-5
+                        class="sad-card pw-card p-5
                                xl:sticky xl:top-6"
                     >
 
@@ -2084,7 +2092,7 @@
 
 
                             <div
-                                class="flex h-9 w-9
+                                class="sad-chip sad-chip-sm sad-violet flex h-9 w-9
                                        items-center
                                        justify-center
                                        rounded-xl
@@ -2187,7 +2195,7 @@
                                     class="rounded-full
                                            bg-violet-50
                                            px-2.5 py-1
-                                           text-[10px]
+                                           text-xs
                                            font-bold
                                            text-violet-700"
                                 >
@@ -2256,7 +2264,7 @@
                                                rounded-full
                                                bg-emerald-50
                                                px-2.5 py-1
-                                               text-[10px]
+                                               text-xs
                                                font-bold
                                                text-emerald-700"
                                     >
@@ -2278,7 +2286,7 @@
                                                rounded-full
                                                bg-blue-50
                                                px-2.5 py-1
-                                               text-[10px]
+                                               text-xs
                                                font-bold
                                                text-blue-700"
                                     >
@@ -2313,9 +2321,9 @@
                             >
 
                                 <span
-                                    class="text-[10px]
+                                    class="text-xs
                                            font-semibold
-                                           text-slate-400"
+                                           text-slate-500"
                                 >
                                     COURSE POSITION
                                 </span>

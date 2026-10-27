@@ -1,6 +1,7 @@
 <x-layouts::app :title="$learningPath->name">
+@include('partials.soft3d')
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -51,7 +52,7 @@
                         <div class="max-w-3xl">
 
                             <span class="inline-flex rounded-full bg-white/15 px-3 py-1.5
-                                         text-[10px] font-bold uppercase tracking-[.1em]
+                                         text-xs font-bold uppercase tracking-[.1em]
                                          text-white backdrop-blur-sm">
                                 Learning Path
                             </span>
@@ -72,7 +73,7 @@
                         <div class="shrink-0 rounded-2xl border border-white/15
                                     bg-white/10 px-5 py-4 text-center backdrop-blur-sm">
 
-                            <p class="text-[10px] font-bold uppercase tracking-[.08em] text-violet-100">
+                            <p class="text-xs font-bold uppercase tracking-[.08em] text-violet-100">
                                 Courses
                             </p>
 
@@ -93,16 +94,16 @@
                 COURSE LIST
             ====================================================== --}}
 
-            <section class="mt-6 overflow-hidden rounded-2xl border
+            <section class="sad-card mt-6 overflow-hidden rounded-2xl border
                             border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
 
-                    <h2 class="text-lg font-bold text-slate-900">
+                    <h2 class="text-lg font-semibold text-slate-900">
                         Courses in this Learning Path
                     </h2>
 
-                    <p class="mt-1 text-xs text-slate-500">
+                    <p class="mt-1 text-sm text-slate-500">
                         Complete these courses in sequence to build your skills.
                     </p>
 
@@ -121,7 +122,7 @@
 
                                     {{-- NUMBER --}}
 
-                                    <div class="flex h-11 w-11 shrink-0 items-center
+                                    <div class="sad-chip sad-violet flex h-11 w-11 shrink-0 items-center
                                                 justify-center rounded-xl bg-violet-50
                                                 text-sm font-bold text-violet-600">
 
@@ -139,8 +140,8 @@
 
                                             <div class="min-w-0">
 
-                                                <p class="text-[10px] font-bold uppercase
-                                                          tracking-[.08em] text-violet-500">
+                                                <p class="text-xs font-bold uppercase
+                                                          tracking-[.08em] text-violet-600">
                                                     Course {{ $loop->iteration }}
                                                 </p>
 
@@ -155,7 +156,7 @@
 
                                                 <span class="self-start rounded-full
                                                              bg-slate-100 px-3 py-1
-                                                             text-[10px] font-semibold
+                                                             text-xs font-semibold
                                                              text-slate-600">
                                                     {{ $course->category->name }}
                                                 </span>
@@ -164,7 +165,7 @@
 
                                         </div>
 
-                                        <p class="mt-2 text-xs text-slate-400">
+                                        <p class="mt-2 text-xs text-slate-500">
                                             Part of your structured learning journey
                                         </p>
 
@@ -215,7 +216,7 @@
 
                     <div class="px-6 py-16 text-center">
 
-                        <div class="mx-auto flex h-14 w-14 items-center
+                        <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center
                                     justify-center rounded-2xl bg-violet-50
                                     text-violet-600">
 
@@ -237,7 +238,7 @@
                             No Courses Yet
                         </h3>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-sm text-slate-500">
                             No courses have been added to this learning path.
                         </p>
 
@@ -265,7 +266,7 @@
                             Ready to start learning?
                         </p>
 
-                        <p class="mt-1 text-[11px] text-violet-600">
+                        <p class="mt-1 text-xs text-violet-600">
                             Explore the courses above and continue your learning journey.
                         </p>
 

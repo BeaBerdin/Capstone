@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Submissions - ' . $assignment->title">
+@include('partials.soft3d')
 @php
     $total = $submissions->count();
     $submitted = $submissions->where('status', 'submitted')->count();
@@ -6,11 +7,11 @@
     $returned = $submissions->where('status', 'returned')->count();
 @endphp
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div class="mx-auto max-w-375">
 
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <a
                     href="{{ route('teacher.assignments.index') }}"
                     class="font-medium hover:text-violet-600"
@@ -69,8 +70,8 @@
 
             <section class="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
                         Total
                     </p>
 
@@ -80,7 +81,7 @@
                 </div>
 
                 <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                    <p class="text-xs font-bold uppercase tracking-wider text-blue-600">
                         Submitted
                     </p>
 
@@ -90,7 +91,7 @@
                 </div>
 
                 <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">
                         Graded
                     </p>
 
@@ -100,7 +101,7 @@
                 </div>
 
                 <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600">
+                    <p class="text-xs font-bold uppercase tracking-wider text-amber-600">
                         Returned
                     </p>
 
@@ -112,7 +113,7 @@
             </section>
 
             <section
-                class="mt-6 overflow-hidden rounded-2xl
+                class="sad-card mt-6 overflow-hidden rounded-2xl
                        border border-slate-200 bg-white shadow-sm"
             >
                 <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
@@ -120,7 +121,7 @@
                         Submissions
                     </h2>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Maximum score: {{ $assignment->max_score }}
 
                         @if($assignment->due_date)
@@ -167,7 +168,7 @@
 
                                     <span
                                         class="rounded-full px-2.5 py-1
-                                               text-[11px] font-semibold
+                                               text-xs font-semibold
                                                {{ $statusClass }}"
                                     >
                                         {{ ucfirst($submission->status) }}
@@ -244,7 +245,7 @@
                     <div class="px-6 py-16 text-center">
 
                         <div
-                            class="mx-auto flex h-14 w-14
+                            class="sad-chip sad-violet mx-auto flex h-14 w-14
                                    items-center justify-center
                                    rounded-2xl bg-violet-50"
                         >

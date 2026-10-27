@@ -12,11 +12,10 @@
             --pw-purple-light: #f4f0ff;
             --pw-purple-border: #ddd6fe;
 
-            --pw-text: #111827;
+            /* --pw-text and --pw-border come from resources/css/app.css. */
             --pw-text-muted: #64748b;
             --pw-text-soft: #94a3b8;
 
-            --pw-border: #eceef3;
             --pw-background: #f7f8fc;
         }
 
@@ -264,6 +263,11 @@
             transform: translateX(1px);
         }
 
+        /* Drawn inside the link so the scrolling nav cannot clip it. */
+        .pw-nav-link:focus-visible {
+            outline-offset: -2px;
+        }
+
 
         /* =====================================================
            ICON FIX
@@ -369,130 +373,6 @@
         color .2s ease;
 }
 
-html.dark .pw-main-content {
-    background: #09090b;
-    color: #f4f4f5;
-}
-/* =====================================================
-   DARK MODE — SIDEBAR
-===================================================== */
-
-html.dark body {
-    background: #09090b;
-    color: #f4f4f5;
-}
-
-html.dark .pw-sidebar {
-    background: #111113;
-    border-right-color: #27272a;
-
-    box-shadow:
-        3px 0 20px rgba(0, 0, 0, 0.18);
-}
-
-/* BRAND */
-
-html.dark .pw-brand {
-    border-bottom-color: #27272a;
-}
-
-html.dark .pw-brand-icon {
-    background:
-        linear-gradient(
-            135deg,
-            rgba(124, 58, 237, .22),
-            rgba(147, 51, 234, .12)
-        );
-
-    box-shadow:
-        0 7px 18px rgba(124, 58, 237, .12);
-}
-
-html.dark .pw-brand-title {
-    color: #fafafa;
-}
-
-html.dark .pw-brand-subtitle {
-    color: #a78bfa;
-}
-
-
-/* NAVIGATION */
-
-html.dark .pw-sidebar-scroll {
-    scrollbar-color: #3f3f46 transparent;
-}
-
-html.dark .pw-sidebar-scroll::-webkit-scrollbar-thumb {
-    background: #3f3f46;
-}
-
-html.dark .pw-nav-heading {
-    color: #71717a;
-}
-
-html.dark .pw-nav-link {
-    color: #d4d4d8;
-}
-
-html.dark .pw-nav-icon {
-    color: #a1a1aa;
-}
-
-html.dark .pw-nav-link:hover {
-    color: #c4b5fd;
-    background: rgba(124, 58, 237, 0.12);
-}
-
-html.dark .pw-nav-link:hover .pw-nav-icon {
-    color: #a78bfa;
-}
-
-
-/* ACTIVE NAV ITEM */
-
-html.dark .pw-nav-link.is-active {
-    color: #ffffff;
-
-    background:
-        linear-gradient(
-            90deg,
-            rgba(124, 58, 237, 0.30) 0%,
-            rgba(99, 102, 241, 0.12) 100%
-        );
-
-    box-shadow:
-        inset 3px 0 0 #8b5cf6;
-}
-
-html.dark .pw-nav-link.is-active .pw-nav-icon {
-    color: #c4b5fd;
-}
-
-
-/* BOTTOM ACCOUNT AREA */
-
-html.dark .pw-sidebar-bottom {
-    background: #111113;
-    border-top-color: #27272a;
-}
-
-html.dark .pw-account-heading {
-    color: #71717a;
-}
-
-
-/* MOBILE */
-
-html.dark .pw-mobile-toggle {
-    background: #18181b;
-    border-color: #3f3f46;
-    color: #f4f4f5;
-
-    box-shadow:
-        0 4px 16px rgba(0, 0, 0, .20);
-}
-
 
         /* =====================================================
            MOBILE
@@ -516,6 +396,12 @@ html.dark .pw-mobile-toggle {
 
             .pw-sidebar.pw-sidebar-open {
                 transform: translateX(0);
+            }
+
+            /* Keeps the logo clear of the menu button, which stays on top
+               of the open drawer as its close button. */
+            .pw-brand {
+                padding-left: 70px;
             }
 
             .pw-main-content {
@@ -1077,6 +963,9 @@ html.dark .pw-mobile-toggle {
         }
 
         .pw-notification-message {
+            /* A block, so its own line-height applies instead of the button's. */
+            display: block;
+
             margin-top: 3px;
 
             color: #64748b;
@@ -1364,128 +1253,11 @@ html.dark .pw-mobile-toggle {
             flex: 0 0 16px;
         }
 
-        html.dark .pw-topbar {
-            background: rgba(17, 17, 19, .96);
-            border-bottom-color: #27272a;
-        }
-
-        html.dark .pw-global-search-input {
-            background: #18181b;
-            border-color: #3f3f46;
-            color: #f4f4f5;
-        }
-
-        html.dark .pw-global-search-input:focus {
-            background: #18181b;
-            border-color: #7c3aed;
-        }
-
-        html.dark .pw-global-search-kbd,
-        html.dark .pw-search-results,
-        html.dark .pw-topbar-dropdown {
-            background: #18181b;
-            border-color: #3f3f46;
-        }
-
-        html.dark .pw-search-result-header,
-        html.dark .pw-topbar-dropdown-header,
-        html.dark .pw-profile-menu-user {
-            border-color: #27272a;
-        }
-
-        html.dark .pw-search-result-item {
-            color: #d4d4d8;
-        }
-
-        html.dark .pw-search-result-item:hover,
-        html.dark .pw-search-result-item.is-focused,
-        html.dark .pw-profile-menu-link:hover {
-            background: rgba(124, 58, 237, .13);
-        }
-
-        html.dark .pw-topbar-icon-button {
-            color: #a1a1aa;
-        }
-
-        html.dark .pw-topbar-icon-button:hover {
-            color: #c4b5fd;
-            background: rgba(124, 58, 237, .12);
-            border-color: rgba(124, 58, 237, .20);
-        }
-
-        html.dark .pw-notification-badge {
-            border-color: #111113;
-        }
-
-        html.dark .pw-topbar-dropdown-title,
-        html.dark .pw-profile-name,
-        html.dark .pw-profile-menu-name {
-            color: #fafafa;
-        }
-
-        html.dark .pw-notification-message,
-        html.dark .pw-profile-menu-link {
-            color: #d4d4d8;
-        }
-
-        html.dark .pw-notification-item {
-            border-bottom-color: #27272a;
-        }
-
-        html.dark .pw-profile-trigger {
-            color: #f4f4f5;
-        }
-
-        html.dark .pw-profile-trigger:hover {
-            background: #18181b;
-            border-color: #27272a;
-        }
-
-        html.dark .pw-notification-list {
-            background: #18181b;
-        }
-
-        html.dark .pw-notification-item-button:hover {
-            background: rgba(124, 58, 237, .11);
-        }
-
-        html.dark .pw-notification-item-button.is-unread {
-            background:
-                linear-gradient(
-                    90deg,
-                    rgba(124, 58, 237, .18),
-                    rgba(99, 102, 241, .08)
-                );
-        }
-
-        html.dark .pw-notification-icon {
-            background: rgba(124, 58, 237, .16);
-            color: #c4b5fd;
-        }
-
-        html.dark .pw-notification-title,
-        html.dark .pw-notification-empty-title {
-            color: #f4f4f5;
-        }
-
-        html.dark .pw-notification-message {
-            color: #a1a1aa;
-        }
-
-        html.dark .pw-notification-new {
-            background: rgba(124, 58, 237, .20);
-            color: #c4b5fd;
-        }
-
-        html.dark .pw-notification-mark-all {
-            border-color: rgba(124, 58, 237, .28);
-            background: rgba(124, 58, 237, .14);
-            color: #c4b5fd;
-        }
-
-        html.dark .pw-notification-mark-all:hover {
-            background: rgba(124, 58, 237, .22);
-            color: #ddd6fe;
+        /* Dropdowns clip overflow, so their items draw the focus outline inside. */
+        .pw-search-result-item:focus-visible,
+        .pw-notification-item-button:focus-visible,
+        .pw-profile-menu-link:focus-visible {
+            outline-offset: -2px;
         }
 
         @media (max-width: 1023px) {
@@ -1676,6 +1448,8 @@ html.dark .pw-mobile-toggle {
         class="pw-mobile-toggle"
         onclick="pwToggleSidebar()"
         aria-label="Open sidebar"
+        aria-controls="pwSidebar"
+        aria-expanded="false"
     >
         <svg
             width="20"
@@ -1765,6 +1539,7 @@ html.dark .pw-mobile-toggle {
                     href="{{ route('dashboard') }}"
                     wire:navigate
                     class="pw-nav-link {{ request()->routeIs('dashboard', 'teacher.dashboard', 'admin.dashboard', 'super_admin.dashboard', 'student.dashboard') ? 'is-active' : '' }}"
+                    @if (request()->routeIs('dashboard', 'teacher.dashboard', 'admin.dashboard', 'super_admin.dashboard', 'student.dashboard')) aria-current="page" @endif
                 >
 
                     <svg
@@ -1810,6 +1585,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('users.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('users.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('users.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -1850,6 +1626,7 @@ html.dark .pw-mobile-toggle {
             href="{{ route('departments.index') }}"
             wire:navigate
             class="pw-nav-link {{ request()->routeIs('departments.*') ? 'is-active' : '' }}"
+            @if (request()->routeIs('departments.*')) aria-current="page" @endif
         >
             <svg
                 class="pw-nav-icon"
@@ -1890,13 +1667,23 @@ html.dark .pw-mobile-toggle {
             </span>
         </a>
 
-    </section>
+                </section>
+
+
+
+                {{-- RECORDS --}}
+                <section class="pw-nav-section">
+
+                    <div class="pw-nav-heading">
+                        Records
+                    </div>
 
                   {{-- Transactions --}}
                     <a
                         href="{{ route('super_admin.transactions.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('super_admin.transactions.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('super_admin.transactions.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -1927,11 +1714,21 @@ html.dark .pw-mobile-toggle {
 
                 </section>
 
+
+
+                {{-- ANALYTICS --}}
+                <section class="pw-nav-section">
+
+                    <div class="pw-nav-heading">
+                        Analytics
+                    </div>
+
                     {{-- Reports --}}
         <a
             href="{{ route('reports.index') }}"
             wire:navigate
             class="pw-nav-link {{ request()->routeIs('reports.*') ? 'is-active' : '' }}"
+            @if (request()->routeIs('reports.*')) aria-current="page" @endif
         >
             <svg
                 class="pw-nav-icon"
@@ -2005,6 +1802,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('courses.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('courses.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('courses.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2035,6 +1833,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('course-categories.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('course-categories.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('course-categories.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2065,6 +1864,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('lessons.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('lessons.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('lessons.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2097,6 +1897,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('quizzes.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('quizzes.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('quizzes.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2131,6 +1932,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('quiz-results.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('quiz-results.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('quiz-results.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2159,6 +1961,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('enrollments.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('enrollments.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('enrollments.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2200,6 +2003,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('ai-recommendations.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('ai-recommendations.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('ai-recommendations.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2235,6 +2039,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student-progress.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student-progress.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student-progress.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2269,6 +2074,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('certificate-management.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('certificate-management.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('certificate-management.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2304,6 +2110,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('certificates.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('certificates.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('certificates.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2338,6 +2145,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('certificate-template.edit') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('certificate-template.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('certificate-template.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2366,6 +2174,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('learning-paths.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('learning-paths.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('learning-paths.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2404,6 +2213,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('admin.student-removal-requests.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('admin.student-removal-requests.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('admin.student-removal-requests.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2436,6 +2246,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('admin.course-reviews.index') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('admin.course-reviews.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('admin.course-reviews.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2486,6 +2297,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.my-courses', 'teacher.courses.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2519,6 +2331,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.lessons.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2568,6 +2381,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.assignments.*', 'teacher.submissions.*')) aria-current="page" @endif
                     >
                         <svg
                             class="pw-nav-icon"
@@ -2603,6 +2417,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.quiz-results.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2650,6 +2465,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.student-progress.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2700,6 +2516,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('course-invitations.*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2754,6 +2571,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.analytics')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2787,6 +2605,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('teacher.course-reviews.*', 'teacher.courses.reviews')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2829,6 +2648,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.marketplace') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.marketplace') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.marketplace')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2859,6 +2679,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.my-courses') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.my-courses') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.my-courses')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2893,6 +2714,7 @@ html.dark .pw-mobile-toggle {
                                 ? 'is-active'
                                 : ''
                         }}"
+                        @if (request()->routeIs('student.assignments.*')) aria-current="page" @endif
                     >
                         <svg
                             class="pw-nav-icon"
@@ -2925,6 +2747,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.learning-paths') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.learning-paths*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.learning-paths*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -2957,6 +2780,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.recommendations') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.recommendations') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.recommendations')) aria-current="page" @endif
                     >
 
                         <svg
@@ -3001,6 +2825,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.transactions') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.transactions*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.transactions*')) aria-current="page" @endif
                     >
 
                         <svg
@@ -3035,6 +2860,7 @@ html.dark .pw-mobile-toggle {
                         href="{{ route('student.certificates') }}"
                         wire:navigate
                         class="pw-nav-link {{ request()->routeIs('student.certificates') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.certificates')) aria-current="page" @endif
                     >
 
                         <svg
@@ -3086,7 +2912,8 @@ html.dark .pw-mobile-toggle {
             <a
                 href="{{ route('profile.edit') }}"
                 wire:navigate
-                class="pw-nav-link {{ request()->routeIs('profile.edit', 'security.edit', 'appearance.edit') ? 'is-active' : '' }}"
+                class="pw-nav-link {{ request()->routeIs('profile.edit', 'security.edit') ? 'is-active' : '' }}"
+                @if (request()->routeIs('profile.edit', 'security.edit')) aria-current="page" @endif
             >
 
                 <svg
@@ -3167,12 +2994,21 @@ html.dark .pw-mobile-toggle {
                         placeholder="Search anything..."
                         autocomplete="off"
                         aria-label="Search PathWise"
+                        aria-keyshortcuts="/"
                     >
 
 
-                    <div class="pw-global-search-kbd">
+                    <div class="pw-global-search-kbd" aria-hidden="true">
                         /
                     </div>
+
+                    {{-- Announces the number of matches to screen readers. --}}
+                    <div
+                        id="pwSearchStatus"
+                        class="sr-only"
+                        role="status"
+                        aria-live="polite"
+                    ></div>
 
 
                     <div
@@ -3265,6 +3101,8 @@ html.dark .pw-mobile-toggle {
                         onclick="pwToggleDropdown('pwNotificationsDropdown')"
                         aria-label="Notifications"
                         aria-haspopup="true"
+                        aria-controls="pwNotificationsDropdown"
+                        aria-expanded="false"
                     >
 
                         <svg
@@ -3518,6 +3356,8 @@ html.dark .pw-mobile-toggle {
                         onclick="pwToggleDropdown('pwProfileDropdown')"
                         aria-label="Open profile menu"
                         aria-haspopup="true"
+                        aria-controls="pwProfileDropdown"
+                        aria-expanded="false"
                     >
 
                         <div class="pw-profile-avatar">
@@ -3673,12 +3513,40 @@ html.dark .pw-mobile-toggle {
     ====================================================== --}}
 
     <script>
+        /*
+         * Keeps aria-expanded on the drawer and dropdown buttons in step with
+         * the panels they control (aria-controls).
+         */
+        function pwSyncExpanded() {
+            [
+                ['pwSidebar', 'pw-sidebar-open'],
+                ['pwNotificationsDropdown', 'is-open'],
+                ['pwProfileDropdown', 'is-open'],
+            ].forEach(function ([id, openClass]) {
+                const panel = document.getElementById(id);
+                const open = !!panel && panel.classList.contains(openClass);
+
+                document
+                    .querySelectorAll('[aria-controls="' + id + '"]')
+                    .forEach(function (control) {
+                        control.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+                        // The menu button also closes the open drawer.
+                        if (id === 'pwSidebar') {
+                            control.setAttribute('aria-label', open ? 'Close sidebar' : 'Open sidebar');
+                        }
+                    });
+            });
+        }
+
         function pwToggleSidebar() {
             const sidebar = document.getElementById('pwSidebar');
             const overlay = document.getElementById('pwSidebarOverlay');
 
             sidebar.classList.toggle('pw-sidebar-open');
             overlay.classList.toggle('pw-overlay-open');
+
+            pwSyncExpanded();
         }
 
         function pwCloseSidebar() {
@@ -3687,14 +3555,10 @@ html.dark .pw-mobile-toggle {
 
             sidebar.classList.remove('pw-sidebar-open');
             overlay.classList.remove('pw-overlay-open');
+
+            pwSyncExpanded();
         }
 
-        document.addEventListener('livewire:navigated', function () {
-            pwCloseSidebar();
-            pwCloseTopbarDropdowns();
-            pwInitGlobalSearch();
-        });
-    
 
         /* =====================================================
            GLOBAL TOPBAR
@@ -3708,6 +3572,8 @@ html.dark .pw-mobile-toggle {
                         dropdown.classList.remove('is-open');
                     }
                 });
+
+            pwSyncExpanded();
         }
 
         function pwToggleDropdown(id) {
@@ -3726,6 +3592,8 @@ html.dark .pw-mobile-toggle {
             } else {
                 dropdown.classList.remove('is-open');
             }
+
+            pwSyncExpanded();
 
             const searchResults = document.getElementById('pwSearchResults');
 
@@ -3774,6 +3642,14 @@ html.dark .pw-mobile-toggle {
                 empty.style.display =
                     visibleCount === 0 ? 'block' : 'none';
 
+                const status = document.getElementById('pwSearchStatus');
+
+                if (status) {
+                    status.textContent = visibleCount === 0
+                        ? 'No matching pages'
+                        : visibleCount + (visibleCount === 1 ? ' matching page' : ' matching pages');
+                }
+
                 results.classList.add('is-open');
                 pwCloseTopbarDropdowns();
             };
@@ -3798,47 +3674,102 @@ html.dark .pw-mobile-toggle {
                     }
                 }
             });
+        }
+
+        /*
+         * Escape closes the open dropdown, else the search results, else the
+         * mobile drawer, and returns focus to the button that opened it.
+         */
+        function pwHandleEscape() {
+            const openDropdown = document.querySelector('.pw-topbar-dropdown.is-open');
+
+            if (openDropdown) {
+                pwCloseTopbarDropdowns();
+                document.querySelector('[aria-controls="' + openDropdown.id + '"]')?.focus();
+
+                return;
+            }
+
+            const searchResults = document.getElementById('pwSearchResults');
+
+            if (searchResults && searchResults.classList.contains('is-open')) {
+                searchResults.classList.remove('is-open');
+
+                return;
+            }
+
+            const sidebar = document.getElementById('pwSidebar');
+
+            if (sidebar && sidebar.classList.contains('pw-sidebar-open')) {
+                pwCloseSidebar();
+                document.querySelector('[aria-controls="pwSidebar"]')?.focus();
+            }
+        }
+
+        /*
+         * Document-level listeners are added once per page load, not on every
+         * wire:navigate, and look up the current elements when they fire.
+         */
+        if (!window.pwLayoutListenersAdded) {
+            window.pwLayoutListenersAdded = true;
+
+            document.addEventListener('livewire:navigated', function () {
+                pwCloseSidebar();
+                pwCloseTopbarDropdowns();
+                pwInitGlobalSearch();
+            });
+
+            document.addEventListener('click', function (event) {
+                const searchWrap =
+                    document.getElementById('pwGlobalSearchWrap');
+
+                const searchResults =
+                    document.getElementById('pwSearchResults');
+
+                if (
+                    searchWrap
+                    && searchResults
+                    && !searchWrap.contains(event.target)
+                ) {
+                    searchResults.classList.remove('is-open');
+                }
+
+                if (
+                    !event.target.closest('.pw-topbar-dropdown-wrap')
+                ) {
+                    pwCloseTopbarDropdowns();
+                }
+            });
 
             document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    pwHandleEscape();
+
+                    return;
+                }
+
                 const activeTag =
                     document.activeElement?.tagName?.toLowerCase();
 
                 const typing =
                     activeTag === 'input'
                     || activeTag === 'textarea'
+                    || activeTag === 'select'
                     || document.activeElement?.isContentEditable;
+
+                const searchInput =
+                    document.getElementById('pwGlobalSearchInput');
 
                 if (
                     event.key === '/'
                     && !typing
+                    && searchInput
                 ) {
                     event.preventDefault();
-                    input.focus();
+                    searchInput.focus();
                 }
             });
         }
-
-        document.addEventListener('click', function (event) {
-            const searchWrap =
-                document.getElementById('pwGlobalSearchWrap');
-
-            const searchResults =
-                document.getElementById('pwSearchResults');
-
-            if (
-                searchWrap
-                && searchResults
-                && !searchWrap.contains(event.target)
-            ) {
-                searchResults.classList.remove('is-open');
-            }
-
-            if (
-                !event.target.closest('.pw-topbar-dropdown-wrap')
-            ) {
-                pwCloseTopbarDropdowns();
-            }
-        });
 
         pwInitGlobalSearch();
 

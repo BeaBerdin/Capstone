@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Lessons'">
+@include('partials.soft3d')
 
 @php
     $totalLessons = $courses->sum(fn ($course) => $course->lessons->count());
@@ -31,7 +32,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -39,7 +40,12 @@
 
 
             {{-- HEADER --}}
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                 <div>
 
@@ -62,7 +68,7 @@
                 <div class="relative w-full lg:w-[320px]">
 
                     <svg
-                        class="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400"
+                        class="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -78,7 +84,7 @@
                         placeholder="Search your courses..."
                         class="h-11 w-full rounded-xl border border-slate-200
                                bg-white pl-11 pr-4 text-sm outline-none
-                               transition placeholder:text-slate-400
+                               transition placeholder:text-slate-500
                                focus:border-violet-300 focus:ring-4
                                focus:ring-violet-100"
                     >
@@ -86,13 +92,15 @@
                 </div>
 
             </div>
+                </div>
+            </section>
 
 
 
             {{-- STATS --}}
             <section class="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <p class="text-xs font-semibold text-slate-500">
                         Courses
                     </p>
@@ -101,13 +109,13 @@
                         {{ $courses->count() }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Available to manage
                     </p>
                 </div>
 
 
-                <div class="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
                     <p class="text-xs font-semibold text-slate-500">
                         Total Lessons
                     </p>
@@ -116,13 +124,13 @@
                         {{ $totalLessons }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Across all courses
                     </p>
                 </div>
 
 
-                <div class="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
                     <p class="text-xs font-semibold text-slate-500">
                         Published
                     </p>
@@ -131,13 +139,13 @@
                         {{ $publishedLessons }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Visible to students
                     </p>
                 </div>
 
 
-                <div class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
                     <p class="text-xs font-semibold text-slate-500">
                         Draft
                     </p>
@@ -146,7 +154,7 @@
                         {{ $draftLessons }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Still being prepared
                     </p>
                 </div>
@@ -253,7 +261,7 @@
                                             </div>
 
                                             <p
-                                                class="mt-3 text-[10px] font-bold uppercase
+                                                class="mt-3 text-xs font-bold uppercase
                                                        tracking-[.18em] text-white/75"
                                             >
                                                 PathWise Learning
@@ -270,7 +278,7 @@
 
                                     <span
                                         class="rounded-full bg-white/95 px-3 py-1.5
-                                               text-[10px] font-bold text-violet-700
+                                               text-xs font-bold text-violet-700
                                                shadow-sm"
                                     >
                                         {{ $lessonCount }}
@@ -343,7 +351,7 @@
                                     <div
                                         class="mt-3 flex items-center
                                                justify-between text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         <span>
                                             {{ $publishedCount }} published
@@ -360,7 +368,7 @@
 
                                 <a
                                     href="{{ route('teacher.lessons', $course) }}"
-                                    class="mt-5 inline-flex h-11 w-full
+                                    class="sad-btn-primary mt-5 inline-flex h-11 w-full
                                            items-center justify-center gap-2
                                            rounded-xl bg-violet-600
                                            text-sm font-semibold text-white
@@ -424,7 +432,7 @@
 
                             <a
                                 href="{{ route('teacher.courses.create') }}"
-                                class="mt-6 inline-flex h-11 items-center
+                                class="sad-btn-primary mt-6 inline-flex h-11 items-center
                                        rounded-xl bg-violet-600 px-5
                                        text-sm font-semibold text-white
                                        hover:bg-violet-700"
@@ -450,7 +458,7 @@
                         No matching courses found.
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Try a different search.
                     </p>
 

@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Course Reviews'">
+@include('partials.soft3d')
 
 <div class="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
 
@@ -26,7 +27,7 @@
         </div>
     </div>
 
-    <div class="pw-card overflow-hidden">
+    <div class="sad-card pw-card overflow-hidden">
         @if ($reviews->isEmpty())
             <div class="p-10 text-center">
                 <h2 class="pw-heading font-semibold">No reviews yet</h2>
@@ -35,7 +36,7 @@
                 </p>
             </div>
         @else
-            <ul class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <ul class="divide-y divide-slate-100">
                 @foreach ($reviews as $review)
                     <li class="p-5">
                         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -53,7 +54,7 @@
             </ul>
 
             @if ($reviews->hasPages())
-                <div class="border-t border-slate-100 p-4 dark:border-zinc-800">
+                <div class="border-t border-slate-100 p-4">
                     {{ $reviews->links() }}
                 </div>
             @endif

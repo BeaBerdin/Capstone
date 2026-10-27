@@ -1,10 +1,16 @@
 <x-layouts::app :title="__('Manage Transactions')">
-<div class="min-h-screen bg-gray-50">
+@include('partials.soft3d')
+<div class="sad-page min-h-screen bg-slate-50 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
     <div class="mx-auto w-full max-w-6xl space-y-6">
         {{-- =====================================================
             HEADER
         ====================================================== --}}
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        {{-- Header card, as on My Certificates. --}}
+        <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <div class="relative px-6 py-6 sm:px-7">
+                <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+        <div class="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
             <div>
                 <p class="text-xs font-bold uppercase tracking-[0.12em] text-violet-600">
@@ -22,6 +28,8 @@
             </div>
 
         </div>
+            </div>
+        </section>
 
 
         @php
@@ -51,7 +59,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
             {{-- TOTAL --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-start justify-between">
 
@@ -64,12 +72,12 @@
                             {{ $totalTransactions }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             All payment records
                         </p>
                     </div>
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                    <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
                         <svg
                             class="h-5 w-5"
                             viewBox="0 0 24 24"
@@ -88,7 +96,7 @@
 
 
             {{-- PENDING --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-start justify-between">
 
@@ -101,12 +109,12 @@
                             {{ $pendingTransactions }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             Awaiting verification
                         </p>
                     </div>
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                    <div class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                         <svg
                             class="h-5 w-5"
                             viewBox="0 0 24 24"
@@ -125,7 +133,7 @@
 
 
             {{-- APPROVED --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-start justify-between">
 
@@ -138,12 +146,12 @@
                             {{ $approvedTransactions }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             Successful payments
                         </p>
                     </div>
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <div class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                         <svg
                             class="h-5 w-5"
                             viewBox="0 0 24 24"
@@ -161,7 +169,7 @@
 
 
             {{-- REVENUE --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="sad-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 
                 <div class="flex items-start justify-between">
 
@@ -174,12 +182,12 @@
                             ₱{{ number_format($approvedRevenue, 2) }}
                         </p>
 
-                        <p class="mt-1 text-xs text-slate-400">
+                        <p class="mt-1 text-xs text-slate-500">
                             From approved payments
                         </p>
                     </div>
 
-                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+                    <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
                         <svg
                             class="h-5 w-5"
                             viewBox="0 0 24 24"
@@ -240,7 +248,7 @@
         {{-- =====================================================
             TRANSACTION MANAGEMENT
         ====================================================== --}}
-        <div class="-mx-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:-mx-6 lg:-mx-10">
+        <div class="sad-card overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 
             {{-- HEADER --}}
             <div class="flex flex-col gap-3 border-b border-slate-200 px-6 py-5 md:flex-row md:items-center md:justify-between">
@@ -276,13 +284,13 @@
 
                {{-- FIX: removed min-w-[1250px]; columns now share the
                     available width and wrap instead of forcing scroll --}}
-               <table class="w-full table-fixed text-left">
+               <table class="w-full min-w-[960px] table-fixed text-left">
 
                     <thead class="border-b border-slate-200 bg-slate-50">
 
-                        <tr class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        <tr class="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
 
-                            <th class="w-[16%] px-4 py-3">
+                            <th class="w-[18%] px-4 py-3">
                                 Transaction
                             </th>
 
@@ -290,7 +298,7 @@
                                 Student
                             </th>
 
-                            <th class="w-[18%] px-4 py-3">
+                            <th class="w-[16%] px-4 py-3">
                                 Course
                             </th>
 
@@ -358,11 +366,11 @@
                                 {{-- TRANSACTION --}}
                                 <td class="px-4 py-4 align-top">
 
-                                    <p class="break-all text-xs font-bold text-slate-800" title="{{ $transaction->transaction_no }}">
+                                    <p class="whitespace-nowrap text-xs font-bold text-slate-800" title="{{ $transaction->transaction_no }}">
                                         {{ $transaction->transaction_no }}
                                     </p>
 
-                                    <p class="mt-1 text-[10px] text-slate-400">
+                                    <p class="mt-1 text-xs text-slate-500">
                                         {{ $transaction->created_at?->format('M d, Y h:i A') }}
                                     </p>
 
@@ -384,7 +392,7 @@
                                                 {{ $transaction->student->name ?? 'Student unavailable' }}
                                             </p>
 
-                                            <p class="mt-1 text-[10px] text-slate-400">
+                                            <p class="mt-1 text-xs text-slate-500">
                                                 Learner
                                             </p>
 
@@ -412,7 +420,7 @@
                                         ₱{{ number_format($transaction->amount, 2) }}
                                     </p>
 
-                                    <p class="mt-1 wrap-break-word text-[10px] text-slate-400">
+                                    <p class="mt-1 wrap-break-word text-xs text-slate-500">
                                         {{ \App\Support\PaymentMethods::forTransaction($transaction) ?? 'No method' }}
                                     </p>
 
@@ -422,7 +430,7 @@
                                 {{-- REFERENCE (hidden below lg) --}}
                                 <td class="hidden px-4 py-4 align-top lg:table-cell">
 
-                                    <p class="break-all text-[10px] font-medium text-slate-600" title="{{ $transaction->payment_reference }}">
+                                    <p class="break-all text-xs font-medium text-slate-600" title="{{ $transaction->payment_reference }}">
                                         {{ $transaction->payment_reference ?? 'Not submitted' }}
                                     </p>
 
@@ -432,7 +440,7 @@
                                 {{-- STATUS --}}
                                 <td class="px-4 py-4 align-top">
 
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold {{ $statusClass }}">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold {{ $statusClass }}">
 
                                         <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
 
@@ -452,7 +460,7 @@
                                             href="{{ route('files.receipt', $transaction) }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[10px] font-bold text-violet-600 transition hover:bg-violet-100"
+                                            class="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-xs font-bold text-violet-600 transition hover:bg-violet-100"
                                         >
 
                                             <svg
@@ -472,7 +480,7 @@
 
                                     @else
 
-                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-400">
+                                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
                                             No proof
                                         </span>
 
@@ -499,7 +507,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Approve this transaction and enroll the student?')"
-                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-emerald-700"
+                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700"
                                                 >
                                                     Approve
                                                 </button>
@@ -518,7 +526,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Reject this transaction?')"
-                                                    class="inline-flex items-center rounded-lg bg-red-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-red-700"
+                                                    class="inline-flex items-center rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
                                                 >
                                                     Reject
                                                 </button>
@@ -527,13 +535,13 @@
 
                                         @elseif($transaction->status === 'approved')
 
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700">
                                                 ✓ Done
                                             </span>
 
                                         @elseif($transaction->status === 'rejected')
 
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1.5 text-[10px] font-bold text-red-600">
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-600">
                                                 ✕ Rejected
                                             </span>
 
@@ -552,7 +560,7 @@
 
                                 <td colspan="8" class="px-6 py-20 text-center">
 
-                                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 text-2xl">
+                                    <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 text-2xl">
                                         💳
                                     </div>
 
@@ -560,7 +568,7 @@
                                         No transactions available
                                     </h3>
 
-                                    <p class="mt-1 text-sm text-slate-400">
+                                    <p class="mt-1 text-sm text-slate-500">
                                         Student payment transactions will appear here.
                                     </p>
 
@@ -588,7 +596,7 @@
 
                 <div class="flex items-start gap-4">
 
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 font-bold text-amber-600">
+                    <div class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 font-bold text-amber-600">
                         !
                     </div>
 
@@ -614,5 +622,7 @@
         @endif
 
     </div>
+
+</div>
 
 </x-layouts::app>

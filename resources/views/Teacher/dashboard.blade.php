@@ -357,1525 +357,516 @@
     ];
 @endphp
 
-<style>
-    /* =========================================================
-       PATHWISE TEACHER DASHBOARD
-       Clean reference-matched light UI
-    ========================================================= */
+{{--
+    Teacher dashboard in the soft-3D style (styles in partials/soft3d).
+    All figures come from the block above and DashboardController@teacher.
+--}}
 
-    .pw-dashboard-page {
-        min-height: 100vh;
-        background: #f7f8fc;
-        color: #0f172a;
-    }
+@php
+    // Course status split for the rail (from the counts above).
+    $draftOrOther = max(0, $totalCourses - $publishedCourses - $pendingCourses);
 
-    .pw-dashboard-shell {
-    width: 100%;
-    max-width: 1600px;
-    margin: 0;
-    padding: 26px 28px 40px;
-}
+    // Progress ring (circle of radius 42).
+    $ringCircumference = 2 * M_PI * 42;
+    $ringProgress = min(100, max(0, $averageProgress));
 
-    .pw-dashboard-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 22px;
-    }
+    $statTones = ['sad-violet', 'sad-sky', 'sad-emerald', 'sad-amber'];
 
-    .pw-dashboard-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-shrink: 0;
-    }
+    $quickActions = [
+        ['label' => 'Create Course', 'href' => route('teacher.courses.create'), 'tone' => 'sad-violet', 'icon' => 'M12 5v14M5 12h14'],
+        ['label' => 'Lessons', 'href' => route('teacher.lessons.index'), 'tone' => 'sad-sky', 'icon' => 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h6'],
+        ['label' => 'Assignments', 'href' => route('teacher.assignments.index'), 'tone' => 'sad-emerald', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],
+        ['label' => 'Quiz Results', 'href' => route('teacher.quiz-results.index'), 'tone' => 'sad-amber', 'icon' => 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8.5 12.5l2.5 2.5 4.5-5'],
+        ['label' => 'Student Progress', 'href' => route('teacher.student-progress.index'), 'tone' => 'sad-rose', 'icon' => 'M4 19V9M9 19V5M14 19v-7M19 19V3'],
+        ['label' => 'Invitations', 'href' => route('course-invitations.index'), 'tone' => 'sad-violet', 'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6'],
+    ];
+@endphp
 
-    .pw-dashboard-card {
-        background: #ffffff;
-        border: 1px solid #e7eaf0;
-        border-radius: 14px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
-    }
+@include('partials.soft3d')
 
-    .pw-section-heading {
-        font-size: 15px;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        color: #111827;
-    }
+<div class="sad-page">
 
-    .pw-section-subheading {
-        margin-top: 4px;
-        font-size: 13px;
-        font-weight: 500;
-        color: #94a3b8;
-    }
+    <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
 
-    .pw-primary-action,
-    .pw-secondary-action {
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        padding: 0 15px;
-        border-radius: 9px;
-        font-size: 12px;
-        font-weight: 700;
-        transition: 160ms ease;
-    }
+        <div class="mx-auto grid max-w-375 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
 
-    .pw-primary-action {
-        color: #fff;
-        background: linear-gradient(90deg, #7c3aed, #5b4ff1);
-        box-shadow: 0 5px 14px rgba(124, 58, 237, .18);
-    }
+            {{-- =====================================================
+                MAIN COLUMN
+            ====================================================== --}}
 
-    .pw-primary-action:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(124, 58, 237, .22);
-    }
+            <div class="min-w-0 space-y-6">
 
-    .pw-secondary-action {
-        color: #475569;
-        background: #fff;
-        border: 1px solid #dde3ec;
-    }
+                {{-- WELCOME BANNER --}}
+                <section class="sad-banner">
 
-    .pw-secondary-action:hover {
-        border-color: #c4b5fd;
-        background: #faf8ff;
-        color: #6d28d9;
-    }
+                    <div class="relative px-6 py-7 sm:px-8 md:pr-[38%]">
 
-    .pw-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
-        margin-bottom: 16px;
-    }
+                        <p class="text-xs font-bold uppercase tracking-[.14em] text-violet-600">
+                            Teacher Dashboard
+                        </p>
 
-    .pw-stat-card {
-        min-height: 128px;
-        padding: 17px 18px 15px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        transition: 160ms ease;
-    }
+                        <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-[26px]">
+                            {{ $greeting }}, {{ $firstName }}!&nbsp;<span aria-hidden="true">👋</span>
+                        </h1>
 
-    .pw-stat-card:hover {
-        border-color: #ddd6fe;
-        box-shadow: 0 7px 22px rgba(76, 29, 149, .055);
-    }
+                        <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                            Here's what's happening in your classes today.
+                        </p>
 
-    .pw-stat-top {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-    }
+                        <p class="mt-1 text-xs font-medium text-slate-500">{{ $currentDate }}</p>
 
-    .pw-stat-icon {
-        width: 40px;
-        height: 40px;
-        flex: 0 0 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-    }
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="{{ route('teacher.courses.create') }}" class="sad-btn sad-btn-primary">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                                Create Course
+                            </a>
 
-    .pw-stat-icon-violet { background: #f1eaff; color: #7c3aed; }
-    .pw-stat-icon-blue { background: #e4f0ff; color: #2563eb; }
-    .pw-stat-icon-emerald { background: #ddfaeb; color: #059669; }
-    .pw-stat-icon-orange { background: #fff0dc; color: #ea580c; }
-
-    .pw-stat-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #475569;
-    }
-
-    .pw-stat-value {
-        margin-top: 2px;
-        font-size: 26px;
-        line-height: 1;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        color: #0f172a;
-    }
-
-    .pw-stat-sub {
-        margin-top: 7px;
-        font-size: 10px;
-        color: #94a3b8;
-    }
-
-    .pw-stat-link {
-        margin-top: 12px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        width: fit-content;
-        font-size: 10.5px;
-        font-weight: 700;
-        color: #6d28d9;
-    }
-
-    .pw-overview-grid,
-    .pw-bottom-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.55fr) minmax(310px, .95fr);
-        gap: 16px;
-    }
-
-    .pw-bottom-grid {
-        margin-top: 16px;
-    }
-
-    .pw-overview-card {
-        padding: 18px 20px 18px;
-        min-height: 320px;
-    }
-
-    .pw-card-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-    }
-
-    .pw-mini-chip {
-        padding: 7px 10px;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        background: #fff;
-        font-size: 9px;
-        font-weight: 600;
-        color: #64748b;
-        white-space: nowrap;
-    }
-
-    .pw-overview-body {
-        margin-top: 20px;
-        display: grid;
-        grid-template-columns: 180px minmax(0, 1fr);
-        gap: 22px;
-        align-items: center;
-    }
-
-    .pw-progress-panel {
-        min-height: 225px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-right: 1px solid #eef1f5;
-        padding-right: 18px;
-    }
-
-    .pw-progress-label {
-        margin-bottom: 14px;
-        font-size: 11px;
-        font-weight: 600;
-        color: #475569;
-    }
-
-    .pw-ring {
-        --pw-progress: 0%;
-        width: 132px;
-        height: 132px;
-        position: relative;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background:
-            conic-gradient(
-                #7657f6 0 var(--pw-progress),
-                #ece8ff var(--pw-progress) 100%
-            );
-    }
-
-    .pw-ring::after {
-        content: "";
-        position: absolute;
-        width: 98px;
-        height: 98px;
-        border-radius: 50%;
-        background: #fff;
-    }
-
-    .pw-ring-copy {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-    }
-
-    .pw-ring-value {
-        font-size: 25px;
-        line-height: 1;
-        font-weight: 800;
-        color: #111827;
-    }
-
-    .pw-ring-caption {
-        margin-top: 4px;
-        font-size: 9px;
-        color: #94a3b8;
-    }
-
-    .pw-active-learners {
-        margin-top: 13px;
-        font-size: 9.5px;
-        font-weight: 700;
-        color: #059669;
-    }
-
-    .pw-chart-panel {
-        min-width: 0;
-    }
-
-    .pw-chart-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 10px;
-    }
-
-    .pw-chart-title {
-        font-size: 11px;
-        font-weight: 600;
-        color: #475569;
-    }
-
-    .pw-chart-note {
-        font-size: 9px;
-        color: #94a3b8;
-    }
-
-    .pw-chart-box {
-        position: relative;
-        height: 182px;
-    }
-
-    .pw-y-axis {
-        position: absolute;
-        inset: 0 auto 22px 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        font-size: 8px;
-        color: #94a3b8;
-    }
-
-    .pw-chart-canvas {
-        position: absolute;
-        inset: 0 0 0 36px;
-        padding-bottom: 22px;
-    }
-
-    .pw-chart-grid {
-        position: absolute;
-        inset: 0 0 22px 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .pw-chart-grid > div {
-        border-top: 1px solid #eef1f5;
-    }
-
-    .pw-chart-svg {
-        position: absolute;
-        inset: 0 0 22px 0;
-        width: 100%;
-        height: calc(100% - 22px);
-        overflow: visible;
-    }
-
-    .pw-x-axis {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        justify-content: space-between;
-        font-size: 8px;
-        color: #94a3b8;
-    }
-
-    .pw-upcoming-card,
-    .pw-activity-card,
-    .pw-quick-card {
-        overflow: hidden;
-    }
-
-    .pw-panel-header {
-        min-height: 68px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        padding: 15px 18px;
-        border-bottom: 1px solid #eef1f5;
-    }
-
-    .pw-panel-count,
-    .pw-panel-link {
-        flex-shrink: 0;
-        font-size: 9.5px;
-        font-weight: 700;
-        color: #6d28d9;
-    }
-
-    .pw-upcoming-body {
-        min-height: 250px;
-    }
-
-    .pw-upcoming-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 18px;
-        border-bottom: 1px solid #f1f3f7;
-    }
-
-    .pw-upcoming-row:last-child {
-        border-bottom: 0;
-    }
-
-    .pw-date-card {
-        width: 46px;
-        flex: 0 0 46px;
-        overflow: hidden;
-        border: 1px solid #e8eaf0;
-        border-radius: 8px;
-        background: #fff;
-        text-align: center;
-    }
-
-    .pw-date-month {
-        padding: 3px 0;
-        background: #7c3aed;
-        color: #fff;
-        font-size: 7px;
-        font-weight: 800;
-        text-transform: uppercase;
-    }
-
-    .pw-date-day {
-        padding: 5px 0;
-        font-size: 14px;
-        font-weight: 800;
-        line-height: 1;
-        color: #111827;
-    }
-
-    .pw-empty-state {
-        min-height: 250px;
-        display: grid;
-        place-items: center;
-        padding: 24px;
-        text-align: center;
-    }
-
-    .pw-empty-icon {
-        width: 42px;
-        height: 42px;
-        margin: 0 auto;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: #f5f3ff;
-        color: #7c3aed;
-    }
-
-    .pw-empty-title {
-        margin-top: 12px;
-        font-size: 11px;
-        font-weight: 800;
-        color: #1f2937;
-    }
-
-    .pw-empty-copy {
-        margin-top: 4px;
-        font-size: 9px;
-        color: #94a3b8;
-    }
-
-    .pw-activity-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-height: 64px;
-        padding: 10px 18px;
-        border-bottom: 1px solid #f1f3f7;
-    }
-
-    .pw-activity-row:last-child {
-        border-bottom: 0;
-    }
-
-    .pw-activity-icon {
-        width: 34px;
-        height: 34px;
-        flex: 0 0 34px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-    }
-
-    .pw-activity-quiz { background: #ecfdf5; color: #059669; }
-    .pw-activity-lesson { background: #eff6ff; color: #2563eb; }
-    .pw-activity-course { background: #f5f3ff; color: #7c3aed; }
-
-    .pw-activity-title {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 10.5px;
-        font-weight: 700;
-        color: #1f2937;
-    }
-
-    .pw-activity-sub {
-        margin-top: 3px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 9px;
-        color: #94a3b8;
-    }
-
-    .pw-activity-time {
-        margin-left: auto;
-        flex-shrink: 0;
-        font-size: 9px;
-        color: #94a3b8;
-        text-align: right;
-    }
-
-    .pw-score-good,
-    .pw-score-bad {
-        flex-shrink: 0;
-        padding: 4px 7px;
-        border-radius: 999px;
-        font-size: 9px;
-        font-weight: 800;
-    }
-
-    .pw-score-good { background: #ecfdf5; color: #059669; }
-    .pw-score-bad { background: #fef2f2; color: #dc2626; }
-
-    .pw-quick-card {
-        padding: 17px;
-    }
-
-    .pw-quick-grid {
-        margin-top: 14px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-    }
-
-    .pw-quick-item {
-        min-height: 96px;
-        padding: 13px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        border: 1px solid #eceef3;
-        border-radius: 11px;
-        background: #fff;
-        transition: 160ms ease;
-    }
-
-    .pw-quick-item:hover {
-        transform: translateY(-1px);
-        border-color: #ddd6fe;
-        background: #faf9ff;
-    }
-
-    .pw-quick-icon {
-        width: 32px;
-        height: 32px;
-        display: grid;
-        place-items: center;
-        border-radius: 9px;
-    }
-
-    .pw-quick-label {
-        margin-top: 10px;
-        font-size: 10px;
-        font-weight: 700;
-        color: #334155;
-    }
-
-    .pw-quick-sub {
-        margin-top: 3px;
-        font-size: 8.5px;
-        color: #94a3b8;
-    }
-
-    @media (max-width: 1180px) {
-        .pw-stats-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .pw-overview-grid,
-        .pw-bottom-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 760px) {
-        .pw-dashboard-shell {
-    width: 100%;
-    max-width: 1600px;
-    margin: 0;
-    padding: 26px 28px 40px;
-}
-
-        .pw-dashboard-header {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-        .pw-stats-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .pw-overview-body {
-            grid-template-columns: 1fr;
-        }
-
-        .pw-progress-panel {
-            min-height: auto;
-            border-right: 0;
-            border-bottom: 1px solid #eef1f5;
-            padding: 0 0 20px;
-        }
-
-        .pw-dashboard-actions {
-            width: 100%;
-            flex-wrap: wrap;
-        }
-    }
-</style>
-
-
-<div class="pw-dashboard-page">
-
-    <main class="pw-dashboard-shell">
-
-
-        {{-- =====================================================
-             HEADER
-        ====================================================== --}}
-
-        <section class="pw-dashboard-header">
-
-            <div>
-
-                <h1
-                    style="
-                        margin:0;
-                        font-size:26px;
-                        line-height:1.2;
-                        font-weight:800;
-                        letter-spacing:-.03em;
-                        color:#0f172a;
-                    "
-                >
-                    {{ $greeting }}, {{ $firstName }}! 👋
-                </h1>
-
-                <p
-                    style="
-                        margin:6px 0 0;
-                        font-size:12px;
-                        color:#64748b;
-                    "
-                >
-                    Here's what's happening in your classes today.
-                </p>
-
-                <p
-                    style="
-                        margin:4px 0 0;
-                        font-size:10px;
-                        font-weight:500;
-                        color:#94a3b8;
-                    "
-                >
-                    {{ $currentDate }}
-                </p>
-
-            </div>
-
-
-            <div class="pw-dashboard-actions">
-
-                <a
-                    href="{{ route('teacher.lessons.index') }}"
-                    class="pw-secondary-action"
-                >
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"
-                        />
-                    </svg>
-
-                    Plan a Lesson
-                </a>
-
-
-                <a
-                    href="{{ route('teacher.courses.create') }}"
-                    class="pw-primary-action"
-                >
-                    <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            d="M12 5v14M5 12h14"
-                        />
-                    </svg>
-
-                    Create Course
-                </a>
-
-            </div>
-
-        </section>
-
-
-
-        {{-- =====================================================
-             STATS
-        ====================================================== --}}
-
-        <section class="pw-stats-grid">
-
-            @foreach($statCards as $stat)
-
-                <div class="pw-dashboard-card pw-stat-card">
-
-                    <div class="pw-stat-top">
-
-                        <div
-                            class="pw-stat-icon
-                                   pw-stat-icon-{{ $stat['tone'] }}"
-                        >
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.9"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="{{ $stat['icon'] }}"
-                                />
-                            </svg>
-                        </div>
-
-
-                        <div style="min-width:0;">
-
-                            <div class="pw-stat-label">
-                                {{ $stat['label'] }}
-                            </div>
-
-                            <div class="pw-stat-value">
-                                {{ $stat['value'] }}
-                            </div>
-
-                            <div class="pw-stat-sub">
-                                {{ $stat['sub'] }}
-                            </div>
-
+                            <a href="{{ route('teacher.lessons.index') }}" class="sad-btn sad-btn-light">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                Plan a Lesson
+                            </a>
                         </div>
 
                     </div>
 
+                    {{-- Soft-3D teaching artwork: board, chart and books, drawn inline. --}}
+                    <svg class="sad-banner-art" viewBox="0 0 360 220" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="tchBoard" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#ffffff" />
+                                <stop offset="1" stop-color="#ede9fe" />
+                            </linearGradient>
+                            <linearGradient id="tchBookA" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#a78bfa" />
+                                <stop offset="1" stop-color="#7c3aed" />
+                            </linearGradient>
+                            <linearGradient id="tchBookB" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#93c5fd" />
+                                <stop offset="1" stop-color="#6366f1" />
+                            </linearGradient>
+                            <linearGradient id="tchApple" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#fda4af" />
+                                <stop offset="1" stop-color="#e11d48" />
+                            </linearGradient>
+                            <filter id="tchSoft" x="-20%" y="-20%" width="140%" height="160%">
+                                <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#4c1d95" flood-opacity="0.18" />
+                            </filter>
+                        </defs>
 
-                    <a
-                        href="{{ route($stat['route']) }}"
-                        class="pw-stat-link"
-                    >
-                        {{ $stat['link'] }} →
-                    </a>
+                        <circle cx="220" cy="110" r="96" fill="#ffffff" opacity="0.35" />
+                        <ellipse cx="200" cy="206" rx="130" ry="10" fill="#7c3aed" opacity="0.08" />
 
-                </div>
+                        {{-- Board with a rising chart --}}
+                        <g filter="url(#tchSoft)">
+                            <rect x="110" y="28" width="170" height="112" rx="16" fill="url(#tchBoard)" />
+                            <rect x="132" y="96" width="18" height="28" rx="5" fill="#ddd6fe" />
+                            <rect x="160" y="80" width="18" height="44" rx="5" fill="#c4b5fd" />
+                            <rect x="188" y="64" width="18" height="60" rx="5" fill="#a78bfa" />
+                            <rect x="216" y="50" width="18" height="74" rx="5" fill="#7c3aed" />
+                            <path d="M138 84 L168 70 L196 56 L248 40" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
+                            <circle cx="248" cy="40" r="5" fill="#f59e0b" />
+                            <path d="M195 140 L185 168 M195 140 L205 168" stroke="#c4b5fd" stroke-width="5" stroke-linecap="round" />
+                        </g>
 
-            @endforeach
+                        {{-- Books --}}
+                        <g filter="url(#tchSoft)">
+                            <rect x="60" y="176" width="110" height="22" rx="6" fill="url(#tchBookB)" />
+                            <rect x="68" y="181" width="94" height="5" rx="2.5" fill="#ffffff" opacity="0.55" />
+                            <rect x="70" y="154" width="92" height="22" rx="6" fill="url(#tchBookA)" />
+                            <rect x="78" y="159" width="76" height="5" rx="2.5" fill="#ffffff" opacity="0.5" />
+                        </g>
 
-        </section>
+                        {{-- Apple --}}
+                        <g filter="url(#tchSoft)">
+                            <circle cx="290" cy="182" r="18" fill="url(#tchApple)" />
+                            <path d="M290 164 C290 156 296 152 302 152" fill="none" stroke="#7c2d12" stroke-width="3" stroke-linecap="round" />
+                            <path d="M292 160 C300 154 310 158 312 164 C304 168 296 166 292 160 Z" fill="#34d399" />
+                        </g>
+                    </svg>
 
-
-
-        {{-- =====================================================
-             AI EVALUATIONS AWAITING REVIEW
-        ====================================================== --}}
-
-        <section class="pw-dashboard-card mb-4" data-dashboard-section="ai-awaiting-review">
-
-            <div class="pw-card-header px-5 pb-3 pt-5 sm:px-6">
-
-                <div>
-                    <div class="pw-section-heading">
-                        AI Evaluations Awaiting Review
-                    </div>
-
-                    <div class="pw-section-subheading">
-                        Suggested scores the students cannot see until you grade them
-                    </div>
-                </div>
-
-                <div class="pw-mini-chip" data-ai-awaiting-count>
-                    {{ number_format($aiAwaitingCount ?? 0) }} awaiting
-                </div>
-
-            </div>
+                </section>
 
 
-            @if(($aiUnfinished ?? collect())->isNotEmpty())
-                <div class="mx-5 mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 sm:mx-6" data-ai-unfinished>
-                    {{ $aiUnfinished->count() }} {{ \Illuminate\Support\Str::plural('AI evaluation', $aiUnfinished->count()) }} did not finish (failed or interrupted). Open
-                    <a href="{{ route('teacher.submissions.show', $aiUnfinished->first()->id) }}" class="font-semibold underline">
-                        the latest one
-                    </a>
-                    to retry, or grade manually.
-                </div>
-            @endif
+                {{-- SUMMARY CARDS (Manuscript Fig. 37). Label and value stay in
+                     their own elements; each card links to its page. --}}
+                <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
 
-
-            @if(($aiAwaitingSubmissions ?? collect())->isEmpty())
-
-                <div class="px-5 pb-6 pt-2 text-center text-sm text-slate-500 sm:px-6">
-                    No AI evaluations are waiting for your review.
-                </div>
-
-            @else
-
-                <ul class="divide-y divide-slate-100">
-                    @foreach($aiAwaitingSubmissions as $awaiting)
-                        <li class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-slate-800">
-                                    {{ $awaiting->student?->name ?? 'Student' }}
-                                </p>
-                                <p class="mt-0.5 truncate text-xs text-slate-500">
-                                    {{ $awaiting->assignment?->title ?? 'Assignment' }}
-                                    · {{ $awaiting->assignment?->course?->title ?? 'Course' }}
-                                </p>
-                            </div>
-
-                            <div class="flex shrink-0 items-center gap-3">
-                                <span class="inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700">
-                                    AI: {{ $awaiting->ai_score }} / {{ $awaiting->assignment?->max_score }}
-                                </span>
-
-                                <a
-                                    href="{{ route('teacher.submissions.show', $awaiting) }}"
-                                    class="inline-flex h-9 items-center justify-center rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white transition hover:bg-violet-700"
-                                >
-                                    Review
-                                </a>
-                            </div>
-
-                        </li>
+                    @foreach($statCards as $stat)
+                        <a href="{{ route($stat['route']) }}" class="sad-card sad-lift block p-5">
+                            <span class="sad-chip {{ $statTones[$loop->index % 4] }}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['icon'] }}" />
+                                </svg>
+                            </span>
+                            <p class="mt-4 text-sm font-medium text-slate-500">{{ $stat['label'] }}</p>
+                            <p class="mt-1 text-3xl font-bold tracking-tight text-slate-950">{{ $stat['value'] }}</p>
+                            <p class="mt-2 text-xs font-medium text-slate-400">{{ $stat['sub'] }}</p>
+                        </a>
                     @endforeach
-                </ul>
 
-                @if(($aiAwaitingCount ?? 0) > $aiAwaitingSubmissions->count())
-                    <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500 sm:px-6">
-                        Showing the latest {{ $aiAwaitingSubmissions->count() }} of {{ number_format($aiAwaitingCount) }}.
-                        Open an assignment's submissions to see the rest.
-                    </p>
-                @endif
-
-            @endif
-
-        </section>
+                </section>
 
 
+                {{-- AI EVALUATIONS AWAITING REVIEW --}}
+                <section class="sad-card overflow-hidden" data-dashboard-section="ai-awaiting-review">
 
-        {{-- =====================================================
-             OVERVIEW + UPCOMING
-        ====================================================== --}}
-
-        <section class="pw-overview-grid">
-
-
-            {{-- CLASS OVERVIEW --}}
-            <div class="pw-dashboard-card pw-overview-card">
-
-                <div class="pw-card-header">
-
-                    <div>
-
-                        <div class="pw-section-heading">
-                            Class Overview
+                    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
+                        <div>
+                            <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                                <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
+                                    <path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"></path>
+                                </svg>
+                                AI Evaluations Awaiting Review
+                            </h2>
+                            <p class="mt-1 text-xs text-slate-500">Suggested scores the students cannot see until you grade them</p>
                         </div>
 
-                        <div class="pw-section-subheading">
-                            Overall learner performance
-                        </div>
-
+                        <span class="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700" data-ai-awaiting-count>
+                            {{ number_format($aiAwaitingCount ?? 0) }} awaiting
+                        </span>
                     </div>
 
+                    @if(($aiUnfinished ?? collect())->isNotEmpty())
+                        <div class="mx-5 mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 sm:mx-6" data-ai-unfinished>
+                            {{ $aiUnfinished->count() }} {{ \Illuminate\Support\Str::plural('AI evaluation', $aiUnfinished->count()) }} did not finish (failed or interrupted). Open
+                            <a href="{{ route('teacher.submissions.show', $aiUnfinished->first()->id) }}" class="font-semibold underline">
+                                the latest one
+                            </a>
+                            to retry, or grade manually.
+                        </div>
+                    @endif
 
-                    <div class="pw-mini-chip">
-                        Recent performance
-                    </div>
+                    @if(($aiAwaitingSubmissions ?? collect())->isEmpty())
 
-                </div>
-
-
-                <div class="pw-overview-body">
-
-
-                    {{-- Progress --}}
-                    <div class="pw-progress-panel">
-
-                        <div class="pw-progress-label">
-                            Overall Progress
+                        <div class="border-t border-slate-100 px-5 py-6 text-center text-sm text-slate-500 sm:px-6">
+                            No AI evaluations are waiting for your review.
                         </div>
 
+                    @else
 
-                        <div
-                            class="pw-ring"
-                            style="--pw-progress: {{ min(100, max(0, $averageProgress)) }}%;"
-                        >
-                            <div class="pw-ring-copy">
+                        <ul class="divide-y divide-slate-100 border-t border-slate-100">
+                            @foreach($aiAwaitingSubmissions as $awaiting)
+                                <li class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 
-                                <div class="pw-ring-value">
-                                    {{ $averageProgress }}%
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <span class="sad-chip sad-chip-sm sad-violet">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-semibold text-slate-800">
+                                                {{ $awaiting->student?->name ?? 'Student' }}
+                                            </p>
+                                            <p class="mt-0.5 truncate text-xs text-slate-500">
+                                                {{ $awaiting->assignment?->title ?? 'Assignment' }}
+                                                · {{ $awaiting->assignment?->course?->title ?? 'Course' }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex shrink-0 items-center gap-3">
+                                        <span class="inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700">
+                                            AI: {{ $awaiting->ai_score }} / {{ $awaiting->assignment?->max_score }}
+                                        </span>
+
+                                        <a href="{{ route('teacher.submissions.show', $awaiting) }}" class="sad-btn sad-btn-primary h-9! px-4! text-xs!">
+                                            Review
+                                        </a>
+                                    </div>
+
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if(($aiAwaitingCount ?? 0) > $aiAwaitingSubmissions->count())
+                            <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500 sm:px-6">
+                                Showing the latest {{ $aiAwaitingSubmissions->count() }} of {{ number_format($aiAwaitingCount) }}.
+                                Open an assignment's submissions to see the rest.
+                            </p>
+                        @endif
+
+                    @endif
+
+                </section>
+
+
+                {{-- CLASS OVERVIEW: progress ring + quiz trend --}}
+                <section class="sad-card p-5 sm:p-6">
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                                <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 3v18h18"></path>
+                                    <path d="m7 16 4-5 4 3 5-7"></path>
+                                </svg>
+                                Class Overview
+                            </h2>
+                            <p class="mt-1 text-xs text-slate-500">Overall learner performance</p>
+                        </div>
+                        <span class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-500">
+                            @if($chartAttemptCount > 0)
+                                Latest {{ $chartAttemptCount }} {{ \Illuminate\Support\Str::plural('attempt', $chartAttemptCount) }}
+                            @else
+                                No attempts yet
+                            @endif
+                        </span>
+                    </div>
+
+                    <div class="mt-5 grid grid-cols-1 gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
+
+                        {{-- Average course progress --}}
+                        <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                            <p class="text-xs font-semibold text-slate-500">Overall Progress</p>
+                            <div class="relative mt-3 h-28 w-28">
+                                <svg viewBox="0 0 100 100" class="h-full w-full -rotate-90" role="img" aria-label="Average course progress">
+                                    <circle cx="50" cy="50" r="42" fill="none" stroke="#ede9fe" stroke-width="11" />
+                                    @if($ringProgress > 0)
+                                        <circle cx="50" cy="50" r="42" fill="none" stroke="#7c3aed" stroke-width="11" stroke-linecap="round"
+                                                stroke-dasharray="{{ round($ringCircumference * $ringProgress / 100, 3) }} {{ round($ringCircumference, 3) }}" />
+                                    @endif
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="text-xl font-bold text-slate-950">{{ $averageProgress }}%</span>
+                                    <span class="text-[10px] font-medium text-slate-400">Average</span>
                                 </div>
-
-                                <div class="pw-ring-caption">
-                                    Average
-                                </div>
-
                             </div>
+                            <p class="mt-3 text-xs font-semibold text-emerald-600">{{ $totalStudents }} active learners</p>
                         </div>
 
-
-                        <div class="pw-active-learners">
-                            {{ $totalStudents }} active learners
-                        </div>
-
-                    </div>
-
-
-
-                    {{-- Chart --}}
-                    <div class="pw-chart-panel">
-
-                        <div class="pw-chart-meta">
-
-                            <div class="pw-chart-title">
-                                Quiz Performance Trend
-                            </div>
-
-                            <div class="pw-chart-note">
-                                @if($chartAttemptCount > 0)
-                                    Latest {{ $chartAttemptCount }}
-                                    {{ \Illuminate\Support\Str::plural('attempt', $chartAttemptCount) }}
-                                @else
-                                    No attempts yet
-                                @endif
-                            </div>
-
-                        </div>
-
-
-                        <div class="pw-chart-box">
+                        {{-- Quiz performance trend --}}
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-700">Quiz Performance Trend</p>
 
                             @if($chartAttemptCount > 0)
-
-                                <div class="pw-y-axis">
-                                    <span>100%</span>
-                                    <span>75%</span>
-                                    <span>50%</span>
-                                    <span>25%</span>
-                                    <span>0%</span>
-                                </div>
-
-
-                                <div class="pw-chart-canvas">
-
-                                    <div class="pw-chart-grid">
-                                        @for($i = 0; $i < 5; $i++)
-                                            <div></div>
-                                        @endfor
-                                    </div>
-
-
-                                    <svg
-                                        class="pw-chart-svg"
-                                        preserveAspectRatio="none"
-                                        viewBox="0 0 600 150"
-                                    >
-
-                                        <defs>
-                                            <linearGradient
-                                                id="pwDashboardGradient"
-                                                x1="0"
-                                                y1="0"
-                                                x2="0"
-                                                y2="1"
-                                            >
-                                                <stop
-                                                    offset="0%"
-                                                    stop-color="#7657f6"
-                                                    stop-opacity=".18"
-                                                />
-                                                <stop
-                                                    offset="100%"
-                                                    stop-color="#7657f6"
-                                                    stop-opacity="0"
-                                                />
-                                            </linearGradient>
-                                        </defs>
-
-
-                                        @if($chartAttemptCount >= 2)
-
-                                            <polygon
-                                                points="{{ $chartAreaPoints }}"
-                                                fill="url(#pwDashboardGradient)"
-                                            />
-
-
-                                            <polyline
-                                                points="{{ $chartPoints }}"
-                                                fill="none"
-                                                stroke="#7657f6"
-                                                stroke-width="3"
-                                                vector-effect="non-scaling-stroke"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                            />
-
-                                        @endif
-
-
-                                        @foreach($chartCoordinates as $point)
-
-                                            <circle
-                                                cx="{{ $point['x'] }}"
-                                                cy="{{ $point['y'] }}"
-                                                r="4.5"
-                                                fill="#7657f6"
-                                            />
-
-                                        @endforeach
-
-                                    </svg>
-
-
-                                    <div
-                                        class="pw-x-axis"
-                                        @if($chartAttemptCount === 1)
-                                            style="justify-content:center;"
-                                        @endif
-                                    >
-                                        @foreach($chartCoordinates as $point)
-                                            <span>{{ $loop->iteration }}</span>
+                                <div class="mt-3 grid grid-cols-[36px_minmax(0,1fr)] gap-2">
+                                    <div class="flex h-40 flex-col justify-between pb-0.5 text-right text-[11px] text-slate-400">
+                                        @foreach([100, 75, 50, 25, 0] as $tick)
+                                            <span>{{ $tick }}%</span>
                                         @endforeach
                                     </div>
 
-                                </div>
+                                    <div>
+                                        <div class="relative h-40">
+                                            <div class="absolute inset-0 flex flex-col justify-between">
+                                                @foreach([100, 75, 50, 25, 0] as $tick)
+                                                    <div class="border-t border-dashed border-slate-200"></div>
+                                                @endforeach
+                                            </div>
 
+                                            <svg class="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 600 150" preserveAspectRatio="none" role="img" aria-label="Quiz performance trend">
+                                                <defs>
+                                                    <linearGradient id="tchTrendFill" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0" stop-color="#7c3aed" stop-opacity="0.22" />
+                                                        <stop offset="1" stop-color="#7c3aed" stop-opacity="0" />
+                                                    </linearGradient>
+                                                </defs>
+                                                @if($chartAttemptCount >= 2)
+                                                    <polygon points="{{ $chartAreaPoints }}" fill="url(#tchTrendFill)" />
+                                                    <polyline points="{{ $chartPoints }}" fill="none" stroke="#7c3aed" stroke-width="2.5"
+                                                              stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                                                @endif
+                                                {{-- Round dots that stay round although the SVG stretches. --}}
+                                                @foreach($chartCoordinates as $point)
+                                                    <line x1="{{ $point['x'] }}" y1="{{ $point['y'] }}" x2="{{ $point['x'] }}" y2="{{ $point['y'] }}"
+                                                          stroke="#7c3aed" stroke-width="9" stroke-linecap="round" vector-effect="non-scaling-stroke">
+                                                        <title>Attempt {{ $loop->iteration }}: {{ round($point['score']) }}%</title>
+                                                    </line>
+                                                @endforeach
+                                            </svg>
+                                        </div>
+
+                                        <div class="mt-2 flex {{ $chartAttemptCount === 1 ? 'justify-center' : 'justify-between' }} text-[11px] text-slate-400">
+                                            @foreach($chartCoordinates as $point)
+                                                <span>{{ $loop->iteration }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                             @else
-
-                                <div
-                                    style="
-                                        height:100%;
-                                        display:grid;
-                                        place-items:center;
-                                        padding:24px;
-                                        text-align:center;
-                                        color:#94a3b8;
-                                        font-size:10px;
-                                        font-weight:600;
-                                    "
-                                >
+                                <div class="mt-3 flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 px-6 text-center text-sm font-medium text-slate-500">
                                     Quiz attempts will appear here once students submit assessments.
                                 </div>
-
                             @endif
-
                         </div>
 
                     </div>
 
-                </div>
+                </section>
+
+
+                {{-- RECENT ACTIVITIES --}}
+                <section class="sad-card overflow-hidden">
+
+                    <div class="flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
+                        <div>
+                            <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                                <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <path d="M12 7v5l3 2"></path>
+                                </svg>
+                                Recent Activities
+                            </h2>
+                            <p class="mt-1 text-xs text-slate-500">Latest activity from your courses</p>
+                        </div>
+                        <a href="{{ route('teacher.quiz-results.index') }}" class="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700">
+                            View All
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                        </a>
+                    </div>
+
+                    <ul class="divide-y divide-slate-100 border-t border-slate-100">
+                        @forelse($activityItems as $activity)
+                            @php
+                                $tone = match ($activity['type']) {
+                                    'quiz' => 'sad-emerald',
+                                    'lesson' => 'sad-sky',
+                                    default => 'sad-violet',
+                                };
+                            @endphp
+
+                            <li class="flex items-center gap-3 px-5 py-3.5 sm:px-6">
+                                <span class="sad-chip sad-chip-sm {{ $tone }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        @if($activity['type'] === 'quiz')
+                                            <path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                                        @elseif($activity['type'] === 'lesson')
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>
+                                        @else
+                                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                                        @endif
+                                    </svg>
+                                </span>
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold text-slate-800">{{ $activity['title'] }}</p>
+                                    <p class="truncate text-xs text-slate-500">{{ $activity['description'] }}</p>
+                                </div>
+
+                                <div class="flex shrink-0 flex-col items-end gap-1">
+                                    @if($activity['score'] !== null)
+                                        <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $activity['score'] >= 75 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600' }}">
+                                            {{ $activity['score'] }}%
+                                        </span>
+                                    @endif
+                                    <span class="text-[11px] text-slate-400">{{ $activity['time']->diffForHumans() }}</span>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="px-6 py-10 text-center text-sm text-slate-500">No recent activities yet.</li>
+                        @endforelse
+                    </ul>
+
+                </section>
 
             </div>
 
 
+            {{-- =====================================================
+                RIGHT RAIL
+            ====================================================== --}}
 
-            {{-- UPCOMING --}}
-            <div class="pw-dashboard-card pw-upcoming-card">
+            <aside class="min-w-0 space-y-6">
 
-                <div class="pw-panel-header">
-
-                    <div>
-
-                        <div class="pw-section-heading">
-                            Upcoming
+                {{-- Upcoming deadlines --}}
+                <section class="sad-card overflow-hidden">
+                    <div class="flex items-center justify-between gap-3 px-5 pt-5">
+                        <div>
+                            <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                                <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"></path>
+                                </svg>
+                                Upcoming
+                            </h2>
+                            <p class="mt-1 text-xs text-slate-500">Scheduled deadlines</p>
                         </div>
-
-                        <div class="pw-section-subheading">
-                            Scheduled deadlines
-                        </div>
-
+                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            {{ $upcomingAssignments->count() }} {{ \Illuminate\Support\Str::plural('item', $upcomingAssignments->count()) }}
+                        </span>
                     </div>
 
-
-                    <div class="pw-panel-count">
-                        {{ $upcomingAssignments->count() }}
-                        {{ \Illuminate\Support\Str::plural('item', $upcomingAssignments->count()) }}
-                    </div>
-
-                </div>
-
-
-                <div class="pw-upcoming-body">
-
-                    @forelse($upcomingAssignments as $assignment)
-
-                        @php
-                            $due = \Carbon\Carbon::parse(
-                                $assignment->due_date
-                            );
-                        @endphp
-
-
-                        <div class="pw-upcoming-row">
-
-                            <div class="pw-date-card">
-
-                                <div class="pw-date-month">
-                                    {{ $due->format('M') }}
+                    <ul class="mt-3 divide-y divide-slate-100 border-t border-slate-100">
+                        @forelse($upcomingAssignments as $assignment)
+                            @php $due = \Carbon\Carbon::parse($assignment->due_date); @endphp
+                            <li class="flex items-center gap-3 px-5 py-3">
+                                <span class="w-11 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-white text-center shadow-[0_6px_14px_-8px_rgba(124,58,237,0.5)]">
+                                    <span class="block bg-violet-50 py-0.5 text-[10px] font-bold uppercase text-violet-600">{{ $due->format('M') }}</span>
+                                    <span class="block py-1 text-sm font-bold text-slate-900">{{ $due->format('d') }}</span>
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold text-slate-800">{{ $assignment->title }}</p>
+                                    <p class="truncate text-xs text-slate-500">{{ $assignment->course->title ?? 'Course' }} · {{ $due->format('g:i A') }}</p>
                                 </div>
-
-                                <div class="pw-date-day">
-                                    {{ $due->format('d') }}
-                                </div>
-
-                            </div>
-
-
-                            <div style="min-width:0;flex:1;">
-
-                                <div
-                                    style="
-                                        overflow:hidden;
-                                        text-overflow:ellipsis;
-                                        white-space:nowrap;
-                                        font-size:10.5px;
-                                        font-weight:700;
-                                        color:#1f2937;
-                                    "
-                                >
-                                    {{ $assignment->title }}
-                                </div>
-
-                                <div
-                                    style="
-                                        margin-top:3px;
-                                        overflow:hidden;
-                                        text-overflow:ellipsis;
-                                        white-space:nowrap;
-                                        font-size:9px;
-                                        color:#94a3b8;
-                                    "
-                                >
-                                    {{ $assignment->course->title ?? 'Course' }}
-                                </div>
-
-                            </div>
-
-
-                            <div
-                                style="
-                                    flex-shrink:0;
-                                    font-size:9px;
-                                    font-weight:500;
-                                    color:#94a3b8;
-                                    text-align:right;
-                                "
-                            >
-                                {{ $due->format('g:i A') }}
-                            </div>
-
-                        </div>
-
-
-                    @empty
-
-                        <div class="pw-empty-state">
-
-                            <div>
-
-                                <div class="pw-empty-icon">
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"
-                                        />
-                                    </svg>
-                                </div>
-
-                                <div class="pw-empty-title">
-                                    Nothing scheduled
-                                </div>
-
-                                <div class="pw-empty-copy">
-                                    Upcoming assignments will appear here.
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    @endforelse
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        {{-- =====================================================
-             RECENT ACTIVITIES + QUICK ACTIONS
-        ====================================================== --}}
-
-        <section class="pw-bottom-grid">
-
-
-            {{-- RECENT ACTIVITIES --}}
-            <div class="pw-dashboard-card pw-activity-card">
-
-                <div class="pw-panel-header">
-
-                    <div>
-
-                        <div class="pw-section-heading">
-                            Recent Activities
-                        </div>
-
-                        <div class="pw-section-subheading">
-                            Latest activity from your courses
-                        </div>
-
-                    </div>
-
-
-                    <a
-                        href="{{ route('teacher.quiz-results.index') }}"
-                        class="pw-panel-link"
-                    >
-                        View all →
-                    </a>
-
-                </div>
-
-
-                <div>
-
-                    @forelse($activityItems as $activity)
-
-                        <div class="pw-activity-row">
-
-                            @if($activity['type'] === 'quiz')
-
-                                <div class="pw-activity-icon pw-activity-quiz">
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.9"
-                                    >
-                                        <path d="M9 11l3 3L22 4" />
-                                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-                                    </svg>
-                                </div>
-
-                            @elseif($activity['type'] === 'lesson')
-
-                                <div class="pw-activity-icon pw-activity-lesson">
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                    >
-                                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                                    </svg>
-                                </div>
-
-                            @else
-
-                                <div class="pw-activity-icon pw-activity-course">
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                    >
-                                        <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292" />
-                                        <path d="M12 6.042A8.966 8.966 0 0118 3.75c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292" />
-                                    </svg>
-                                </div>
-
-                            @endif
-
-
-                            <div style="min-width:0;flex:1;">
-
-                                <div class="pw-activity-title">
-                                    {{ $activity['title'] }}
-                                </div>
-
-                                <div class="pw-activity-sub">
-                                    {{ $activity['description'] }}
-                                </div>
-
-                            </div>
-
-
-                            @if($activity['score'] !== null)
-
-                                <div
-                                    class="{{
-                                        $activity['score'] >= 75
-                                            ? 'pw-score-good'
-                                            : 'pw-score-bad'
-                                    }}"
-                                >
-                                    {{ $activity['score'] }}%
-                                </div>
-
-                            @endif
-
-
-                            <div class="pw-activity-time">
-                                {{ $activity['time']->diffForHumans() }}
-                            </div>
-
-                        </div>
-
-
-                    @empty
-
-                        <div
-                            style="
-                                padding:45px 20px;
-                                text-align:center;
-                                font-size:10px;
-                                color:#94a3b8;
-                            "
-                        >
-                            No recent activities yet.
-                        </div>
-
-                    @endforelse
-
-                </div>
-
-            </div>
-
-
-
-            {{-- QUICK ACTIONS --}}
-            <div class="pw-dashboard-card pw-quick-card">
-
-                <div>
-
-                    <div class="pw-section-heading">
+                            </li>
+                        @empty
+                            <li class="px-5 py-8 text-center">
+                                <span class="sad-chip sad-violet mx-auto">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"></path></svg>
+                                </span>
+                                <p class="mt-3 text-sm font-semibold text-slate-800">Nothing scheduled</p>
+                                <p class="mt-1 text-xs text-slate-500">Upcoming assignments will appear here.</p>
+                            </li>
+                        @endforelse
+                    </ul>
+                </section>
+
+                {{-- Course status --}}
+                <section class="sad-card p-5">
+                    <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                        <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
+                        </svg>
+                        Course Status
+                    </h2>
+
+                    <ul class="mt-4 space-y-2.5">
+                        <li class="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-2.5">
+                            <span class="sad-chip sad-chip-sm sad-emerald">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"></path></svg>
+                            </span>
+                            <span class="flex-1 text-sm font-medium text-slate-600">Published</span>
+                            <span class="text-base font-bold text-slate-950">{{ $publishedCourses }}</span>
+                        </li>
+                        <li class="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-2.5">
+                            <span class="sad-chip sad-chip-sm sad-amber">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                            </span>
+                            <span class="flex-1 text-sm font-medium text-slate-600">Pending approval</span>
+                            <span class="text-base font-bold text-slate-950">{{ $pendingCourses }}</span>
+                        </li>
+                        <li class="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-2.5">
+                            <span class="sad-chip sad-chip-sm sad-sky">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </span>
+                            <span class="flex-1 text-sm font-medium text-slate-600">Draft or other</span>
+                            <span class="text-base font-bold text-slate-950">{{ $draftOrOther }}</span>
+                        </li>
+                    </ul>
+                </section>
+
+                {{-- Quick actions (existing teacher pages only) --}}
+                <section class="sad-card p-5">
+                    <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
+                        <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
                         Quick Actions
+                    </h2>
+
+                    <div class="mt-4 grid grid-cols-2 gap-3">
+                        @foreach($quickActions as $action)
+                            <a href="{{ $action['href'] }}" class="sad-lift flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/60 px-2 py-4 text-center">
+                                <span class="sad-chip sad-chip-sm {{ $action['tone'] }}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $action['icon'] }}"></path></svg>
+                                </span>
+                                <span class="text-xs font-semibold text-slate-700">{{ $action['label'] }}</span>
+                            </a>
+                        @endforeach
                     </div>
+                </section>
 
-                    <div class="pw-section-subheading">
-                        Jump directly to common teaching tasks.
-                    </div>
+            </aside>
 
-                </div>
-
-
-                <div class="pw-quick-grid">
-
-                    <a
-                        href="{{ route('teacher.courses.create') }}"
-                        class="pw-quick-item"
-                    >
-                        <div
-                            class="pw-quick-icon"
-                            style="background:#f5f3ff;color:#7c3aed;"
-                        >
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    d="M12 5v14M5 12h14"
-                                />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="pw-quick-label">Create Course</div>
-                            <div class="pw-quick-sub">Build new content</div>
-                        </div>
-                    </a>
-
-
-                    <a
-                        href="{{ route('teacher.lessons.index') }}"
-                        class="pw-quick-item"
-                    >
-                        <div
-                            class="pw-quick-icon"
-                            style="background:#eff6ff;color:#2563eb;"
-                        >
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8Z" />
-                                <path d="M14 2v6h6M8 13h8M8 17h6" />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="pw-quick-label">Lessons</div>
-                            <div class="pw-quick-sub">Manage materials</div>
-                        </div>
-                    </a>
-
-
-                    <a
-                        href="{{ route('teacher.quiz-results.index') }}"
-                        class="pw-quick-item"
-                    >
-                        <div
-                            class="pw-quick-icon"
-                            style="background:#fff7ed;color:#ea580c;"
-                        >
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <circle cx="12" cy="12" r="9" />
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="m8.5 12.5 2.5 2.5 4.5-5"
-                                />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="pw-quick-label">Quiz Results</div>
-                            <div class="pw-quick-sub">Review performance</div>
-                        </div>
-                    </a>
-
-
-                    <a
-                        href="{{ route('teacher.student-progress.index') }}"
-                        class="pw-quick-item"
-                    >
-                        <div
-                            class="pw-quick-icon"
-                            style="background:#ecfdf5;color:#059669;"
-                        >
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M4 19V9M9 19V5M14 19v-7M19 19V3"
-                                />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <div class="pw-quick-label">Student Progress</div>
-                            <div class="pw-quick-sub">Track learners</div>
-                        </div>
-                    </a>
-
-                </div>
-
-            </div>
-
-        </section>
-
+        </div>
 
     </main>
 

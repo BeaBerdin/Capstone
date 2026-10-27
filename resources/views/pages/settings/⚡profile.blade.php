@@ -204,8 +204,8 @@ new #[Title('Profile settings')] class extends Component {
            px-6 py-7
            text-zinc-900
            transition-colors
-           dark:bg-neutral-950
-           dark:text-zinc-100
+
+
            lg:px-8"
 >
 
@@ -230,9 +230,9 @@ new #[Title('Profile settings')] class extends Component {
                        px-4 py-3
                        text-sm font-medium
                        text-emerald-700
-                       dark:border-emerald-900/50
-                       dark:bg-emerald-950/30
-                       dark:text-emerald-300"
+
+
+"
             >
                 {{ session('profile-photo-success') }}
             </div>
@@ -250,17 +250,17 @@ new #[Title('Profile settings')] class extends Component {
                    bg-white
                    p-5
                    shadow-sm
-                   dark:border-neutral-700
-                   dark:bg-neutral-900"
+
+"
         >
 
             <div class="mb-5">
 
-                <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 class="text-sm font-semibold text-zinc-900">
                     Profile photo
                 </h3>
 
-                <p class="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                <p class="mt-1 text-sm leading-6 text-zinc-500">
                     Choose a new photo and PathWise will save it automatically.
                 </p>
 
@@ -276,9 +276,9 @@ new #[Title('Profile settings')] class extends Component {
                            border-4 border-white
                            bg-violet-100 shadow-sm
                            ring-1 ring-zinc-200
-                           dark:border-neutral-900
-                           dark:bg-violet-950
-                           dark:ring-neutral-700"
+
+
+"
                 >
 
                     @if($photo)
@@ -302,7 +302,7 @@ new #[Title('Profile settings')] class extends Component {
                         <div
                             class="flex h-full w-full items-center justify-center
                                    text-2xl font-bold text-violet-700
-                                   dark:text-violet-300"
+"
                         >
                             {{ auth()->user()->initials() }}
                         </div>
@@ -317,12 +317,12 @@ new #[Title('Profile settings')] class extends Component {
 
                     <label
                         class="block text-sm font-semibold
-                               text-zinc-800 dark:text-zinc-200"
+                               text-zinc-800"
                     >
                         Choose profile picture
                     </label>
 
-                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         JPG, JPEG, PNG or WEBP. Maximum file size: 2 MB.
                     </p>
 
@@ -348,12 +348,12 @@ new #[Title('Profile settings')] class extends Component {
                                    hover:border-violet-300
                                    hover:bg-violet-50
                                    hover:text-violet-700
-                                   dark:border-zinc-700
-                                   dark:bg-zinc-800
-                                   dark:text-zinc-200
-                                   dark:hover:border-violet-700
-                                   dark:hover:bg-violet-950/30
-                                   dark:hover:text-violet-300"
+
+
+
+
+
+"
                         >
 
                             <svg
@@ -384,8 +384,8 @@ new #[Title('Profile settings')] class extends Component {
                                 class="text-sm font-semibold
                                        text-red-600 transition
                                        hover:text-red-700
-                                       dark:text-red-400
-                                       dark:hover:text-red-300"
+
+"
                             >
                                 Remove photo
                             </button>
@@ -406,7 +406,7 @@ new #[Title('Profile settings')] class extends Component {
 
                     @error('photo')
 
-                        <p class="mt-3 text-xs font-medium text-red-600 dark:text-red-400">
+                        <p class="mt-3 text-xs font-medium text-red-600">
                             {{ $message }}
                         </p>
 
@@ -432,17 +432,17 @@ new #[Title('Profile settings')] class extends Component {
             <div
                 class="rounded-2xl border border-zinc-200
                        bg-white p-5 shadow-sm
-                       dark:border-neutral-700
-                       dark:bg-neutral-900"
+
+"
             >
 
                 <div class="mb-5">
 
-                    <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 class="text-sm font-semibold text-zinc-900">
                         Personal information
                     </h3>
 
-                    <p class="mt-1 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                    <p class="mt-1 text-sm leading-6 text-zinc-500">
                         Update the name and email address associated with your account.
                     </p>
 
@@ -478,11 +478,11 @@ new #[Title('Profile settings')] class extends Component {
                                 class="mt-4 rounded-xl
                                        border border-amber-200
                                        bg-amber-50 p-4
-                                       dark:border-amber-900/50
-                                       dark:bg-amber-950/30"
+
+"
                             >
 
-                                <p class="text-sm text-amber-800 dark:text-amber-200">
+                                <p class="text-sm text-amber-800">
                                     {{ __('Your email address is unverified.') }}
                                 </p>
 
@@ -492,7 +492,7 @@ new #[Title('Profile settings')] class extends Component {
                                     wire:click.prevent="resendVerificationNotification"
                                     class="mt-2 text-sm font-semibold
                                            text-violet-700 hover:text-violet-800 hover:underline
-                                           dark:text-violet-300 dark:hover:text-violet-200"
+"
                                 >
                                     {{ __('Click here to re-send the verification email.') }}
                                 </button>
@@ -500,7 +500,7 @@ new #[Title('Profile settings')] class extends Component {
 
                                 @if(session('status') === 'verification-link-sent')
 
-                                    <p class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+                                    <p class="mt-3 text-sm font-medium text-green-600">
                                         {{ __('A new verification link has been sent to your email address.') }}
                                     </p>
 
@@ -553,16 +553,16 @@ new #[Title('Profile settings')] class extends Component {
 
             <div
                 class="mt-10 border-t border-zinc-200 pt-8
-                       dark:border-neutral-700"
+"
             >
 
                 <div class="mb-5">
 
-                    <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 class="text-base font-semibold text-zinc-900">
                         Danger zone
                     </h3>
 
-                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    <p class="mt-1 text-sm text-zinc-500">
                         Actions in this section may permanently affect your account.
                     </p>
 

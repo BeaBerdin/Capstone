@@ -5,16 +5,16 @@
         <div class="w-full max-w-xl">
 
             @if (session('error'))
-                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {{ session('error') }}
                 </div>
             @endif
 
-            <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                <div class="border-b border-gray-200 bg-violet-50 px-6 py-8 text-center dark:border-zinc-700 dark:bg-violet-950/20">
+                <div class="border-b border-slate-200 bg-violet-50 px-6 py-8 text-center">
 
-                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-300">
+                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
@@ -31,11 +31,11 @@
                         </svg>
                     </div>
 
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-2xl font-bold text-slate-900">
                         Course Invitation
                     </h1>
 
-                    <p class="mt-2 text-sm text-gray-600 dark:text-zinc-400">
+                    <p class="mt-2 text-sm text-slate-600">
                         You have been invited to join this course.
                     </p>
 
@@ -44,44 +44,44 @@
                 <div class="px-6 py-8">
 
                     <div class="mb-6">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                             Course
                         </p>
 
-                        <h2 class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+                        <h2 class="mt-1 text-xl font-semibold text-slate-900">
                             {{ $invitation->course->title ?? 'Course unavailable' }}
                         </h2>
                     </div>
 
-                    <div class="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-zinc-900">
+                    <div class="mb-6 rounded-lg bg-slate-50 p-4">
 
                         <div class="flex items-center justify-between gap-4">
 
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     Invitation Code
                                 </p>
 
-                                <p class="mt-1 font-mono text-lg font-bold tracking-wider text-violet-600 dark:text-violet-300">
+                                <p class="mt-1 font-mono text-lg font-bold tracking-wider text-violet-600">
                                     {{ $invitation->code }}
                                 </p>
                             </div>
 
                             @if ($invitation->isAccepted())
 
-                                <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
                                     Accepted
                                 </span>
 
                             @elseif ($invitation->isExpired())
 
-                                <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
                                     Expired
                                 </span>
 
                             @else
 
-                                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-green-300">
+                                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
                                     Active
                                 </span>
 
@@ -93,9 +93,9 @@
 
                     @if ($invitation->expires_at)
 
-                        <p class="mb-6 text-sm text-gray-500 dark:text-zinc-400">
+                        <p class="mb-6 text-sm text-slate-500">
                             This invitation expires on
-                            <span class="font-medium text-gray-700 dark:text-zinc-300">
+                            <span class="font-medium text-slate-700">
                                 {{ $invitation->expires_at->format('M d, Y h:i A') }}
                             </span>.
                         </p>
@@ -106,7 +106,7 @@
 
                         @if ((float) ($invitation->course->price ?? 0) > 0)
 
-                            <div class="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                            <div class="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                 <p class="font-semibold">
                                     This is a paid course.
                                 </p>
@@ -142,7 +142,7 @@
 </form>
                         @else
 
-                            <div class="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                            <div class="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
                                 This is a free course. You can join immediately.
                             </div>
 
@@ -164,13 +164,13 @@
 
                     @elseif ($invitation->isAccepted())
 
-                        <div class="rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                        <div class="rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-700">
                             This invitation has already been accepted.
                         </div>
 
                     @else
 
-                        <div class="rounded-lg bg-red-50 px-4 py-3 text-center text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                        <div class="rounded-lg bg-red-50 px-4 py-3 text-center text-sm text-red-700">
                             This invitation has expired and can no longer be used.
                         </div>
 

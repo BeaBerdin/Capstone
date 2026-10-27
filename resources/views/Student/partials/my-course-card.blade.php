@@ -50,7 +50,7 @@
 
 
 <article
-    class="course-card pw-card pw-course-card overflow-hidden {{ $isCancelled ? 'pw-course-card-cancelled' : '' }}"
+    class="sad-card course-card pw-card pw-course-card overflow-hidden {{ $isCancelled ? 'pw-course-card-cancelled' : '' }}"
     data-search="{{ $searchText }}"
     data-category="{{ $course->category?->id ?? '' }}"
     data-progress="{{ $progressGroup }}"
@@ -100,21 +100,21 @@
 
             @if($isCompleted)
 
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
                     <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
                     Completed
                 </span>
 
             @elseif($isCancelled)
 
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
                     <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
                     Cancelled
                 </span>
 
             @else
 
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-blue-700 shadow-sm backdrop-blur">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-blue-700 shadow-sm backdrop-blur">
                     <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                     In Progress
                 </span>
@@ -125,7 +125,7 @@
 
 
         {{-- PROGRESS --}}
-        <div class="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur">
+        <div class="absolute bottom-3 right-3 rounded-full bg-slate-950/75 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
             {{ number_format($progress, 0) }}%
         </div>
 
@@ -139,7 +139,7 @@
     <div class="p-5">
 
         {{-- CATEGORY --}}
-        <p class="text-[10px] font-bold uppercase tracking-[.08em] {{ $isCancelled ? 'text-slate-400' : 'text-violet-500' }}">
+        <p class="text-xs font-bold uppercase tracking-[.08em] {{ $isCancelled ? 'text-slate-500' : 'text-violet-500' }}">
             {{ $course->category?->name ?? 'Course' }}
         </p>
 
@@ -160,19 +160,19 @@
         <div class="mt-4 flex flex-wrap gap-2">
 
             @if($course->difficulty_level)
-                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600">
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
                     {{ ucfirst($course->difficulty_level) }}
                 </span>
             @endif
 
             @if($course->estimated_hours)
-                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-600">
+                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">
                     {{ $course->estimated_hours }} hrs
                 </span>
             @endif
 
             @if($course->certificate_available)
-                <span class="rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-semibold text-orange-600">
+                <span class="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-600">
                     Certificate
                 </span>
             @endif
@@ -213,20 +213,20 @@
         <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
 
             <div>
-                <dt class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Enrolled
                 </dt>
-                <dd class="mt-1 text-[11px] font-semibold text-slate-600">
+                <dd class="mt-1 text-xs font-semibold text-slate-600">
                     {{ $formatDate($enrollment->enrolled_at) }}
                 </dd>
             </div>
 
             @if($isCompleted)
                 <div class="text-right">
-                    <dt class="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Completed
                     </dt>
-                    <dd class="mt-1 text-[11px] font-semibold text-emerald-600" data-completed-on>
+                    <dd class="mt-1 text-xs font-semibold text-emerald-600" data-completed-on>
                         {{ $formatDate($enrollment->completed_at) }}
                     </dd>
                 </div>
@@ -267,7 +267,7 @@
 
                     <a
                         href="{{ route('student.course.show', $course) }}"
-                        class="inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
+                        class="sad-btn-primary inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
                     >
                         Course Details
                     </a>
@@ -291,7 +291,7 @@
 
             <a
                 href="{{ route('student.learn.course', $course) }}"
-                class="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-xs font-semibold text-white transition hover:bg-violet-700"
+                class="sad-btn-primary mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-xs font-semibold text-white transition hover:bg-violet-700"
             >
                 <svg
                     class="h-3.5 w-3.5"

@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Quiz Builder'">
+@include('partials.soft3d')
 
 @php
     $questionCount = $quiz ? $quiz->questions->count() : 0;
@@ -61,7 +62,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -69,7 +70,7 @@
 
 
             {{-- BREADCRUMB --}}
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
 
                 <a
                     href="{{ route('teacher.my-courses') }}"
@@ -238,7 +239,7 @@
             <section class="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
 
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Questions
@@ -248,7 +249,7 @@
                         {{ $questionCount }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Quiz items
                     </p>
 
@@ -256,7 +257,7 @@
 
 
 
-                <div class="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Total Points
@@ -266,7 +267,7 @@
                         {{ $totalPoints }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Available points
                     </p>
 
@@ -274,7 +275,7 @@
 
 
 
-                <div class="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Passing Score
@@ -284,7 +285,7 @@
                         {{ $quiz ? $quiz->passing_score : 75 }}%
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         Required to pass
                     </p>
 
@@ -292,7 +293,7 @@
 
 
 
-                <div class="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
 
                     <p class="text-xs font-semibold text-slate-500">
                         Time Limit
@@ -306,7 +307,7 @@
                         }}
                     </p>
 
-                    <p class="mt-1 text-xs text-slate-400">
+                    <p class="mt-1 text-xs text-slate-500">
                         {{
                             $quiz && $quiz->time_limit_minutes
                                 ? 'Minutes'
@@ -331,7 +332,7 @@
 
 
                     {{-- QUIZ SETTINGS --}}
-                    <section class="pw-card p-5 sm:p-7">
+                    <section class="sad-card pw-card p-5 sm:p-7">
 
                         <div class="border-b border-slate-100 pb-5">
 
@@ -441,7 +442,7 @@
                                         <span
                                             class="pointer-events-none absolute right-4
                                                    top-1/2 -translate-y-1/2
-                                                   text-sm text-slate-400"
+                                                   text-sm text-slate-500"
                                         >
                                             %
                                         </span>
@@ -478,7 +479,7 @@
                                         <span
                                             class="pointer-events-none absolute right-4
                                                    top-1/2 -translate-y-1/2
-                                                   text-xs text-slate-400"
+                                                   text-xs text-slate-500"
                                         >
                                             minutes
                                         </span>
@@ -560,7 +561,7 @@
 
                                     <button
                                         type="submit"
-                                        class="inline-flex h-11 items-center
+                                        class="sad-btn-primary inline-flex h-11 items-center
                                                justify-center rounded-xl
                                                bg-violet-600 px-5
                                                text-sm font-semibold text-white
@@ -595,7 +596,7 @@
                     {{-- AI QUIZ GENERATOR --}}
                     @if($quiz)
 
-                        <section class="pw-card overflow-hidden">
+                        <section class="sad-card pw-card overflow-hidden">
 
                             <div
                                 class="border-b border-violet-100
@@ -627,7 +628,7 @@
                                             <div>
 
                                                 <p
-                                                    class="text-[10px] font-bold
+                                                    class="text-xs font-bold
                                                            uppercase tracking-[.13em]
                                                            text-violet-500"
                                                 >
@@ -666,7 +667,7 @@
                                         class="inline-flex self-start
                                                rounded-full border
                                                border-violet-100 bg-white
-                                               px-3 py-1.5 text-[11px]
+                                               px-3 py-1.5 text-xs
                                                font-semibold text-violet-600"
                                     >
                                         1 generation = 1 API request
@@ -740,7 +741,7 @@
                                             <p
                                                 class="mt-2 text-xs
                                                        leading-5
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Generate several questions in
                                                 one request to conserve the
@@ -820,7 +821,7 @@
                                             <p
                                                 class="mt-2 text-xs
                                                        leading-5
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Difficulty changes how deeply
                                                 Gemini tests the lesson
@@ -866,7 +867,7 @@
 
                                         <p
                                             class="text-xs leading-5
-                                                   text-slate-400"
+                                                   text-slate-500"
                                         >
                                             AI questions are appended.
                                             Existing manual questions are
@@ -877,7 +878,7 @@
                                         <button
                                             type="submit"
                                             data-ai-generate-button
-                                            class="inline-flex h-11
+                                            class="sad-btn-primary inline-flex h-11
                                                    items-center justify-center
                                                    rounded-xl bg-violet-600
                                                    px-5 text-sm font-semibold
@@ -968,7 +969,7 @@
                                 @forelse($quiz->questions as $question)
 
                                     <article
-                                        class="pw-question-card
+                                        class="sad-card pw-question-card
                                                rounded-2xl border
                                                border-slate-200
                                                bg-white p-5
@@ -1010,7 +1011,7 @@
                                                         {{ $loop->iteration }}
                                                     </p>
 
-                                                    <p class="mt-0.5 text-[11px] text-slate-400">
+                                                    <p class="mt-0.5 text-xs text-slate-500">
                                                         {{ $question->points }}
                                                         {{
                                                             \Illuminate\Support\Str::plural(
@@ -1081,7 +1082,7 @@
                                                                        justify-center
                                                                        rounded-full
                                                                        bg-slate-100
-                                                                       text-[10px]
+                                                                       text-xs
                                                                        font-bold
                                                                        text-slate-600"
                                                             >
@@ -1177,7 +1178,7 @@
 
                                                     <button
                                                         type="submit"
-                                                        class="inline-flex h-10
+                                                        class="sad-btn-primary inline-flex h-10
                                                                items-center justify-center
                                                                rounded-xl bg-violet-600
                                                                px-4 text-xs font-semibold
@@ -1232,7 +1233,7 @@
                                                     class="rounded-lg bg-slate-100
                                                            px-3 py-2 text-xs
                                                            font-semibold
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     🔒 Locked
                                                 </span>
@@ -1258,7 +1259,7 @@
                                             No questions yet.
                                         </p>
 
-                                        <p class="mt-1 text-xs text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             Add your first question below.
                                         </p>
 
@@ -1275,12 +1276,12 @@
                         {{-- ADD QUESTION --}}
                         @if($quizCanBeModified)
 
-                        <section class="pw-card p-5 sm:p-7">
+                        <section class="sad-card pw-card p-5 sm:p-7">
 
                             <div class="flex items-start gap-4">
 
                                 <div
-                                    class="flex h-11 w-11
+                                    class="sad-chip sad-violet flex h-11 w-11
                                            shrink-0 items-center
                                            justify-center rounded-xl
                                            bg-violet-50
@@ -1386,7 +1387,7 @@
                                                            justify-center
                                                            rounded-full
                                                            bg-slate-100
-                                                           text-[10px]
+                                                           text-xs
                                                            font-bold
                                                            text-slate-600"
                                                 >
@@ -1476,7 +1477,7 @@
 
                                     <button
                                         type="submit"
-                                        class="inline-flex h-11
+                                        class="sad-btn-primary inline-flex h-11
                                                items-center justify-center
                                                rounded-xl bg-violet-600
                                                px-5 text-sm font-semibold
@@ -1580,10 +1581,10 @@
 
 
                         {{-- COURSE --}}
-                        <section class="pw-card p-5">
+                        <section class="sad-card pw-card p-5">
 
                             <p
-                                class="text-[10px] font-bold uppercase
+                                class="text-xs font-bold uppercase
                                        tracking-[.12em] text-violet-500"
                             >
                                 Quiz Lesson
@@ -1602,7 +1603,7 @@
 
                                 <div class="flex items-center justify-between text-xs">
 
-                                    <span class="text-slate-400">
+                                    <span class="text-slate-500">
                                         Lesson order
                                     </span>
 
@@ -1619,7 +1620,7 @@
 
 
                         {{-- CHECKLIST --}}
-                        <section class="pw-card p-5">
+                        <section class="sad-card pw-card p-5">
 
                             <h3 class="text-sm font-bold text-slate-900">
                                 Quiz checklist
@@ -1638,7 +1639,7 @@
                                                {{
                                                    $quiz
                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                       : 'bg-slate-100 text-slate-400'
+                                                       : 'bg-slate-100 text-slate-500'
                                                }}
                                                text-xs font-bold"
                                     >
@@ -1662,7 +1663,7 @@
                                                {{
                                                    $questionCount > 0
                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                       : 'bg-slate-100 text-slate-400'
+                                                       : 'bg-slate-100 text-slate-500'
                                                }}
                                                text-xs font-bold"
                                     >
@@ -1690,7 +1691,7 @@
                                                {{
                                                    $quiz?->is_published
                                                        ? 'bg-emerald-50 text-emerald-600'
-                                                       : 'bg-slate-100 text-slate-400'
+                                                       : 'bg-slate-100 text-slate-500'
                                                }}
                                                text-xs font-bold"
                                     >
@@ -1753,7 +1754,7 @@
 
                                     <div class="flex justify-between text-xs">
 
-                                        <span class="text-slate-400">
+                                        <span class="text-slate-500">
                                             Passing
                                         </span>
 
@@ -1766,7 +1767,7 @@
 
                                     <div class="mt-2 flex justify-between text-xs">
 
-                                        <span class="text-slate-400">
+                                        <span class="text-slate-500">
                                             Status
                                         </span>
 

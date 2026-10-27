@@ -43,7 +43,8 @@
     </style>
 
 
-    <div class="min-h-screen bg-[#f8f9fc]">
+@include('partials.soft3d')
+    <div class="sad-page min-h-screen bg-[#f8f9fc]">
 
         <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -54,7 +55,12 @@
                     HEADER
                 ====================================================== --}}
 
-                <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                {{-- Header card, as on My Certificates. --}}
+                <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                    <div class="relative px-6 py-6 sm:px-7">
+                        <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+                <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                     <div>
 
@@ -74,6 +80,8 @@
                     </div>
 
                 </div>
+                    </div>
+                </section>
 
 
                 {{-- =====================================================
@@ -136,7 +144,7 @@
                             </p>
                         </div>
 
-                        <span class="rounded-lg bg-violet-600 px-3 py-2 text-[11px] font-bold text-white">
+                        <span class="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white">
                             + Add User
                         </span>
 
@@ -203,12 +211,12 @@
                         </div>
 
                         <div class="sm:col-span-2 flex items-center justify-between gap-4">
-                            <p class="text-[11px] text-slate-400">
+                            <p class="text-xs text-slate-500">
                                 Accounts created here are already email-verified. Ask the user to change the password after the first login.
                             </p>
 
                             <button type="submit"
-                                    class="h-10 shrink-0 rounded-xl bg-violet-600 px-5 text-xs font-bold text-white transition hover:bg-violet-700">
+                                    class="sad-btn-primary h-10 shrink-0 rounded-xl bg-violet-600 px-5 text-xs font-bold text-white transition hover:bg-violet-700">
                                 Create Account
                             </button>
                         </div>
@@ -226,7 +234,7 @@
 
                     {{-- ADMIN --}}
 
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -242,7 +250,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                            <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -259,7 +267,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Department administrators
                         </p>
 
@@ -268,7 +276,7 @@
 
                     {{-- TEACHERS --}}
 
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -284,7 +292,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <div class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -301,7 +309,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Course instructors
                         </p>
 
@@ -310,7 +318,7 @@
 
                     {{-- STUDENTS --}}
 
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -326,7 +334,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <div class="sad-chip sad-chip-sm sad-sky flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
 
                                 <svg
                                     class="h-5 w-5"
@@ -345,7 +353,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Registered learners
                         </p>
 
@@ -354,7 +362,7 @@
 
                     {{-- SUPER ADMIN --}}
 
-                    <div class="pw-card pw-hover p-5">
+                    <div class="sad-card pw-card pw-hover p-5">
 
                         <div class="flex items-start justify-between gap-4">
 
@@ -370,7 +378,7 @@
 
                             </div>
 
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                            <div class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
 
                                 <svg
                                     class="h-5 w-5"
@@ -386,7 +394,7 @@
 
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             System-level administrators
                         </p>
 
@@ -399,7 +407,7 @@
                     USER DIRECTORY
                 ====================================================== --}}
 
-                <section class="pw-card mt-6 overflow-hidden">
+                <section class="sad-card pw-card mt-6 overflow-hidden">
 
 
                     {{-- TABLE HEADER --}}
@@ -428,7 +436,7 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 
                                     <svg
-                                        class="h-4 w-4 text-slate-400"
+                                        class="h-4 w-4 text-slate-500"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
@@ -444,7 +452,7 @@
                                     type="text"
                                     id="userSearch"
                                     placeholder="Search users..."
-                                    class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+                                    class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs text-slate-700 outline-none transition placeholder:text-slate-500 focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
                                 >
 
                             </div>
@@ -462,7 +470,7 @@
 
                             <thead class="border-b border-slate-100 bg-slate-50/80">
 
-                                <tr class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+                                <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
 
                                     <th class="px-6 py-4">
                                         User
@@ -547,7 +555,7 @@
 
                                             <div class="flex items-center gap-3">
 
-                                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
+                                                <div class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600">
 
                                                     {{ strtoupper(substr($user->name, 0, 1)) }}
 
@@ -559,7 +567,7 @@
                                                         {{ $user->name }}
                                                     </p>
 
-                                                    <p class="mt-0.5 text-[11px] text-slate-400">
+                                                    <p class="mt-0.5 text-xs text-slate-500">
                                                         PathWise User
                                                     </p>
 
@@ -587,7 +595,7 @@
 
                                             @if($currentRole)
 
-                                                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold {{ $roleClass }}">
+                                                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold {{ $roleClass }}">
 
                                                     <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
 
@@ -597,7 +605,7 @@
 
                                             @else
 
-                                                <span class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-bold text-slate-500">
+                                                <span class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">
                                                     No Role
                                                 </span>
 
@@ -660,7 +668,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Are you sure you want to change this user role?')"
-                                                    class="h-9 rounded-lg bg-violet-600 px-3 text-[11px] font-bold text-white transition hover:bg-violet-700"
+                                                    class="sad-btn-primary h-9 rounded-lg bg-violet-600 px-3 text-xs font-bold text-white transition hover:bg-violet-700"
                                                 >
                                                     Update
                                                 </button>
@@ -680,7 +688,7 @@
 
                                             <div class="flex items-center gap-2">
 
-                                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold {{ $isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600' }}">
+                                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-bold {{ $isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600' }}">
                                                     {{ $isActive ? 'Active' : 'Deactivated' }}
                                                 </span>
 
@@ -698,7 +706,7 @@
 
                                                         <button
                                                             type="submit"
-                                                            class="h-8 rounded-lg border px-2.5 text-[11px] font-bold transition {{ $isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}"
+                                                            class="h-8 rounded-lg border px-2.5 text-xs font-bold transition {{ $isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}"
                                                         >
                                                             {{ $isActive ? 'Deactivate' : 'Activate' }}
                                                         </button>
@@ -710,7 +718,7 @@
 
                                             @if(! $user->hasVerifiedEmail())
                                                 <div class="mt-1.5 flex items-center gap-2">
-                                                    <p class="text-[10px] text-amber-600">Email not verified</p>
+                                                    <p class="text-xs text-amber-600">Email not verified</p>
 
                                                     <form
                                                         action="{{ route('users.verify-email', $user) }}"
@@ -722,7 +730,7 @@
 
                                                         <button
                                                             type="submit"
-                                                            class="h-7 rounded-lg border border-amber-200 px-2 text-[10px] font-bold text-amber-700 transition hover:bg-amber-50"
+                                                            class="h-7 rounded-lg border border-amber-200 px-2 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
                                                         >
                                                             Mark verified
                                                         </button>
@@ -732,7 +740,7 @@
 
                                             <a
                                                 href="{{ route('users.edit', $user) }}"
-                                                class="mt-1.5 inline-flex h-7 items-center rounded-lg border border-violet-200 px-2.5 text-[10px] font-bold text-violet-700 transition hover:bg-violet-50"
+                                                class="mt-1.5 inline-flex h-7 items-center rounded-lg border border-violet-200 px-2.5 text-xs font-bold text-violet-700 transition hover:bg-violet-50"
                                             >
                                                 Edit name / email
                                             </a>
@@ -748,7 +756,7 @@
                                                 {{ $user->created_at->format('M d, Y') }}
                                             </p>
 
-                                            <p class="mt-0.5 text-[10px] text-slate-400">
+                                            <p class="mt-0.5 text-xs text-slate-500">
                                                 {{ $user->created_at->format('h:i A') }}
                                             </p>
 
@@ -763,7 +771,7 @@
 
                                         <td colspan="6" class="px-6 py-16 text-center">
 
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                            <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
 
                                                 <svg
                                                     class="h-6 w-6"
@@ -784,7 +792,7 @@
                                                 No users found
                                             </h3>
 
-                                            <p class="mt-1 text-xs text-slate-400">
+                                            <p class="mt-1 text-xs text-slate-500">
                                                 Registered users will appear here.
                                             </p>
 
@@ -801,7 +809,7 @@
 
                                     <td colspan="6" class="px-6 py-14 text-center">
 
-                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                                        <div class="sad-chip sad-violet mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
 
                                             <svg
                                                 class="h-5 w-5"
@@ -820,7 +828,7 @@
                                             No matching users
                                         </h3>
 
-                                        <p class="mt-1 text-xs text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             Try searching with a different name, email, or role.
                                         </p>
 

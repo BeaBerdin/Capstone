@@ -1,76 +1,105 @@
 <x-layouts::app title="Enrollments">
+@include('partials.soft3d')
+<div class="space-y-6 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Enrollments</h1>
+    {{-- Header card, as on My Certificates. --}}
+    <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+        <div class="relative px-6 py-6 sm:px-7">
+            <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
 
-        <a href="{{ route('enrollments.create') }}"
-           class="px-4 py-2 bg-blue-600 text-white rounded">
-            Add Enrollment
-        </a>
-    </div>
+    <x-pw.page-header title="Enrollments" class="relative">
+        <x-slot:actions>
+            <a href="{{ route('enrollments.create') }}"
+               class="sad-btn-primary inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+                Add Enrollment
+            </a>
+        </x-slot:actions>
+    </x-pw.page-header>
+        </div>
+    </section>
 
     @if(session('success'))
-        <div class="mb-4 p-3 bg-green-100 text-green-700 rounded">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {{ session('success') }}
         </div>
     @endif
 
-    <div class="overflow-x-auto">
-        <table class="w-full border">
-            <thead>
-                <tr>
-                    <th class="border p-2">Student</th>
-                    <th class="border p-2">Course</th>
-                    <th class="border p-2">Status</th>
-                    <th class="border p-2">Progress</th>
-                    <th class="border p-2">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @foreach($enrollments as $enrollment)
+    <div class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[640px] text-left text-sm">
+                <thead class="border-b border-slate-200 bg-slate-50">
                     <tr>
-                        <td class="border p-2">
-                            {{ $enrollment->student->name }}
-                        </td>
-
-                        <td class="border p-2">
-                            {{ $enrollment->course->title }}
-                        </td>
-
-                        <td class="border p-2">
-                            {{ $enrollment->status }}
-                        </td>
-
-                        <td class="border p-2">
-                            {{ $enrollment->progress_percentage }}%
-                        </td>
-
-                        <td class="border p-2">
-                            <a href="{{ route('enrollments.edit',$enrollment) }}"
-                               class="text-blue-500">
-                                Edit
-                            </a>
-
-                            <form action="{{ route('enrollments.destroy',$enrollment) }}"
-                                  method="POST"
-                                  class="inline">
-
-                                @csrf
-                                @method('DELETE')
-
-                                <button
-                                    onclick="return confirm('Delete Enrollment?')"
-                                    class="text-red-500">
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
+                        <th class="pw-table-head px-5 py-3">Student</th>
+                        <th class="pw-table-head px-5 py-3">Course</th>
+                        <th class="pw-table-head px-5 py-3">Status</th>
+                        <th class="pw-table-head px-5 py-3">Progress</th>
+                        <th class="pw-table-head px-5 py-3">Actions</th>
                     </tr>
-                @endforeach
-            </tbody>
+                </thead>
 
-        </table>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse($enrollments as $enrollment)
+                        @php
+                            $statusTone = match ($enrollment->status) {
+                                'completed' => 'success',
+                                'cancelled' => 'danger',
+                                default => 'violet',
+                            };
+                        @endphp
+
+                        <tr class="transition hover:bg-slate-50/70">
+                            <td class="px-5 py-4 font-medium text-slate-900">
+                                {{ $enrollment->student->name }}
+                            </td>
+
+                            <td class="px-5 py-4 text-slate-700">
+                                {{ $enrollment->course->title }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <x-pw.badge :tone="$statusTone" class="capitalize">{{ $enrollment->status }}</x-pw.badge>
+                            </td>
+
+                            <td class="px-5 py-4 text-slate-700">
+                                {{ $enrollment->progress_percentage }}%
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-4 whitespace-nowrap">
+                                    <a href="{{ route('enrollments.edit',$enrollment) }}"
+                                       class="text-sm font-semibold text-violet-600 hover:text-violet-700">
+                                        Edit
+                                    </a>
+
+                                    <form action="{{ route('enrollments.destroy',$enrollment) }}"
+                                          method="POST"
+                                          class="inline">
+
+                                        @csrf
+                                        @method('DELETE')
+
+                                        <button
+                                            onclick="return confirm('Delete Enrollment?')"
+                                            class="text-sm font-semibold text-red-600 hover:text-red-700">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5">
+                                <x-pw.empty-state title="No enrollments yet." />
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+
+            </table>
+        </div>
     </div>
+
+</div>
 
 </x-layouts::app>

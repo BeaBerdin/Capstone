@@ -1,4 +1,5 @@
 <x-layouts::app :title="'My Transactions'">
+@include('partials.soft3d')
 
 @php
     $totalTransactions = $transactions->count();
@@ -8,7 +9,7 @@
 @endphp
 
 
-<div class="min-h-screen bg-slate-50/70">
+<div class="sad-page min-h-screen bg-slate-50/70">
 
     <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
 
@@ -19,7 +20,7 @@
                 HEADER
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
 
                 <div class="relative px-6 py-7 sm:px-8">
 
@@ -30,7 +31,7 @@
 
                         <div class="max-w-2xl">
 
-                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">
+                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                     <path d="M3 10h18"></path>
@@ -51,7 +52,7 @@
 
                         <a
                             href="{{ route('student.marketplace') }}"
-                            class="inline-flex h-11 w-fit items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                            class="sad-btn-primary inline-flex h-11 w-fit items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
                         >
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -75,7 +76,7 @@
 
             <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-xs font-semibold text-slate-500">
@@ -86,12 +87,12 @@
                                 {{ $totalTransactions }}
                             </p>
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 All purchase attempts
                             </p>
                         </div>
 
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <div class="sad-chip sad-violet flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                 <path d="M3 10h18"></path>
@@ -101,7 +102,7 @@
                 </div>
 
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-xs font-semibold text-slate-500">
@@ -112,12 +113,12 @@
                                 {{ $approvedTransactions }}
                             </p>
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 Verified payments
                             </p>
                         </div>
 
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                        <div class="sad-chip sad-emerald flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 6 9 17l-5-5"></path>
                             </svg>
@@ -126,7 +127,7 @@
                 </div>
 
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-xs font-semibold text-slate-500">
@@ -137,12 +138,12 @@
                                 {{ $pendingTransactions }}
                             </p>
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 Awaiting verification
                             </p>
                         </div>
 
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                        <div class="sad-chip sad-amber flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="9"></circle>
                                 <path d="M12 7v5l3 2"></path>
@@ -152,7 +153,7 @@
                 </div>
 
 
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-xs font-semibold text-slate-500">
@@ -163,12 +164,12 @@
                                 {{ $rejectedTransactions }}
                             </p>
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 Declined transactions
                             </p>
                         </div>
 
-                        <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                        <div class="sad-chip sad-rose flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M18 6 6 18"></path>
                                 <path d="m6 6 12 12"></path>
@@ -185,12 +186,12 @@
                 TRANSACTION HISTORY
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section class="sad-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
-                        <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                        <p class="text-xs font-bold uppercase tracking-[0.12em] text-violet-500">
                             Payment Activity
                         </p>
 
@@ -204,7 +205,7 @@
                     </div>
 
 
-                    <span class="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-500">
+                    <span class="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
                         {{ $totalTransactions }}
                         {{ \Illuminate\Support\Str::plural('record', $totalTransactions) }}
                     </span>
@@ -249,11 +250,11 @@
 
                                 <div class="flex flex-wrap items-center gap-2">
 
-                                    <p class="text-[10px] font-bold uppercase tracking-widest text-violet-500">
+                                    <p class="text-xs font-bold uppercase tracking-widest text-violet-500">
                                         {{ $transaction->transaction_no }}
                                     </p>
 
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold {{ $statusClass }}">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold {{ $statusClass }}">
                                         <span class="h-1.5 w-1.5 rounded-full {{ $dotClass }}"></span>
                                         {{ $statusLabel }}
                                     </span>
@@ -276,7 +277,7 @@
 
                             {{-- AMOUNT --}}
                             <div>
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     Amount
                                 </p>
 
@@ -289,7 +290,7 @@
 
                             {{-- METHOD --}}
                             <div>
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     Method
                                 </p>
 
@@ -302,7 +303,7 @@
 
                             {{-- REFERENCE --}}
                             <div class="min-w-0">
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                     Reference
                                 </p>
 
@@ -321,7 +322,7 @@
 
                                 <a
                                     href="{{ route('student.transactions.show', $transaction) }}"
-                                    class="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-50 lg:w-auto"
+                                    class="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 lg:w-auto"
                                 >
                                     View Details
 
@@ -343,7 +344,7 @@
                     {{-- EMPTY STATE --}}
                     <div class="px-6 py-16 text-center">
 
-                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                        <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                 <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                                 <path d="M3 10h18"></path>
@@ -364,7 +365,7 @@
 
                         <a
                             href="{{ route('student.marketplace') }}"
-                            class="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-5 text-xs font-semibold text-white transition hover:bg-violet-700"
+                            class="sad-btn-primary mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-5 text-xs font-semibold text-white transition hover:bg-violet-700"
                         >
                             Browse Courses
                         </a>

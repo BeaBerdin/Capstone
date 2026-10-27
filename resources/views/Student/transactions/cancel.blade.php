@@ -1,14 +1,15 @@
 
 <x-layouts::app :title="'Transaction Cancelled'">
+@include('partials.soft3d')
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-6 text-slate-900">
 
                     <div class="text-center">
 
-                        <svg class="mx-auto h-12 w-12 text-yellow-500"
+                        <svg class="mx-auto h-12 w-12 text-amber-500"
                              fill="none"
                              viewBox="0 0 24 24"
                              stroke="currentColor">
@@ -22,19 +23,19 @@
                             Payment Cancelled
                         </h3>
 
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-2 text-sm text-slate-500">
                             Your payment for
                             <strong>{{ $transaction->course->title ?? 'the course' }}</strong>
                             was cancelled.
                         </p>
 
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-sm text-slate-500">
                             Transaction No: {{ $transaction->transaction_no }}
                         </p>
 
                         <div class="mt-6">
                             <a href="{{ route('student.marketplace') }}"
-                               class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 focus:bg-purple-700 active:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                               class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 focus:bg-violet-700 active:bg-violet-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                 Back to Marketplace
                             </a>
                         </div>

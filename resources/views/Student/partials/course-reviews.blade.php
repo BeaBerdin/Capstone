@@ -3,9 +3,9 @@
     Needs: $course, $reviewSummary, $reviews, $myReview, $canReview.
     Comments are printed with {{ }}, so they are always escaped text.
 --}}
-<section id="reviews" class="pw-card mt-6 scroll-mt-24 overflow-hidden">
+<section id="reviews" class="sad-card pw-card mt-6 scroll-mt-24 overflow-hidden">
 
-    <div class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-zinc-800">
+    <div class="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
             <h2 class="pw-heading text-lg font-bold">Reviews</h2>
             <p class="pw-muted mt-1 text-sm">What students say about this course.</p>
@@ -32,22 +32,22 @@
         {{-- THE STUDENT'S OWN REVIEW / FORM --}}
         @if ($myReview && $myReview->is_hidden)
 
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
                         Hidden by an administrator
                     </span>
                     <x-rating-stars :rating="$myReview->rating" />
                 </div>
 
                 @if (filled($myReview->comment))
-                    <p class="mt-3 whitespace-pre-line break-words text-sm text-slate-700 dark:text-zinc-300">{{ $myReview->comment }}</p>
+                    <p class="mt-3 whitespace-pre-line break-words text-sm text-slate-700">{{ $myReview->comment }}</p>
                 @endif
 
-                <p class="mt-3 text-xs text-amber-800 dark:text-amber-200">
+                <p class="mt-3 text-xs text-amber-800">
                     Reason: {{ $myReview->hidden_reason }}
                 </p>
-                <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                <p class="mt-1 text-xs text-amber-700">
                     Only you can see this review. It cannot be edited or deleted while it is hidden.
                 </p>
             </div>
@@ -57,7 +57,7 @@
             <form
                 method="POST"
                 action="{{ $myReview ? route('student.reviews.update', $myReview) : route('student.reviews.store', $course) }}"
-                class="rounded-xl border border-violet-100 bg-violet-50/50 p-4 sm:p-5 dark:border-violet-500/20 dark:bg-violet-500/5"
+                class="rounded-xl border border-violet-100 bg-violet-50/50 p-4 sm:p-5"
             >
                 @csrf
                 @if ($myReview)
@@ -86,7 +86,7 @@
                                     @checked($selectedRating === $value)
                                     required
                                 >
-                                <span class="inline-flex h-10 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition peer-checked:border-amber-400 peer-checked:bg-amber-50 peer-checked:text-amber-700 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:peer-checked:bg-amber-500/10 dark:peer-checked:text-amber-300">
+                                <span class="inline-flex h-10 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition peer-checked:border-amber-400 peer-checked:bg-amber-50 peer-checked:text-amber-700 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-500">
                                     <svg class="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                         <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.36 4.18a1 1 0 0 0 .95.69h4.4c.97 0 1.37 1.24.59 1.81l-3.56 2.59a1 1 0 0 0-.36 1.12l1.36 4.18c.3.92-.75 1.69-1.54 1.12l-3.56-2.59a1 1 0 0 0-1.18 0l-3.56 2.59c-.79.57-1.84-.2-1.54-1.12l1.36-4.18a1 1 0 0 0-.36-1.12L1.75 9.6c-.78-.57-.38-1.81.59-1.81h4.4a1 1 0 0 0 .95-.69l1.36-4.18Z" />
                                     </svg>
@@ -120,7 +120,7 @@
                 @enderror
 
                 <div class="mt-4 flex flex-wrap gap-2">
-                    <button type="submit" class="inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
+                    <button type="submit" class="sad-btn-primary inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2">
                         {{ $myReview ? 'Save Changes' : 'Post Review' }}
                     </button>
                 </div>
@@ -149,14 +149,14 @@
                 No reviews yet. Students who take this course can rate it here.
             </p>
         @else
-            <ul class="divide-y divide-slate-100 dark:divide-zinc-800">
+            <ul class="divide-y divide-slate-100">
                 @foreach ($reviews as $review)
                     <li class="py-4 first:pt-0 last:pb-0">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="pw-heading text-sm font-semibold">{{ $review->student?->name ?? 'Student' }}</span>
                                 @if ((int) $review->student_id === (int) auth()->id())
-                                    <span class="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">You</span>
+                                    <span class="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">You</span>
                                 @endif
                             </div>
                             <span class="pw-soft text-xs">{{ $review->created_at?->format('M d, Y') }}</span>
@@ -172,7 +172,7 @@
             </ul>
 
             @if ($reviews->hasPages())
-                <div class="border-t border-slate-100 pt-4 dark:border-zinc-800">
+                <div class="border-t border-slate-100 pt-4">
                     {{ $reviews->links() }}
                 </div>
             @endif

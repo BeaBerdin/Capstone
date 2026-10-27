@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Transaction Details'">
+@include('partials.soft3d')
 
 <style>
     .pw-card {
@@ -35,7 +36,7 @@
     }
 </style>
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-4 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -45,7 +46,12 @@
                 HEADER
             ====================================================== --}}
 
-            <div>
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+            <div class="relative">
                 <a href="{{ route('student.transactions') }}" class="text-xs font-semibold text-violet-600 hover:text-violet-700">
                     &larr; Back to Transactions
                 </a>
@@ -62,6 +68,8 @@
                     Review your payment transaction and upload your proof of payment.
                 </p>
             </div>
+                </div>
+            </section>
 
             @if(session('success'))
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
@@ -80,7 +88,7 @@
                 TRANSACTION
             ====================================================== --}}
 
-            <section class="pw-card p-5 sm:p-7">
+            <section class="sad-card pw-card p-5 sm:p-7">
 
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div class="min-w-0">
@@ -110,21 +118,21 @@
 
                 <dl class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Course</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Course</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">
                             {{ $transaction->course->title ?? 'Course unavailable' }}
                         </dd>
                     </div>
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Amount</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Amount</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">
                             ₱{{ number_format($transaction->amount, 2) }}
                         </dd>
                     </div>
 
                     <div class="rounded-xl bg-slate-50 px-4 py-3">
-                        <dt class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Payment Method</dt>
+                        <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Payment Method</dt>
                         <dd class="mt-1 text-sm font-semibold text-slate-800">
                             {{ \App\Support\PaymentMethods::forTransaction($transaction) ?? 'Not yet submitted' }}
                         </dd>
@@ -133,7 +141,7 @@
 
                 @if($transaction->payment_reference)
                     <div class="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-                        <p class="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Payment Reference</p>
+                        <p class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Payment Reference</p>
                         <p class="mt-1 break-all text-sm font-semibold text-slate-800">
                             {{ $transaction->payment_reference }}
                         </p>
@@ -154,7 +162,7 @@
                                  class="max-h-72 w-auto max-w-full rounded-xl border border-slate-200 object-contain shadow-sm">
                         </a>
 
-                        <p class="mt-2 text-xs text-slate-400">
+                        <p class="mt-2 text-xs text-slate-500">
                             Click image to view full receipt.
                         </p>
                     </div>
@@ -169,7 +177,7 @@
                     UPLOAD PROOF
                 ====================================================== --}}
 
-                <section class="pw-card p-5 sm:p-7">
+                <section class="sad-card pw-card p-5 sm:p-7">
 
                     <h3 class="text-lg font-bold text-slate-900">
                         Upload / Replace Payment Proof
@@ -239,7 +247,7 @@
                                     <p id="file-name" class="mt-2 break-all text-sm font-medium text-slate-600">
                                         Click to upload payment receipt
                                     </p>
-                                    <p class="mt-1 text-xs text-slate-400">
+                                    <p class="mt-1 text-xs text-slate-500">
                                         JPG, JPEG, or PNG only
                                     </p>
                                 </div>
@@ -269,7 +277,7 @@
                         </div>
 
                         <button type="submit"
-                                class="inline-flex h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700 sm:w-auto">
+                                class="sad-btn-primary inline-flex h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700 sm:w-auto">
                             Submit Payment Proof
                         </button>
                     </form>
@@ -281,7 +289,7 @@
                     STATUS
                 ====================================================== --}}
 
-                <section class="pw-card p-5 sm:p-7">
+                <section class="sad-card pw-card p-5 sm:p-7">
                     <h3 class="text-lg font-bold text-slate-900">
                         Payment Status
                     </h3>

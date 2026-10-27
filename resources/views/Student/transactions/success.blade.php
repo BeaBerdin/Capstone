@@ -1,9 +1,10 @@
 <x-layouts::app :title="$paymentVerified ? 'Payment Confirmed' : 'Payment Verification'">
+@include('partials.soft3d')
 
     <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
+        <div class="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-6 text-slate-900">
 
                     <div class="text-center">
 
@@ -23,7 +24,7 @@
                                 Payment Confirmed!
                             </h3>
 
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-2 text-sm text-slate-500">
                                 Your payment for
                                 <strong>
                                     {{ $transaction->course->title ?? 'the course' }}
@@ -31,7 +32,7 @@
                                 has been securely verified through PayMongo.
                             </p>
 
-                            <p class="mt-2 text-sm text-green-600 dark:text-green-400">
+                            <p class="mt-2 text-sm text-green-600">
                                 You are now enrolled and can start learning.
                             </p>
 
@@ -51,7 +52,7 @@
                                 Payment Verification Pending
                             </h3>
 
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-2 text-sm text-slate-500">
                                 PathWise has not confirmed a completed PayMongo payment for
                                 <strong>
                                     {{ $transaction->course->title ?? 'this course' }}
@@ -59,19 +60,19 @@
                                 yet.
                             </p>
 
-                            <p class="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                            <p class="mt-2 text-sm text-amber-600">
                                 {{ $verificationMessage ?? 'Please check the payment status again.' }}
                             </p>
 
                         @endif
 
 
-                        <div class="mt-6 rounded-lg bg-gray-50 p-4 text-left dark:bg-gray-900/50">
+                        <div class="mt-6 rounded-lg bg-slate-50 p-4 text-left">
 
                             <div class="grid gap-3 sm:grid-cols-2">
 
                                 <div>
-                                    <p class="text-xs uppercase tracking-wide text-gray-400">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">
                                         Transaction No.
                                     </p>
                                     <p class="mt-1 text-sm font-semibold">
@@ -80,7 +81,7 @@
                                 </div>
 
                                 <div>
-                                    <p class="text-xs uppercase tracking-wide text-gray-400">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">
                                         Status
                                     </p>
                                     <p class="mt-1 text-sm font-semibold {{ $paymentVerified ? 'text-green-600' : 'text-amber-600' }}">
@@ -89,7 +90,7 @@
                                 </div>
 
                                 <div>
-                                    <p class="text-xs uppercase tracking-wide text-gray-400">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">
                                         Amount
                                     </p>
                                     <p class="mt-1 text-sm font-semibold">
@@ -98,7 +99,7 @@
                                 </div>
 
                                 <div>
-                                    <p class="text-xs uppercase tracking-wide text-gray-400">
+                                    <p class="text-xs uppercase tracking-wide text-slate-500">
                                         Payment Method
                                     </p>
                                     <p class="mt-1 text-sm font-semibold">
@@ -116,24 +117,24 @@
                             @if($paymentVerified)
 
                                 <a href="{{ route('student.my-courses') }}"
-                                   class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 transition">
+                                   class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 transition">
                                     Go to My Courses
                                 </a>
 
                                 <a href="{{ route('student.marketplace') }}"
-                                   class="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-200 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 transition dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                   class="inline-flex items-center px-4 py-2 bg-slate-100 border border-slate-200 rounded-md font-semibold text-xs text-slate-700 uppercase tracking-widest hover:bg-slate-200 transition">
                                     Back to Marketplace
                                 </a>
 
                             @else
 
                                 <a href="{{ route('student.transactions.success', $transaction) }}"
-                                   class="inline-flex items-center px-4 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 transition">
+                                   class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 transition">
                                     Check Payment Status Again
                                 </a>
 
                                 <a href="{{ route('student.transactions') }}"
-                                   class="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-200 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 transition dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                   class="inline-flex items-center px-4 py-2 bg-slate-100 border border-slate-200 rounded-md font-semibold text-xs text-slate-700 uppercase tracking-widest hover:bg-slate-200 transition">
                                     Transaction History
                                 </a>
 

@@ -1,16 +1,24 @@
 
 <x-layouts::app :title="'Student Removal Requests'">
+@include('partials.soft3d')
 
 <div class="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
 
-    <div>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+    {{-- Header card, as on My Certificates. --}}
+    <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+        <div class="relative px-6 py-6 sm:px-7">
+            <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+    <div class="relative">
+        <h1 class="text-2xl font-bold text-neutral-900">
             Student Removal Requests
         </h1>
-        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        <p class="mt-1 text-sm text-neutral-500">
             Review and decide on instructor requests to remove students from courses.
         </p>
     </div>
+        </div>
+    </section>
 
     @if (session('success'))
         <div class="rounded-xl border border-green-200 bg-green-50 p-4 text-green-800">
@@ -28,17 +36,17 @@
         </div>
     @endif
 
-    <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+    <div class="sad-card overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
 
-        <div class="border-b border-neutral-200 p-5 dark:border-neutral-700">
-            <h2 class="font-semibold text-neutral-900 dark:text-white">
+        <div class="border-b border-neutral-200 p-5">
+            <h2 class="font-semibold text-neutral-900">
                 Requests for My Department
             </h2>
         </div>
 
         @if ($requests->isEmpty())
             <div class="p-10 text-center">
-                <h3 class="font-semibold text-neutral-800 dark:text-white">
+                <h3 class="font-semibold text-neutral-800">
                     No removal requests found
                 </h3>
                 <p class="mt-2 text-sm text-neutral-500">
@@ -48,7 +56,7 @@
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-neutral-50 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                    <thead class="bg-neutral-50 text-neutral-600">
                         <tr>
                             <th class="p-4">Instructor</th>
                             <th class="p-4">Student</th>
@@ -59,25 +67,25 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
+                    <tbody class="divide-y divide-neutral-200">
                         @foreach ($requests as $item)
                             <tr>
-                                <td class="p-4 text-neutral-800 dark:text-neutral-200">
+                                <td class="p-4 text-neutral-800">
                                     {{ $item->instructor->name ?? 'Unavailable' }}
                                 </td>
 
-                                <td class="p-4 font-medium text-neutral-900 dark:text-white">
+                                <td class="p-4 font-medium text-neutral-900">
                                     {{ $item->student->name ?? 'Unavailable' }}
                                     <div class="mt-1 text-xs text-neutral-500">
                                         {{ $item->student->email ?? '' }}
                                     </div>
                                 </td>
 
-                                <td class="p-4 text-neutral-700 dark:text-neutral-300">
+                                <td class="p-4 text-neutral-700">
                                     {{ $item->course->title ?? 'Unavailable' }}
                                 </td>
 
-                                <td class="max-w-xs whitespace-normal p-4 text-neutral-600 dark:text-neutral-300">
+                                <td class="max-w-xs whitespace-normal p-4 text-neutral-600">
                                     {{ $item->reason }}
                                 </td>
 
@@ -115,7 +123,7 @@
                                                 rows="2"
                                                 maxlength="2000"
                                                 placeholder="Review note (optional; required if rejecting)"
-                                                class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm text-neutral-900 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
+                                                class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm text-neutral-900"
                                             ></textarea>
 
                                             <div class="flex flex-wrap gap-2">
@@ -141,7 +149,7 @@
                                             </div>
                                         </form>
                                     @else
-                                        <div class="text-xs text-neutral-600 dark:text-neutral-300">
+                                        <div class="text-xs text-neutral-600">
                                             <p>
                                                 Reviewed by:
                                                 {{ $item->reviewer->name ?? 'Unavailable' }}
@@ -161,7 +169,7 @@
                 </table>
             </div>
 
-            <div class="border-t border-neutral-200 p-4 dark:border-neutral-700">
+            <div class="border-t border-neutral-200 p-4">
                 {{ $requests->links() }}
             </div>
         @endif

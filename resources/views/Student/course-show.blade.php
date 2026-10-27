@@ -1,4 +1,5 @@
 <x-layouts::app :title="$course->title">
+@include('partials.soft3d')
 
 @php
     /*
@@ -204,7 +205,7 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
@@ -218,7 +219,7 @@
             <div
                 class="mb-5 flex flex-wrap
                        items-center gap-2
-                       text-xs text-slate-400"
+                       text-xs text-slate-500"
             >
 
                 <a
@@ -256,10 +257,15 @@
                 HEADER
             ====================================================== --}}
 
+            {{-- Header card, as on My Certificates. --}}
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
             <div
-                class="flex flex-col gap-5
+                class="relative flex flex-col gap-5
                        lg:flex-row
-                       lg:items-end
+                       lg:items-center
                        lg:justify-between"
             >
 
@@ -301,7 +307,7 @@
                 <a
                     href="{{ route('student.marketplace') }}"
                     class="inline-flex h-11
-                           self-start items-center
+                           self-start lg:self-auto items-center
                            justify-center gap-2
                            rounded-xl
                            border border-slate-200
@@ -328,6 +334,8 @@
                 </a>
 
             </div>
+                </div>
+            </section>
 
 
 
@@ -400,7 +408,7 @@
                     COURSE OVERVIEW
                 ================================================== --}}
 
-                <section class="pw-card overflow-hidden">
+                <section class="sad-card pw-card overflow-hidden">
 
 
                     {{-- IMAGE --}}
@@ -477,7 +485,7 @@
                                 class="rounded-full
                                        bg-white/95
                                        px-3 py-1.5
-                                       text-[10px]
+                                       text-xs
                                        font-bold uppercase
                                        tracking-[.08em]
                                        text-violet-700
@@ -495,7 +503,7 @@
                                 class="rounded-full
                                        bg-slate-950/70
                                        px-3 py-1.5
-                                       text-[10px]
+                                       text-xs
                                        font-semibold
                                        text-white
                                        backdrop-blur"
@@ -625,11 +633,11 @@
                             <div>
 
                                 <p
-                                    class="text-[10px]
+                                    class="text-xs
                                            font-semibold
                                            uppercase
                                            tracking-[.08em]
-                                           text-slate-400"
+                                           text-slate-500"
                                 >
                                     Instructor
                                 </p>
@@ -659,7 +667,7 @@
                 <aside>
 
                     <section
-                        class="pw-card
+                        class="sad-card pw-card
                                overflow-hidden
                                xl:sticky xl:top-6"
                     >
@@ -692,7 +700,7 @@
 
                                 <p
                                     class="mt-1 text-xs
-                                           text-slate-400"
+                                           text-slate-500"
                                 >
                                     No payment required
                                 </p>
@@ -709,7 +717,7 @@
 
                                 <p
                                     class="mt-1 text-xs
-                                           text-slate-400"
+                                           text-slate-500"
                                 >
                                     One-time course purchase
                                 </p>
@@ -738,7 +746,7 @@
                                     >
 
                                         <div
-                                            class="flex h-9 w-9
+                                            class="sad-chip sad-chip-sm sad-violet flex h-9 w-9
                                                    items-center
                                                    justify-center
                                                    rounded-xl
@@ -799,7 +807,7 @@
                                     >
 
                                         <div
-                                            class="flex h-9 w-9
+                                            class="sad-chip sad-chip-sm sad-sky flex h-9 w-9
                                                    items-center
                                                    justify-center
                                                    rounded-xl
@@ -871,7 +879,7 @@
                                     >
 
                                         <div
-                                            class="flex h-9 w-9
+                                            class="sad-chip sad-chip-sm sad-emerald flex h-9 w-9
                                                    items-center
                                                    justify-center
                                                    rounded-xl
@@ -935,7 +943,7 @@
                                     >
 
                                         <div
-                                            class="flex h-9 w-9
+                                            class="sad-chip sad-chip-sm sad-amber flex h-9 w-9
                                                    items-center
                                                    justify-center
                                                    rounded-xl
@@ -1033,11 +1041,11 @@
                                         <div>
 
                                             @if($isCompleted)
-                                                <span class="inline-flex rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                                                <span class="inline-flex rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-bold text-white">
                                                     Completed
                                                 </span>
 
-                                                <p class="mt-1.5 text-[11px] leading-5 text-emerald-700">
+                                                <p class="mt-1.5 text-xs leading-5 text-emerald-700">
                                                     You finished this course{{ $enrollment->completed_at ? ' on '.\Carbon\Carbon::parse($enrollment->completed_at)->format('M d, Y') : '' }}.
                                                     You can still review the lessons.
                                                 </p>
@@ -1052,7 +1060,7 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[11px]
+                                                           text-xs
                                                            leading-5
                                                            text-emerald-700"
                                                 >
@@ -1158,7 +1166,7 @@
 
                                 <a
                                     href="{{ route('student.learn.course', $course) }}"
-                                    class="mt-5
+                                    class="sad-btn-primary mt-5
                                            inline-flex h-11
                                            w-full items-center
                                            justify-center gap-2
@@ -1205,7 +1213,7 @@
                                         Enrollment cancelled
                                     </p>
 
-                                    <p class="mt-1 text-[11px] leading-5 text-rose-700">
+                                    <p class="mt-1 text-xs leading-5 text-rose-700">
                                         Your enrollment was cancelled. Contact the course administrator.
                                     </p>
                                 </div>
@@ -1269,7 +1277,7 @@
 
                                             <p
                                                 class="mt-1
-                                                       text-[11px]
+                                                       text-xs
                                                        leading-5
                                                        text-orange-700"
                                             >
@@ -1324,7 +1332,7 @@
 
                                     <p
                                         class="mt-1
-                                               text-[11px]
+                                               text-xs
                                                leading-5
                                                text-blue-700"
                                     >
@@ -1359,7 +1367,7 @@
                                     <button
                                         type="submit"
                                         data-purchase-button
-                                        class="inline-flex
+                                        class="sad-btn-primary inline-flex
                                                h-11 w-full
                                                items-center
                                                justify-center gap-2
@@ -1422,7 +1430,7 @@
 
                                     <p
                                         class="mt-1
-                                               text-[11px]
+                                               text-xs
                                                leading-5
                                                text-emerald-700"
                                     >
@@ -1444,7 +1452,7 @@
 
                                     <button
                                         type="submit"
-                                        class="inline-flex
+                                        class="sad-btn-primary inline-flex
                                                h-11 w-full
                                                items-center
                                                justify-center gap-2
@@ -1551,7 +1559,7 @@
 
 
                 {{-- LESSONS --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p
                         class="text-xs
@@ -1577,7 +1585,7 @@
 
 
                         <div
-                            class="flex h-9 w-9
+                            class="sad-chip sad-chip-sm sad-violet flex h-9 w-9
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -1613,7 +1621,7 @@
 
 
                 {{-- DURATION --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p
                         class="text-xs
@@ -1638,7 +1646,7 @@
                             <span
                                 class="text-sm
                                        font-semibold
-                                       text-slate-400"
+                                       text-slate-500"
                             >
                                 min
                             </span>
@@ -1646,7 +1654,7 @@
 
 
                         <div
-                            class="flex h-9 w-9
+                            class="sad-chip sad-chip-sm sad-sky flex h-9 w-9
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -1679,7 +1687,7 @@
 
 
                 {{-- PREVIEWS --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p
                         class="text-xs
@@ -1705,7 +1713,7 @@
 
 
                         <div
-                            class="flex h-9 w-9
+                            class="sad-chip sad-chip-sm sad-emerald flex h-9 w-9
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -1722,7 +1730,7 @@
 
 
                 {{-- LEVEL --}}
-                <div class="pw-card p-5">
+                <div class="sad-card pw-card p-5">
 
                     <p
                         class="text-xs
@@ -1753,7 +1761,7 @@
 
 
                         <div
-                            class="flex h-9 w-9
+                            class="sad-chip sad-chip-sm sad-amber flex h-9 w-9
                                    items-center
                                    justify-center
                                    rounded-xl
@@ -1776,7 +1784,7 @@
             ====================================================== --}}
 
             <section
-                class="pw-card mt-6
+                class="sad-card pw-card mt-6
                        overflow-hidden"
             >
 
@@ -1826,7 +1834,7 @@
 
                         <a
                             href="{{ route('student.learn.course', $course) }}"
-                            class="inline-flex h-10
+                            class="sad-btn-primary inline-flex h-10
                                    self-start items-center
                                    justify-center
                                    rounded-xl
@@ -1930,10 +1938,10 @@
                                         >
 
                                             <p
-                                                class="text-[10px]
+                                                class="text-xs
                                                        font-bold uppercase
                                                        tracking-[.08em]
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Lesson
                                                 {{ $lesson->lesson_order }}
@@ -1946,7 +1954,7 @@
                                                     class="rounded-full
                                                            bg-violet-50
                                                            px-2 py-0.5
-                                                           text-[9px]
+                                                           text-xs
                                                            font-bold
                                                            uppercase
                                                            tracking-wide
@@ -1974,8 +1982,8 @@
                                                    flex-wrap
                                                    items-center
                                                    gap-3
-                                                   text-[11px]
-                                                   text-slate-400"
+                                                   text-xs
+                                                   text-slate-500"
                                         >
 
                                             <span>
@@ -2120,7 +2128,7 @@
                     >
 
                         <div
-                            class="mx-auto flex
+                            class="sad-chip sad-violet mx-auto flex
                                    h-14 w-14
                                    items-center
                                    justify-center
@@ -2164,7 +2172,7 @@
 
                         <p
                             class="mt-1 text-xs
-                                   text-slate-400"
+                                   text-slate-500"
                         >
                             Course lessons will
                             appear here once added.
@@ -2191,7 +2199,7 @@
             ====================================================== --}}
 
             <section
-                class="pw-card mt-6 p-5 sm:p-6"
+                class="sad-card pw-card mt-6 p-5 sm:p-6"
             >
 
                 <div
@@ -2207,7 +2215,7 @@
                     >
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-violet flex h-10 w-10
                                    shrink-0 items-center
                                    justify-center
                                    rounded-xl
@@ -2265,7 +2273,7 @@
                     >
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-sky flex h-10 w-10
                                    shrink-0 items-center
                                    justify-center
                                    rounded-xl
@@ -2345,7 +2353,7 @@
                     >
 
                         <div
-                            class="flex h-10 w-10
+                            class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10
                                    shrink-0 items-center
                                    justify-center
                                    rounded-xl

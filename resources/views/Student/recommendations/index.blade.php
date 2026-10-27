@@ -1,6 +1,7 @@
 <x-layouts::app :title="'Recommended Courses'">
+@include('partials.soft3d')
 
-<div class="min-h-screen bg-slate-50/70">
+<div class="sad-page min-h-screen bg-slate-50/70">
 
     <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
 
@@ -11,7 +12,7 @@
                 HEADER
             ====================================================== --}}
 
-            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
 
                 <div class="relative px-6 py-7 sm:px-8">
 
@@ -22,7 +23,7 @@
 
                         <div class="max-w-2xl">
 
-                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">
+                            <div class="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                 </svg>
@@ -49,7 +50,7 @@
                             </div>
 
                             <div>
-                                <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                                <p class="text-xs font-bold uppercase tracking-[0.12em] text-violet-500">
                                     Recommendations
                                 </p>
 
@@ -105,7 +106,7 @@
                 @endphp
 
 
-                <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-violet-200 hover:shadow-md">
+                <section class="sad-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-violet-200 hover:shadow-md">
 
                     <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_210px]">
 
@@ -143,7 +144,7 @@
 
 
                             <div class="absolute left-4 top-4">
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 shadow-sm backdrop-blur">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-violet-700 shadow-sm backdrop-blur">
                                     <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                     </svg>
@@ -153,7 +154,7 @@
 
 
                             <div class="absolute bottom-4 left-4 right-4">
-                                <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-white/75">
+                                <p class="text-xs font-bold uppercase tracking-[0.12em] text-white/75">
                                     {{ $course?->category?->name ?? 'Recommended Course' }}
                                 </p>
                             </div>
@@ -168,19 +169,19 @@
                             <div class="flex flex-wrap items-center gap-2">
 
                                 @if($course?->difficulty_level)
-                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold text-slate-600">
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
                                         {{ ucfirst($course->difficulty_level) }}
                                     </span>
                                 @endif
 
                                 @if($course?->estimated_hours)
-                                    <span class="rounded-full bg-violet-50 px-3 py-1 text-[10px] font-semibold text-violet-700">
+                                    <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
                                         {{ $course->estimated_hours }} hrs
                                     </span>
                                 @endif
 
                                 @if($course?->certificate_available)
-                                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700">
+                                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                                         Certificate Available
                                     </span>
                                 @endif
@@ -188,7 +189,7 @@
                             </div>
 
 
-                            <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-500">
+                            <p class="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-violet-500">
                                 Recommended for you
                             </p>
 
@@ -216,7 +217,7 @@
                                     </div>
 
                                     <div>
-                                        <p class="text-[10px] font-bold uppercase tracking-[0.1em] text-violet-600">
+                                        <p class="text-xs font-bold uppercase tracking-[0.1em] text-violet-600">
                                             Why this fits you
                                         </p>
 
@@ -238,7 +239,7 @@
 
                             <div>
 
-                                <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                                <p class="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                                     AI Match
                                 </p>
 
@@ -275,7 +276,7 @@
 
                                 <a
                                     href="{{ route('student.course.show', $course) }}"
-                                    class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+                                    class="sad-btn-primary inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
                                 >
                                     View Course
 
@@ -308,7 +309,7 @@
                     EMPTY STATE
                 ================================================== --}}
 
-                <section class="overflow-hidden rounded-3xl border border-dashed border-violet-200 bg-white shadow-sm">
+                <section class="sad-card overflow-hidden rounded-3xl border border-dashed border-violet-200 bg-white shadow-sm">
 
                     <div class="grid min-h-[360px] grid-cols-1 lg:grid-cols-[1fr_360px]">
 
@@ -317,7 +318,7 @@
 
                             <div class="max-w-xl">
 
-                                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                <div class="sad-chip sad-violet flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
                                     <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                         <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                     </svg>
@@ -338,7 +339,7 @@
 
                                 <a
                                     href="{{ route('student.my-courses') }}"
-                                    class="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                    class="sad-btn-primary mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
                                 >
                                     Go to My Courses
 

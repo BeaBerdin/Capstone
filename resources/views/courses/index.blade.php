@@ -1,29 +1,35 @@
 <x-layouts::app :title="__('Courses')">
+@include('partials.soft3d')
 
-    <div class="space-y-8">
+    <div class="space-y-8 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
         {{-- =========================================================
              PAGE HEADER
         ========================================================== --}}
 
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {{-- Header card, as on My Certificates. --}}
+        <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <div class="relative px-6 py-6 sm:px-7">
+                <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+
+        <div class="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
-                <p class="text-sm font-medium text-purple-600 dark:text-purple-400">
+                <p class="text-sm font-medium text-violet-600">
                     Course Management
                 </p>
 
-                <h1 class="mt-1 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">
                     Courses
                 </h1>
 
-                <p class="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-2 max-w-2xl text-sm text-slate-500">
                     Manage and organize the courses available on PathWise.
                 </p>
             </div>
 
             <a href="{{ route('courses.create') }}"
-               class="inline-flex items-center justify-center rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-700">
+               class="sad-btn-primary inline-flex items-center justify-center rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
 
                 <svg class="mr-2 h-4 w-4"
                      fill="none"
@@ -42,6 +48,8 @@
             </a>
 
         </div>
+            </div>
+        </section>
 
 
         {{-- =========================================================
@@ -50,7 +58,7 @@
 
         @if(session('success'))
 
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-300">
+            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                 {{ session('success') }}
             </div>
 
@@ -58,7 +66,7 @@
 
         @if(session('error') || $errors->any())
 
-            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {{ session('error') ?? $errors->first() }}
             </div>
 
@@ -69,7 +77,7 @@
              SEARCH AND FILTERS
         ========================================================== --}}
 
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div class="sad-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 
             <div class="flex flex-col gap-3 lg:flex-row">
 
@@ -77,7 +85,7 @@
                 <div class="relative flex-1">
 
                     <svg
-                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -95,7 +103,7 @@
                         type="text"
                         autocomplete="off"
                         placeholder="Search courses..."
-                        class="w-full rounded-lg border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-lg border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:ring-violet-500"
                     >
 
                 </div>
@@ -104,7 +112,7 @@
                 {{-- CATEGORY --}}
                 <select
                     id="categoryFilter"
-                    class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    class="rounded-lg border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-violet-500 focus:ring-violet-500"
                 >
 
                     <option value="all">
@@ -125,7 +133,7 @@
                 {{-- STATUS --}}
                 <select
                     id="statusFilter"
-                    class="rounded-lg border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-700 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    class="rounded-lg border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-violet-500 focus:ring-violet-500"
                 >
 
                     <option value="all">
@@ -163,11 +171,11 @@
 
             <div>
 
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 class="text-xl font-semibold text-slate-900">
                     All Courses
                 </h2>
 
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-sm text-slate-500">
 
                     <span id="courseCount">
                         {{ $courses->count() }}
@@ -204,19 +212,19 @@
                     $statusClass = match ($status) {
 
                         'published' =>
-                            'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+                            'bg-green-100 text-green-700',
 
                         'pending' =>
-                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
+                            'bg-amber-100 text-amber-700',
 
                         'rejected' =>
-                            'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+                            'bg-red-100 text-red-700',
 
                         'draft' =>
-                            'bg-gray-100 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400',
+                            'bg-slate-100 text-slate-600',
 
                         default =>
-                            'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+                            'bg-blue-100 text-blue-700',
 
                     };
 
@@ -228,7 +236,7 @@
                 ====================================================== --}}
 
                 <div
-                    class="course-card group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                    class="sad-card course-card group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                     data-title="{{ strtolower($course->title) }}"
                     data-category="{{ $course->category_id }}"
                     data-status="{{ strtolower($course->status) }}"
@@ -237,7 +245,7 @@
 
                     {{-- THUMBNAIL --}}
 
-                    <div class="relative h-44 overflow-hidden bg-linear-to-br from-purple-700 via-purple-600 to-indigo-700">
+                    <div class="relative h-44 overflow-hidden bg-linear-to-br from-violet-700 via-violet-600 to-indigo-700">
 
                         <div class="absolute inset-0 flex items-center justify-center">
 
@@ -287,7 +295,7 @@
 
                         {{-- CATEGORY --}}
 
-                        <p class="text-xs font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-400">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-violet-600">
 
                             {{ $course->category->name ?? 'No Category' }}
 
@@ -296,7 +304,7 @@
 
                         {{-- TITLE --}}
 
-                        <h3 class="mt-2 line-clamp-2 text-lg font-bold leading-snug text-gray-900 dark:text-white">
+                        <h3 class="mt-2 line-clamp-2 text-lg font-bold leading-snug text-slate-900">
 
                             {{ $course->title }}
 
@@ -305,7 +313,7 @@
 
                         {{-- TEACHER --}}
 
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-2 text-sm text-slate-500">
 
                             By {{ $course->teacher->name ?? 'No Teacher' }}
 
@@ -318,7 +326,7 @@
 
                             @if($course->price > 0)
 
-                                <span class="text-lg font-bold text-gray-900 dark:text-white">
+                                <span class="text-lg font-bold text-slate-900">
 
                                     ₱{{ number_format($course->price, 2) }}
 
@@ -326,7 +334,7 @@
 
                             @else
 
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                <span class="text-lg font-bold text-green-600">
 
                                     Free
 
@@ -337,7 +345,7 @@
                         </div>
 
 
-                        <div class="my-4 border-t border-gray-100 dark:border-gray-800"></div>
+                        <div class="my-4 border-t border-slate-100"></div>
 
 
                         {{-- ACTIONS --}}
@@ -402,7 +410,7 @@
 
                                 <a
                                     href="{{ route('courses.edit', $course) }}"
-                                    class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                                    class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-center text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                                 >
                                     Edit
                                 </a>
@@ -424,7 +432,7 @@
                                 <button
                                     type="submit"
                                     onclick="return confirm('Delete this course?')"
-                                    class="w-full rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                                    class="w-full rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                                 >
                                     Delete
                                 </button>
@@ -442,10 +450,10 @@
                 {{-- DATABASE EMPTY --}}
 
                 <div
-                    class="col-span-full rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-900"
+                    class="sad-card col-span-full rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"
                 >
 
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600">
 
                         <svg
                             class="h-7 w-7"
@@ -465,17 +473,17 @@
 
                     </div>
 
-                    <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mt-4 text-lg font-semibold text-slate-900">
                         No courses found
                     </h3>
 
-                    <p class="mx-auto mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mx-auto mt-1 max-w-md text-sm text-slate-500">
                         Create your first course to get started.
                     </p>
 
                     <a
                         href="{{ route('courses.create') }}"
-                        class="mt-5 inline-flex rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700"
+                        class="sad-btn-primary mt-5 inline-flex rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
                     >
                         Add Course
                     </a>
@@ -491,10 +499,10 @@
 
             <div
                 id="noCourseResults"
-                class="col-span-full hidden rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-900"
+                class="sad-card col-span-full hidden rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"
             >
 
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
 
                     <svg
                         class="h-7 w-7"
@@ -514,11 +522,11 @@
 
                 </div>
 
-                <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 class="mt-4 text-lg font-semibold text-slate-900">
                     No courses found
                 </h3>
 
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-sm text-slate-500">
                     Try searching for another course or changing your filters.
                 </p>
 

@@ -1,4 +1,5 @@
 <x-layouts::app :title="$assignment->title">
+@include('partials.soft3d')
 
     <div class="mx-auto max-w-5xl space-y-6">
 
@@ -29,7 +30,7 @@
 
 
         {{-- HEADER --}}
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="sad-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 
@@ -86,7 +87,7 @@
             <div class="mt-6 grid gap-4 sm:grid-cols-3">
 
                 <div class="rounded-xl bg-slate-50 p-4">
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
                         Maximum Score
                     </p>
 
@@ -96,7 +97,7 @@
                 </div>
 
                 <div class="rounded-xl bg-slate-50 p-4">
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
                         Due Date
                     </p>
 
@@ -106,7 +107,7 @@
                 </div>
 
                 <div class="rounded-xl bg-slate-50 p-4">
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
                         AI Evaluation
                     </p>
 
@@ -125,11 +126,11 @@
 
 
         {{-- INSTRUCTIONS --}}
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="sad-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
             <div class="flex items-center gap-3">
 
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                <div class="sad-chip sad-chip-sm sad-violet flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
                     ℹ
                 </div>
 
@@ -165,7 +166,7 @@
         {{-- EXISTING SUBMISSION --}}
         @if($submission)
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="sad-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
@@ -220,12 +221,12 @@
                             <div class="flex items-center gap-2">
 
                                 <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
-                                <span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span>
+                                <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
                                 <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
 
                             </div>
 
-                            <span class="text-xs font-medium text-slate-400">
+                            <span class="text-xs font-medium text-slate-500">
                                 {{ $assignment->programmingLanguageLabel() ?? 'Code' }}
                             </span>
 
@@ -244,7 +245,7 @@
 
                         <div class="mt-5 rounded-xl bg-slate-50 p-5">
 
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">
                                 Your Answer
                             </p>
 
@@ -281,9 +282,9 @@
                 {{-- TEACHER FEEDBACK --}}
                 @if($submission->feedback)
 
-                    <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5">
+                    <div class="sad-card mt-5 rounded-xl border border-slate-200 bg-white p-5">
 
-                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">
                             Teacher Feedback
                         </p>
 
@@ -304,7 +305,7 @@
             || $submission->status !== 'graded'
         )
 
-            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="sad-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
                 <div class="mb-6">
 
@@ -354,7 +355,7 @@
                                         Code Submission
                                     </label>
 
-                                    <p class="mt-1 text-xs text-slate-400">
+                                    <p class="mt-1 text-xs text-slate-500">
                                         Write your solution below and submit it for evaluation.
                                     </p>
 
@@ -374,12 +375,12 @@
                                     <div class="flex items-center gap-2">
 
                                         <span class="h-2.5 w-2.5 rounded-full bg-red-400"></span>
-                                        <span class="h-2.5 w-2.5 rounded-full bg-yellow-400"></span>
+                                        <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span>
                                         <span class="h-2.5 w-2.5 rounded-full bg-green-400"></span>
 
                                     </div>
 
-                                    <span class="text-[11px] font-medium text-slate-400">
+                                    <span class="text-xs font-medium text-slate-500">
                                         {{ $assignment->programmingLanguageLabel() ?? 'Code' }}
                                     </span>
 
@@ -400,7 +401,7 @@
                             </div>
 
 
-                            <div class="mt-2 flex items-center justify-between text-xs text-slate-400">
+                            <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
 
                                 <span>
                                     Language:
@@ -438,7 +439,7 @@
                                 class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"
                             />
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 Accepted: {{ implode(', ', array_map(fn ($extension) => '.'.$extension, $assignment->sourceFileExtensions())) }}.
                                 Maximum 25 MB.
                                 @if($assignment->acceptsTypedAnswer())
@@ -496,7 +497,7 @@
                                 class="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600"
                             />
 
-                            <p class="mt-2 text-xs text-slate-400">
+                            <p class="mt-2 text-xs text-slate-500">
                                 Accepted: PDF, DOC, DOCX, PPT, PPTX, TXT, JPG, JPEG, PNG.
                                 Maximum 25 MB.
                             </p>
@@ -521,7 +522,7 @@
 
                         <button
                             type="submit"
-                            class="inline-flex items-center justify-center rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
+                            class="sad-btn-primary inline-flex items-center justify-center rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-700"
                         >
                             {{ $submission ? 'Resubmit Assignment' : 'Submit Assignment' }}
                         </button>
