@@ -1,83 +1,33 @@
 <x-layouts::app title="Edit Enrollment">
+@include('partials.soft3d')
 
-    <h1 class="text-2xl font-bold mb-6">
-        Edit Enrollment
-    </h1>
-
-    <form action="{{ route('enrollments.update',$enrollment) }}"
-          method="POST">
-
+<x-pw.form-layout
+    :crumbs="['Enrollments' => route('enrollments.index'), 'Edit Enrollment' => null]"
+    title="Edit Enrollment"
+    subtitle="Update the enrollment status or progress."
+    :back-url="route('enrollments.index')"
+    back-label="Back to Enrollments"
+>
+    <form method="POST" action="{{ route('enrollments.update', $enrollment) }}" class="sad-card overflow-hidden">
         @csrf
         @method('PUT')
 
-        <div class="space-y-4">
+        <x-pw.form-errors />
 
-            <select name="student_id"
-                    class="w-full border rounded p-3">
+        @include('enrollments._form', ['enrollment' => $enrollment])
 
-                @foreach($students as $student)
-
-                    <option value="{{ $student->id }}"
-                        {{ $enrollment->student_id == $student->id ? 'selected' : '' }}>
-
-                        {{ $student->name }}
-
-                    </option>
-
-                @endforeach
-
-            </select>
-
-            <select name="course_id"
-                    class="w-full border rounded p-3">
-
-                @foreach($courses as $course)
-
-                    <option value="{{ $course->id }}"
-                        {{ $enrollment->course_id == $course->id ? 'selected' : '' }}>
-
-                        {{ $course->title }}
-
-                    </option>
-
-                @endforeach
-
-            </select>
-
-            <select name="status"
-                    class="w-full border rounded p-3">
-
-                <option value="active"
-                    {{ $enrollment->status == 'active' ? 'selected' : '' }}>
-                    Active
-                </option>
-
-                <option value="completed"
-                    {{ $enrollment->status == 'completed' ? 'selected' : '' }}>
-                    Completed
-                </option>
-
-                <option value="cancelled"
-                    {{ $enrollment->status == 'cancelled' ? 'selected' : '' }}>
-                    Cancelled
-                </option>
-
-            </select>
-
-            <input type="number"
-                   name="progress_percentage"
-                   value="{{ $enrollment->progress_percentage }}"
-                   min="0"
-                   max="100"
-                   class="w-full border rounded p-3">
-
-            <button
-                class="bg-blue-600 text-white px-4 py-2 rounded">
-                Update Enrollment
-            </button>
-
-        </div>
-
+        <x-pw.form-footer submit="Update Enrollment" :cancel-url="route('enrollments.index')" />
     </form>
+
+    <x-slot:aside>
+        <x-pw.form-aside
+            title="Enrollment Guidelines"
+            :tips="[
+                'Setting the status to Completed records today as the completion date.',
+                'Cancelled enrollments are kept for the record.',
+            ]"
+        />
+    </x-slot:aside>
+</x-pw.form-layout>
 
 </x-layouts::app>

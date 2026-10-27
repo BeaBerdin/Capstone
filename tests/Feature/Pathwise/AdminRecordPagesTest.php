@@ -96,7 +96,7 @@ test('the submission form shows validation errors and keeps the input', function
             'status' => 'graded',
         ])
         ->assertOk()
-        ->assertSee('Please fix the following:')
+        ->assertSee('Please correct the following:')
         ->assertSee('Score cannot exceed the assignment maximum score.')
         ->assertSee('Kept answer');
 });
@@ -150,7 +150,7 @@ test('the certificate pages render and the form shows validation errors', functi
             'status' => 'issued',
         ])
         ->assertOk()
-        ->assertSee('Please fix the following:')
+        ->assertSee('Please correct the following:')
         ->assertSee('value="PW-TEST-0001"', false);
 });
 

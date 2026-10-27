@@ -1,15 +1,16 @@
 <x-layouts::app title="Assignments">
+@include('partials.soft3d')
 @php
     $totalAssignments = $assignments->count();
     $publishedAssignments = $assignments->where('is_published', true)->count();
     $draftAssignments = $totalAssignments - $publishedAssignments;
 @endphp
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
         <div class="mx-auto max-w-375">
 
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <a href="{{ route('teacher.dashboard') }}" class="font-medium hover:text-violet-600">
                     Dashboard
                 </a>
@@ -17,7 +18,15 @@
                 <span class="font-semibold text-slate-600">Assignments</span>
             </div>
 
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            {{-- Header card, as on My Certificates. --}}
+            {{-- overflow stays visible so the New Assignment menu is not clipped; the blob is clipped by its own wrapper. --}}
+            <section class="sad-banner relative z-20 rounded-3xl border border-violet-100 bg-white shadow-sm" style="overflow: visible">
+                <div class="relative px-6 py-6 sm:px-7">
+                    <div class="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+                        <div class="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
+                    </div>
+
+            <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
                         Output Evaluation
@@ -52,10 +61,10 @@
                             x-cloak
                             x-show="open"
                             @click.outside="open = false"
-                            class="absolute right-0 z-30 mt-2 w-80 overflow-hidden rounded-2xl
+                            class="sad-card absolute right-0 z-30 mt-2 max-h-[70vh] w-80 overflow-y-auto rounded-2xl
                                    border border-slate-200 bg-white p-2 shadow-xl"
                         >
-                            <p class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            <p class="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Choose a Draft, Rejected or Published Course
                             </p>
                             @foreach($courses as $course)
@@ -64,7 +73,7 @@
                                     class="block rounded-xl px-3 py-3 transition hover:bg-violet-50"
                                 >
                                     <p class="text-sm font-semibold text-slate-800">{{ $course->title }}</p>
-                                    <p class="mt-1 text-xs text-slate-400">
+                                    <p class="mt-1 text-xs text-slate-500">
                                         {{ ucfirst($course->status) }}
                                     </p>
                                 </a>
@@ -72,11 +81,13 @@
                         </div>
                     </div>
                 @else
-                    <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+                    <div class="sad-card rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
                         Assignments can be added to Draft, Rejected or Published courses. Courses waiting for admin review are locked.
                     </div>
                 @endif
             </div>
+                </div>
+            </section>
 
             @if(session('success'))
                 <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50
@@ -86,21 +97,21 @@
             @endif
 
             <section class="mt-7 grid gap-3 sm:grid-cols-3">
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+                <div class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total</p>
                     <p class="mt-2 text-2xl font-bold text-slate-950">{{ $totalAssignments }}</p>
                 </div>
                 <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Published</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">Published</p>
                     <p class="mt-2 text-2xl font-bold text-emerald-700">{{ $publishedAssignments }}</p>
                 </div>
                 <div class="rounded-2xl border border-amber-100 bg-amber-50 p-5">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600">Unpublished</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-amber-600">Unpublished</p>
                     <p class="mt-2 text-2xl font-bold text-amber-700">{{ $draftAssignments }}</p>
                 </div>
             </section>
 
-            <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section class="sad-card mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
                     <h2 class="text-sm font-bold text-slate-800">Your Assignments</h2>
                 </div>
@@ -115,18 +126,18 @@
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <span class="rounded-full bg-violet-50 px-2.5 py-1 text-[11px]
+                                    <span class="rounded-full bg-violet-50 px-2.5 py-1 text-xs
                                                  font-semibold text-violet-700">
                                         {{ $assignment->course?->title ?? 'Course unavailable' }}
                                     </span>
 
                                     @if($assignment->is_published)
-                                        <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px]
+                                        <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs
                                                      font-semibold text-emerald-700">
                                             Published
                                         </span>
                                     @else
-                                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px]
+                                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs
                                                      font-semibold text-slate-600">
                                             Unpublished
                                         </span>
@@ -201,7 +212,7 @@
                     </div>
                 @empty
                     <div class="px-6 py-16 text-center">
-                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-2xl">
+                        <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-2xl">
                             📝
                         </div>
                         <h3 class="mt-4 text-base font-bold text-slate-800">No assignments yet</h3>

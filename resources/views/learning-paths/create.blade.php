@@ -1,71 +1,33 @@
 <x-layouts::app :title="'Create Learning Path'">
+@include('partials.soft3d')
 
-<div class="space-y-6">
+<x-pw.form-layout
+    :crumbs="['Learning Paths' => route('learning-paths.index'), 'Create Learning Path' => null]"
+    title="Create Learning Path"
+    subtitle="Build a structured learning sequence from the available courses."
+    :back-url="route('learning-paths.index')"
+    back-label="Back to Learning Paths"
+>
+    <form method="POST" action="{{ route('learning-paths.store') }}" class="sad-card overflow-hidden">
+        @csrf
 
-    <div>
-        <h1 class="text-2xl font-bold">Create Learning Path</h1>
-        <p class="text-gray-500">
-            Build a structured learning sequence using available courses.
-        </p>
-    </div>
+        <x-pw.form-errors />
 
-    <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-900 dark:border-neutral-700">
+        @include('learning-paths._form')
 
-        <form action="{{ route('learning-paths.store') }}"
-              method="POST"
-              class="space-y-5">
-            @csrf
+        <x-pw.form-footer submit="Save Learning Path" :cancel-url="route('learning-paths.index')" />
+    </form>
 
-            <div>
-                <label class="block mb-1 font-medium">Path Name</label>
-                <input type="text"
-                       name="name"
-                       value="{{ old('name') }}"
-                       class="w-full rounded border p-2 bg-transparent"
-                       required>
-
-                @error('name')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block mb-1 font-medium">Description</label>
-                <textarea name="description"
-                          rows="4"
-                          class="w-full rounded border p-2 bg-transparent">{{ old('description') }}</textarea>
-            </div>
-
-            <div>
-                <label class="block mb-2 font-medium">Select Courses</label>
-
-                <div class="space-y-2">
-                    @foreach($courses as $course)
-                        <label class="flex items-center gap-2 rounded bg-neutral-100 p-3 dark:bg-neutral-800">
-                            <input type="checkbox"
-                                   name="course_ids[]"
-                                   value="{{ $course->id }}">
-                            <span>{{ $course->title }}</span>
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <div class="flex gap-2">
-                <button type="submit"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
-                    Save Learning Path
-                </button>
-
-                <a href="{{ route('learning-paths.index') }}"
-                   class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded">
-                    Cancel
-                </a>
-            </div>
-        </form>
-
-    </div>
-
-</div>
+    <x-slot:aside>
+        <x-pw.form-aside
+            title="Learning Path Guidelines"
+            :tips="[
+                'Give the path a name that says what students will learn.',
+                'Tick every course that belongs in this path.',
+                'You can add or remove courses later.',
+            ]"
+        />
+    </x-slot:aside>
+</x-pw.form-layout>
 
 </x-layouts::app>

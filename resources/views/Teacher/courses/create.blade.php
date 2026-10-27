@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Create Course'">
+@include('partials.soft3d')
 
 <style>
 
@@ -47,80 +48,24 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
         <div class="mx-auto max-w-[1400px]">
 
 
-            {{-- ==========================================================
-                BREADCRUMB
-            =========================================================== --}}
-
-            <div
-                class="mb-6 flex flex-wrap items-center gap-2
-                       text-xs text-slate-400"
+            {{-- HEADER (PathWise forms reference) --}}
+            <x-pw.form-header
+                class="mb-7"
+                :crumbs="['My Courses' => route('teacher.my-courses'), 'Create Course' => null]"
+                title="Create a New Course"
+                :back-url="route('teacher.my-courses')"
+                back-label="Back to My Courses"
             >
-
-                <a
-                    href="{{ route('teacher.my-courses') }}"
-                    class="font-medium transition
-                           hover:text-violet-600"
-                >
-                    My Courses
-                </a>
-
-                <svg
-                    class="h-3.5 w-3.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path d="m9 18 6-6-6-6"></path>
-                </svg>
-
-                <span class="font-medium text-slate-600">
-                    Create Course
-                </span>
-
-            </div>
-
-
-
-            {{-- ==========================================================
-                HEADER
-            =========================================================== --}}
-
-            <div class="mb-7">
-
-                <p
-                    class="text-xs font-bold uppercase
-                           tracking-[0.12em] text-violet-600"
-                >
-                    Course Builder
-                </p>
-
-                <h1
-                    class="mt-2 text-3xl font-bold
-                           tracking-tight text-slate-950"
-                >
-                    Create a new course
-                </h1>
-
-                <p
-                    class="mt-2 max-w-2xl text-sm
-                           leading-6 text-slate-500"
-                >
-                    Add the basic information students will see
-                    when discovering your course. You can add
-                    lessons and learning content after creating it.
-                </p>
-
-            </div>
-
-
+                Add the basic information students will see when discovering your course.
+                You can add lessons and learning content after creating it.
+            </x-pw.form-header>
 
             {{-- ==========================================================
                 ERRORS
@@ -231,7 +176,7 @@
                             >
 
                                 <div
-                                    class="flex h-11 w-11
+                                    class="sad-chip sad-violet flex h-11 w-11
                                            shrink-0 items-center
                                            justify-center
                                            rounded-xl
@@ -303,7 +248,7 @@
 
                                     <p
                                         class="mt-1 text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         Use a clear and descriptive
                                         title students can understand
@@ -346,8 +291,8 @@
 
                                         <span
                                             id="titleCounter"
-                                            class="text-[11px]
-                                                   text-slate-400"
+                                            class="text-xs
+                                                   text-slate-500"
                                         >
                                             0 / 255
                                         </span>
@@ -425,10 +370,10 @@
 
                                         <p class="text-sm font-semibold text-slate-800">
                                             Start from a template
-                                            <span class="font-normal text-slate-400">(optional)</span>
+                                            <span class="font-normal text-slate-500">(optional)</span>
                                         </p>
 
-                                        <p class="mt-1 text-xs text-slate-400">
+                                        <p class="mt-1 text-xs text-slate-500">
                                             A template adds a ready-made lesson outline to your course.
                                             The lessons are saved as unpublished drafts with writing tips,
                                             so you can replace the tips with your own content.
@@ -467,7 +412,7 @@
                                                     <span class="min-w-0">
                                                         <span class="block text-sm font-semibold text-slate-800">
                                                             {{ $template->name }}
-                                                            <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                                                            <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
                                                                 {{ count($outline) }} lessons
                                                             </span>
                                                         </span>
@@ -476,7 +421,7 @@
                                                             <span class="block text-xs text-slate-500">{{ $template->description }}</span>
                                                         @endif
 
-                                                        <span class="mt-1.5 block text-[11px] leading-5 text-slate-500">
+                                                        <span class="mt-1.5 block text-xs leading-5 text-slate-500">
                                                             @foreach($outline as $item)
                                                                 {{ $loop->iteration }}. {{ $item['title'] }}@if(! $loop->last)<br>@endif
                                                             @endforeach
@@ -518,7 +463,7 @@
 
                                     <p
                                         class="mt-1 text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         Explain what students will
                                         learn and who the course is for.
@@ -561,8 +506,8 @@
 
                                         <span
                                             id="descriptionCounter"
-                                            class="text-[11px]
-                                                   text-slate-400"
+                                            class="text-xs
+                                                   text-slate-500"
                                         >
                                             0 / 2000
                                         </span>
@@ -590,7 +535,7 @@
                             >
 
                                 <div
-                                    class="flex h-11 w-11
+                                    class="sad-chip sad-sky flex h-11 w-11
                                            shrink-0 items-center
                                            justify-center
                                            rounded-xl bg-blue-50
@@ -738,16 +683,16 @@
                                         </p>
 
                                         <p
-                                            class="mt-3 text-[11px]
-                                                   text-slate-400"
+                                            class="mt-3 text-xs
+                                                   text-slate-500"
                                         >
                                             JPG, PNG or WEBP ·
                                             Maximum 5 MB
                                         </p>
 
                                         <p
-                                            class="mt-1 text-[11px]
-                                                   text-slate-400"
+                                            class="mt-1 text-xs
+                                                   text-slate-500"
                                         >
                                             Recommended:
                                             1280 × 720 pixels
@@ -862,7 +807,7 @@
                             >
 
                                 <div
-                                    class="flex h-11 w-11
+                                    class="sad-chip sad-emerald flex h-11 w-11
                                            shrink-0 items-center
                                            justify-center
                                            rounded-xl
@@ -992,9 +937,9 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[11px]
+                                                           text-xs
                                                            leading-4
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     No prior knowledge
                                                     required.
@@ -1063,9 +1008,9 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[11px]
+                                                           text-xs
                                                            leading-4
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     Some previous
                                                     knowledge helpful.
@@ -1134,9 +1079,9 @@
 
                                                 <p
                                                     class="mt-1
-                                                           text-[11px]
+                                                           text-xs
                                                            leading-4
-                                                           text-slate-400"
+                                                           text-slate-500"
                                                 >
                                                     Designed for
                                                     experienced learners.
@@ -1201,7 +1146,7 @@
                                                        top-1/2
                                                        -translate-y-1/2
                                                        text-xs
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 hours
                                             </span>
@@ -1266,8 +1211,8 @@
 
 
                                         <p
-                                            class="mt-1.5 text-[11px]
-                                                   text-slate-400"
+                                            class="mt-1.5 text-xs
+                                                   text-slate-500"
                                         >
                                             Enter 0.00 to make
                                             this course free.
@@ -1308,7 +1253,7 @@
                             >
 
                                 <div
-                                    class="flex h-11 w-11
+                                    class="sad-chip sad-amber flex h-11 w-11
                                            shrink-0 items-center
                                            justify-center
                                            rounded-xl
@@ -1410,7 +1355,7 @@
 
                                     <p
                                         class="mt-1 text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         Optional YouTube or other
                                         public video URL.
@@ -1424,7 +1369,7 @@
                                                    absolute left-4
                                                    top-1/2 h-4.5 w-4.5
                                                    -translate-y-1/2
-                                                   text-slate-400"
+                                                   text-slate-500"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -1662,7 +1607,7 @@
 
                                     <p
                                         class="mt-1 text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         How your course card
                                         may appear.
@@ -1678,7 +1623,7 @@
                                            overflow-hidden
                                            bg-gradient-to-br
                                            from-violet-600
-                                           via-purple-600
+                                           via-violet-600
                                            to-indigo-700"
                                     id="previewCover"
                                 >
@@ -1766,7 +1711,7 @@
 
 
                                             <p
-                                                class="mt-3 text-[10px]
+                                                class="mt-3 text-xs
                                                        font-bold uppercase
                                                        tracking-[.18em]
                                                        text-white/75"
@@ -1790,7 +1735,7 @@
                                                    rounded-full
                                                    bg-white/95
                                                    px-3 py-1.5
-                                                   text-[10px]
+                                                   text-xs
                                                    font-bold
                                                    text-slate-600
                                                    shadow-sm"
@@ -1832,7 +1777,7 @@
                                         <span
                                             id="previewDifficulty"
                                             class="font-medium
-                                                   text-slate-400"
+                                                   text-slate-500"
                                         >
                                             Beginner
                                         </span>
@@ -1879,11 +1824,11 @@
                                                    text-center"
                                         >
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold
                                                        uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Lessons
                                             </p>
@@ -1903,11 +1848,11 @@
                                                    text-center"
                                         >
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold
                                                        uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Duration
                                             </p>
@@ -1928,11 +1873,11 @@
                                                    text-center"
                                         >
                                             <p
-                                                class="text-[9px]
+                                                class="text-xs
                                                        font-bold
                                                        uppercase
                                                        tracking-wide
-                                                       text-slate-400"
+                                                       text-slate-500"
                                             >
                                                 Price
                                             </p>

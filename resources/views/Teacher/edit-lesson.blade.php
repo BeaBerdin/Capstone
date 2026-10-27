@@ -1,4 +1,5 @@
 <x-layouts::app :title="'Edit Lesson'">
+@include('partials.soft3d')
 
 @php
     $currentType = old('lesson_type', $lesson->lesson_type ?? 'video');
@@ -41,118 +42,28 @@
 </style>
 
 
-<div class="min-h-screen bg-[#f8f9fc]">
+<div class="sad-page min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
         <div class="mx-auto max-w-[1400px]">
 
 
-            {{-- =====================================================
-                BREADCRUMB
-            ====================================================== --}}
-
-            <div
-                class="mb-5 flex flex-wrap items-center
-                       gap-2 text-xs text-slate-400"
+            {{-- HEADER (PathWise forms reference) --}}
+            <x-pw.form-header
+                class="mb-7"
+                :crumbs="['My Courses' => route('teacher.my-courses'), $lesson->course->title => route('teacher.lessons', $lesson->course), 'Edit Lesson' => null]"
+                title="Edit Lesson"
+                :back-url="route('teacher.lessons', $lesson->course)"
+                back-label="Back to Lessons"
             >
-
-                <a
-                    href="{{ route('teacher.my-courses') }}"
-                    class="font-medium transition
-                           hover:text-violet-600"
-                >
-                    My Courses
-                </a>
-
-                <span>›</span>
-
-                <a
-                    href="{{ route('teacher.lessons', $lesson->course) }}"
-                    class="font-medium transition
-                           hover:text-violet-600"
-                >
-                    {{ $lesson->course->title }}
-                </a>
-
-                <span>›</span>
-
-                <span class="font-semibold text-slate-600">
-                    Edit Lesson
+                Update this lesson in
+                <span class="font-semibold text-violet-700">{{ $lesson->course->title }}</span>.
+                <span class="ml-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $lesson->is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                    <span class="h-1.5 w-1.5 rounded-full {{ $lesson->is_published ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
+                    {{ $lesson->is_published ? 'Published' : 'Draft' }}
                 </span>
-
-            </div>
-
-
-
-            {{-- =====================================================
-                HEADER
-            ====================================================== --}}
-
-            <div
-                class="mb-7 flex flex-col gap-5
-                       lg:flex-row lg:items-end lg:justify-between"
-            >
-
-                <div>
-
-                    <p
-                        class="text-xs font-bold uppercase
-                               tracking-[.12em] text-violet-600"
-                    >
-                        Course Builder
-                    </p>
-
-                    <h1
-                        class="mt-2 text-3xl font-bold
-                               tracking-tight text-slate-950"
-                    >
-                        Edit lesson
-                    </h1>
-
-                    <p
-                        class="mt-2 max-w-2xl text-sm
-                               leading-6 text-slate-500"
-                    >
-                        Update this lesson in
-
-                        <span class="font-semibold text-slate-700">
-                            {{ $lesson->course->title }}
-                        </span>.
-                    </p>
-
-                </div>
-
-
-                <span
-                    class="inline-flex self-start items-center
-                           gap-2 rounded-full px-3 py-1.5
-                           text-xs font-semibold
-                           {{
-                               $lesson->is_published
-                               ? 'bg-emerald-50 text-emerald-700'
-                               : 'bg-slate-100 text-slate-600'
-                           }}"
-                >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full
-                               {{
-                                   $lesson->is_published
-                                   ? 'bg-emerald-500'
-                                   : 'bg-slate-400'
-                               }}"
-                    ></span>
-
-                    {{
-                        $lesson->is_published
-                        ? 'Published'
-                        : 'Draft'
-                    }}
-                </span>
-
-            </div>
-
-
+            </x-pw.form-header>
 
             {{-- =====================================================
                 ERRORS
@@ -251,9 +162,10 @@
                             LESSON TYPE
                         ============================================== --}}
 
-                        <section class="pw-card p-5 sm:p-7">
+                        <section class="sad-card pw-card p-5 sm:p-7">
 
-                            <h2 class="text-lg font-bold text-slate-900">
+                            <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                <span class="sad-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg></span>
                                 Lesson type
                             </h2>
 
@@ -287,7 +199,7 @@
                                     >
 
                                         <div
-                                            class="type-icon flex h-11 w-11
+                                            class="sad-chip sad-violet type-icon flex h-11 w-11
                                                    items-center justify-center
                                                    rounded-xl bg-violet-50
                                                    text-violet-600 transition"
@@ -309,8 +221,8 @@
                                         </p>
 
                                         <p
-                                            class="mt-1 text-[11px]
-                                                   leading-4 text-slate-400"
+                                            class="mt-1 text-xs
+                                                   leading-4 text-slate-500"
                                         >
                                             YouTube or online video.
                                         </p>
@@ -340,7 +252,7 @@
                                     >
 
                                         <div
-                                            class="type-icon flex h-11 w-11
+                                            class="sad-chip sad-sky type-icon flex h-11 w-11
                                                    items-center justify-center
                                                    rounded-xl bg-blue-50
                                                    text-blue-600 transition"
@@ -374,8 +286,8 @@
                                         </p>
 
                                         <p
-                                            class="mt-1 text-[11px]
-                                                   leading-4 text-slate-400"
+                                            class="mt-1 text-xs
+                                                   leading-4 text-slate-500"
                                         >
                                             Written learning content.
                                         </p>
@@ -405,7 +317,7 @@
                                     >
 
                                         <div
-                                            class="type-icon flex h-11 w-11
+                                            class="sad-chip sad-emerald type-icon flex h-11 w-11
                                                    items-center justify-center
                                                    rounded-xl bg-teal-50
                                                    text-teal-600 transition"
@@ -430,8 +342,8 @@
                                         </p>
 
                                         <p
-                                            class="mt-1 text-[11px]
-                                                   leading-4 text-slate-400"
+                                            class="mt-1 text-xs
+                                                   leading-4 text-slate-500"
                                         >
                                             PDF, Word or presentation.
                                         </p>
@@ -461,7 +373,7 @@
                                     >
 
                                         <div
-                                            class="type-icon flex h-11 w-11
+                                            class="sad-chip sad-amber type-icon flex h-11 w-11
                                                    items-center justify-center
                                                    rounded-xl bg-orange-50
                                                    text-orange-500 transition"
@@ -479,8 +391,8 @@
                                         </p>
 
                                         <p
-                                            class="mt-1 text-[11px]
-                                                   leading-4 text-slate-400"
+                                            class="mt-1 text-xs
+                                                   leading-4 text-slate-500"
                                         >
                                             Assessment lesson.
                                         </p>
@@ -499,13 +411,14 @@
                             BASIC INFORMATION
                         ============================================== --}}
 
-                        <section class="pw-card p-5 sm:p-7">
+                        <section class="sad-card pw-card p-5 sm:p-7">
 
                             <div
                                 class="border-b border-slate-100
                                        pb-5"
                             >
-                                <h2 class="text-lg font-bold text-slate-900">
+                                <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                    <span class="sad-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6M8 13h8M8 17h6"></path></svg></span>
                                     Lesson information
                                 </h2>
 
@@ -583,8 +496,8 @@
                                         >
 
                                         <p
-                                            class="mt-1.5 text-[11px]
-                                                   text-slate-400"
+                                            class="mt-1.5 text-xs
+                                                   text-slate-500"
                                         >
                                             Controls the lesson's position.
                                         </p>
@@ -622,7 +535,7 @@
                                                        absolute right-4
                                                        top-1/2
                                                        -translate-y-1/2
-                                                       text-xs text-slate-400"
+                                                       text-xs text-slate-500"
                                             >
                                                 minutes
                                             </span>
@@ -645,13 +558,13 @@
 
                         <section
                             id="videoSection"
-                            class="pw-card hidden p-5 sm:p-7"
+                            class="sad-card pw-card hidden p-5 sm:p-7"
                         >
 
                             <div class="flex items-start gap-4">
 
                                 <div
-                                    class="flex h-11 w-11 shrink-0
+                                    class="sad-chip sad-violet flex h-11 w-11 shrink-0
                                            items-center justify-center
                                            rounded-xl bg-violet-50
                                            text-violet-600"
@@ -742,13 +655,13 @@
 
                         <section
                             id="textSection"
-                            class="pw-card hidden p-5 sm:p-7"
+                            class="sad-card pw-card hidden p-5 sm:p-7"
                         >
 
                             <div class="flex items-start gap-4">
 
                                 <div
-                                    class="flex h-11 w-11 shrink-0
+                                    class="sad-chip sad-sky flex h-11 w-11 shrink-0
                                            items-center justify-center
                                            rounded-xl bg-blue-50
                                            text-blue-600"
@@ -792,13 +705,13 @@
 
                         <section
                             id="documentSection"
-                            class="pw-card hidden p-5 sm:p-7"
+                            class="sad-card pw-card hidden p-5 sm:p-7"
                         >
 
                             <div class="flex items-start gap-4">
 
                                 <div
-                                    class="flex h-11 w-11 shrink-0
+                                    class="sad-chip sad-emerald flex h-11 w-11 shrink-0
                                            items-center justify-center
                                            rounded-xl bg-teal-50
                                            text-teal-600"
@@ -964,8 +877,8 @@
                                         </p>
 
                                         <p
-                                            class="mt-3 text-[11px]
-                                                   text-slate-400"
+                                            class="mt-3 text-xs
+                                                   text-slate-500"
                                         >
                                             PDF, Word, PowerPoint,
                                             Excel or TXT · Max 20 MB
@@ -1020,7 +933,7 @@
 
                         <section
                             id="quizSection"
-                            class="pw-card hidden p-5 sm:p-7"
+                            class="sad-card pw-card hidden p-5 sm:p-7"
                         >
 
                             <div
@@ -1133,7 +1046,7 @@
 
                                         <a
                                             href="{{ route('teacher.quiz.builder', $lesson) }}"
-                                            class="inline-flex h-11 shrink-0
+                                            class="sad-btn-primary inline-flex h-11 shrink-0
                                                    items-center justify-center
                                                    gap-2 rounded-xl
                                                    bg-violet-600 px-5
@@ -1191,9 +1104,10 @@
                             ACCESS SETTINGS
                         ============================================== --}}
 
-                        <section class="pw-card p-5 sm:p-7">
+                        <section class="sad-card pw-card p-5 sm:p-7">
 
-                            <h2 class="text-lg font-bold text-slate-900">
+                            <h2 class="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                <span class="sad-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span>
                                 Lesson access
                             </h2>
 
@@ -1363,7 +1277,7 @@
 
                             <button
                                 type="submit"
-                                class="inline-flex h-12 flex-1
+                                class="sad-btn-primary inline-flex h-12 flex-1
                                        items-center justify-center
                                        rounded-xl bg-violet-600
                                        px-5 text-sm font-semibold
@@ -1389,7 +1303,7 @@
 
 
                             {{-- LIVE PREVIEW --}}
-                            <section class="pw-card overflow-hidden">
+                            <section class="sad-card pw-card overflow-hidden">
 
                                 <div
                                     class="border-b border-slate-100
@@ -1404,7 +1318,7 @@
 
                                     <p
                                         class="mt-1 text-xs
-                                               text-slate-400"
+                                               text-slate-500"
                                     >
                                         Preview your changes.
                                     </p>
@@ -1415,7 +1329,7 @@
 
                                     <div
                                         id="previewIcon"
-                                        class="flex h-14 w-14
+                                        class="sad-chip sad-violet flex h-14 w-14
                                                items-center justify-center
                                                rounded-2xl bg-violet-50
                                                text-xl text-violet-600"
@@ -1426,7 +1340,7 @@
 
                                     <p
                                         id="previewType"
-                                        class="mt-4 text-[10px]
+                                        class="mt-4 text-xs
                                                font-bold uppercase
                                                tracking-[.12em]
                                                text-violet-600"
@@ -1504,7 +1418,7 @@
                             >
 
                                 <p
-                                    class="text-[10px] font-bold
+                                    class="text-xs font-bold
                                            uppercase tracking-[.12em]
                                            text-violet-500"
                                 >

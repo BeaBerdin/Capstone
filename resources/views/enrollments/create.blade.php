@@ -1,79 +1,33 @@
 <x-layouts::app title="Create Enrollment">
+@include('partials.soft3d')
 
-    <h1 class="text-2xl font-bold mb-6">
-        Create Enrollment
-    </h1>
-
-    <form action="{{ route('enrollments.store') }}" method="POST">
-
+<x-pw.form-layout
+    :crumbs="['Enrollments' => route('enrollments.index'), 'Create Enrollment' => null]"
+    title="Create Enrollment"
+    subtitle="Enroll a student in a course manually."
+    :back-url="route('enrollments.index')"
+    back-label="Back to Enrollments"
+>
+    <form method="POST" action="{{ route('enrollments.store') }}" class="sad-card overflow-hidden">
         @csrf
 
-        <div class="space-y-4">
+        <x-pw.form-errors />
 
-            <select name="student_id"
-                    class="w-full border rounded p-3"
-                    required>
+        @include('enrollments._form')
 
-                <option value="">
-                    Select Student
-                </option>
-
-                @foreach($students as $student)
-                    <option value="{{ $student->id }}">
-                        {{ $student->name }}
-                    </option>
-                @endforeach
-
-            </select>
-
-            <select name="course_id"
-                    class="w-full border rounded p-3"
-                    required>
-
-                <option value="">
-                    Select Course
-                </option>
-
-                @foreach($courses as $course)
-                    <option value="{{ $course->id }}">
-                        {{ $course->title }}
-                    </option>
-                @endforeach
-
-            </select>
-
-            <select name="status"
-                    class="w-full border rounded p-3">
-
-                <option value="active">
-                    Active
-                </option>
-
-                <option value="completed">
-                    Completed
-                </option>
-
-                <option value="cancelled">
-                    Cancelled
-                </option>
-
-            </select>
-
-            <input type="number"
-                   name="progress_percentage"
-                   value="0"
-                   min="0"
-                   max="100"
-                   class="w-full border rounded p-3"
-                   placeholder="Progress Percentage">
-
-            <button
-                class="bg-blue-600 text-white px-4 py-2 rounded">
-                Save Enrollment
-            </button>
-
-        </div>
-
+        <x-pw.form-footer submit="Save Enrollment" :cancel-url="route('enrollments.index')" />
     </form>
+
+    <x-slot:aside>
+        <x-pw.form-aside
+            title="Enrollment Guidelines"
+            :tips="[
+                'Use this for students enrolled outside the marketplace.',
+                'New enrollments usually start as Active with 0% progress.',
+                'Cancelled enrollments are kept for the record.',
+            ]"
+        />
+    </x-slot:aside>
+</x-pw.form-layout>
 
 </x-layouts::app>

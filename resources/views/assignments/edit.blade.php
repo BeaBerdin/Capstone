@@ -1,66 +1,35 @@
 <x-layouts::app :title="__('Edit Assignment')">
+@include('partials.soft3d')
 
-<h1 class="text-2xl font-bold mb-6">Edit Assignment</h1>
+<x-pw.form-layout
+    :crumbs="['Assignments' => route('assignments.index'), 'Edit Assignment' => null]"
+    title="Edit Assignment"
+    :subtitle="$assignment->title . '.'"
+    :back-url="route('assignments.index')"
+    back-label="Back to Assignments"
+>
+    <form method="POST" action="{{ route('assignments.update', $assignment) }}" class="sad-card overflow-hidden">
+        @csrf
+        @method('PUT')
 
-<form action="{{ route('assignments.update', $assignment) }}"
-      method="POST"
-      class="space-y-4">
+        <x-pw.form-errors />
 
-    @csrf
-    @method('PUT')
+        @include('assignments._form', ['assignment' => $assignment])
 
-    <select name="course_id" class="w-full border rounded p-3">
-        @foreach($courses as $course)
-            <option value="{{ $course->id }}"
-                {{ $assignment->course_id == $course->id ? 'selected' : '' }}>
-                {{ $course->title }}
-            </option>
-        @endforeach
-    </select>
+        <x-pw.form-footer submit="Update Assignment" :cancel-url="route('assignments.index')" />
+    </form>
 
-    <select name="lesson_id" class="w-full border rounded p-3">
-        <option value="">No Lesson</option>
-
-        @foreach($lessons as $lesson)
-            <option value="{{ $lesson->id }}"
-                {{ $assignment->lesson_id == $lesson->id ? 'selected' : '' }}>
-                {{ $lesson->title }}
-            </option>
-        @endforeach
-    </select>
-
-    <input type="text"
-           name="title"
-           value="{{ $assignment->title }}"
-           class="w-full border rounded p-3">
-
-    <textarea name="description"
-              class="w-full border rounded p-3">{{ $assignment->description }}</textarea>
-
-    <input type="datetime-local"
-           name="due_date"
-           value="{{ $assignment->due_date ? date('Y-m-d\TH:i', strtotime($assignment->due_date)) : '' }}"
-           class="w-full border rounded p-3">
-
-    <input type="number"
-           name="max_score"
-           value="{{ $assignment->max_score }}"
-           class="w-full border rounded p-3">
-
-    <select name="is_published" class="w-full border rounded p-3">
-        <option value="1" {{ $assignment->is_published ? 'selected' : '' }}>
-            Published
-        </option>
-        <option value="0" {{ !$assignment->is_published ? 'selected' : '' }}>
-            Draft
-        </option>
-    </select>
-
-    <button type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded">
-        Update Assignment
-    </button>
-
-</form>
+    <x-slot:aside>
+        <x-pw.form-aside
+            title="Assignment Guidelines"
+            :tips="[
+                'Pick a lesson from the same course, or leave it course-level.',
+                'Choose the submission type. For code, pick the language students will use.',
+                'AI evaluation only suggests a score; the teacher saves the grade.',
+                'Publishing a draft notifies the enrolled students.',
+            ]"
+        />
+    </x-slot:aside>
+</x-pw.form-layout>
 
 </x-layouts::app>

@@ -1,176 +1,56 @@
 <x-layouts::app :title="'Edit Assignment - ' . $assignment->title">
-<div class="min-h-screen bg-[#f8f9fc]">
-    <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
-        <div class="mx-auto max-w-4xl">
+@include('partials.soft3d')
 
-            <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                <a href="{{ route('teacher.assignments.index') }}" class="font-medium hover:text-violet-600">
-                    Assignments
-                </a>
-                <span>›</span>
-                <span class="font-semibold text-slate-600">Edit</span>
-            </div>
+{{-- Edit Assignment: same layout and sections as Create (Teacher.assignments._form). --}}
 
-            <div>
-                <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
-                    {{ $course->title }}
-                </p>
-                <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                    Edit Assignment
-                </h1>
-                <p class="mt-2 text-sm text-slate-500">
-                    Update the instructions, submission type, AI evaluation, scoring, deadline, or publication status.
-                </p>
-            </div>
+<div class="sad-page min-h-screen">
+    <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div class="mx-auto max-w-6xl">
 
-            @if($errors->any())
-                <div class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
-                    <p class="text-sm font-bold text-rose-700">Please correct the following:</p>
-                    <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-rose-600">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form
-                method="POST"
-                action="{{ route('teacher.assignments.update', $assignment) }}"
-                class="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            <x-pw.form-header
+                :crumbs="['Assignments' => route('teacher.assignments.index'), 'Edit Assignment' => null]"
+                title="Edit Assignment"
+                :back-url="route('teacher.assignments.index')"
+                back-label="Back to Assignments"
             >
-                @csrf
-                @method('PUT')
+                <span class="font-semibold text-violet-700">{{ $assignment->title }}</span> in {{ $course->title }}.
+            </x-pw.form-header>
 
-                <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
-                    <h2 class="text-sm font-bold text-slate-800">Assignment Details</h2>
-                </div>
+            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
 
-                <div class="space-y-5 p-5 sm:p-6">
-                    <div>
-                        <label for="title" class="text-sm font-semibold text-slate-700">
-                            Assignment Title <span class="text-rose-500">*</span>
-                        </label>
-                        <input
-                            id="title"
-                            name="title"
-                            type="text"
-                            value="{{ old('title', $assignment->title) }}"
-                            required
-                            maxlength="255"
-                            class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                   outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                        >
-                    </div>
+                <form
+                    method="POST"
+                    action="{{ route('teacher.assignments.update', $assignment) }}"
+                    class="sad-card overflow-hidden"
+                >
+                    @csrf
+                    @method('PUT')
 
-                    <div>
-                        <label for="description" class="text-sm font-semibold text-slate-700">
-                            Instructions / Description
-                        </label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            rows="6"
-                            class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm
-                                   outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                        >{{ old('description', $assignment->description) }}</textarea>
-                    </div>
+                    <x-pw.form-errors />
 
-                    @include('Teacher.assignments._type-fields', ['assignment' => $assignment])
+                    @include('Teacher.assignments._form', ['assignment' => $assignment])
 
-                    <div class="grid gap-5 sm:grid-cols-2">
-                        <div>
-                            <label for="lesson_id" class="text-sm font-semibold text-slate-700">
-                                Related Lesson
-                            </label>
-                            <select
-                                id="lesson_id"
-                                name="lesson_id"
-                                class="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4
-                                       text-sm outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                            >
-                                <option value="">Course-level assignment</option>
-                                @foreach($lessons as $lesson)
-                                    <option
-                                        value="{{ $lesson->id }}"
-                                        @selected((string) old('lesson_id', $assignment->lesson_id) === (string) $lesson->id)
-                                    >
-                                        {{ $lesson->title }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <x-pw.form-footer submit="Save Changes" :cancel-url="route('teacher.assignments.index')">
+                        <x-slot:icon>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"></path></svg>
+                        </x-slot:icon>
+                    </x-pw.form-footer>
+                </form>
 
-                        <div>
-                            <label for="max_score" class="text-sm font-semibold text-slate-700">
-                                Maximum Score <span class="text-rose-500">*</span>
-                            </label>
-                            <input
-                                id="max_score"
-                                name="max_score"
-                                type="number"
-                                min="1"
-                                max="10000"
-                                value="{{ old('max_score', $assignment->max_score) }}"
-                                required
-                                class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                       outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                            >
-                        </div>
-                    </div>
+                <x-pw.form-aside
+                    title="Before You Save"
+                    :tips="[
+                        'Saving does not change work students have already submitted.',
+                        'Students see updated instructions and due dates right away.',
+                        'AI evaluation only suggests a score. Students never see it; they see the grade you save.',
+                        'Untick Publish to hide the assignment from students.',
+                    ]"
+                />
 
-                    <div>
-                        <label for="due_date" class="text-sm font-semibold text-slate-700">
-                            Due Date
-                        </label>
-                        <input
-                            id="due_date"
-                            name="due_date"
-                            type="datetime-local"
-                            value="{{ old('due_date', $assignment->due_date?->format('Y-m-d\TH:i')) }}"
-                            class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                   outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                        >
-                    </div>
+            </div>
 
-                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200
-                                  bg-slate-50 px-4 py-3">
-                        <input
-                            type="checkbox"
-                            name="is_published"
-                            value="1"
-                            @checked((bool) old('is_published', $assignment->is_published))
-                            class="mt-1 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                        >
-                        <span>
-                            <span class="block text-sm font-semibold text-slate-700">Publish assignment</span>
-                            <span class="mt-0.5 block text-xs text-slate-500">
-                                Enrolled students can access it once the course is published.
-                            </span>
-                        </span>
-                    </label>
-                </div>
-
-                <div class="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50
-                            px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-                    <a
-                        href="{{ route('teacher.assignments.index') }}"
-                        class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200
-                               bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                        Cancel
-                    </a>
-                    <button
-                        type="submit"
-                        class="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r
-                               from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white
-                               shadow-md shadow-violet-200 transition hover:-translate-y-0.5"
-                    >
-                        Save Changes
-                    </button>
-                </div>
-            </form>
         </div>
     </main>
 </div>
+
 </x-layouts::app>

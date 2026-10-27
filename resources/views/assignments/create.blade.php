@@ -1,61 +1,34 @@
 <x-layouts::app :title="__('Create Assignment')">
+@include('partials.soft3d')
 
-<h1 class="text-2xl font-bold mb-6">Create Assignment</h1>
+<x-pw.form-layout
+    :crumbs="['Assignments' => route('assignments.index'), 'Create Assignment' => null]"
+    title="Create Assignment"
+    subtitle="Add a graded activity to any course."
+    :back-url="route('assignments.index')"
+    back-label="Back to Assignments"
+>
+    <form method="POST" action="{{ route('assignments.store') }}" class="sad-card overflow-hidden">
+        @csrf
 
-<form action="{{ route('assignments.store') }}"
-      method="POST"
-      class="space-y-4">
+        <x-pw.form-errors />
 
-    @csrf
+        @include('assignments._form')
 
-    <select name="course_id" class="w-full border rounded p-3">
-        <option value="">Select Course</option>
+        <x-pw.form-footer submit="Save Assignment" :cancel-url="route('assignments.index')" />
+    </form>
 
-        @foreach($courses as $course)
-            <option value="{{ $course->id }}">
-                {{ $course->title }}
-            </option>
-        @endforeach
-    </select>
-
-    <select name="lesson_id" class="w-full border rounded p-3">
-        <option value="">No Lesson</option>
-
-        @foreach($lessons as $lesson)
-            <option value="{{ $lesson->id }}">
-                {{ $lesson->title }}
-            </option>
-        @endforeach
-    </select>
-
-    <input type="text"
-           name="title"
-           placeholder="Assignment Title"
-           class="w-full border rounded p-3">
-
-    <textarea name="description"
-              placeholder="Assignment Description"
-              class="w-full border rounded p-3"></textarea>
-
-    <input type="datetime-local"
-           name="due_date"
-           class="w-full border rounded p-3">
-
-    <input type="number"
-           name="max_score"
-           value="100"
-           class="w-full border rounded p-3">
-
-    <select name="is_published" class="w-full border rounded p-3">
-        <option value="1">Published</option>
-        <option value="0">Draft</option>
-    </select>
-
-    <button type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded">
-        Save Assignment
-    </button>
-
-</form>
+    <x-slot:aside>
+        <x-pw.form-aside
+            title="Assignment Guidelines"
+            :tips="[
+                'Pick a lesson from the same course, or leave it course-level.',
+                'Choose the submission type. For code, pick the language students will use.',
+                'AI evaluation only suggests a score; the teacher saves the grade.',
+                'Enrolled students are notified when a published assignment is saved.',
+            ]"
+        />
+    </x-slot:aside>
+</x-pw.form-layout>
 
 </x-layouts::app>

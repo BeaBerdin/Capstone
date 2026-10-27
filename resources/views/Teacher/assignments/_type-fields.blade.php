@@ -47,7 +47,7 @@
                                 </option>
                             </select>
 
-                            <p class="mt-1.5 text-xs text-slate-400">
+                            <p class="mt-1.5 text-xs text-slate-500">
                                 Choose what type of output students will submit.
                             </p>
                         </div>
@@ -79,7 +79,7 @@
                                 @endforeach
                             </select>
 
-                            <p class="mt-1.5 text-xs text-slate-400">
+                            <p class="mt-1.5 text-xs text-slate-500">
                                 Typed answers and pasted code keep their exact formatting. Uploaded files may be up to 25 MB.
                             </p>
                         </div>
@@ -91,7 +91,7 @@
                         >
                             <div class="flex items-start gap-4">
 
-                                <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                                <div class="sad-chip sad-chip-sm sad-violet mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         class="h-5 w-5"
@@ -160,7 +160,7 @@
 - Clarity of explanation"
                             >{{ old('evaluation_criteria', $assignment?->evaluation_criteria) }}</textarea>
 
-                            <p class="mt-1.5 text-xs text-slate-400">
+                            <p class="mt-1.5 text-xs text-slate-500">
                                 These criteria will help Gemini evaluate the student's work.
                             </p>
                         </div>
@@ -196,7 +196,7 @@
                                 @endforeach
                             </select>
 
-                            <p class="mt-1.5 text-xs text-slate-400">
+                            <p class="mt-1.5 text-xs text-slate-500">
                                 Students can type their code or upload one source file in this language. The language is also used for AI evaluation.
                             </p>
                         </div>

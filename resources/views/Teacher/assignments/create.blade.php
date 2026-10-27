@@ -1,254 +1,60 @@
 <x-layouts::app :title="'Create Assignment - ' . $course->title">
+@include('partials.soft3d')
 
-    <div class="min-h-screen bg-[#f8f9fc]">
+{{--
+    Create Assignment, laid out after the PathWise forms reference: header
+    with breadcrumb and back link, the form in one white card with titled
+    sections, and on desktop a side panel with artwork and guidelines.
+--}}
 
-        <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
-            <div class="mx-auto max-w-4xl">
+<div class="sad-page min-h-screen">
+    <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div class="mx-auto max-w-6xl">
 
-                {{-- Breadcrumb --}}
-                <div class="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <a
-                        href="{{ route('teacher.assignments.index') }}"
-                        class="font-medium hover:text-violet-600"
-                    >
-                        Assignments
-                    </a>
+            <x-pw.form-header
+                :crumbs="['Assignments' => route('teacher.assignments.index'), 'Create Assignment' => null]"
+                title="Create New Assignment"
+                :back-url="route('teacher.assignments.index')"
+                back-label="Back to Assignments"
+            >
+                For <span class="font-semibold text-violet-700">{{ $course->title }}</span>. Fill in the details below.
+            </x-pw.form-header>
 
-                    <span>›</span>
+            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
 
-                    <span class="font-semibold text-slate-600">
-                        Create
-                    </span>
-                </div>
-
-                {{-- Header --}}
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-[.12em] text-violet-600">
-                        {{ $course->title }}
-                    </p>
-
-                    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-                        Create Assignment
-                    </h1>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        Add an output-based activity that enrolled students can submit for evaluation.
-                    </p>
-                </div>
-
-                {{-- Validation Errors --}}
-                @if($errors->any())
-                    <div class="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
-                        <p class="text-sm font-bold text-rose-700">
-                            Please correct the following:
-                        </p>
-
-                        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-rose-600">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                {{-- Form --}}
                 <form
                     method="POST"
                     action="{{ route('teacher.assignments.store', $course) }}"
-                    class="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    class="sad-card overflow-hidden"
                 >
                     @csrf
 
-                    {{-- Section Header --}}
-                    <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
-                        <h2 class="text-sm font-bold text-slate-800">
-                            Assignment Details
-                        </h2>
-                    </div>
+                    <x-pw.form-errors />
 
-                    <div class="space-y-6 p-5 sm:p-6">
+                    @include('Teacher.assignments._form')
 
-                        {{-- Assignment Title --}}
-                        <div>
-                            <label
-                                for="title"
-                                class="text-sm font-semibold text-slate-700"
-                            >
-                                Assignment Title
-                                <span class="text-rose-500">*</span>
-                            </label>
-
-                            <input
-                                id="title"
-                                name="title"
-                                type="text"
-                                value="{{ old('title') }}"
-                                required
-                                maxlength="255"
-                                class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                       outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                                placeholder="e.g. Reflection Paper"
-                            >
-                        </div>
-
-                        {{-- Description --}}
-                        <div>
-                            <label
-                                for="description"
-                                class="text-sm font-semibold text-slate-700"
-                            >
-                                Instructions / Description
-                            </label>
-
-                            <textarea
-                                id="description"
-                                name="description"
-                                rows="6"
-                                class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm
-                                       outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                                placeholder="Explain what the student should submit..."
-                            >{{ old('description') }}</textarea>
-                        </div>
-
-                        @include('Teacher.assignments._type-fields')
-
-                        {{-- Lesson + Max Score --}}
-                        <div class="grid gap-5 sm:grid-cols-2">
-
-                            {{-- Related Lesson --}}
-                            <div>
-                                <label
-                                    for="lesson_id"
-                                    class="text-sm font-semibold text-slate-700"
-                                >
-                                    Related Lesson
-                                </label>
-
-                                <select
-                                    id="lesson_id"
-                                    name="lesson_id"
-                                    class="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm
-                                           outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                                >
-                                    <option value="">
-                                        Course-level assignment
-                                    </option>
-
-                                    @foreach($lessons as $lesson)
-                                        <option
-                                            value="{{ $lesson->id }}"
-                                            @selected((string) old('lesson_id') === (string) $lesson->id)
-                                        >
-                                            {{ $lesson->title }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Maximum Score --}}
-                            <div>
-                                <label
-                                    for="max_score"
-                                    class="text-sm font-semibold text-slate-700"
-                                >
-                                    Maximum Score
-                                    <span class="text-rose-500">*</span>
-                                </label>
-
-                                <input
-                                    id="max_score"
-                                    name="max_score"
-                                    type="number"
-                                    min="1"
-                                    max="10000"
-                                    value="{{ old('max_score', 100) }}"
-                                    required
-                                    class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                           outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                                >
-                            </div>
-
-                        </div>
-
-                        {{-- Due Date --}}
-                        <div>
-                            <label
-                                for="due_date"
-                                class="text-sm font-semibold text-slate-700"
-                            >
-                                Due Date
-                            </label>
-
-                            <input
-                                id="due_date"
-                                name="due_date"
-                                type="datetime-local"
-                                value="{{ old('due_date') }}"
-                                class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                                       outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100"
-                            >
-
-                            <p class="mt-1.5 text-xs text-slate-400">
-                                Leave blank if the assignment has no deadline.
-                            </p>
-                        </div>
-
-                        {{-- Publish --}}
-                        <label
-                            class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200
-                                   bg-slate-50 px-4 py-3"
-                        >
-                            <input
-                                type="checkbox"
-                                name="is_published"
-                                value="1"
-                                @checked(old('is_published', true))
-                                class="mt-1 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                            >
-
-                            <span>
-                                <span class="block text-sm font-semibold text-slate-700">
-                                    Publish assignment
-                                </span>
-
-                                <span class="mt-0.5 block text-xs text-slate-500">
-                                    Students will see this once the course itself is published and they are enrolled.
-                                </span>
-                            </span>
-                        </label>
-
-                    </div>
-
-                    {{-- Footer --}}
-                    <div
-                        class="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50
-                               px-5 py-4 sm:flex-row sm:justify-end sm:px-6"
-                    >
-
-                        <a
-                            href="{{ route('teacher.assignments.index') }}"
-                            class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200
-                                   bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                            Cancel
-                        </a>
-
-                        <button
-                            type="submit"
-                            class="inline-flex h-11 items-center justify-center rounded-xl bg-linear-to-r
-                                   from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white
-                                   shadow-md shadow-violet-200 transition hover:-translate-y-0.5"
-                        >
-                            Create Assignment
-                        </button>
-
-                    </div>
-
+                    <x-pw.form-footer submit="Create Assignment" :cancel-url="route('teacher.assignments.index')">
+                        <x-slot:icon>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                        </x-slot:icon>
+                    </x-pw.form-footer>
                 </form>
 
-            </div>
-        </main>
+                <x-pw.form-aside
+                    title="Assignment Guidelines"
+                    :tips="[
+                        'Write clear instructions: students see them on the assignment page.',
+                        'Choose Essay or Code. For code, pick the language students will use.',
+                        'Set a due date, or leave it blank for no deadline.',
+                        'AI evaluation only suggests a score. Students never see it; they see the grade you save.',
+                        'Untick Publish to keep the assignment hidden while you prepare it.',
+                    ]"
+                />
 
-    </div>
+            </div>
+
+        </div>
+    </main>
+</div>
 
 </x-layouts::app>
