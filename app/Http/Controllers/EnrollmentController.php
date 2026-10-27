@@ -9,11 +9,27 @@ use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $enrollments = Enrollment::with(['student', 'course'])->latest()->get();
+        $filters = $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+        ]);
 
-        return view('enrollments.index', compact('enrollments'));
+        $from = $filters['from'] ?? null;
+        $to = $filters['to'] ?? null;
+
+        // Older rows may have no enrolled_at; their created_at stands in for it.
+        $enrolledOn = 'DATE(COALESCE(enrolled_at, created_at))';
+
+        $enrollments = Enrollment::with(['student', 'course'])
+            ->when($from, fn ($query) => $query->whereRaw("{$enrolledOn} >= ?", [$from]))
+            ->when($to, fn ($query) => $query->whereRaw("{$enrolledOn} <= ?", [$to]))
+            ->orderByRaw('COALESCE(enrolled_at, created_at) DESC')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('enrollments.index', compact('enrollments', 'from', 'to'));
     }
 
     public function create()
