@@ -206,3 +206,18 @@ test('a source file not moved to the private disk yet is still sent to Gemini', 
 
     Http::assertSent(fn (Request $request) => str_contains($request->body(), 'UNIQUE-LEGACY-MARKER'));
 });
+
+test('AI evaluation leaves room for Gemini to think and lists the JSON keys', function () {
+    fakeGeminiEvaluation();
+
+    [$teacher, $submission] = aiEvaluationSetup(['answer_text' => 'class Main {}']);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertSessionHas('success');
+
+    // Thinking tokens count toward max_output_tokens; 2000 cut long evaluations off.
+    Http::assertSent(fn (Request $request) => $request['generation_config']['thinking_level'] === 'low'
+        && $request['generation_config']['max_output_tokens'] === 8000
+        && str_contains($request['input'], '"feedback": "..."'));
+});

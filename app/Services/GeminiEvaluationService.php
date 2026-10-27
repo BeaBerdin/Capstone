@@ -123,7 +123,9 @@ class GeminiEvaluationService
 
             'generation_config' => [
                 'temperature' => 0.2,
-                'max_output_tokens' => 2000,
+                // Thinking tokens count toward this limit; 2000 cut long evaluations off.
+                'thinking_level' => 'low',
+                'max_output_tokens' => 8000,
             ],
         ];
 
@@ -349,7 +351,9 @@ PROMPT;
 
 IMPORTANT OUTPUT RULES
 
-Return ONLY valid JSON matching the requested schema.
+Return ONLY valid JSON matching the requested schema, with exactly these keys:
+
+{"score": 0, "feedback": "...", "strengths": ["..."], "improvements": ["..."], "criteria_analysis": "...", "code_quality": "...", "efficiency": "..."}
 
 Do not include Markdown.
 

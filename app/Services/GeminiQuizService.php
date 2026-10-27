@@ -88,7 +88,7 @@ class GeminiQuizService
                 ),
 
             'generation_config' => [
-                'thinking_level' => 'medium',
+                'thinking_level' => 'low', // gemini-2.5-flash accepts only low or high
                 'max_output_tokens' =>
                     $this->maxOutputTokens(
                         $count
@@ -248,6 +248,9 @@ NON-NEGOTIABLE RULES:
 13. Never use phrases such as "According to the lesson material", "Based on the lesson", "From the reading", "According to the course", or similar references to source material.
 14. Ask the question directly as if it were written by a teacher for an actual assessment.
 15. Do not reveal or mention that the answer comes from provided lesson content.
+16. Return only this JSON, with no Markdown code fences:
+{"questions": [{"question": "...", "option_a": "...", "option_b": "...", "option_c": "...", "option_d": "...", "correct_answer": "A", "points": 1}]}
+correct_answer is a single capital letter: A, B, C or D.
 PROMPT;
     }
 
@@ -583,7 +586,25 @@ PROMPT;
             );
         }
 
-        return $output;
+        /*
+         * Remove accidental Markdown
+         * code fences.
+         */
+        $output = preg_replace(
+            '/^```(?:json)?\s*/i',
+            '',
+            $output
+        );
+
+        $output = preg_replace(
+            '/\s*```$/',
+            '',
+            $output
+        );
+
+        return trim(
+            $output
+        );
     }
 
 
@@ -613,6 +634,19 @@ PROMPT;
                 throw new RuntimeException(
                     'Gemini returned an invalid question.'
                 );
+            }
+
+            /*
+             * gemini-2.5-flash sometimes ignores the schema and
+             * returns the choices as "options": {"A": ..., "D": ...}.
+             */
+            if (is_array($question['options'] ?? null)) {
+                foreach (['a', 'b', 'c', 'd'] as $letter) {
+                    $question['option_'.$letter] ??=
+                        $question['options'][strtoupper($letter)]
+                        ?? $question['options'][$letter]
+                        ?? null;
+                }
             }
 
             $questionText =

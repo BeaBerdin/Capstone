@@ -3,6 +3,7 @@
 use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -173,4 +174,73 @@ test('another teacher cannot generate questions for the quiz', function () {
         ->assertForbidden();
 
     Http::assertNothingSent();
+});
+
+/**
+ * Fake Gemini answering with this raw model text.
+ */
+function fakeGeminiQuizText(string $text): void
+{
+    Http::fake(['*' => Http::response([
+        'steps' => [[
+            'type' => 'model_output',
+            'content' => [['type' => 'text', 'text' => $text]],
+        ]],
+    ])]);
+}
+
+test('Gemini is asked for a thinking level gemini-2.5-flash accepts', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    fakeGeneratedQuestions(['What does HTML stand for?', 'Spare one?', 'Spare two?']);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+        ->assertSessionHas('success');
+
+    // gemini-2.5-flash rejects "medium" with a 400; it accepts only low or high.
+    Http::assertSent(fn (Request $request) => $request['generation_config']['thinking_level'] === 'low');
+});
+
+test('questions wrapped in a Markdown code fence are still saved', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    $questions = array_map(fn (int $i) => [
+        'question' => "Fenced question {$i}?",
+        'option_a' => "A{$i}", 'option_b' => "B{$i}", 'option_c' => "C{$i}", 'option_d' => "D{$i}",
+        'correct_answer' => 'C',
+        'points' => 1,
+    ], [1, 2, 3]);
+
+    fakeGeminiQuizText("```json\n".json_encode(['questions' => $questions], JSON_PRETTY_PRINT)."\n```");
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+        ->assertSessionHas('success');
+
+    expect(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())->toBe(['Fenced question 1?']);
+});
+
+test('questions with the choices under "options" are still saved', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    $questions = array_map(fn (int $i) => [
+        'question' => "Options question {$i}?",
+        'options' => ['A' => "A{$i}", 'B' => "B{$i}", 'C' => "C{$i}", 'D' => "D{$i}"],
+        'correct_answer' => 'D',
+        'points' => 1,
+    ], [1, 2, 3]);
+
+    fakeGeminiQuizText(json_encode(['questions' => $questions]));
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+        ->assertSessionHas('success');
+
+    $saved = QuizQuestion::where('quiz_id', $quiz->id)->first();
+
+    expect($saved->question)->toBe('Options question 1?')
+        ->and($saved->option_a)->toBe('A1')
+        ->and($saved->option_d)->toBe('D1')
+        ->and($saved->correct_answer)->toBe('D');
 });
