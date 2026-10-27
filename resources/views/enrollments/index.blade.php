@@ -24,41 +24,27 @@
         </div>
     @endif
 
-    {{-- Date filter: enrollments are listed newest first by enrollment date. --}}
-    <form method="GET" action="{{ route('enrollments.index') }}"
-          class="sad-card flex flex-col gap-4 p-5 sm:flex-row sm:items-end">
-        <div class="grid flex-1 gap-4 sm:grid-cols-2">
-            <x-pw.field label="Enrolled from" for="from">
-                <input id="from" type="date" name="from" value="{{ $from }}" class="sad-field">
-            </x-pw.field>
-
-            <x-pw.field label="Enrolled to" for="to">
-                <input id="to" type="date" name="to" value="{{ $to }}" class="sad-field">
-            </x-pw.field>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <button type="submit" class="sad-btn sad-btn-primary">Filter</button>
-
-            @if($from || $to)
-                <a href="{{ route('enrollments.index') }}" class="sad-btn sad-btn-light border border-slate-200">Clear</a>
-            @endif
-        </div>
-    </form>
+    {{-- Date range: enrollments are listed newest first by enrollment date. --}}
+    <nav class="flex flex-wrap gap-2" aria-label="Enrollment date range">
+        @foreach($ranges as $key => [$label])
+            <a href="{{ $key === 'all' ? route('enrollments.index') : route('enrollments.index', ['range' => $key]) }}"
+               @if($range === $key) aria-current="page" @endif
+               @class([
+                   'inline-flex h-9 items-center rounded-full border px-4 text-xs font-semibold transition',
+                   'border-violet-600 bg-violet-600 text-white shadow-sm shadow-violet-200' => $range === $key,
+                   'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:text-violet-700' => $range !== $key,
+               ])>
+                {{ $label }}
+            </a>
+        @endforeach
+    </nav>
 
     @php
-        $formatDay = fn ($date) => \Carbon\Carbon::parse($date)->format('M d, Y');
-
-        $range = match (true) {
-            $from && $to => ' enrolled from ' . $formatDay($from) . ' to ' . $formatDay($to),
-            (bool) $from => ' enrolled on or after ' . $formatDay($from),
-            (bool) $to => ' enrolled on or before ' . $formatDay($to),
-            default => '',
-        };
+        $rangeWording = $ranges[$range][1];
     @endphp
 
     <p class="-mt-2 text-xs text-slate-500">
-        {{ $enrollments->count() . ' ' . Str::plural('enrollment', $enrollments->count()) . $range }} · newest first
+        {{ $enrollments->count() . ' ' . Str::plural('enrollment', $enrollments->count()) . ($rangeWording ? ' ' . $rangeWording : '') }} · newest first
     </p>
 
     <div class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -137,7 +123,7 @@
                     @empty
                         <tr>
                             <td colspan="6">
-                                <x-pw.empty-state :title="$from || $to ? 'No enrollments in this date range.' : 'No enrollments yet.'" />
+                                <x-pw.empty-state :title="$range !== 'all' ? 'No enrollments ' . $ranges[$range][1] . '.' : 'No enrollments yet.'" />
                             </td>
                         </tr>
                     @endforelse

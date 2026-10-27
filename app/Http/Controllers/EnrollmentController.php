@@ -9,27 +9,52 @@ use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
+    /**
+     * Quick date ranges on the Enrollments page: key => [button label, summary wording].
+     */
+    public const DATE_RANGES = [
+        'all' => ['All time', ''],
+        'today' => ['Today', 'today'],
+        '7d' => ['Last 7 days', 'in the last 7 days'],
+        '30d' => ['Last 30 days', 'in the last 30 days'],
+        '90d' => ['Last 90 days', 'in the last 90 days'],
+        'year' => ['This year', 'this year'],
+    ];
+
     public function index(Request $request)
     {
-        $filters = $request->validate([
-            'from' => 'nullable|date',
-            'to' => 'nullable|date|after_or_equal:from',
-        ]);
+        $range = $request->query('range', 'all');
 
-        $from = $filters['from'] ?? null;
-        $to = $filters['to'] ?? null;
+        // An unknown range (an old or edited link) shows everything.
+        if (! array_key_exists($range, self::DATE_RANGES)) {
+            $range = 'all';
+        }
+
+        // Each range runs up to today; "Last 7 days" includes today.
+        $since = match ($range) {
+            'today' => today(),
+            '7d' => today()->subDays(6),
+            '30d' => today()->subDays(29),
+            '90d' => today()->subDays(89),
+            'year' => today()->startOfYear(),
+            default => null,
+        };
 
         // Older rows may have no enrolled_at; their created_at stands in for it.
-        $enrolledOn = 'DATE(COALESCE(enrolled_at, created_at))';
-
         $enrollments = Enrollment::with(['student', 'course'])
-            ->when($from, fn ($query) => $query->whereRaw("{$enrolledOn} >= ?", [$from]))
-            ->when($to, fn ($query) => $query->whereRaw("{$enrolledOn} <= ?", [$to]))
+            ->when($since, fn ($query) => $query->whereRaw(
+                'DATE(COALESCE(enrolled_at, created_at)) >= ?',
+                [$since->toDateString()]
+            ))
             ->orderByRaw('COALESCE(enrolled_at, created_at) DESC')
             ->orderByDesc('id')
             ->get();
 
-        return view('enrollments.index', compact('enrollments', 'from', 'to'));
+        return view('enrollments.index', [
+            'enrollments' => $enrollments,
+            'range' => $range,
+            'ranges' => self::DATE_RANGES,
+        ]);
     }
 
     public function create()
