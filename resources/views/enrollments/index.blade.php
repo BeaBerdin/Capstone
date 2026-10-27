@@ -65,22 +65,22 @@
                             </td>
 
                             <td class="px-5 py-4">
-                                <div class="flex items-center gap-4 whitespace-nowrap">
-                                    <a href="{{ route('enrollments.edit',$enrollment) }}"
-                                       class="text-sm font-semibold text-violet-600 hover:text-violet-700">
+                                <div class="flex items-center gap-2 whitespace-nowrap">
+                                    <a href="{{ route('enrollments.edit', $enrollment) }}"
+                                       class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
                                         Edit
                                     </a>
 
-                                    <form action="{{ route('enrollments.destroy',$enrollment) }}"
+                                    <form action="{{ route('enrollments.destroy', $enrollment) }}"
                                           method="POST"
-                                          class="inline">
-
+                                          onsubmit="return confirm('Delete this enrollment?')">
                                         @csrf
                                         @method('DELETE')
 
-                                        <button
-                                            onclick="return confirm('Delete Enrollment?')"
-                                            class="text-sm font-semibold text-red-600 hover:text-red-700">
+                                        <button type="submit"
+                                                class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-rose-100 bg-white px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50">
+                                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg>
                                             Delete
                                         </button>
                                     </form>
