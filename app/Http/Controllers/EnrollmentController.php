@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Course;
 use App\Models\User;
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EnrollmentController extends Controller
 {
@@ -59,7 +62,7 @@ class EnrollmentController extends Controller
 
     public function create()
     {
-        $students = User::orderBy('name')->get();
+        $students = $this->students()->orderBy('name')->get();
         $courses = Course::orderBy('title')->get();
 
         return view('enrollments.create', compact('students', 'courses'));
@@ -68,7 +71,7 @@ class EnrollmentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:users,id',
+            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
             'course_id' => 'required|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
@@ -90,7 +93,7 @@ class EnrollmentController extends Controller
 
     public function edit(Enrollment $enrollment)
     {
-        $students = User::orderBy('name')->get();
+        $students = $this->students()->orderBy('name')->get();
         $courses = Course::orderBy('title')->get();
 
         return view('enrollments.edit', compact('enrollment', 'students', 'courses'));
@@ -99,7 +102,7 @@ class EnrollmentController extends Controller
     public function update(Request $request, Enrollment $enrollment)
     {
         $request->validate([
-            'student_id' => 'required|exists:users,id',
+            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
             'course_id' => 'required|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
@@ -125,5 +128,24 @@ class EnrollmentController extends Controller
         return redirect()
             ->route('enrollments.index')
             ->with('success', 'Enrollment deleted successfully.');
+    }
+
+    /**
+     * Only student accounts can be enrolled in a course.
+     */
+    private function students(): Builder
+    {
+        return User::query()->whereHas('roles', function (Builder $query) {
+            $query->where('name', 'student');
+        });
+    }
+
+    private function mustBeStudent(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) {
+            if (! $this->students()->whereKey($value)->exists()) {
+                $fail('Only student accounts can be enrolled in a course.');
+            }
+        };
     }
 }

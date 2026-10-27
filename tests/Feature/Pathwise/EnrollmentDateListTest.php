@@ -117,3 +117,29 @@ test('an unknown range shows all enrollments', function () {
         ->assertSee('Olive Oldest')
         ->assertSee('1 enrollment · newest first');
 });
+
+test('only student accounts are offered and accepted on the enrollment form', function () {
+    $admin = pathwiseUser('admin', ['name' => 'Ada Admin']);
+    $teacher = pathwiseUser('teacher', ['name' => 'Theo Teacher']);
+    pathwiseUser('student', ['name' => 'Sam Student']);
+    $course = pathwiseCourse($teacher, ['status' => 'published']);
+
+    $this->actingAs($admin)
+        ->get(route('enrollments.create'))
+        ->assertOk()
+        ->assertSee('Sam Student')
+        ->assertDontSee('Theo Teacher');
+
+    $this->actingAs($admin)
+        ->from(route('enrollments.create'))
+        ->post(route('enrollments.store'), [
+            'student_id' => $teacher->id,
+            'course_id' => $course->id,
+            'status' => 'active',
+            'progress_percentage' => 0,
+        ])
+        ->assertRedirect(route('enrollments.create'))
+        ->assertSessionHasErrors(['student_id' => 'Only student accounts can be enrolled in a course.']);
+
+    expect(Enrollment::where('student_id', $teacher->id)->exists())->toBeFalse();
+});
