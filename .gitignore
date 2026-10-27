@@ -47,3 +47,6 @@ docs/audit/*.pdf
 
 # Local test run output.
 test-results*.txt
+
+# Recorded demo videos (kept locally, not in git).
+/demo-videos
