@@ -244,3 +244,41 @@ test('questions with the choices under "options" are still saved', function () {
         ->and($saved->option_d)->toBe('D1')
         ->and($saved->correct_answer)->toBe('D');
 });
+
+test('a Gemini timeout shows a clear message and leaves the quiz unchanged', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    Http::fake(['*' => Http::failedConnection('Operation timed out')]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner'])
+        ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertSessionHas('error', 'Gemini did not respond in time. Your quiz was not changed. Please try again, or generate fewer questions.');
+
+    expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
+});
+
+test('a temporary Gemini server error is retried within the time budget', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    $questions = array_map(fn (int $i) => [
+        'question' => "Retried question {$i}?",
+        'option_a' => "A{$i}", 'option_b' => "B{$i}", 'option_c' => "C{$i}", 'option_d' => "D{$i}",
+        'correct_answer' => 'A',
+        'points' => 1,
+    ], [1, 2, 3]);
+
+    Http::fake(['*' => Http::sequence()
+        ->push(['error' => ['message' => 'Unavailable']], 503)
+        ->push(['steps' => [[
+            'type' => 'model_output',
+            'content' => [['type' => 'text', 'text' => json_encode(['questions' => $questions])]],
+        ]]])]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+        ->assertSessionHas('success');
+
+    Http::assertSentCount(2);
+    expect(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())->toBe(['Retried question 1?']);
+});

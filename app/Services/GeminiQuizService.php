@@ -14,6 +14,12 @@ class GeminiQuizService
     private const DEFAULT_ENDPOINT =
         'https://generativelanguage.googleapis.com/v1beta/interactions';
 
+    /**
+     * Total seconds spent waiting for Gemini, retries included. Stays
+     * below the controller's set_time_limit(150).
+     */
+    public const REQUEST_BUDGET_SECONDS = 120;
+
     private const MAX_SOURCE_CHARACTERS = 50000;
 
     private const MAX_QUESTIONS = 10;
@@ -419,7 +425,19 @@ PROMPT;
 
         $lastResponse = null;
 
+        $deadline =
+            microtime(true)
+            +
+            self::REQUEST_BUDGET_SECONDS;
+
         for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $secondsLeft =
+                (int) floor(
+                    $deadline
+                    -
+                    microtime(true)
+                );
+
             $response =
                 Http::withHeaders([
                     'x-goog-api-key' =>
@@ -429,7 +447,15 @@ PROMPT;
                         'application/json',
                 ])
                     ->acceptJson()
-                    ->timeout(60)
+                    ->timeout(
+                        max(
+                            10,
+                            min(
+                                60,
+                                $secondsLeft
+                            )
+                        )
+                    )
                     ->connectTimeout(15)
                     ->post(
                         $endpoint,
@@ -449,6 +475,8 @@ PROMPT;
                 )
                 ||
                 $attempt === 3
+                ||
+                $deadline - microtime(true) < 10
             ) {
                 break;
             }

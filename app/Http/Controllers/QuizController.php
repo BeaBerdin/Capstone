@@ -12,6 +12,7 @@ use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Services\GeminiQuizService;
 use App\Services\RecommendationService;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -488,6 +489,10 @@ class QuizController extends Controller
         Quiz $quiz,
         GeminiQuizService $geminiQuizService
     ) {
+        // Gemini can take more than 30 seconds for 5 or 10 questions; the
+        // service stops waiting after GeminiQuizService::REQUEST_BUDGET_SECONDS.
+        set_time_limit(150);
+
         $quiz->load([
             'course',
             'lesson',
@@ -885,6 +890,19 @@ class QuizController extends Controller
             report(
                 $exception
             );
+
+
+            if ($exception instanceof ConnectionException) {
+                return redirect()
+                    ->route(
+                        'teacher.quiz.builder',
+                        $quiz->lesson_id
+                    )
+                    ->with(
+                        'error',
+                        'Gemini did not respond in time. Your quiz was not changed. Please try again, or generate fewer questions.'
+                    );
+            }
 
 
             $message =
