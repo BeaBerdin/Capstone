@@ -1,0 +1,199 @@
+<?php
+
+use App\Models\Enrollment;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
+
+/*
+| Finalization: the PayMongo webhook only approves a payment when the
+| signature is valid for the exact body, the timestamp is recent, the event
+| is a paid checkout, and PayMongo itself confirms the session is paid for
+| the full amount. Repeated events do not create duplicate enrollments.
+*/
+
+const WEBHOOK_SECRET = 'whsk_finalization_secret';
+
+function webhookTransaction(string $secretKey = 'sk_test_fake'): Transaction
+{
+    config([
+        'services.paymongo.secret_key' => $secretKey,
+        'services.paymongo.public_key' => 'pk_test_fake',
+        'services.paymongo.webhook_secret' => WEBHOOK_SECRET,
+    ]);
+
+    $student = pathwiseUser('student');
+    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'price' => 499]);
+
+    return Transaction::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'transaction_no' => 'TXN-WEBHOOK-1',
+        'amount' => 499,
+        'payment_method' => 'PayMongo',
+        'payment_reference' => 'cs_webhook_1',
+        'status' => 'pending',
+    ]);
+}
+
+function fakeCheckoutSession(string $status = 'paid', int $amount = 49900): void
+{
+    Http::fake([
+        'api.paymongo.com/v1/checkout_sessions/*' => Http::response([
+            'data' => [
+                'id' => 'cs_webhook_1',
+                'attributes' => [
+                    'reference_number' => 'TXN-WEBHOOK-1',
+                    'payments' => [[
+                        'id' => 'pay_webhook_1',
+                        'attributes' => [
+                            'status' => $status,
+                            'currency' => 'PHP',
+                            'amount' => $amount,
+                            'source' => ['id' => 'src_1', 'type' => 'gcash'],
+                        ],
+                    ]],
+                ],
+            ],
+        ]),
+    ]);
+}
+
+function webhookBody(string $type = 'checkout_session.payment.paid', string $reference = 'TXN-WEBHOOK-1'): string
+{
+    return json_encode([
+        'data' => [
+            'id' => 'evt_'.uniqid(),
+            'attributes' => [
+                'type' => $type,
+                'data' => [
+                    'id' => 'cs_webhook_1',
+                    'attributes' => ['reference_number' => $reference],
+                ],
+            ],
+        ],
+    ]);
+}
+
+function sendWebhook($test, string $body, ?string $header)
+{
+    $server = ['CONTENT_TYPE' => 'application/json'];
+
+    if ($header !== null) {
+        $server['HTTP_PAYMONGO_SIGNATURE'] = $header;
+    }
+
+    return $test->call('POST', route('paymongo.webhook'), [], [], [], $server, $body);
+}
+
+function signedHeader(string $body, ?int $timestamp = null, string $mode = 'te', string $secret = WEBHOOK_SECRET): string
+{
+    $timestamp ??= now()->timestamp;
+    $signature = hash_hmac('sha256', $timestamp.'.'.$body, $secret);
+
+    return $mode === 'li'
+        ? "t={$timestamp},te=,li={$signature}"
+        : "t={$timestamp},te={$signature},li=";
+}
+
+test('a correctly signed paid event approves the payment and enrolls the student once', function () {
+    Notification::fake();
+    $transaction = webhookTransaction();
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+    sendWebhook($this, $body, signedHeader($body))->assertOk();
+
+    // PayMongo retries events: a second delivery must not duplicate anything.
+    $again = webhookBody();
+    sendWebhook($this, $again, signedHeader($again))->assertOk();
+
+    expect($transaction->fresh()->status)->toBe('approved')
+        ->and(Enrollment::where('student_id', $transaction->student_id)
+            ->where('course_id', $transaction->course_id)->count())->toBe(1)
+        ->and(Enrollment::where('student_id', $transaction->student_id)->value('status'))->toBe('active');
+});
+
+test('a signature made for a different body is rejected', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession();
+
+    $header = signedHeader(webhookBody(reference: 'TXN-SOMETHING-ELSE'));
+
+    sendWebhook($this, webhookBody(), $header)->assertStatus(401);
+
+    expect($transaction->fresh()->status)->toBe('pending');
+    Http::assertNothingSent();
+});
+
+test('a signature made with the wrong secret is rejected', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+
+    sendWebhook($this, $body, signedHeader($body, secret: 'whsk_attacker'))->assertStatus(401);
+
+    expect($transaction->fresh()->status)->toBe('pending');
+});
+
+test('an old timestamp outside the tolerance is rejected', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+
+    sendWebhook($this, $body, signedHeader($body, now()->timestamp - 3600))->assertStatus(401);
+
+    expect($transaction->fresh()->status)->toBe('pending');
+});
+
+test('a test-mode signature is not accepted when live keys are configured', function () {
+    $transaction = webhookTransaction('sk_live_fake');
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+
+    sendWebhook($this, $body, signedHeader($body, mode: 'te'))->assertStatus(401);
+    expect($transaction->fresh()->status)->toBe('pending');
+
+    Notification::fake();
+    sendWebhook($this, $body, signedHeader($body, mode: 'li'))->assertOk();
+    expect($transaction->fresh()->status)->toBe('approved');
+});
+
+test('other event types are ignored', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession();
+
+    $body = webhookBody('payment.failed');
+
+    sendWebhook($this, $body, signedHeader($body))->assertSuccessful();
+
+    expect($transaction->fresh()->status)->toBe('pending')
+        ->and(Enrollment::count())->toBe(0);
+});
+
+test('a signed event is not trusted when PayMongo says the session is unpaid', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession('pending');
+
+    $body = webhookBody();
+
+    sendWebhook($this, $body, signedHeader($body))->assertStatus(202);
+
+    expect($transaction->fresh()->status)->toBe('pending')
+        ->and(Enrollment::count())->toBe(0);
+});
+
+test('a payment for less than the course price is not approved', function () {
+    $transaction = webhookTransaction();
+    fakeCheckoutSession('paid', 100);
+
+    $body = webhookBody();
+
+    sendWebhook($this, $body, signedHeader($body));
+
+    expect($transaction->fresh()->status)->not->toBe('approved')
+        ->and(Enrollment::count())->toBe(0);
+});
