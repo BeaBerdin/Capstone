@@ -12,7 +12,7 @@ Step-by-step instructions per role are in [docs/USER_GUIDE.md](docs/USER_GUIDE.m
 
 ## Requirements
 
-- PHP 8.3 or newer, Composer
+- PHP 8.4 or newer (8.4.1 minimum), Composer
 - Node.js and npm
 - MySQL
 
