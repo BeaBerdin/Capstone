@@ -1011,6 +1011,11 @@ class CourseController extends Controller
             )
             ->firstOrFail();
 
+        // The progress view lists enrollments; here it is this one student.
+        $enrollments = collect([
+            $enrollment->load(['student', 'course.category']),
+        ]);
+
         return view(
             'Teacher.student-progress',
             compact(
@@ -1018,7 +1023,8 @@ class CourseController extends Controller
                 'student',
                 'lessons',
                 'progressByLesson',
-                'enrollment'
+                'enrollment',
+                'enrollments'
             )
         );
     }

@@ -14,18 +14,20 @@ class StudentProgressController extends Controller
 
     public function index()
     {
+        /*
+         * Teachers see their own courses only. The Administrator (Department
+         * Head) sees every course: "Student Progress Reports" (Fig. 36).
+         */
         $enrollments = Enrollment::with([
                 'student',
                 'course.category',
             ])
-            ->whereHas(
-                'course',
-                function ($query) {
-                    $query->where(
-                        'teacher_id',
-                        auth()->id()
-                    );
-                }
+            ->when(
+                ! auth()->user()->hasRole('admin'),
+                fn ($query) => $query->whereHas(
+                    'course',
+                    fn ($course) => $course->where('teacher_id', auth()->id())
+                )
             )
             ->latest()
             ->get();
