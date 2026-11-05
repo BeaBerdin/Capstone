@@ -36,6 +36,16 @@ class UserManagementController extends Controller
     }
 
     /**
+     * Create Account form (Manuscript Figure 31: "Add User").
+     */
+    public function create()
+    {
+        $departments = Department::orderBy('name')->get();
+
+        return view('users.create', compact('departments'));
+    }
+
+    /**
      * Create a new account (for example, an Administrator / Department Head).
      *
      * Accounts created by the EDP are marked as email-verified because the

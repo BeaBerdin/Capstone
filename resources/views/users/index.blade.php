@@ -127,12 +127,12 @@
                     CREATE ACCOUNT (Manuscript Figure 31: "Add User")
                 ====================================================== --}}
 
-                <details
-                    class="pw-card mt-6 overflow-hidden"
-                    @if($errors->any()) open @endif
-                >
+                <section class="sad-card mt-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
 
-                    <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 sm:px-6">
+                    <div class="flex items-start gap-3">
+                        <span class="sad-section-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
+                        </span>
 
                         <div>
                             <h2 class="text-sm font-bold text-slate-900">
@@ -141,89 +141,17 @@
 
                             <p class="mt-0.5 text-xs text-slate-500">
                                 Add an Administrator, Teacher, Student, or Super Admin account.
+                                Accounts created here are already email-verified.
                             </p>
                         </div>
+                    </div>
 
-                        <span class="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white">
-                            + Add User
-                        </span>
+                    <a href="{{ route('users.create') }}" class="sad-btn sad-btn-primary shrink-0 self-start sm:self-auto">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                        Add User
+                    </a>
 
-                    </summary>
-
-                    <form
-                        action="{{ route('users.store') }}"
-                        method="POST"
-                        class="grid gap-4 border-t border-slate-100 px-5 py-5 sm:grid-cols-2 sm:px-6"
-                    >
-                        @csrf
-
-                        <div>
-                            <label for="new_name" class="text-xs font-semibold text-slate-600">Full name</label>
-                            <input id="new_name" name="name" type="text" value="{{ old('name') }}" required
-                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                            @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="new_email" class="text-xs font-semibold text-slate-600">Email address</label>
-                            <input id="new_email" name="email" type="email" value="{{ old('email') }}" required
-                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                            @error('email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="new_role" class="text-xs font-semibold text-slate-600">Role</label>
-                            <select id="new_role" name="role" required
-                                    class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                                <option value="admin" @selected(old('role', 'admin') === 'admin')>Administrator (Department Head)</option>
-                                <option value="teacher" @selected(old('role') === 'teacher')>Teacher</option>
-                                <option value="student" @selected(old('role') === 'student')>Student</option>
-                                <option value="super_admin" @selected(old('role') === 'super_admin')>Super Admin (EDP)</option>
-                            </select>
-                            @error('role') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="new_department" class="text-xs font-semibold text-slate-600">Department (optional)</label>
-                            <select id="new_department" name="department_id"
-                                    class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                                <option value="">No department</option>
-                                @foreach(($departments ?? collect()) as $department)
-                                    <option value="{{ $department->id }}" @selected((string) old('department_id') === (string) $department->id)>
-                                        {{ $department->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('department_id') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="new_password" class="text-xs font-semibold text-slate-600">Temporary password</label>
-                            <input id="new_password" name="password" type="password" required autocomplete="new-password"
-                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                            @error('password') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="new_password_confirmation" class="text-xs font-semibold text-slate-600">Confirm password</label>
-                            <input id="new_password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password"
-                                   class="mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100">
-                        </div>
-
-                        <div class="sm:col-span-2 flex items-center justify-between gap-4">
-                            <p class="text-xs text-slate-500">
-                                Accounts created here are already email-verified. Ask the user to change the password after the first login.
-                            </p>
-
-                            <button type="submit"
-                                    class="sad-btn-primary h-10 shrink-0 rounded-xl bg-violet-600 px-5 text-xs font-bold text-white transition hover:bg-violet-700">
-                                Create Account
-                            </button>
-                        </div>
-
-                    </form>
-
-                </details>
+                </section>
 
                 {{-- =====================================================
                     ROLE SUMMARY

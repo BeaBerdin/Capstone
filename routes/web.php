@@ -107,6 +107,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/super-admin/users', [UserManagementController::class, 'index'])
             ->name('users.index');
 
+        Route::get('/super-admin/users/create', [UserManagementController::class, 'create'])
+            ->name('users.create');
+
         Route::post('/super-admin/users', [UserManagementController::class, 'store'])
             ->name('users.store');
 
