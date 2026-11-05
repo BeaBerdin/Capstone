@@ -156,7 +156,7 @@
             @endif
 
 
-            <div class="mt-7 grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
+            <div class="mt-7 grid gap-6 *:min-w-0 lg:grid-cols-[1.25fr_.75fr]">
 
                 {{-- LEFT SIDE --}}
                 <div class="space-y-6">

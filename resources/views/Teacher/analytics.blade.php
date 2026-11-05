@@ -545,7 +545,7 @@
 
         {{-- TREND + DISTRIBUTION --}}
         <section
-            class="mt-4 grid grid-cols-1 gap-4
+            class="mt-4 grid grid-cols-1 gap-4 *:min-w-0
                    xl:grid-cols-[1.35fr_.65fr]"
         >
 
@@ -894,7 +894,7 @@
 
         {{-- LEARNERS + ASSESSMENT --}}
         <section
-            class="mt-4 grid grid-cols-1 gap-4
+            class="mt-4 grid grid-cols-1 gap-4 *:min-w-0
                    xl:grid-cols-[1.35fr_.65fr]"
         >
 

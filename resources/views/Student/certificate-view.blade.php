@@ -32,7 +32,7 @@
         <div class="relative w-full max-w-1400 overflow-hidden rounded-3xl border-10 border-purple-700 bg-white shadow-2xl">
 
             <!-- A4 Landscape Ratio -->
-            <div class="relative aspect-297/210 w-full p-10 text-center text-black lg:p-16">
+            <div class="relative w-full p-6 text-center text-black sm:p-10 lg:p-16">
 
                 <!-- Soft corner glows for a premium feel -->
                 <div class="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-purple-300/30 blur-3xl"></div>
@@ -47,7 +47,7 @@
                 <div class="cert-corner bottom-8 left-8 border-b-2 border-l-2 rounded-bl-lg"></div>
                 <div class="cert-corner bottom-8 right-8 border-b-2 border-r-2 rounded-br-lg"></div>
 
-                <div class="relative z-10 flex h-full flex-col justify-between">
+                <div class="relative z-10 flex h-full flex-col justify-between gap-8">
 
                     <!-- Header -->
                     <div>
@@ -59,11 +59,11 @@
                                 class="h-20 object-contain">
                         </div>
 
-                        <h1 class="certificate-title text-5xl font-extrabold tracking-[0.18em] text-purple-800 lg:text-7xl">
+                        <h1 class="certificate-title text-3xl font-extrabold tracking-[0.12em] text-purple-800 sm:text-5xl sm:tracking-[0.18em] lg:text-7xl">
                             CERTIFICATE
                         </h1>
 
-                        <h2 class="mt-2 text-2xl font-bold tracking-wide text-purple-600 lg:text-4xl">
+                        <h2 class="mt-2 text-xl font-bold tracking-wide text-purple-600 sm:text-2xl lg:text-4xl">
                             OF COMPLETION
                         </h2>
 
@@ -80,7 +80,7 @@
                             This certificate is proudly awarded to
                         </p>
 
-                        <h2 class="certificate-name mt-4 inline-block border-b-2 border-purple-300 px-12 pb-2 text-4xl font-bold text-purple-900 lg:text-5xl">
+                        <h2 class="certificate-name mt-4 inline-block max-w-full break-words border-b-2 border-purple-300 px-4 pb-2 text-2xl font-bold text-purple-900 sm:px-12 sm:text-4xl lg:text-5xl">
                             {{ $certificate->student->name }}
                         </h2>
 
@@ -88,7 +88,7 @@
                             for successfully completing the course
                         </p>
 
-                        <h3 class="mt-3 text-3xl font-bold text-purple-800 lg:text-4xl">
+                        <h3 class="mt-3 break-words text-xl font-bold text-purple-800 sm:text-3xl lg:text-4xl">
                             {{ $certificate->course->title }}
                         </h3>
 
@@ -107,19 +107,19 @@
                     <!-- Footer -->
                     <div>
 
-                        <div class="mx-auto grid max-w-3xl grid-cols-2 gap-8">
+                        <div class="mx-auto mt-6 grid max-w-3xl grid-cols-1 gap-4 sm:mt-0 sm:grid-cols-2 sm:gap-8">
 
                             <div>
                                 <p class="text-xs uppercase tracking-wide text-gray-500">
                                     Certificate Number
                                 </p>
 
-                                <p class="mt-1 text-xl font-bold text-purple-900">
+                                <p class="mt-1 break-all text-xl font-bold text-purple-900">
                                     {{ $certificate->certificate_number }}
                                 </p>
 
                                 <p class="mt-2 text-xs text-gray-400">
-                                    Verify this certificate at: pathwise.test
+                                    Verify this certificate at: {{ route('certificates.verify') }}
                                 </p>
                             </div>
 
@@ -136,7 +136,7 @@
                         </div>
 
                         <div class="mt-10">
-                            <div class="mx-auto w-72 border-t-2 border-purple-700"></div>
+                            <div class="mx-auto w-48 border-t-2 border-purple-700 sm:w-72"></div>
 
                             <p class="mt-3 text-lg font-bold tracking-wide text-purple-900">
                                 PATHWISE

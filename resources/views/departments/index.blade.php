@@ -1,4 +1,3 @@
-```blade
 <x-layouts::app :title="'Department Management'">
 
 @include('partials.soft3d')
