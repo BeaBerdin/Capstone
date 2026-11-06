@@ -439,8 +439,7 @@ class QuizController extends Controller
         $quiz->course_id =
             $lesson->course_id;
 
-        $quiz->lesson_id =
-            $lesson->id;
+        $quiz->lesson()->associate($lesson);
 
         $quiz->title =
             $validated['title'];
@@ -1215,6 +1214,8 @@ class QuizController extends Controller
             'B' => 'option_b',
             'C' => 'option_c',
             'D' => 'option_d',
+            // Unreachable: validateQuestion() only accepts A, B, C or D.
+            default => throw new \UnhandledMatchError('Invalid correct answer.'),
         };
 
 
@@ -1356,7 +1357,7 @@ class QuizController extends Controller
         );
 
         $secondsRemaining = $deadline !== null
-            ? max(0, $deadline - now()->timestamp)
+            ? max(0, $deadline - now()->getTimestamp())
             : null;
 
 
@@ -1490,7 +1491,7 @@ class QuizController extends Controller
         app(
             RecommendationService::class
         )->generate(
-            auth()->id(),
+            (int) auth()->id(),
             $quiz,
             $percentage
         );
@@ -1573,7 +1574,7 @@ class QuizController extends Controller
             return null;
         }
 
-        $now = now()->timestamp;
+        $now = now()->getTimestamp();
 
         $startedAt = session($key);
 

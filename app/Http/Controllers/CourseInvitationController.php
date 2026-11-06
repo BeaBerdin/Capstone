@@ -388,8 +388,7 @@ if (! empty($validated['expires_at'])) {
 
     $courseInvitation->loadMissing('course');
 
-    $courseTitle = $courseInvitation->course?->title
-        ?? 'your course';
+    $courseTitle = $courseInvitation->course->title;
 
    $student->notify(
     new PathwiseNotification(

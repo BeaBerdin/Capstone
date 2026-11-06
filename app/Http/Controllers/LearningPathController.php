@@ -73,7 +73,7 @@ class LearningPathController extends Controller
         $this->syncCoursesWithOrder(
             $learningPath,
             collect(
-                $request->course_ids ?? []
+                (array) ($request->course_ids ?? [])
             )
         );
 
@@ -152,7 +152,7 @@ class LearningPathController extends Controller
         $this->syncCoursesWithOrder(
             $learningPath,
             collect(
-                $request->course_ids ?? []
+                (array) ($request->course_ids ?? [])
             )
         );
 
@@ -309,7 +309,7 @@ class LearningPathController extends Controller
             '. Average Quiz Score: '
             .
             round(
-                $averageScore,
+                (float) $averageScore,
                 2
             )
             .
@@ -612,7 +612,7 @@ class LearningPathController extends Controller
             $index => $course
         ) {
             $courseId =
-                is_object($course)
+                $course instanceof Course
                     ? $course->id
                     : $course;
 

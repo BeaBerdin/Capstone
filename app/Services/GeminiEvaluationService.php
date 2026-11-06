@@ -514,10 +514,7 @@ PROMPT;
             );
         }
 
-        $score = (int) (
-            $result['score']
-            ?? 0
-        );
+        $score = (int) $result['score'];
 
         $score = max(
             0,

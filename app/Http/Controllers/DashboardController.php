@@ -92,7 +92,7 @@ class DashboardController extends Controller
      * The latest registrations, role assignments, enrollments and payments,
      * newest first, each tagged with its status.
      *
-     * @return \Illuminate\Support\Collection<int, array{type: string, title: string, detail: string, status: string, at: \Carbon\CarbonInterface}>
+     * @return \Illuminate\Support\Collection<int, array{type: string, title: string, detail: string, status: string, at: \Carbon\CarbonImmutable|\Illuminate\Support\Carbon}>
      */
     private function superAdminRecentActivity(int $limit = 8)
     {
@@ -114,7 +114,7 @@ class DashboardController extends Controller
             ->get(['users.name', 'roles.name as role', 'user_roles.created_at'])
             ->map(fn ($row) => [
                 'type' => 'Role assignment',
-                'title' => $row->name,
+                'title' => (string) $row->name,
                 'detail' => 'Assigned role: '.str_replace('_', ' ', $row->role),
                 'status' => 'Verified',
                 'at' => \Illuminate\Support\Carbon::parse($row->created_at),
@@ -123,8 +123,8 @@ class DashboardController extends Controller
         $enrollments = Enrollment::with(['student', 'course'])->latest()->take($limit)->get()
             ->map(fn (Enrollment $enrollment) => [
                 'type' => 'Enrollment',
-                'title' => $enrollment->student?->name ?? 'Student',
-                'detail' => $enrollment->course?->title ?? 'Course',
+                'title' => $enrollment->student->name,
+                'detail' => $enrollment->course->title,
                 'status' => ucfirst((string) $enrollment->status),
                 'at' => $enrollment->created_at,
             ]);
@@ -132,8 +132,8 @@ class DashboardController extends Controller
         $payments = Transaction::with(['student', 'course'])->latest()->take($limit)->get()
             ->map(fn (Transaction $transaction) => [
                 'type' => 'Payment',
-                'title' => $transaction->student?->name ?? 'Student',
-                'detail' => '₱'.number_format((float) $transaction->amount, 2).' · '.($transaction->course?->title ?? 'Course'),
+                'title' => $transaction->student->name,
+                'detail' => '₱'.number_format((float) $transaction->amount, 2).' · '.$transaction->course->title,
                 'status' => match ($transaction->status) {
                     'approved' => 'Verified',
                     'rejected' => 'Rejected',

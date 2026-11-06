@@ -57,12 +57,10 @@ class AIRecommendationController extends Controller
     {
         $request->validate([
             'student_id' =>
-                'required|exists:users,id',
+                'required|integer|exists:users,id',
         ]);
 
-        $student = User::findOrFail(
-            $request->student_id
-        );
+        $student = User::findOrFail((int) $request->student_id);
 
         /*
          * The request must point to a real student account.

@@ -39,8 +39,8 @@ class CourseReviewController extends Controller
         }
 
         $review = new CourseReview($this->validated($request));
-        $review->course_id = $course->id;
-        $review->student_id = $request->user()->id;
+        $review->course()->associate($course);
+        $review->student()->associate($request->user());
         $review->save();
 
         $course->teacher?->notify(new PathwiseNotification(

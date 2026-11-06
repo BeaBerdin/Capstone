@@ -15,7 +15,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user,
+            $user !== null,
             401
         );
 
@@ -213,7 +213,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user,
+            $user !== null,
             401
         );
 

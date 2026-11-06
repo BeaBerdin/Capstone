@@ -64,7 +64,7 @@ class PrivateFileController extends Controller
 
         $course = $lesson->course;
 
-        abort_unless($course, 403);
+        abort_unless($course !== null, 403);
 
         $canOpen = (int) $course->teacher_id === (int) $user->id
             || $user->hasRole('admin')
@@ -89,7 +89,7 @@ class PrivateFileController extends Controller
     {
         $disk = PrivateFiles::diskFor($path);
 
-        abort_unless($disk, 404);
+        abort_unless($disk !== null, 404);
 
         $name = basename($path);
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));

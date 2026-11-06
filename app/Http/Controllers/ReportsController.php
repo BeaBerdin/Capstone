@@ -264,7 +264,7 @@ class ReportsController extends Controller
 
             'weeklyCompletions' => $this->barChart(
                 'Lessons completed',
-                collect($engagement['weeklyCompletions'])
+                collect((array) $engagement['weeklyCompletions'])
                     ->pluck('completed', 'week')
                     ->all()
             ),
@@ -736,7 +736,7 @@ class ReportsController extends Controller
             });
 
         $trendCounts = $enrollments
-            ->filter(fn ($enrollment) => $enrollment->created_at)
+            ->filter(fn ($enrollment) => $enrollment->created_at !== null)
             ->groupBy(
                 fn ($enrollment) => $enrollment->created_at->format('Y-m')
             )

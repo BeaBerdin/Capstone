@@ -392,7 +392,7 @@ class CourseController extends Controller
             )
             ->latest()
             ->get()
-            ->filter(fn ($enrollment) => $enrollment->course)
+            ->filter(fn ($enrollment) => $enrollment->course !== null)
             ->values();
 
         // In Progress, Completed and Cancelled sections. Any other status
@@ -640,7 +640,7 @@ class CourseController extends Controller
         }
 
         $template = filled($validated['template_id'] ?? null)
-            ? CourseTemplate::find($validated['template_id'])
+            ? CourseTemplate::find((int) $validated['template_id'])
             : null;
 
         $validated['template_id'] = $template?->id;

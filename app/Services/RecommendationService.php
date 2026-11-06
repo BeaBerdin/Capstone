@@ -113,7 +113,7 @@ class RecommendationService
                 'advanced' => 3,
             ];
 
-            $targetRank = $difficultyRank[$targetDifficulty] ?? 2;
+            $targetRank = $difficultyRank[$targetDifficulty];
 
             $recommendedCourse = Course::where(
                 'category_id',

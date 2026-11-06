@@ -250,7 +250,7 @@ class AssignmentController extends Controller
         $assignment->load('course');
 
         abort_unless(
-            $assignment->course,
+            $assignment->course !== null,
             404
         );
 
@@ -285,7 +285,7 @@ class AssignmentController extends Controller
         $assignment->load('course');
 
         abort_unless(
-            $assignment->course,
+            $assignment->course !== null,
             404
         );
 
@@ -332,7 +332,7 @@ class AssignmentController extends Controller
         $assignment->load('course');
 
         abort_unless(
-            $assignment->course,
+            $assignment->course !== null,
             404
         );
 

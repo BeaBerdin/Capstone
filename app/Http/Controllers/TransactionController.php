@@ -142,7 +142,7 @@ if ($invitation->isExpired()) {
         if ((float) $course->price <= 0) {
 
             $this->activateEnrollment(
-                auth()->id(),
+                (int) auth()->id(),
                 $course->id
             );
 
@@ -1516,7 +1516,7 @@ if ($invitation->isExpired()) {
         }
 
         if (
-            $enrollment->progress_percentage
+            $enrollment->getAttribute('progress_percentage')
             ===
             null
         ) {
@@ -1667,7 +1667,7 @@ if ($invitation->isExpired()) {
             $tolerance > 0
             &&
             abs(
-                now()->timestamp
+                now()->getTimestamp()
                 -
                 (int) $timestamp
             )

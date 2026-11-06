@@ -116,11 +116,11 @@ class DepartmentController extends Controller
     public function assignStore(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
             'department_id' => ['required', 'exists:departments,id'],
         ]);
 
-        $user = User::findOrFail($validated['user_id']);
+        $user = User::findOrFail((int) $validated['user_id']);
 
         $isAllowed = $user->roles()
             ->whereIn('name', ['admin', 'teacher', 'instructor'])

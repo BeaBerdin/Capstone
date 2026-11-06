@@ -180,7 +180,9 @@ class DemoDataSeeder extends Seeder
             [1, $communication, 'active', null, null],
         ];
 
-        foreach ($enrollments as [$index, $course, $status, $quiz, $quizScore]) {
+        foreach ($enrollments as $row) {
+            [$index, $course, $status, $quiz, $quizScore] = $row;
+
             $student = $students[$index];
 
             $this->enroll($student, $course, $status);
@@ -286,8 +288,8 @@ class DemoDataSeeder extends Seeder
             'rating' => $rating,
             'comment' => $comment,
         ]);
-        $review->course_id = $course->id;
-        $review->student_id = $student->id;
+        $review->course()->associate($course);
+        $review->student()->associate($student);
         $review->forceFill([
             'is_hidden' => $hiddenReason !== null,
             'hidden_reason' => $hiddenReason,
@@ -561,9 +563,14 @@ class DemoDataSeeder extends Seeder
         }
 
         $image = imagecreatetruecolor(360, 200);
-        imagefill($image, 0, 0, imagecolorallocate($image, 255, 255, 255));
-
+        $white = imagecolorallocate($image, 255, 255, 255);
         $dark = imagecolorallocate($image, 30, 41, 59);
+
+        if ($white === false || $dark === false) {
+            return base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==');
+        }
+
+        imagefill($image, 0, 0, $white);
         imagerectangle($image, 4, 4, 355, 195, $dark);
         imagestring($image, 5, 110, 40, 'DEMO RECEIPT', $dark);
         imagestring($image, 4, 70, 90, 'Bank Transfer  PHP 799.00', $dark);

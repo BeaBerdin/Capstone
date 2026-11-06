@@ -42,7 +42,7 @@ class SubmissionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'assignment_id' => 'required|exists:assignments,id',
+            'assignment_id' => 'required|integer|exists:assignments,id',
             'student_id' => 'required|exists:users,id',
             'answer_text' => 'nullable|string',
             'file_path' => 'nullable|string|max:255',
@@ -52,7 +52,7 @@ class SubmissionController extends Controller
         ]);
 
         $assignment = Assignment::findOrFail(
-            $validated['assignment_id']
+            (int) $validated['assignment_id']
         );
 
         if (
@@ -116,7 +116,7 @@ class SubmissionController extends Controller
     public function update(Request $request, Submission $submission)
     {
         $validated = $request->validate([
-            'assignment_id' => 'required|exists:assignments,id',
+            'assignment_id' => 'required|integer|exists:assignments,id',
             'student_id' => 'required|exists:users,id',
             'answer_text' => 'nullable|string',
             'file_path' => 'nullable|string|max:255',
@@ -126,7 +126,7 @@ class SubmissionController extends Controller
         ]);
 
         $assignment = Assignment::findOrFail(
-            $validated['assignment_id']
+            (int) $validated['assignment_id']
         );
 
         if (
@@ -378,7 +378,7 @@ class SubmissionController extends Controller
                     message: 'A student submitted "' .
                         $assignment->title . '".',
                     type: $notificationType,
-                    courseId: $assignment->course?->id,
+                    courseId: $assignment->course->id,
                     assignmentId: $assignment->id,
                     submissionId: $submission->id
                 )
@@ -408,7 +408,7 @@ class SubmissionController extends Controller
             'lesson',
         ]);
 
-        abort_unless($assignment->course, 404);
+        abort_unless($assignment->course !== null, 404);
 
         $this->ensureTeacherOwnsAssignment($assignment);
 

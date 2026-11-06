@@ -493,8 +493,7 @@ PROMPT;
         }
 
         $status =
-            $lastResponse?->status()
-            ?? 0;
+            $lastResponse->status();
 
         $message =
             $this->extractApiErrorMessage(

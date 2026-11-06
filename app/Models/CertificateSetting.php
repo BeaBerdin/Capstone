@@ -33,7 +33,7 @@ class CertificateSetting extends Model
     public static function current(): self
     {
         return static::query()->oldest('id')->first()
-            ?? new static(self::DEFAULTS);
+            ?? new self(self::DEFAULTS);
     }
 
     /**
