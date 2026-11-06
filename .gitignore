@@ -45,6 +45,19 @@ yarn-error.log
 *.sql
 docs/audit/*.pdf
 
+# The manuscript (its CVs contain members' personal information) and any
+# other Word file: never committed.
+*.docx
+
+# Screenshots and images saved in the project root (personal screenshots,
+# design exports). The site's own images live in public/ and are not affected.
+/*.png
+
+# Local audit material kept outside Git by decision (November 6, 2026):
+# the browser-audit evidence and the superseded December revision notes.
+/docs/audit/evidence/
+/docs/audit/MANUSCRIPT_REVISIONS_DECEMBER.md
+
 # Local test run output.
 test-results*.txt
 
