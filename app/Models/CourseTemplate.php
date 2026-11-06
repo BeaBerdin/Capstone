@@ -33,6 +33,9 @@ class CourseTemplate extends Model
         ];
     }
 
+    /**
+     * @return HasMany<Course, $this>
+     */
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class, 'template_id');

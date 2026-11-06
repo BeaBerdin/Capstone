@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LessonProgress extends Model
 {
@@ -17,12 +18,18 @@ class LessonProgress extends Model
         'time_spent_minutes',
     ];
 
-    public function student()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_id');
     }
 
-    public function lesson()
+    /**
+     * @return BelongsTo<Lesson, $this>
+     */
+    public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class LearningPath extends Model
 {
@@ -14,12 +16,18 @@ class LearningPath extends Model
         'is_generated',
     ];
 
-    public function student()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_id');
     }
 
-    public function courses()
+    /**
+     * @return BelongsToMany<Course, $this>
+     */
+    public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'learning_path_courses')
             ->withPivot('course_order')

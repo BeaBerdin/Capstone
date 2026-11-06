@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -83,19 +86,28 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             ->implode('');
     }
 
-    public function courses()
+    /**
+     * @return HasMany<Course, $this>
+     */
+    public function courses(): HasMany
     {
         return $this->hasMany(Course::class, 'teacher_id');
     }
 
-    public function roles()
+    /**
+     * @return BelongsToMany<Role, $this>
+     */
+    public function roles(): BelongsToMany
     {
         // Timestamps record when a role was assigned (shown in the Super
         // Admin dashboard's Recent Activity).
         return $this->belongsToMany(Role::class, 'user_roles')->withTimestamps();
     }
 
-    public function department()
+    /**
+     * @return BelongsTo<Department, $this>
+     */
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }

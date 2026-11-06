@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourseCategory extends Model
 {
@@ -13,7 +14,10 @@ class CourseCategory extends Model
         'is_active',
     ];
 
-    public function courses()
+    /**
+     * @return HasMany<Course, $this>
+     */
+    public function courses(): HasMany
     {
         return $this->hasMany(Course::class, 'category_id');
     }

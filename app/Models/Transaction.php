@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
@@ -22,22 +23,34 @@ class Transaction extends Model
     'approved_by',
     'approved_at',
 ];
-    public function student()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_id');
     }
 
-    public function course()
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
-    public function approver()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
- public function courseInvitation()
+ /**
+  * @return BelongsTo<CourseInvitation, $this>
+  */
+ public function courseInvitation(): BelongsTo
 {
     return $this->belongsTo(
         CourseInvitation::class,

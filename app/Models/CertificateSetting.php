@@ -36,6 +36,9 @@ class CertificateSetting extends Model
             ?? new static(self::DEFAULTS);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

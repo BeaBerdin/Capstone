@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quiz extends Model
 {
@@ -16,17 +18,26 @@ class Quiz extends Model
         'is_published',
     ];
 
-    public function course()
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 
-    public function questions()
+    /**
+     * @return HasMany<QuizQuestion, $this>
+     */
+    public function questions(): HasMany
     {
         return $this->hasMany(QuizQuestion::class);
     }
 
-    public function lesson()
+    /**
+     * @return BelongsTo<Lesson, $this>
+     */
+    public function lesson(): BelongsTo
    {
     return $this->belongsTo(Lesson::class);
    }

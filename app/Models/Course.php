@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
@@ -42,46 +45,73 @@ class Course extends Model
         'certificate_available',
     ];
 
-    public function category()
+    /**
+     * @return BelongsTo<CourseCategory, $this>
+     */
+    public function category(): BelongsTo
  {
     return $this->belongsTo(CourseCategory::class, 'category_id');
  }
 
-   public function template()
+   /**
+    * @return BelongsTo<CourseTemplate, $this>
+    */
+   public function template(): BelongsTo
  {
     return $this->belongsTo(CourseTemplate::class, 'template_id');
  }
 
-   public function teacher()
+   /**
+    * @return BelongsTo<User, $this>
+    */
+   public function teacher(): BelongsTo
  {
     return $this->belongsTo(User::class, 'teacher_id');
  }
-   public function lessons()
+   /**
+    * @return HasMany<Lesson, $this>
+    */
+   public function lessons(): HasMany
  {
     return $this->hasMany(Lesson::class);
  }
 
-   public function quizzes()
+   /**
+    * @return HasMany<Quiz, $this>
+    */
+   public function quizzes(): HasMany
  {
     return $this->hasMany(Quiz::class);
  }
 
- public function enrollments()
+ /**
+  * @return HasMany<Enrollment, $this>
+  */
+ public function enrollments(): HasMany
 {
     return $this->hasMany(Enrollment::class);
 }
 
-public function transactions()
+/**
+ * @return HasMany<Transaction, $this>
+ */
+public function transactions(): HasMany
 {
     return $this->hasMany(Transaction::class);
 }
 
-public function certificates()
+/**
+ * @return HasMany<Certificate, $this>
+ */
+public function certificates(): HasMany
 {
     return $this->hasMany(Certificate::class);
 }
 
-public function learningPaths()
+/**
+ * @return BelongsToMany<LearningPath, $this>
+ */
+public function learningPaths(): BelongsToMany
 {
     return $this->belongsToMany(
         LearningPath::class,
@@ -89,15 +119,20 @@ public function learningPaths()
     );
 }
 
-public function reviews()
+/**
+ * @return HasMany<CourseReview, $this>
+ */
+public function reviews(): HasMany
 {
     return $this->hasMany(CourseReview::class);
 }
 
 /**
  * Reviews counted in the average and shown publicly (not hidden).
+ *
+ * @return HasMany<CourseReview, $this>
  */
-public function visibleReviews()
+public function visibleReviews(): HasMany
 {
     return $this->hasMany(CourseReview::class)->where('is_hidden', false);
 }
