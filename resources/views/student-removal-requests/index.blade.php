@@ -40,8 +40,15 @@
 
         <div class="border-b border-neutral-200 p-5">
             <h2 class="font-semibold text-neutral-900">
-                Requests for My Department
+                {{ ($campusWide ?? false) ? 'Requests from All Departments' : 'Requests for My Department' }}
             </h2>
+            <p class="mt-1 text-xs text-neutral-500">
+                @if ($campusWide ?? false)
+                    Your account has no department, so you see every removal request (campus-wide).
+                @else
+                    Includes requests from teachers without a department and from departments that have no Department Head.
+                @endif
+            </p>
         </div>
 
         @if ($requests->isEmpty())
@@ -50,7 +57,7 @@
                     No removal requests found
                 </h3>
                 <p class="mt-2 text-sm text-neutral-500">
-                    Instructor requests from your department will appear here.
+                    {{ ($campusWide ?? false) ? 'Removal requests from all teachers will appear here.' : 'Instructor requests from your department will appear here.' }}
                 </p>
             </div>
         @else

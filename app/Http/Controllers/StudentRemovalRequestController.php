@@ -96,24 +96,25 @@ class StudentRemovalRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        $reviewers = auth()->user()->department_id
+            ? 'the Department Head approves it'
+            : 'an administrator approves it (your account has no department, so the request was sent to all administrators)';
+
         return back()->with(
             'success',
-            'Student removal request submitted successfully. The student remains enrolled until the Department Head approves it.'
+            'Student removal request submitted successfully. The student remains enrolled until '.$reviewers.'.'
         );
     }
 
     /**
-     * Show requests belonging to instructors in the Department Head's department.
+     * Show the requests this administrator may review (see the rules in
+     * StudentRemovalRequest): the own department, teachers without a
+     * department and departments without an administrator; everything
+     * for an administrator without a department.
      */
     public function departmentHeadIndex()
     {
-        $departmentId = auth()->user()->department_id;
-
-        abort_if(
-            !$departmentId,
-            403,
-            'Your account must be assigned to a department.'
-        );
+        $administrator = auth()->user();
 
         $requests = StudentRemovalRequest::with([
             'instructor',
@@ -121,16 +122,16 @@ class StudentRemovalRequestController extends Controller
             'course',
             'reviewer',
         ])
-            ->whereHas('instructor', function ($query) use ($departmentId) {
-                $query->where('department_id', $departmentId);
-            })
+            ->reviewableBy($administrator)
             ->latest()
             ->paginate(10);
 
-       return view(
-    'student-removal-requests.index',
-    compact('requests')
-);
+        $campusWide = ! $administrator->department_id;
+
+        return view(
+            'student-removal-requests.index',
+            compact('requests', 'campusWide')
+        );
     }
 
     /**
@@ -152,20 +153,9 @@ class StudentRemovalRequestController extends Controller
             ],
         ]);
 
-        $departmentId = auth()->user()->department_id;
-
-        abort_if(
-            !$departmentId,
-            403,
-            'Your account must be assigned to a department.'
-        );
-
-        $studentRemovalRequest->load('instructor');
-
-        // A Department Head can only review requests from their department.
+        // A Department Head reviews only the requests routed to them.
         abort_unless(
-            (int) $studentRemovalRequest->instructor?->department_id
-                === (int) $departmentId,
+            $studentRemovalRequest->isReviewableBy(auth()->user()),
             403,
             'You cannot review requests from another department.'
         );
