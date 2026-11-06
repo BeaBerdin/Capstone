@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Notifications\PathwiseNotification;
 use App\Support\PaymentMethods;
 use App\Support\PrivateFiles;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -253,11 +254,10 @@ if ($invitation->isExpired()) {
         |--------------------------------------------------------------------------
         */
 
-        $transaction = Transaction::create([
+        $transaction = $this->createTransactionWithUniqueNumber([
             'student_id' => auth()->id(),
             'course_id' => $course->id,
             'course_invitation_id' => $invitation?->id,
-            'transaction_no' => $this->generateTransactionNumber(),
             'amount' => $course->price,
             'payment_method' => 'PayMongo',
             'status' => 'pending',
@@ -1790,25 +1790,49 @@ if ($invitation->isExpired()) {
     |--------------------------------------------------------------------------
     */
 
+    /*
+    | Format (unchanged): TRX-YYYYMMDD-00001, numbered per day.
+    |
+    | System finalization L-1: the next number used to be "today's count + 1",
+    | so two purchases at the same moment got the same number and one failed
+    | on the unique index. The number now continues from today's highest
+    | number, and if another purchase takes that number first, the unique
+    | index rejects the insert and a fresh number is tried.
+    */
+    private const TRANSACTION_NUMBER_ATTEMPTS = 5;
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function createTransactionWithUniqueNumber(array $attributes): Transaction
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return Transaction::create($attributes + [
+                    'transaction_no' => $this->generateTransactionNumber(),
+                ]);
+            } catch (UniqueConstraintViolationException $exception) {
+                if ($attempt >= self::TRANSACTION_NUMBER_ATTEMPTS) {
+                    throw $exception;
+                }
+            }
+        }
+    }
+
     private function generateTransactionNumber(): string
     {
-        $date =
-            now()->format('Ymd');
+        $prefix = 'TRX-'.now()->format('Ymd').'-';
 
-        $countToday =
-            Transaction::whereDate(
-                'created_at',
-                now()->toDateString()
-            )->count() + 1;
+        // Longest first, then highest: correct even past 99999 in one day.
+        $latest = Transaction::where('transaction_no', 'like', $prefix.'%')
+            ->orderByRaw('LENGTH(transaction_no) DESC')
+            ->orderByDesc('transaction_no')
+            ->value('transaction_no');
 
-        return 'TRX-'
-            . $date
-            . '-'
-            . str_pad(
-                $countToday,
-                5,
-                '0',
-                STR_PAD_LEFT
-            );
+        $next = $latest === null
+            ? 1
+            : ((int) substr((string) $latest, strlen($prefix))) + 1;
+
+        return $prefix.str_pad((string) $next, 5, '0', STR_PAD_LEFT);
     }
 }
