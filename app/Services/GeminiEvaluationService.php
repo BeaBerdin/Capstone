@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiEvaluationService
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function evaluate(
         string $submissionType,
         string $assignmentTitle,
@@ -374,6 +377,9 @@ PROMPT;
         return $prompt;
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function extractOutputText(
         array $data
     ): string {
@@ -427,6 +433,9 @@ PROMPT;
         return '';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function parseJsonResponse(
         string $outputText
     ): array {
@@ -478,6 +487,10 @@ PROMPT;
         return $decoded;
     }
 
+    /**
+     * @param  array<string, mixed>  $result
+     * @return array<string, mixed>
+     */
     private function normalizeResult(
         array $result,
         int $maxScore
@@ -571,6 +584,9 @@ PROMPT;
         ];
     }
 
+    /**
+     * @return list<string>
+     */
     private function normalizeList(
         mixed $value
     ): array {

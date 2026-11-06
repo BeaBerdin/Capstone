@@ -539,6 +539,9 @@ class DemoDataSeeder extends Seeder
         );
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     private function submission(Assignment $assignment, User $student, array $attributes): void
     {
         Submission::firstOrCreate(

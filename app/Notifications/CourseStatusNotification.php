@@ -17,6 +17,9 @@ class CourseStatusNotification extends Notification
     ) {
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function via(object $notifiable): array
     {
         return [
@@ -24,6 +27,9 @@ class CourseStatusNotification extends Notification
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(object $notifiable): array
     {
         $message = match ($this->status) {

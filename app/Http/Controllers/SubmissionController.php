@@ -934,6 +934,9 @@ class SubmissionController extends Controller
         ];
     }
 
+    /**
+     * @param  array<int|string, mixed>  $items
+     */
     private function formatAiList(array $items): string
     {
         if (empty($items)) {

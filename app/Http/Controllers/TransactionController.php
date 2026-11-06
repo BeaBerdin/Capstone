@@ -1070,6 +1070,9 @@ if ($invitation->isExpired()) {
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     private function verifyPayMongoCheckout(
         Transaction $transaction
     ): array {
@@ -1552,6 +1555,9 @@ if ($invitation->isExpired()) {
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     private function verifyPayMongoWebhookSignature(
         Request $request
     ): array {

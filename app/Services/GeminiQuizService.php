@@ -326,6 +326,8 @@ PROMPT;
 
     /**
      * Gemini Interactions API structured-output schema.
+     *
+     * @return array<string, mixed>
      */
     private function responseFormat(
         int $count
@@ -412,6 +414,8 @@ PROMPT;
     /**
      * Send the request with controlled retry handling for
      * throttling and temporary server failures.
+     *
+     * @param  array<string, mixed>  $payload
      */
     private function sendRequest(
         string $apiKey,
@@ -639,6 +643,9 @@ PROMPT;
     /**
      * Application-level validation remains necessary even when
      * structured output is enabled.
+     *
+     * @param  array<int|string, mixed>  $questions
+     * @return array<int, array{question: string, option_a: string, option_b: string, option_c: string, option_d: string, correct_answer: string, points: int}>
      */
     private function validateAndNormalizeQuestions(
         array $questions,

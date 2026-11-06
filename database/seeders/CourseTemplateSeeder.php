@@ -29,6 +29,9 @@ class CourseTemplateSeeder extends Seeder
         }
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function templates(): array
     {
         return [

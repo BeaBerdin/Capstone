@@ -112,6 +112,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->belongsTo(Department::class);
     }
 
+    /**
+     * @param  string  $role
+     */
     public function hasRole($role)
     {
         return $this->roles()

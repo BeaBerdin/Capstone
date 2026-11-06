@@ -1151,6 +1151,9 @@ class QuizController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validateQuestion(
         Request $request
     ): array {
@@ -1199,6 +1202,9 @@ class QuizController extends Controller
     }
 
 
+    /**
+     * @param  array<string, mixed>  $validated
+     */
     private function validateCorrectOption(
         array $validated
     ): void {

@@ -62,6 +62,10 @@ class CourseReview extends Model
         return $this->belongsTo(User::class, 'hidden_by');
     }
 
+    /**
+     * @param  Builder<CourseReview>  $query
+     * @return Builder<CourseReview>
+     */
     public function scopeVisible(Builder $query): Builder
     {
         return $query->where('is_hidden', false);

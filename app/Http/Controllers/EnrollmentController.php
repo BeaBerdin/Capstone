@@ -132,6 +132,8 @@ class EnrollmentController extends Controller
 
     /**
      * Only student accounts can be enrolled in a course.
+     *
+     * @return Builder<\App\Models\User>
      */
     private function students(): Builder
     {

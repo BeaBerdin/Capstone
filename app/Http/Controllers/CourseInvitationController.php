@@ -414,6 +414,8 @@ if (! empty($validated['expires_at'])) {
     /**
      * Students who can receive this invitation: any student who has no
      * enrollment record in the invitation's course yet.
+     *
+     * @return Builder<\App\Models\User>
      */
     private function invitableStudents(CourseInvitation $invitation): Builder
     {

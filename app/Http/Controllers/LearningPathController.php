@@ -597,6 +597,9 @@ class LearningPathController extends Controller
     }
 
 
+    /**
+     * @param  \Illuminate\Support\Collection<array-key, mixed>  $courses
+     */
     private function syncCoursesWithOrder(
         LearningPath $learningPath,
         $courses

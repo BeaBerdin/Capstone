@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $name
  * @property string|null $description
- * @property array|null $structure
+ * @property array<string, mixed>|null $structure
  * @property bool $is_active
  */
 class CourseTemplate extends Model
@@ -41,6 +41,10 @@ class CourseTemplate extends Model
         return $this->hasMany(Course::class, 'template_id');
     }
 
+    /**
+     * @param  Builder<CourseTemplate>  $query
+     * @return Builder<CourseTemplate>
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

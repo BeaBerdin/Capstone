@@ -47,6 +47,9 @@ class Enrollment extends Model
 
     /**
      * Only enrollments that still give access to the course.
+     *
+     * @param  Builder<Enrollment>  $query
+     * @return Builder<Enrollment>
      */
     public function scopeWithAccess(Builder $query): Builder
     {

@@ -186,6 +186,9 @@ class CourseReviewController extends Controller
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validated(Request $request): array
     {
         return $request->validate([

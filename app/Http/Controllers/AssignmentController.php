@@ -442,6 +442,9 @@ class AssignmentController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validateAssignment(
         Request $request
     ): array {
@@ -530,6 +533,9 @@ class AssignmentController extends Controller
     }
 
 
+    /**
+     * @return array<string, mixed>
+     */
     private function validateTeacherAssignment(
         Request $request,
         Course $course
@@ -629,6 +635,10 @@ class AssignmentController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
     private function normalizeAiEvaluationFields(
         array $validated
     ): array {
@@ -727,6 +737,9 @@ class AssignmentController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @param  array<string, mixed>  $validated
+     */
     private function ensureLessonBelongsToCourse(
         array $validated
     ): void {
