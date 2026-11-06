@@ -63,9 +63,15 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | PathWise: set APP_TIMEZONE=Asia/Manila on the production server
+    | before it stores real data. Certificate issue dates and numbers, the
+    | backup schedule and every date shown on the pages use this timezone.
+    | Changing it on a database that already holds data does not convert
+    | the stored timestamps; they are read in the new timezone.
+    |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
