@@ -34,7 +34,7 @@
 
                     {{-- Assign Department --}}
                     <a href="{{ route('departments.assign') }}"
-                       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                       class="inline-flex items-center gap-2 h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
@@ -48,7 +48,7 @@
 
                     {{-- Create Department --}}
                     <a href="{{ route('departments.create') }}"
-                       class="sad-btn-primary inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+                       class="sad-btn-primary inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"
@@ -305,7 +305,7 @@
                     </p>
 
                     <a href="{{ route('departments.create') }}"
-                       class="sad-btn-primary mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700">
+                       class="sad-btn-primary mt-5 inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700">
 
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round"

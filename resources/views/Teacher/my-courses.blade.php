@@ -448,7 +448,7 @@
                        items-center justify-center gap-2
                        self-start lg:self-auto rounded-lg
                        bg-violet-600 px-4
-                       text-xs font-bold text-white
+                       text-xs font-semibold text-white
                        shadow-sm transition
                        hover:bg-violet-700"
             >
@@ -1431,7 +1431,7 @@
                                                gap-2 rounded-lg
                                                bg-emerald-50
                                                px-3 text-xs
-                                               font-bold text-emerald-700
+                                               font-semibold text-emerald-700
                                                transition
                                                hover:bg-emerald-100"
                                     >
@@ -1505,7 +1505,7 @@
                             class="sad-btn-primary mt-5 inline-flex h-10
                                    items-center gap-2
                                    rounded-lg bg-violet-600
-                                   px-4 text-xs font-bold
+                                   px-4 text-xs font-semibold
                                    text-white transition
                                    hover:bg-violet-700"
                         >

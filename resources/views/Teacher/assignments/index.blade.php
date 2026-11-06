@@ -44,10 +44,9 @@
                         <button
                             type="button"
                             @click="open = !open"
-                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl
-                                   bg-linear-to-r from-violet-600 to-indigo-600 px-5
-                                   text-sm font-semibold text-white shadow-md shadow-violet-200
-                                   transition hover:-translate-y-0.5 hover:shadow-lg"
+                            class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5
+                                   text-sm font-semibold text-white
+                                   transition"
                         >
                             <span class="text-lg leading-none">+</span>
                             New Assignment

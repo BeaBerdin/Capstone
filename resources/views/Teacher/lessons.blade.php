@@ -235,15 +235,11 @@
 
                     <a
                         href="{{ route('teacher.lessons.create', $course) }}"
-                        class="inline-flex h-11 items-center
+                        class="sad-btn-primary inline-flex h-11 items-center
                                justify-center gap-2 self-start
-                               rounded-xl bg-gradient-to-r
-                               from-violet-600 to-indigo-600
+                               rounded-xl
                                px-5 text-sm font-semibold
-                               text-white shadow-md
-                               shadow-violet-200 transition
-                               hover:-translate-y-0.5
-                               hover:shadow-lg"
+                               text-white transition"
                     >
 
                         <svg

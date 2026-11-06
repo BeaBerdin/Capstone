@@ -32,8 +32,8 @@
 
             <button
                 type="submit"
-                class="inline-flex h-11 items-center justify-center rounded-xl bg-violet-600 text-sm font-semibold
-                       text-white transition hover:bg-violet-700"
+                class="pw-btn-primary inline-flex h-11 items-center justify-center rounded-xl text-sm font-semibold
+                       text-white transition"
             >
                 Verify
             </button>

@@ -504,14 +504,12 @@
 
                                                 <button
                                                     type="submit"
-                                                    class="inline-flex h-10 w-full
+                                                    class="sad-btn-primary inline-flex h-10 w-full
                                                            items-center justify-center
-                                                           rounded-xl bg-linear-to-r
-                                                           from-violet-600 to-indigo-600
+                                                           rounded-xl
                                                            px-5 text-sm font-semibold
-                                                           text-white shadow-md
-                                                           shadow-violet-200
-                                                           transition hover:-translate-y-0.5
+                                                           text-white
+                                                           transition
                                                            sm:w-auto"
                                                 >
                                                     ✦ {{ $aiDidNotFinish ? 'Retry AI Evaluation' : 'Generate AI Evaluation' }}

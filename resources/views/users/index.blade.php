@@ -596,7 +596,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Are you sure you want to change this user role?')"
-                                                    class="sad-btn-primary h-9 rounded-lg bg-violet-600 px-3 text-xs font-bold text-white transition hover:bg-violet-700"
+                                                    class="sad-btn-primary h-9 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
                                                 >
                                                     Update
                                                 </button>
@@ -634,7 +634,7 @@
 
                                                         <button
                                                             type="submit"
-                                                            class="h-8 rounded-lg border px-2.5 text-xs font-bold transition {{ $isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}"
+                                                            class="h-8 rounded-lg border px-2.5 text-xs font-semibold transition {{ $isActive ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}"
                                                         >
                                                             {{ $isActive ? 'Deactivate' : 'Activate' }}
                                                         </button>
@@ -658,7 +658,7 @@
 
                                                         <button
                                                             type="submit"
-                                                            class="h-7 rounded-lg border border-amber-200 px-2 text-xs font-bold text-amber-700 transition hover:bg-amber-50"
+                                                            class="h-7 rounded-lg border border-amber-200 px-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
                                                         >
                                                             Mark verified
                                                         </button>
@@ -668,7 +668,7 @@
 
                                             <a
                                                 href="{{ route('users.edit', $user) }}"
-                                                class="mt-1.5 inline-flex h-7 items-center rounded-lg border border-violet-200 px-2.5 text-xs font-bold text-violet-700 transition hover:bg-violet-50"
+                                                class="mt-1.5 inline-flex h-7 items-center rounded-lg border border-violet-200 px-2.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
                                             >
                                                 Edit name / email
                                             </a>

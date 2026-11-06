@@ -68,7 +68,7 @@
                     <span>Remember me</span>
                 </label>
 
-                <button type="submit" class="w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-700">
+                <button type="submit" class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition">
                     Log in
                 </button>
             </form>

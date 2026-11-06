@@ -462,7 +462,7 @@
 
                                                 <button
                                                     type="submit"
-                                                    class="h-8 rounded-lg bg-red-600 px-3 text-xs font-bold text-white transition hover:bg-red-700"
+                                                    class="h-8 rounded-lg bg-red-600 px-3 text-xs font-semibold text-white transition hover:bg-red-700"
                                                     onclick="return confirm('Delete recommendation?')"
                                                 >
                                                     Delete

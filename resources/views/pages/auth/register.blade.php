@@ -126,7 +126,7 @@
                     >
                 </div>
 
-                <button type="submit" class="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800">
+                <button type="submit" class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition">
                     {{ __('Create account') }}
                 </button>
             </form>

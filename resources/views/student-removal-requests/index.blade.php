@@ -139,7 +139,7 @@
                                                     name="decision"
                                                     value="approved"
                                                     onclick="return confirm('Approve this request and remove the student from this course?')"
-                                                    class="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700"
+                                                    class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
                                                 >
                                                     Approve
                                                 </button>

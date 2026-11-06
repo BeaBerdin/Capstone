@@ -1754,7 +1754,7 @@
                                            {{
                                                $failedFinalQuiz
                                                ? 'bg-red-600 hover:bg-red-700'
-                                               : 'bg-violet-600 hover:bg-violet-700'
+                                               : 'sad-btn-primary'
                                            }}
                                            px-5 text-sm font-semibold
                                            text-white transition"

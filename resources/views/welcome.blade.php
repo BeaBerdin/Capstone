@@ -40,7 +40,7 @@
                                 Log in
                             </a>
                             @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="rounded-lg bg-linear-to-r from-purple-500 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:opacity-90">
+                                <a href="{{ route('register') }}" class="pw-btn-primary rounded-xl px-5 py-2 text-sm font-semibold text-white transition">
                                     Get Started
                                 </a>
                             @endif
@@ -70,7 +70,7 @@
 
                     <div class="mt-10 flex flex-col gap-3 sm:flex-row">
                         @guest
-                            <a href="{{ route('register') }}" class="rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-8 py-3 font-semibold text-white shadow-lg shadow-purple-500/25 transition hover:scale-[1.02] hover:opacity-90">
+                            <a href="{{ route('register') }}" class="pw-btn-primary rounded-xl px-8 py-3 font-semibold text-white transition">
                                 Start Learning Free
                             </a>
                             <a href="{{ route('login') }}" class="rounded-xl border border-gray-200 px-8 py-3 font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50">
@@ -78,7 +78,7 @@
                             </a>
                         @endguest
                         @auth
-                            <a href="{{ route('dashboard') }}" class="rounded-xl bg-linear-to-r from-purple-500 to-indigo-600 px-8 py-3 font-semibold text-white shadow-lg shadow-purple-500/25 transition hover:scale-[1.02] hover:opacity-90">
+                            <a href="{{ route('dashboard') }}" class="pw-btn-primary rounded-xl px-8 py-3 font-semibold text-white transition">
                                 Go to Dashboard
                             </a>
                         @endauth

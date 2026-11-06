@@ -460,7 +460,7 @@
                                             href="{{ route('files.receipt', $transaction) }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-xs font-bold text-violet-600 transition hover:bg-violet-100"
+                                            class="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-xs font-semibold text-violet-600 transition hover:bg-violet-100"
                                         >
 
                                             <svg
@@ -507,7 +507,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Approve this transaction and enroll the student?')"
-                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+                                                    class="inline-flex items-center rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
                                                 >
                                                     Approve
                                                 </button>
@@ -526,7 +526,7 @@
                                                 <button
                                                     type="submit"
                                                     onclick="return confirm('Reject this transaction?')"
-                                                    class="inline-flex items-center rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+                                                    class="inline-flex items-center rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
                                                 >
                                                     Reject
                                                 </button>

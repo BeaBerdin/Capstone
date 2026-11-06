@@ -117,24 +117,24 @@
                             @if($paymentVerified)
 
                                 <a href="{{ route('student.my-courses') }}"
-                                   class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 transition">
+                                   class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition">
                                     Go to My Courses
                                 </a>
 
                                 <a href="{{ route('student.marketplace') }}"
-                                   class="inline-flex items-center px-4 py-2 bg-slate-100 border border-slate-200 rounded-md font-semibold text-xs text-slate-700 uppercase tracking-widest hover:bg-slate-200 transition">
+                                   class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
                                     Back to Marketplace
                                 </a>
 
                             @else
 
                                 <a href="{{ route('student.transactions.success', $transaction) }}"
-                                   class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 transition">
+                                   class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition">
                                     Check Payment Status Again
                                 </a>
 
                                 <a href="{{ route('student.transactions') }}"
-                                   class="inline-flex items-center px-4 py-2 bg-slate-100 border border-slate-200 rounded-md font-semibold text-xs text-slate-700 uppercase tracking-widest hover:bg-slate-200 transition">
+                                   class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
                                     Transaction History
                                 </a>
 

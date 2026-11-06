@@ -48,6 +48,32 @@
         outline: 2px solid #7c3aed;
         outline-offset: 2px;
     }
+
+    /* One disabled look for every button. A component's own disabled
+       utilities still take precedence. */
+    button:disabled,
+    button[aria-disabled="true"] {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
+
+/* Flux primary buttons (settings and account pages) use the PathWise
+   primary instead of Flux's default near-black accent. */
+[data-flux-button][class*="bg-[var(--color-accent)]"] {
+    background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+    border-color: transparent;
+    color: #ffffff;
+}
+
+/* The auth card greys every span ([&_span]:text-gray-500); keep the
+   button label white so it stays readable on the purple. */
+[data-flux-button][class*="bg-[var(--color-accent)]"] span {
+    color: inherit;
+}
+
+[data-flux-button][class*="bg-[var(--color-accent)]"]:hover:not(:disabled) {
+    background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
 }
 
 [data-flux-field]:not(ui-radio, ui-checkbox) {
@@ -215,8 +241,8 @@ select:focus[data-flux-control] {
 
 
 /* SHARED BUTTON SIZE AND TABLE HEADER
-   Not used by any page yet. In the components layer so a page's own
-   utilities still win. Pair .pw-btn with .pw-btn-primary or .pw-btn-secondary. */
+   In the components layer so a page's own utilities still win.
+   .pw-btn-primary is used by pages that do not load partials/soft3d. */
 
 @layer components {
     .pw-btn {
@@ -242,16 +268,21 @@ select:focus[data-flux-control] {
         cursor: not-allowed;
     }
 
+    /* Same look as .sad-btn-primary (partials/soft3d), for pages that do
+       not load the soft-3D styles, such as the log-in pages. */
     .pw-btn-primary {
         border: 1px solid transparent;
-        background: var(--pw-primary);
+        background: linear-gradient(180deg, #8b5cf6 0%, var(--pw-primary) 100%);
         color: #ffffff;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.25),
+            0 10px 20px -10px rgba(124, 58, 237, 0.7);
 
         transition: background-color 160ms ease;
     }
 
     .pw-btn-primary:hover {
-        background: var(--pw-primary-hover);
+        background: linear-gradient(180deg, var(--pw-primary) 0%, var(--pw-primary-hover) 100%);
     }
 
     .pw-table-head {

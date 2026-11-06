@@ -1555,18 +1555,12 @@
 
                             <button
                                 type="submit"
-                                class="inline-flex h-12 flex-1
+                                class="sad-btn-primary inline-flex h-12 flex-1
                                        items-center justify-center
                                        gap-2 rounded-xl
-                                       bg-gradient-to-r
-                                       from-violet-600
-                                       to-indigo-600
                                        px-5 text-sm font-semibold
-                                       text-white shadow-md
-                                       shadow-violet-200
-                                       transition
-                                       hover:-translate-y-0.5
-                                       hover:shadow-lg"
+                                       text-white
+                                       transition"
                             >
                                 Create Course
                             </button>
@@ -1971,20 +1965,13 @@
 
                                 <button
                                     type="submit"
-                                    class="inline-flex h-12
+                                    class="sad-btn-primary inline-flex h-12
                                            w-full items-center
                                            justify-center gap-2
                                            rounded-xl
-                                           bg-gradient-to-r
-                                           from-violet-600
-                                           to-indigo-600
                                            px-5 text-sm
                                            font-semibold text-white
-                                           shadow-md
-                                           shadow-violet-200
-                                           transition
-                                           hover:-translate-y-0.5
-                                           hover:shadow-lg"
+                                           transition"
                                 >
 
                                     <svg

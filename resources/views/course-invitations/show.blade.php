@@ -135,7 +135,7 @@
 
     <button
         type="submit"
-        class="w-full rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+        class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
     >
         View Course & Purchase
     </button>
@@ -154,7 +154,7 @@
 
                                 <button
                                     type="submit"
-                                    class="w-full rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                                    class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                                 >
                                     Accept Invitation & Join Course
                                 </button>
