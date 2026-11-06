@@ -497,6 +497,168 @@ this compilation. The full replacement wording is in the tracked
 
 ---
 
+## H. Findings from the Final Validation Audit (November 6, 2026)
+
+Source: `docs/audit/FINAL_VALIDATION_AUDIT.md` (browser run of all four
+roles, all 51 manuscript images, column-by-column data dictionary check).
+Items 1–35 and G-1 to G-5 above are unchanged; section H adds N-1 to N-26
+(and N-27, which records a decision made on November 6).
+
+**Decisions recorded on November 6, 2026 (by the group lead, for now):**
+remove the unsupported gamification and adaptive-quiz claims; correct the
+Lean Canvas, Figure 1, Figure 14, the learning-path description, the AI
+quiz-generation description and the other inaccurate diagrams and tables;
+keep the published-course editing restriction and document it. Matters that
+need facts or approval the audit cannot supply are marked **Unresolved**:
+do not fill them in without the group or adviser.
+
+**Status updates for earlier items:** item 35h is **resolved** (the signed
+transmittal letter is on p. 119). Items 15, 24 and 31 also apply to their
+figures (N-15, N-18, N-20). Item 17 also applies to Figure 19 (N-10).
+**N-18** (Figures 39 and 40, pp. 75–76, still show the dropped `payments` table and the
+`Payment` entity) is handled by item 24: remove them when redrawing. Apart from that,
+Figure 39 is accurate and already shows the real `course_reviews` columns.
+
+### H.1 Chapter II and Figure 1
+
+#### N-1. Gamification claims (decided: remove)
+
+| | |
+|---|---|
+| **Where** | p. 14 (Gamification in E-Learning, relevance paragraph); p. 20 (Figure 1, "Gamification (Duterte, 2024)" box); pp. 20–21 (framework text, "Engagement within the system is reinforced by Gamification …") |
+| **Find text** | "achievement-oriented elements"; "reinforced by Gamification" |
+| **Current** | p. 14: "Rather than functioning as plain completion records, PATHWISE's digital certificates and progress dashboards are designed with achievement-oriented elements that reinforce learner motivation and encourage sustained engagement throughout a course, consistent with the engagement principles identified in the literature." |
+| **Replacement** | p. 14: "Gamification is relevant to PATHWISE because its findings inform the motivational design of the platform: visible progress percentages, quiz results and digital certificates give learners clear milestones as they move through a course. PATHWISE does not implement game elements such as points, badges, leaderboards or streaks in this version." Framework text (pp. 20–21): replace "Engagement within the system is reinforced by Gamification, which Duterte (2024) found to produce measurable gains in motivation and academic performance, and by Digital Credentials, …" with "Engagement within the system is supported by visible progress milestones, informed by the gamification findings of Duterte (2024), and by Digital Credentials, …". Figure 1: rename the box "Progress Milestones (informed by Duterte, 2024)" or remove it. |
+| **Reason** | No points, badges, leaderboards or streaks exist. The panel may ask to see them. |
+| **Evidence** | No such code in `app/` or `resources/views` (searched for badge/points awarded/leaderboard/streak/achievement). Progress percentages: `Enrollment::progress_percentage`; certificates: workflow 9–11 of the audit. |
+| **Confirm?** | **Decided** (remove). Inform the **adviser**, who may prefer a different wording. |
+
+#### N-2. Adaptive / gamified assessment in Related Studies (decided: remove)
+
+| | |
+|---|---|
+| **Where** | p. 26 (Idika and Saihi, 2025); p. 27 (Kulkarni et al., 2024); p. 26 also says Idika "give[s] PATHWISE's developers a concrete point of comparison for how its own … Adaptive Learning module might be technically structured" |
+| **Find text** | "embedding a similar adaptive, gamified assessment approach"; "builds on this gamified learner-creator model" |
+| **Current** | p. 26: "PATHWISE extends this concept by embedding a similar adaptive, gamified assessment approach within a complete PaaS-style platform that also supports course creation, marketplace discovery, and AI-driven course recommendation." p. 27: "PATHWISE builds on this gamified learner-creator model by adding an AI Recommendation Engine, Adaptive Learning, and a monetized course marketplace, resulting in a more comprehensive, intelligence-driven platform." |
+| **Replacement** | p. 26: "PATHWISE applies the adaptive principle at the course level instead: after each quiz it recommends an easier, similar or harder next course, while its quizzes keep a fixed set of questions chosen by the teacher, within a complete platform that also supports course creation, marketplace discovery, and AI-assisted course recommendation." p. 27: "PATHWISE builds on this learner-creator model and its verification-and-publishing workflow by adding an AI-assisted course recommendation, a course marketplace and integrated payment." Also on p. 26, "its own AI Recommendation Engine and Adaptive Learning module" → "its own AI-assisted course recommendation". |
+| **Reason** | Quizzes do not change difficulty during the attempt, and there is no gamification. |
+| **Evidence** | `RecommendationService::generate` (difficulty of the next course from the quiz percentage); `QuizController` (fixed questions; one point per correct answer). |
+| **Confirm?** | **Decided** (remove). Inform the adviser. |
+
+#### N-3. "Restricted, department-integrated account creation" (Unresolved)
+
+| | |
+|---|---|
+| **Where** | p. 15, Cybersecurity and Data Privacy relevance paragraph |
+| **Find text** | "restricted, department-integrated account creation process" |
+| **Current** | "These findings reinforce the rationale behind PATHWISE's restricted, department-integrated account creation process and its reliance on a secure payment gateway, …" |
+| **Replacement (if registration stays open, recommended)** | "These findings reinforce the rationale behind PATHWISE's role-based access control, mandatory email verification, optional two-factor authentication and passkeys, Super Admin account deactivation, and its reliance on a secure payment gateway, …" |
+| **Reason** | Anyone can register as a Student or Teacher with an email address that can receive mail; departments are used only to route student removal requests. Courses still need administrator approval before students see them. |
+| **Evidence** | `app/Actions/Fortify/CreateNewUser.php` (`role` in student, teacher); `routes/web.php` line 33 (`verified`); `AccountDeactivationTest`; audit workflows 1–4. |
+| **Confirm?** | **Unresolved: adviser.** Keeping open registration needs only this wording change. Restricting teacher registration would be a new feature (audit SYS-4) and is not approved. |
+
+#### N-23. AI quiz generation source material (decided: correct)
+
+| | |
+|---|---|
+| **Where** | p. 19, Quiz Generation relevance paragraph; p. 18, Self-Paced Learning relevance paragraph |
+| **Find text** | "based on course materials uploaded by educators"; "intelligent, performance-based course sequencing" |
+| **Current** | p. 19: "…the platform integrates the Google Gemini API to automatically generate quiz questions based on course materials uploaded by educators." p. 18: "By pairing visible, real-time progress tracking with intelligent, performance-based course sequencing, …" |
+| **Replacement** | p. 19: "…the platform integrates the Google Gemini API to generate draft quiz questions from the text of the published reading lessons that educators write in a course; uploaded PDF and video lessons are not read by the AI." p. 18 (optional): "By pairing visible progress tracking, updated as lessons and quizzes are completed, with performance-based recommendations of the next course, …" |
+| **Reason** | The AI reads only reading-lesson text; generation is refused until such a lesson exists. Progress updates when a lesson or quiz is completed, not continuously. |
+| **Evidence** | `app/Services/GeminiQuizService.php` (text lessons only); refusal message "Add published Reading lessons with content before generating AI questions" (audit workflow 17); `AiQuizGenerationTest`. |
+| **Confirm?** | **Decided** (correct). |
+
+#### N-6. Figure 1 corrections (decided: correct; one reference Unresolved)
+
+| | |
+|---|---|
+| **Where** | p. 20, Figure 1 (PATHWISE's Conceptual Framework) |
+| **Current (in the image)** | "User Training" box with "Instructor Module … (iv) View/Verify earnings"; the Student Module box is also labelled "Instructor's Access"; "Learnig Portal"; "AI Recomendation Engine Learning"; "Self-Paced Learning (Walker et al., 2024)" in Reference Concept; Gamification box (N-1) |
+| **Correction** | Rename "User Training" to "Role-based User Access" (item 8); remove "(iv) View/Verify earnings"; label the second box "Student's Access"; fix the spelling: "Learning Portal", "AI Recommendation Engine"; handle the Gamification box as in N-1. |
+| **Reason** | There is no training module and no teacher earnings page. |
+| **Evidence** | No earnings route or view; routes by role in `routes/web.php`. |
+| **Unresolved** | "**Walker et al., 2024**" is cited in the figure but is **not in the References** (pp. 110–114). The group must find and add the full reference, or replace it with a source already cited (for self-paced learning the text cites Ramaswami et al., 2023, and Tzeng et al., 2023). **Do not invent a reference.** |
+| **Confirm?** | **Decided** (figure corrections); **Group** (Walker reference). |
+
+#### N-26. "Platform as a Service" framing (Unresolved)
+
+| | |
+|---|---|
+| **Where** | Title page subtitle and General Objective (pp. i, 4), Definition of Terms (p. 9), PaaS literature relevance (p. 11), Comparative Matrix row (p. 28) |
+| **Current** | The system is "delivered as a Platform-as-a-Service" |
+| **Possible wording** | "a web-based platform delivered as a cloud-hosted service and accessed through a browser, with no local installation" |
+| **Reason** | PathWise is a web application that users use through a browser (closer to Software as a Service); it runs on a hosting platform. The current framing may be questioned. |
+| **Confirm?** | **Unresolved: adviser.** No change unless the adviser asks for one. |
+
+### H.2 Chapter III figures
+
+| ID | Page / figure | Current | Correction | Evidence | Confirm? |
+|---|---|---|---|---|---|
+| **N-5** | p. 40, Fig. 14 (Program Workflow, Administrator) | "Review submitted courses (own department)"; "Generate reports (engagement, course performance) with PDF export" | "Review submitted courses"; replace the reports box with "View student progress reports". Also add "Review removal requests: own department, teachers without a department, and departments without a Department Head; all requests if the administrator has no department" | `CourseController::approve` (no department filter); only `super-admin/reports` and `teacher/analytics` exist; removal routing `StudentRemovalRequest::scopeReviewableBy` (Phase 4 B2) | **Decided** (correct) |
+| **N-7** | p. 38, Fig. 10 (Lean Model Canvas) | Unfair Advantage: "Continuous improvement through data analytics and machine learning"; Revenue Streams: "Subscription fees (premium features)", "Transaction fees from marketplace", "Commission from course sales", "Certificate generation fees", "Partnerships and sponsorships"; Key Metrics: "User engagement (login frequency, time spent)" | Unfair Advantage: "…through data analytics and AI-assisted features (Google Gemini API)". Revenue Streams: keep "Course enrollment fees" as implemented and label the others "**Planned (not in this version)**", or remove them. Key Metrics: remove "time spent" or label it planned | No subscription, commission, certificate-fee or marketplace-fee code; time spent is never recorded (item 20) | **Decided** (correct); the choice between "label planned" and "remove" is **Group** |
+| **N-8** | p. 42 (text) vs p. 43 (Fig. 17, Business Roadmap) | Text: 2025 → 2030 ("The roadmap concludes in 2030"), six stages; figure: 2025 → 2031 with different milestones (for example "2027 Beta Testing of the AI Recommendation Engine", "2031 Global Expansion") | Make the text and the figure state the same years and milestones | Manuscript only | **Unresolved: Group** (choose the real plan; do not invent dates) |
+| **N-9** | p. 44, Fig. 18 (Functional Decomposition) | Lists only the original functions | Optional: add Teacher: Manage Assignments and Grading, Generate Quiz with AI, Invite Students, Request Student Removal, View Course Reviews; Student: Submit Outputs, Accept Invitation, Rate and Review Courses; Administrator: Moderate Course Reviews, Review Removal Requests; Super Admin: Manage Departments | `routes/web.php` | Group (optional) |
+| **N-10** | p. 48, Fig. 19 (AI System Architecture) | Output Evaluation box: "Code (HTML/CSS/JavaScript, Java, C, PHP)" | Add **Python** | `app/Models/Assignment.php` (`python`); same fix as item 17 | No |
+| **N-11** | p. 50, Fig. 20 (Use Case Diagram) | No "Create account" use case; "Monitor progress and grade quizzes" | Add "Create account" (Student, Teacher); "Monitor progress and grade submissions"; optional use cases from G-4 | Fig. 21 models Create Account; quizzes are scored automatically (item 9) | No (optional parts: Group) |
+| **N-12** | p. 52, Fig. 22 (Log-in) | "Check username and password" | "Check email and password" | Login form fields `email`, `password` | No |
+| **N-13** | p. 53, Fig. 23 (Enroll in Course) | "Process payment" drawn as «include» | Draw "Process payment" as «extend» (paid courses only); optionally add "Accept invitation" «extend» | Free courses enroll without payment; invitations (audit workflows 5, 29, 38) | No |
+| **N-14** | p. 56, Fig. 26 (Get AI-Recommended Courses) | "Analyze learning behavior" | "Evaluate the latest quiz result" and "Generate explanation (Gemini)" | `RecommendationService`; item 11 | No |
+| **N-15** | p. 60, Fig. 30 (Manage Certificates and AI Recommendations) | "Configure certificate templates"; "Adjust recommendation settings" | "Update certificate template"; "Generate or remove recommendation records" | One template (`certificate_settings`); `AIRecommendationController` (index, create, store, destroy); item 15 | No |
+| **N-16** | p. 62, Fig. 32 (Login Page storyboard) | Screenshot shows a browser password-manager popup containing a demo account email | Retake the screenshot without the popup | — | No |
+| **N-17** | pp. 67–73, Figs. 35–38 (dashboard storyboards) | Older dark design; browser tab "… - Laravel"; Administrator quick action "AI Recommendations — Manage suggestion settings" | Optional: retake from the current light design after setting `APP_NAME=PathWise`; at least remove "Manage suggestion settings" | `LightModeOnlyTest`; `docs/DEPLOYMENT_HOSTINGER.md` (APP_NAME) | Group (optional) |
+| **N-19** | p. 102, Fig. 41 (Network Design) | Node labelled "Service" | "Email (SMTP) Service" | `config/mail.php` | No |
+| **N-20** | p. 105, Fig. 44 (Technology Stack) | "Laravel 13 · PHP 8.3"; "User's Laptop / Desktop" | "PHP 8.4"; "Any device with a web browser" (same as item 31 in the text) | `composer.json` `"php": "^8.4.1"` | No |
+| **N-25** | p. 31 (Fig. 7, Input: "CCS students and faculty"); p. 119 (transmittal letter: "students in programming courses and computer studies"); pp. 30, 33 (respondents "across all academic departments") | The population is described differently | State the population that was actually surveyed, consistently in all three places | Manuscript only | **Unresolved: Group** (facts only the group has; see also item 35d/e) |
+
+### H.3 Data dictionary, storyboard table and List of Modules
+
+| ID | Page | Current | Correction | Evidence | Confirm? |
+|---|---|---|---|---|---|
+| **N-4** | p. 95, Table 22 (Learning_Paths), `is_generated` | "Indicates whether the learning path was AI-generated" | "Indicates whether the learning path was generated automatically by the system from the student's quiz results (rule-based: course category and difficulty)" | `LearningPathController::generateForStudent` (no Gemini call); `LearningPathGenerationTest` | **Decided** (correct) |
+| **N-21** | p. 65, Registration Page storyboard table and Logic | Password and Confirm Password: VARCHAR, size 50 | Size "—" (stored as a secure hash). Add a Logic line: "4.3 On the live site, passwords must be at least 12 characters with upper- and lowercase letters, a number and a symbol, and must not appear in a known data breach. The email address must belong to a domain that can receive email." | `AppServiceProvider` (`Password::defaults`); `app/Concerns/ProfileValidationRules.php` (`email:rfc,dns`) | No |
+| **N-22** | pp. 77–92, Tables 5, 7, 8, 9, 19 | Columns missing or a constraint wrong | Table 5 Users: add `remember_token` (Null, varchar, Yes, "Token for 'Remember me' logins"), `created_at`, `updated_at`. Table 7 Course_Categories: add `created_at`, `updated_at`. Table 8 Course_Templates: add `is_active` (Not Null, int, No, "Indicates whether teachers can choose the template"), `created_at`, `updated_at`. Table 9 Courses: `description` constraint "Not Null" (the row says "Null" but Allow Nulls "No"). Table 19 Transactions: `transaction_no` constraint "Unique"; add `approved_at` (Null, timestamp, Yes, "Date and time the payment was approved"), `created_at`, `updated_at` | Column-by-column comparison with the database (`FINAL_VALIDATION_AUDIT.md` 5.7) | No |
+| **N-24** | p. 109, Table 24 (List of Modules) | "View AI Learning Analytics" (Teacher) | "View Course Analytics" | `teacher/analytics` (charts of enrollments and scores; no AI) | No |
+
+### H.4 Published-course editing (decision of November 6)
+
+#### N-27. Document that teachers cannot change a published course
+
+| | |
+|---|---|
+| **Where** | p. 55 (Manage Courses and Lessons use case); p. 107 (FR c, see item 32c); p. 72 (Teacher Dashboard logic, step 3) |
+| **Add** | Use case (p. 55), Post-Condition: "…saved in the database. A course can be edited only while it is a draft or after the administrator returns it for revision; while it is pending approval or published, the teacher cannot change it." FR c (append to the item 32 wording): "Courses that are pending approval or published cannot be changed by the teacher." Teacher Dashboard step 3 (p. 72): "…to create a new course or edit a draft or returned course." |
+| **Reason** | Decision of November 6: keep the approval process; teachers cannot edit published courses, and no new republishing workflow is added now. The teacher sees "This course is published, so its lessons cannot be added or changed by the teacher. Contact an administrator if a change is needed." |
+| **Evidence** | `LessonController::ensureTeacherCanModifyCourse` (draft and rejected only); `CourseController::redirectIfCourseLocked`; `LockedLessonPagesTest` (Phase 4 B3); audit workflow 47. Assignments are the exception: they stay editable in a published course and are locked only while pending (`Course::ASSIGNMENT_EDITABLE_STATUSES`, `AssignmentLockTest`). |
+| **Confirm?** | **Decided** (document). Any future republishing workflow needs a separate discussion. |
+
+### H.5 Removal requests (wording after the Phase 4 fix)
+
+Where the manuscript describes removal requests (Table 25 caption p. 98,
+Table 27 caption p. 100, and any new Teacher/Administrator text), use:
+"A teacher's request to remove a student goes to the Department Head of the
+teacher's department. Requests from teachers without a department, or from a
+department that has no Department Head, go to every administrator, and an
+administrator without a department reviews all requests. The student stays
+enrolled until an administrator approves the request." Evidence:
+`StudentRemovalRequest::scopeReviewableBy`, `RemovalRequestRoutingTest`.
+**Confirm?** No (describes the system).
+
+### H.6 Summary of section H
+
+| Status | Items |
+|---|---|
+| Decided, ready to edit | N-1, N-2, N-4, N-5, N-6 (figure), N-7 (wording), N-10, N-11, N-12, N-13, N-14, N-15, N-16, N-19, N-20, N-21, N-22, N-23, N-24, N-27, H.5 |
+| Optional (group) | N-9, N-17 |
+| **Unresolved: group** | N-6 (Walker et al., 2024 reference), N-7 (label planned or remove), N-8 (roadmap years), N-25 (survey population) |
+| **Unresolved: adviser** | N-3 (account creation claim), N-26 (PaaS framing) |
+
+Figures to redraw (adds to the list in the Summary below): Figures 1, 10, 14,
+17 (or the text), 18 (optional), 19, 20, 22, 23, 26, 30, 41, 44; screenshots
+32 and 35–38 (optional).
+
+---
+
 ## Summary
 
 | Section | Items | Confirm with adviser | Group decision | Factual only |
@@ -508,6 +670,7 @@ this compilation. The full replacement wording is in the tracked
 | E. Specs / modules | 28–34 | 32 (q–t), 34 | 31, 34 | 28, 29, 30, 33; 32 c, d, h, i |
 | F. Front matter | 35a–i | 35c | 35a, b, d, e, h | 35f, g, i |
 | G. Optional additions | G-1 to G-5 | G-1, G-4 | all | — |
+| H. Final validation audit (Nov. 6) | N-1 to N-27 | N-3, N-26 (unresolved) | N-6 reference, N-7, N-8, N-9, N-17, N-25 | the rest (see H.6) |
 
 **Figures that must be redrawn or relabelled:** Figure 1 (item 8), Figure 20
 (item 9, if new use cases are added), Figures 39 and 40 (items 24–25),

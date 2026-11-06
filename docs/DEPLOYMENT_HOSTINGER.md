@@ -32,6 +32,9 @@ screenshot. They go **only** into the server's `.env`.
 | HTTPS | Required (secure cookies, passkeys, PayMongo redirects) | — |
 | Queue worker | **Not needed.** Nothing is queued; mail is sent immediately | No `ShouldQueue` in `app/` |
 | Cron | Needed for the scheduled backups | `routes/console.php` |
+| Outbound internet (HTTPS from the server) | The server must be able to reach: `generativelanguage.googleapis.com` (Gemini), `api.paymongo.com` (payments, webhook verification), `api.pwnedpasswords.com` (in production every new password is checked against known data breaches), and the SMTP server (`smtp.hostinger.com:465`). **Check:** `curl -sI https://api.pwnedpasswords.com/range/00000` over SSH returns `HTTP/2 200` | `AppServiceProvider` (`Password::defaults()->uncompromised()`), `config/services.php` |
+| DNS lookups from the server | Registration and profile emails are validated with `email:rfc,dns`: the email's domain must have mail (MX) records. Without DNS on the server, every registration fails with "The email field must be a valid email address." Domains that cannot receive mail (for example `example.com`) are always rejected | `app/Concerns/ProfileValidationRules.php` |
+| Password rules (production only) | At least 12 characters, upper- and lowercase letters, a number and a symbol, and not found in a known breach. Local/testing environments have no rules, so test production passwords on the live site | `AppServiceProvider` |
 
 Verified on November 4: `config:cache`, `route:cache`, `view:cache` and
 `event:cache` all succeed with this code.
@@ -48,6 +51,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_KEY=                      # filled by: php artisan key:generate
 APP_URL=https://your-domain   # exact, with https, no trailing slash
+APP_TIMEZONE=Asia/Manila      # set BEFORE the database holds real data (certificate dates, backup times)
 
 LOG_CHANNEL=stack
 LOG_STACK=daily               # one file per day, old files removed
@@ -92,6 +96,28 @@ SEED_SUPERADMIN_PASSWORD=     # optional; leave empty to have one generated and 
 ```
 
 Notes:
+- **`APP_TIMEZONE=Asia/Manila` is required on the server.** Without it the
+  app runs in UTC: a certificate earned between 00:00 and 07:59 Philippine
+  time is dated the previous day, and the "01:00" backup runs at 09:00
+  Philippine time. Set it before the first real data is stored; changing it
+  later does not convert stored times (they are read in the new timezone).
+- **`APP_NAME=PathWise` is required.** It is the name shown in every browser
+  tab ("Dashboard - PathWise"), in the email sender name and in the PDFs. The
+  default `Laravel` from `.env.example` shows "Laravel" everywhere (seen in
+  the local copy and in the manuscript storyboard screenshots). Set it on
+  local computers used for the defense demo as well.
+- **Quote values that contain `#`, spaces or quotes.** In `.env`, an unquoted
+  `#` starts a comment, so `MAIL_PASSWORD=Abc#123` is read as `Abc` with no
+  error (confirmed during the November 6 audit). Write
+  `MAIL_PASSWORD="Abc#123"`. This applies to every password and key:
+  `MAIL_PASSWORD`, `DB_PASSWORD`, `BACKUP_ARCHIVE_PASSWORD`,
+  `SEED_SUPERADMIN_PASSWORD`. Inside double quotes, `${NAME}` is replaced by
+  another variable, so do not use `${` in a password, and write a literal `"`
+  as `\"`. After editing, run
+  `php artisan config:clear` and test the login, email and backup once.
+- Never commit `.env` or paste its values into issues, chats or documents
+  (see `docs/audit/SECURITY_DUMP_EXPOSURE.md` for an earlier exposure of a
+  database dump).
 - `MAIL_ENCRYPTION` is not used by Laravel 13; `MAIL_SCHEME` is.
 - The PayMongo **test** and **live** webhook signatures differ. The app picks
   the right one from whether `PAYMONGO_SECRET_KEY` starts with `sk_live_`.
@@ -110,7 +136,7 @@ Notes:
 3. Back up your local database if you plan to bring its data over
    (section 9).
 4. **Never upload:** `.env`, `node_modules/`, `vendor/` (install it on the
-   server), `public/hot`, `*.sql` dumps (for example `Dump20260901.sql`),
+   server), `public/hot`, `*.sql` database exports,
    `*.sqlite`, `storage/logs/*`, `storage/app/private/*` backups, the PNG
    screenshots in the project root, `test-results*.txt`.
 
@@ -220,7 +246,11 @@ scheduler then runs:
 - Sundays at 02:00: a full backup (database, files and uploads)
 - daily at 03:00: cleanup (keeps all backups for 7 days, daily ones for 16)
 
-The server's timezone may differ from Philippine time. Check with `date`.
+These times are in the **application timezone** (`APP_TIMEZONE`, section 2),
+not the server's clock: Laravel's scheduler uses `config('app.timezone')`.
+With `APP_TIMEZONE=Asia/Manila` the backups run at 01:00, 02:00 and 03:00
+Philippine time whatever `date` shows on the server. Check with
+`php artisan schedule:list`, which shows each next run time.
 
 ### 4.8 PayMongo webhook
 
@@ -302,8 +332,9 @@ name or log line). Never put a secret in the evidence.
 | V-15 | Backup restores | Download that zip; restore it into a **new empty** database (section 9.3); compare the table count and row counts | Same as live | ☐ | |
 | V-16 | Deactivated account | Super Admin deactivates the test student; the student refreshes | Logged out; cannot log in again | ☐ | |
 | V-17 | Logs | `tail storage/logs/laravel-*.log` | No errors from the steps above | ☐ | |
+| V-18 | Timezone | `php artisan schedule:list`; compare the certificate date from V-13 with today's Philippine date | Next database backup at 01:00 Philippine time (`+08:00`); certificate dated today (Philippine date) | ☐ | |
 
-When V-1 to V-17 pass, record the results in `FINALIZATION_REPORT.md`. Only
+When V-1 to V-18 pass, record the results in `FINALIZATION_REPORT.md`. Only
 then is the deployment complete.
 
 ---
@@ -330,11 +361,60 @@ php artisan up
 ### 9.1 Backups
 
 - Automatic: section 4.7. Stored in `storage/app/private/<APP_NAME>/` on the
-  same server, which does **not** protect against losing the server. **Download
-  the latest zip at least weekly** (File Manager/SFTP) and keep it off the
-  server. Hostinger's own backups (hPanel → Backups) are a second layer.
-  **Check:** what your plan includes.
+  same server, which does **not** protect against losing the server or the
+  hosting account. Hostinger's own backups (hPanel → Backups) are a second
+  layer. **Check:** what your plan includes.
 - Manual, any time: `php artisan backup:run --only-db`.
+
+#### 9.1.1 Weekly off-site copy (manual)
+
+The backups contain personal data (names, emails, grades, payment records).
+Treat each copy as confidential (Data Privacy Act of 2012, RA 10173).
+
+**Who and when:** one named member (and one backup person) every
+**Monday**, after Sunday's full backup (02:00) and Monday's database backup
+(01:00).
+
+1. **Find the newest backups** [SSH]:
+   ```bash
+   cd ~/domains/<your-domain>/pathwise
+   ls -lt storage/app/private/PathWise/ | head -5        # newest first; note the Sunday full backup and today's
+   sha256sum storage/app/private/PathWise/<file>.zip      # write the checksum in the log below
+   ```
+2. **Download** them: hPanel File Manager → `pathwise/storage/app/private/PathWise/`
+   → Download, or from your computer:
+   `scp -P <ssh-port> <user>@<host>:domains/<your-domain>/pathwise/storage/app/private/PathWise/<file>.zip .`
+   Never move backups into `public_html` or any web-reachable folder to
+   download them.
+3. **Check the download is complete:** compare the checksum on your computer
+   with the one from step 1 (Windows: `certutil -hashfile <file>.zip SHA256`;
+   macOS/Linux: `sha256sum <file>.zip`). They must be identical.
+4. **Store it securely:**
+   - Keep the zip encrypted: the archive is password-protected when
+     `BACKUP_ARCHIVE_PASSWORD` is set (it must be). Keep that password in a
+     password manager, **never** in the same folder as the zip, in Git, or in a
+     chat.
+   - Store it in **two** places that only the responsible members can open
+     (for example the group's private cloud folder and an offline USB drive).
+     Not in the Git repository and not in a shared public link.
+   - Name it unchanged (the file name contains the date).
+5. **Keep:** the last 4 weekly copies and 1 copy per month for the last
+   3 months. Delete older copies from every location (and empty the trash).
+6. **Verify once a month** (test restore, never on the live database):
+   unzip the newest copy on a computer with MySQL, import the `.sql` into a
+   new empty database (for example `pathwise_restore_test`), and compare the
+   table count and the row counts of `users`, `courses`, `enrollments` and
+   `transactions` with the live site (Super Admin dashboard and reports).
+   Then drop the test database and delete the unzipped files. Section 9.3 has
+   the commands.
+7. **Record** each run (no secrets, no file contents):
+
+| Date | Member | Files (names) | SHA-256 match? | Stored in | Monthly restore test (tables/rows OK?) | Notes |
+|---|---|---|---|---|---|---|
+| | | | ☐ | | | |
+
+If a download fails, a checksum differs, or a restore test fails: tell the
+group the same day, run `php artisan backup:run` manually, and repeat.
 
 ### 9.2 Bringing local data to the server (optional, first deployment only)
 
@@ -386,5 +466,5 @@ php artisan up
 - The exact hPanel menu names and PHP binary path for **your** plan. Fill in
   every **Check:** once the subscription is confirmed.
 - MariaDB has not been tested with this app. The migrations use no
-  MySQL-only SQL, but run V-1 to V-17 after the first `migrate`.
+  MySQL-only SQL, but run V-1 to V-18 after the first `migrate`.
 - Live PayMongo keys: only after explicit authorization.
