@@ -1,16 +1,52 @@
 # PATHWISE — System Finalization Report
 
-Inspection date: November 6, 2026 · Branch `finalization` · `HEAD` `5257be3`
-(8 local commits, not pushed) · `Berdin` = `origin/Berdin` = `277310b`.
+Inspection date: November 6, 2026 · Branch `finalization` (see section F for the current HEAD)
+(local commits only, not pushed) · `Berdin` = `origin/Berdin` = `277310b`.
 
 Scope: the Laravel system only. The manuscript was not edited. **No code was
 changed for this report**; it records the inspection of the uncommitted B1–B5
 work and of the whole application, and proposes the next steps. Nothing was
 staged, committed, pushed, merged, deployed or reset.
 
-> **Read section 0 first.** It records the approved fixes made after this
-> inspection and replaces the earlier verdict, results and commit plan.
-> Sections 1–8 are the original inspection (kept for traceability).
+> **Read section F first (system freeze, current).** Section 0 records the
+> earlier approved fixes; sections 1–8 are the original inspection (kept for
+> traceability).
+
+## F. System freeze status (November 6, third pass)
+
+### F.1 Approved and done in this pass
+
+| Item | Commit | Result |
+|---|---|---|
+| **P1** type documentation and parameter types | `415d268` | PHPDoc only (validated request arrays, Gemini/PayMongo responses, notification channels, query scopes and builders, template structure, two untyped parameters). No runtime change |
+| **P2** behaviour-neutral fixes | `1a5efb9` | Explicit null checks; integer ids for `findOrFail()` (ids from requests also validated as `integer`, so malformed input such as an array is rejected instead of causing a server error); `associate()` for relations; `getTimestamp()`; removal of null checks the foreign keys already guarantee; `new self()`; explicit `default` arm on an already-validated `match`; seeder GD colour failure handled and enrollment rows destructured in the loop; Dashboard activity types documented. **Kept on purpose:** the `is_array()` guard on notification data (protects against malformed stored data) |
+| **L-1** unique transaction numbers | `95c5479` | Same format `TRX-YYYYMMDD-00001`; the next number continues from today's highest number and the insert is retried (up to 5 times) if another purchase took that number first. Existing records unchanged. New `TransactionNumberTest` (4 tests): the simultaneous-purchase and gap tests **failed with HTTP 500 on the old code** and pass now |
+| **P3** controller return types (194) | — | **Deferred until after the defense** (approved). Outstanding CI work |
+| Branded error pages, lock-rule consolidation | — | Deferred |
+
+### F.2 Verification after the last code commit (`95c5479`)
+
+| Check | Result |
+|---|---|
+| Full test suite | **598 passed, 0 failed, 2,536 assertions** (594 + 4 L-1 tests) |
+| PHPStan level 7 (`composer types:check`) | **195 errors**: 194 `missingType.return` (deferred P3) + 1 `function.alreadyNarrowedType` (the notification guard kept on purpose). History: 553 → 297 → 255 (P1) → 196 (P2) → 195 (L-1). **CI's type-analysis step still fails** until P3 is done |
+| `composer audit` / `npm audit --omit=dev` | No advisories / 0 vulnerabilities |
+| Production build | Success |
+| **Browser regression** (separate database `pathwise_audit`, created and dropped; `APP_NAME=PathWise`, `APP_TIMEZONE=Asia/Manila`, log mailer, PayMongo test keys, **no Gemini key**) | **Crawl:** 203 pages (Super Admin 36, Administrator 82, Teacher 52, Student 33): 0 server errors, 0 JavaScript errors, 0 overflow at 390/1280 px; only the 3 PDF downloads are reported by the crawler. The Administrator removal-requests page now loads (was 403). **Workflows:** registration and email verification, enrollment, quiz scoring, recommendation (fallback text without Gemini), course completion, certificate issue and PDF, review, teacher course building, upload limit, submit for approval, locked-page redirect (B3), administrator approval and notification, return for revision with remarks, essay submission and teacher grading, invitations, removal requests and departments (B2), account creation/deactivation, report and certificate PDFs, PayMongo test checkout with the new number `TRX-20261106-00001`, unpaid-session and bad-signature webhooks, cancel link, review hiding, password reset, published-course lock: **all pass**. Without a Gemini key, AI quiz generation and AI evaluation fail **gracefully** (no server error; the evaluation is marked `failed` and the teacher grades manually) |
+| Script-only differences (not system defects) | "BUG CHECK: admin without department … 403" now gets 200, which confirms the B2 fix; lesson count measured before the quiz lesson completes; the verification check used the wrong query parameter (`number` is correct; verified separately on November 6); four scripts had course ids from the previous database and were rerun with the correct ids (all pass) |
+
+### F.3 Remaining
+
+| Item | Type | Owner | Blocks |
+|---|---|---|---|
+| Exposed database export (F-1): visibility, affected person, demo passwords, history decision | Security | Group (+ your approval for any history rewrite) | **Deployment** |
+| P3: 194 controller return types | CI | You (approval after the defense) | Green CI only |
+| Teacher self-registration (F-5) | Decision | Adviser | No |
+| Branded error pages (F-6), lock-rule consolidation (F-9) | Polish | You | No |
+| Local `APP_NAME=PathWise` (F-8) | Configuration | You | No |
+| Hostinger prerequisites and live checks V-1 to V-18 (section 5, deployment guide) | Deployment | Team + separate approval | **Deployment** |
+
+No known critical or high **application** defect remains.
 
 ## 0. Status after the approved fixes (November 6, second pass)
 
