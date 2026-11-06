@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lesson;
 use App\Models\Course;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Models\Enrollment;
 use App\Models\LessonProgress;
@@ -629,6 +630,33 @@ class LessonController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Final validation audit SYS-2: the owner of a course that is pending
+     * approval or published is sent back to the lesson list with an
+     * explanation instead of a 403 error page. Other teachers still get 403
+     * (checked in ensureTeacherCanModifyCourse), and saving stays blocked.
+     */
+    private function redirectIfLessonsLocked(Course $course): ?RedirectResponse
+    {
+        if ((int) $course->teacher_id !== (int) auth()->id()) {
+            return null;
+        }
+
+        $status = strtolower(trim((string) $course->status));
+
+        if (in_array($status, ['draft', 'rejected'], true)) {
+            return null;
+        }
+
+        $message = $status === 'pending'
+            ? 'This course is waiting for administrator approval, so its lessons cannot be added or changed. You can edit it again if the administrator returns it for revision.'
+            : 'This course is published, so its lessons cannot be added or changed by the teacher. Contact an administrator if a change is needed.';
+
+        return redirect()
+            ->route('teacher.lessons', $course)
+            ->with('error', $message);
+    }
+
     private function ensureTeacherCanModifyCourse(Course $course): void
     {
         if (
@@ -703,6 +731,10 @@ class LessonController extends Controller
 
     public function teacherCreateLesson(Course $course)
     {
+        if ($redirect = $this->redirectIfLessonsLocked($course)) {
+            return $redirect;
+        }
+
         $this->ensureTeacherCanModifyCourse($course);
 
         $course->load('category');
@@ -922,6 +954,10 @@ class LessonController extends Controller
     public function teacherEditLesson(Lesson $lesson)
     {
         $lesson->load('course.category');
+
+        if ($redirect = $this->redirectIfLessonsLocked($lesson->course)) {
+            return $redirect;
+        }
 
         $this->ensureTeacherCanModifyCourse($lesson->course);
 
