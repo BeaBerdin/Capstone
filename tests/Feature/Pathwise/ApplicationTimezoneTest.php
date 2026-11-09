@@ -129,8 +129,12 @@ test('the scheduler uses the configured application timezone for the backups', f
 
         Carbon::setTestNow(Carbon::parse('2026-11-06 12:00:00', 'Asia/Manila'));
 
-        expect($event->nextRunDate()->setTimezone('Asia/Manila')->format('Y-m-d H:i'))->toBe('2026-11-07 01:00')
-            ->and($event->nextRunDate()->setTimezone('UTC')->format('Y-m-d H:i'))->toBe('2026-11-06 17:00');
+        // nextRunDate() defaults to the real clock ('now'), which ignores
+        // Carbon's frozen time, so pass the frozen moment explicitly.
+        $nextRun = $event->nextRunDate(Carbon::now());
+
+        expect($nextRun->copy()->setTimezone('Asia/Manila')->format('Y-m-d H:i'))->toBe('2026-11-07 01:00')
+            ->and($nextRun->copy()->setTimezone('UTC')->format('Y-m-d H:i'))->toBe('2026-11-06 17:00');
     });
 
     // The registered backup events follow config('app.timezone').
