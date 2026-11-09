@@ -65,6 +65,24 @@ class CourseCategoryController extends Controller
 
     public function destroy(CourseCategory $courseCategory)
     {
+        // courses.category_id cascades on delete, so removing a category that
+        // still has courses would also remove those courses and everything
+        // linked to them. Refuse while any course (of any status) uses it.
+        $courseCount = $courseCategory->courses()->count();
+
+        if ($courseCount > 0) {
+            return redirect()
+                ->route('course-categories.index')
+                ->with('error', sprintf(
+                    '"%s" cannot be deleted because it still has %d %s. Move %s to another category or delete %s first.',
+                    $courseCategory->name,
+                    $courseCount,
+                    $courseCount === 1 ? 'course' : 'courses',
+                    $courseCount === 1 ? 'that course' : 'those courses',
+                    $courseCount === 1 ? 'it' : 'them',
+                ));
+        }
+
         $courseCategory->delete();
 
         return redirect()

@@ -61,6 +61,18 @@
         @endif
 
 
+        {{-- Error Message (e.g. a category that still has courses) --}}
+        @if (session('error'))
+
+            <div role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+
+                {{ session('error') }}
+
+            </div>
+
+        @endif
+
+
         {{-- Search --}}
         <div class="sad-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
 
