@@ -59,13 +59,23 @@
                                 class="h-20 object-contain">
                         </div>
 
+                        {{-- Title, body text and signatory come from the Administrator's
+                             certificate template (same as the PDF); everything is escaped.
+                             The title keeps the two-line design: first word, then the rest. --}}
+                        @php
+                            $template = $template ?? \App\Models\CertificateSetting::current();
+                            $titleParts = preg_split('/\s+/', trim((string) $template->title), 2);
+                        @endphp
+
                         <h1 class="certificate-title text-3xl font-extrabold tracking-[0.12em] text-purple-800 sm:text-5xl sm:tracking-[0.18em] lg:text-7xl">
-                            CERTIFICATE
+                            {{ \Illuminate\Support\Str::upper($titleParts[0] ?? '') }}
                         </h1>
 
-                        <h2 class="mt-2 text-xl font-bold tracking-wide text-purple-600 sm:text-2xl lg:text-4xl">
-                            OF COMPLETION
-                        </h2>
+                        @if (! empty($titleParts[1]))
+                            <h2 class="mt-2 text-xl font-bold tracking-wide text-purple-600 sm:text-2xl lg:text-4xl">
+                                {{ \Illuminate\Support\Str::upper($titleParts[1]) }}
+                            </h2>
+                        @endif
 
                         <div class="mt-4 text-3xl text-purple-600">
                             ❦
@@ -94,11 +104,7 @@
 
                         <div class="mx-auto mt-8 max-w-4xl">
                             <p class="leading-relaxed text-gray-600">
-                                This certificate is proudly awarded in recognition of the
-                                learner&rsquo;s dedication, commitment, and successful completion
-                                of all course requirements, assessments, and learning
-                                activities under the academic standards of the PathWise
-                                AI-Powered E-Learning Platform.
+                                {{ $template->body_text }}
                             </p>
                         </div>
 
@@ -139,11 +145,11 @@
                             <div class="mx-auto w-48 border-t-2 border-purple-700 sm:w-72"></div>
 
                             <p class="mt-3 text-lg font-bold tracking-wide text-purple-900">
-                                PATHWISE
+                                {{ $template->signatory_name }}
                             </p>
 
                             <p class="text-sm text-gray-500">
-                                AI-Powered E-Learning Platform
+                                {{ $template->signatory_position }}
                             </p>
                         </div>
 

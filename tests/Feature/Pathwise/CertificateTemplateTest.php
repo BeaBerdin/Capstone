@@ -189,3 +189,76 @@ test('the admin sidebar links to the certificate template', function () {
         ->assertOk()
         ->assertSee('href="'.route('certificate-template.edit').'"', false);
 });
+
+test('changing the template changes both the on-screen certificate and the PDF', function () {
+    [$student, $certificate] = issuedCertificate();
+
+    $this->actingAs(pathwiseUser('admin'))
+        ->put(route('certificate-template.update'), templatePayload());
+
+    $screen = $this->actingAs($student)
+        ->get(route('student.certificate.view', $certificate))
+        ->assertOk()
+        ->assertSee('CERTIFICATE')
+        ->assertSee('OF ACHIEVEMENT')
+        ->assertSee('Awarded for completing every lesson and assessment.')
+        ->assertSee('Dr. Maria Santos')
+        ->assertSee('Dean, College of Computing')
+        ->assertDontSee('OF COMPLETION')
+        ->assertDontSee('AI-Powered E-Learning Platform')
+        ->getContent();
+
+    $pdf = renderCertificatePdfHtml($certificate);
+
+    foreach (['Awarded for completing every lesson and assessment.', 'Dr. Maria Santos', 'Dean, College of Computing'] as $wording) {
+        expect($screen)->toContain($wording)
+            ->and($pdf)->toContain($wording);
+    }
+
+    expect($pdf)->toContain('Certificate of Achievement');
+
+    // A second change shows up on both as well.
+    $this->actingAs(pathwiseUser('admin'))
+        ->put(route('certificate-template.update'), templatePayload([
+            'signatory_name' => 'Engr. Ana Reyes',
+            'signatory_position' => 'Program Head',
+        ]));
+
+    $this->actingAs($student)
+        ->get(route('student.certificate.view', $certificate))
+        ->assertSee('Engr. Ana Reyes')
+        ->assertSee('Program Head')
+        ->assertDontSee('Dr. Maria Santos');
+
+    expect(renderCertificatePdfHtml($certificate))->toContain('Engr. Ana Reyes')
+        ->toContain('Program Head')
+        ->not->toContain('Dr. Maria Santos');
+});
+
+test('the on-screen certificate escapes the template wording', function () {
+    [$student, $certificate] = issuedCertificate();
+
+    $this->actingAs(pathwiseUser('admin'))
+        ->put(route('certificate-template.update'), templatePayload([
+            'body_text' => 'Awarded with <b>distinction</b>.',
+        ]));
+
+    $this->actingAs($student)
+        ->get(route('student.certificate.view', $certificate))
+        ->assertOk()
+        ->assertSee('Awarded with &lt;b&gt;distinction&lt;/b&gt;.', false)
+        ->assertDontSee('<b>distinction</b>', false);
+});
+
+test('without saved settings the on-screen certificate shows the original wording', function () {
+    [$student, $certificate] = issuedCertificate();
+    CertificateSetting::query()->delete();
+
+    $this->actingAs($student)
+        ->get(route('student.certificate.view', $certificate))
+        ->assertOk()
+        ->assertSee('CERTIFICATE')
+        ->assertSee('OF COMPLETION')
+        ->assertSee(CertificateSetting::DEFAULTS['signatory_name'])
+        ->assertSee(CertificateSetting::DEFAULTS['signatory_position']);
+});

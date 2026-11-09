@@ -230,9 +230,12 @@ class CertificateController extends Controller
             'course',
         ]);
 
+        // Same wording as the PDF: the Administrator's current template.
+        $template = CertificateSetting::current();
+
         return view(
             'Student.certificate-view',
-            compact('certificate')
+            compact('certificate', 'template')
         );
     }
 
