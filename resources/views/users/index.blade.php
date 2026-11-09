@@ -400,27 +400,27 @@
 
                                 <tr class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         User
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Email
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Current Role
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Change Role
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Status
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Registered
                                     </th>
 
@@ -479,7 +479,7 @@
 
                                         {{-- USER --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <div class="flex items-center gap-3">
 
@@ -508,7 +508,7 @@
 
                                         {{-- EMAIL --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <p class="text-xs font-medium text-slate-600">
                                                 {{ $user->email }}
@@ -519,7 +519,7 @@
 
                                         {{-- CURRENT ROLE --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             @if($currentRole)
 
@@ -544,7 +544,7 @@
 
                                         {{-- CHANGE ROLE --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <form
                                                 action="{{ route('users.update-role', $user) }}"
@@ -608,7 +608,7 @@
 
                                         {{-- STATUS (activate / deactivate) --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             @php
                                                 $isActive = $user->is_active !== false;
@@ -678,7 +678,7 @@
 
                                         {{-- DATE --}}
 
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <p class="text-xs font-semibold text-slate-600">
                                                 {{ $user->created_at->format('M d, Y') }}

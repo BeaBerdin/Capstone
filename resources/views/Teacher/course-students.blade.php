@@ -982,28 +982,28 @@
                                            text-slate-500"
                                 >
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Student
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Progress
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Status
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Enrolled
                                     </th>
 
-                                    <th class="px-6 py-4">
+                                    <th class="px-4 py-4">
                                         Last Updated
                                     </th>
 
                                     <th
-                                        class="px-6 py-4
+                                        class="px-4 py-4
                                                text-right"
                                     >
                                         Action
@@ -1131,7 +1131,7 @@
 
 
                                         {{-- STUDENT --}}
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <div
                                                 class="flex
@@ -1189,7 +1189,7 @@
 
 
                                         {{-- PROGRESS --}}
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             <div class="w-55">
 
@@ -1282,7 +1282,7 @@
 
 
                                         {{-- STATUS --}}
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             @if($status === 'completed')
 
@@ -1361,7 +1361,7 @@
 
 
                                         {{-- ENROLLMENT DATE --}}
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             @if($enrollment->enrolled_at)
 
@@ -1414,7 +1414,7 @@
 
 
                                         {{-- LAST UPDATED --}}
-                                        <td class="px-6 py-5">
+                                        <td class="px-4 py-5">
 
                                             @if($enrollment->updated_at)
 
@@ -1460,7 +1460,7 @@
 
 
                                        {{-- ACTION --}}
-<td class="px-6 py-5">
+<td class="px-4 py-5">
     @if($student)
         <div class="flex flex-col items-end gap-2">
 
