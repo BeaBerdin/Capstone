@@ -2123,7 +2123,7 @@
                                                font-semibold
                                                text-slate-500"
                                     >
-                                        Recommendation match
+                                        Your quiz score
                                     </span>
 
                                     <span
@@ -2159,6 +2159,10 @@
                                     ></div>
 
                                 </div>
+
+                                <p class="mt-1.5 text-[11px] text-slate-500">
+                                    Based on your latest quiz result
+                                </p>
 
                             </div>
 

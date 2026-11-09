@@ -58,7 +58,7 @@
                                     <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                 </svg>
 
-                                Generate AI Learning Path
+                                Generate Learning Path
                             </button>
                         </form>
 
@@ -130,7 +130,7 @@
                                             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                             </svg>
-                                            AI Generated
+                                            System generated
                                         </span>
                                     </div>
                                 @endif
@@ -250,7 +250,7 @@
                                                     <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                                 </svg>
 
-                                                Generate AI Learning Path
+                                                Generate Learning Path
                                             </button>
                                         </form>
 

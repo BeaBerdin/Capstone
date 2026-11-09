@@ -4,7 +4,7 @@
 <x-pw.form-layout
     :crumbs="['Departments' => route('departments.index'), 'Assign Department' => null]"
     title="Assign Department"
-    subtitle="Assign an admin, teacher, or instructor to a department."
+    subtitle="Assign an admin or teacher to a department."
     :back-url="route('departments.index')"
     back-label="Back to Departments"
 >
@@ -34,7 +34,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M16 11h6M19 8l3 3-3 3"></path></svg>
             </x-slot:icon>
 
-            <x-pw.field label="User" for="user_id" required hint="Only users with admin, teacher, or instructor roles are listed.">
+            <x-pw.field label="User" for="user_id" required hint="Only users with the admin or teacher role are listed.">
                 <select id="user_id" name="user_id" required class="sad-field">
                     <option value="" disabled @selected(! old('user_id'))>Select a user</option>
                     @foreach($users as $user)

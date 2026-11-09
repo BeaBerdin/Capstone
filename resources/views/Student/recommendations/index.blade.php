@@ -148,7 +148,7 @@
                                     <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                     </svg>
-                                    AI Pick
+                                    Recommended
                                 </span>
                             </div>
 
@@ -240,7 +240,7 @@
                             <div>
 
                                 <p class="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                    AI Match
+                                    Your quiz score
                                 </p>
 
 
@@ -266,7 +266,7 @@
 
 
                                 <p class="mt-3 text-xs leading-5 text-slate-500">
-                                    Match based on your latest learning performance.
+                                    Based on your latest quiz result
                                 </p>
 
                             </div>

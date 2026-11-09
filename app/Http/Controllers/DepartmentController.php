@@ -102,7 +102,7 @@ class DepartmentController extends Controller
 
         $users = User::with('roles')
             ->whereHas('roles', function ($query) {
-                $query->whereIn('name', ['admin', 'teacher', 'instructor']);
+                $query->whereIn('name', ['admin', 'teacher']);
             })
             ->orderBy('name')
             ->get();
@@ -111,7 +111,7 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Assign a department to an admin/teacher/instructor.
+     * Assign a department to an admin or teacher.
      */
     public function assignStore(Request $request)
     {
@@ -123,12 +123,12 @@ class DepartmentController extends Controller
         $user = User::findOrFail((int) $validated['user_id']);
 
         $isAllowed = $user->roles()
-            ->whereIn('name', ['admin', 'teacher', 'instructor'])
+            ->whereIn('name', ['admin', 'teacher'])
             ->exists();
 
         if (!$isAllowed) {
             return back()
-                ->with('error', 'Only admins, teachers, and instructors can be assigned to a department.');
+                ->with('error', 'Only admins and teachers can be assigned to a department.');
         }
 
         $user->update([
