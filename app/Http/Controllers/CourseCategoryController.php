@@ -49,7 +49,9 @@ class CourseCategoryController extends Controller
     public function update(Request $request, CourseCategory $courseCategory)
     {
         $request->validate([
-            'name' => 'required|max:255',
+            // Same rule as store(): names stay unique; the category's own
+            // current name is allowed.
+            'name' => 'required|max:255|unique:course_categories,name,'.$courseCategory->id,
             'description' => 'nullable'
         ]);
 
