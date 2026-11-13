@@ -684,7 +684,7 @@ PROMPT;
             }
 
             $questionText =
-                $this->cleanText(
+                $this->cleanGeminiText(
                     (string) (
                         $question['question']
                         ?? ''
@@ -692,7 +692,7 @@ PROMPT;
                 );
 
             $optionA =
-                $this->cleanText(
+                $this->cleanGeminiText(
                     (string) (
                         $question['option_a']
                         ?? ''
@@ -700,7 +700,7 @@ PROMPT;
                 );
 
             $optionB =
-                $this->cleanText(
+                $this->cleanGeminiText(
                     (string) (
                         $question['option_b']
                         ?? ''
@@ -708,7 +708,7 @@ PROMPT;
                 );
 
             $optionC =
-                $this->cleanText(
+                $this->cleanGeminiText(
                     (string) (
                         $question['option_c']
                         ?? ''
@@ -716,7 +716,7 @@ PROMPT;
                 );
 
             $optionD =
-                $this->cleanText(
+                $this->cleanGeminiText(
                     (string) (
                         $question['option_d']
                         ?? ''
@@ -878,12 +878,26 @@ PROMPT;
     }
 
 
-    private function cleanText(
+    /*
+     * Questions and options written by Gemini: keep tags such as "<h1>"
+     * as plain text, because they are often the answer itself (a quiz about
+     * HTML). Stripping them emptied options and rejected the whole batch.
+     * The text is always shown escaped, like questions typed by a teacher.
+     */
+    private function cleanGeminiText(
         string $text
+    ): string {
+        return $this->cleanText($text, keepTags: true);
+    }
+
+
+    private function cleanText(
+        string $text,
+        bool $keepTags = false
     ): string {
         $text =
             html_entity_decode(
-                strip_tags($text),
+                $keepTags ? $text : strip_tags($text),
                 ENT_QUOTES
                 |
                 ENT_HTML5,
