@@ -158,7 +158,6 @@ test('another teacher cannot open or change the owner teacher\'s course pages', 
         route('teacher.assignments.edit', $f['assignment']),
         route('teacher.submissions.index', $f['assignment']),
         route('teacher.submissions.show', $f['submission']),
-        route('teacher.quiz-results.edit', $f['result']),
         route('teacher.courses.reviews', $f['course']),
         route('files.submission', $f['submission']),
         route('files.receipt', $f['transaction']),
@@ -182,8 +181,6 @@ test('another teacher cannot open or change the owner teacher\'s course pages', 
     expectBlocked($this->delete(route('teacher.assignments.destroy', $f['assignment'])));
     expectBlocked($this->put(route('teacher.submissions.grade', $f['submission']), ['score' => 0, 'feedback' => 'x']));
     expectBlocked($this->post(route('teacher.submissions.ai-evaluate', $f['submission'])));
-    expectBlocked($this->put(route('teacher.quiz-results.update', $f['result']), ['score' => 0]));
-    expectBlocked($this->delete(route('teacher.quiz-results.destroy', $f['result'])));
     expectBlocked($this->delete(route('course-invitations.destroy', $f['invitation'])));
     expectBlocked($this->post(route('course-invitations.send', $f['invitation']), ['email' => 'x@example.com']));
     expectBlocked($this->post(route('teacher.student-removal-requests.store', $f['course']), ['student_id' => $f['student']->id, 'reason' => 'x']));

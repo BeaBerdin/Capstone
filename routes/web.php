@@ -198,7 +198,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('lessons', LessonController::class)->except('show');
         Route::resource('quizzes', QuizController::class)->except('show');
         Route::resource('quiz-questions', QuizQuestionController::class)->except('show');
-        Route::resource('quiz-results', QuizResultController::class)->except('show');
+        // Quiz results are view-only: they are recorded when a student submits a quiz.
+        Route::get('/quiz-results', [QuizResultController::class, 'index'])
+            ->name('quiz-results.index');
         Route::resource('enrollments', EnrollmentController::class)->except('show');
         Route::resource('assignments', AssignmentController::class);
         // Submissions are view-only for administrators: teachers grade their own courses.
@@ -360,21 +362,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/teacher/quiz-results', [QuizResultController::class, 'index'])
             ->name('teacher.quiz-results.index');
-
-        Route::get('/teacher/quiz-results/create', [QuizResultController::class, 'create'])
-            ->name('teacher.quiz-results.create');
-
-        Route::post('/teacher/quiz-results', [QuizResultController::class, 'store'])
-            ->name('teacher.quiz-results.store');
-
-        Route::get('/teacher/quiz-results/{quiz_result}/edit', [QuizResultController::class, 'edit'])
-            ->name('teacher.quiz-results.edit');
-
-        Route::put('/teacher/quiz-results/{quiz_result}', [QuizResultController::class, 'update'])
-            ->name('teacher.quiz-results.update');
-
-        Route::delete('/teacher/quiz-results/{quiz_result}', [QuizResultController::class, 'destroy'])
-            ->name('teacher.quiz-results.destroy');
 
         Route::get('/teacher/student-progress', [StudentProgressController::class, 'index'])
             ->name('teacher.student-progress.index');

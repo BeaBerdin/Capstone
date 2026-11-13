@@ -112,3 +112,36 @@ test('the admin sidebar links to the admin pages and each one opens', function (
         $this->actingAs($admin)->get(route($page))->assertOk();
     }
 });
+
+test('quiz results are view-only: teachers and administrators cannot add, edit or delete them', function (string $role) {
+    [$teacher, , , $quiz] = adminQuizResultSetup();
+    $user = $role === 'teacher' ? $teacher : pathwiseUser('admin');
+    $prefix = $role === 'teacher' ? '/teacher/quiz-results' : '/quiz-results';
+    $result = QuizResult::sole();
+    $before = $result->getAttributes();
+
+    // The list still opens and has no add, edit or delete controls.
+    $this->actingAs($user)->get($prefix)
+        ->assertOk()
+        ->assertSee('HTML Basics Checkpoint')
+        ->assertDontSee($prefix.'/create', false)
+        ->assertDontSee($prefix.'/'.$result->id.'/edit', false)
+        ->assertDontSee('name="_method" value="DELETE"', false);
+
+    $payload = ['student_id' => $result->student_id, 'quiz_id' => $quiz->id, 'score' => 0, 'total_items' => 1, 'attempt_number' => 2];
+
+    // The create and edit pages and every write route are gone.
+    expect($this->actingAs($user)->get($prefix.'/create')->status())->toBeIn([404, 405]);
+    expect($this->actingAs($user)->get($prefix.'/'.$result->id.'/edit')->status())->toBeIn([404, 405]);
+    expect($this->actingAs($user)->post($prefix, $payload)->status())->toBeIn([404, 405]);
+    expect($this->actingAs($user)->put($prefix.'/'.$result->id, $payload)->status())->toBeIn([404, 405]);
+    expect($this->actingAs($user)->delete($prefix.'/'.$result->id)->status())->toBeIn([404, 405]);
+
+    expect(QuizResult::count())->toBe(1)
+        ->and($result->fresh()->getAttributes())->toBe($before);
+
+    foreach (['create', 'store', 'edit', 'update', 'destroy'] as $action) {
+        expect(Route::has('teacher.quiz-results.'.$action))->toBeFalse()
+            ->and(Route::has('quiz-results.'.$action))->toBeFalse();
+    }
+})->with(['teacher', 'admin']);
