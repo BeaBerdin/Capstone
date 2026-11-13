@@ -201,7 +201,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('quiz-results', QuizResultController::class)->except('show');
         Route::resource('enrollments', EnrollmentController::class)->except('show');
         Route::resource('assignments', AssignmentController::class);
-        Route::resource('submissions', SubmissionController::class);
+        // Submissions are view-only for administrators: teachers grade their own courses.
+        Route::resource('submissions', SubmissionController::class)->only(['index', 'show']);
         Route::resource('certificates', CertificateController::class)->except('show');
         Route::resource('ai-recommendations', AIRecommendationController::class)->except(['show', 'edit', 'update']);
 

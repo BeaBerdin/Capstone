@@ -33,37 +33,7 @@ function recordPagesSubmission(): Submission
     ]);
 }
 
-test('the administrator can open the submission create and edit forms', function () {
-    $submission = recordPagesSubmission();
-    $admin = pathwiseUser('admin');
-    $teacher = pathwiseUser('teacher', ['name' => 'Tom Teacher']);
-
-    // These pages used to fail: the student list was never passed to them.
-    $this->actingAs($admin)
-        ->get(route('submissions.create'))
-        ->assertOk()
-        ->assertSee('Create Submission')
-        ->assertSee('Rita Record')
-        ->assertDontSee('Tom Teacher');   // only students are offered
-
-    $this->actingAs($admin)
-        ->get(route('submissions.edit', $submission))
-        ->assertOk()
-        ->assertSee('Edit Submission')
-        ->assertSee('value="'.$submission->student_id.'" selected', false);
-});
-
-test('editing a submission keeps its student even without the student role', function () {
-    $submission = recordPagesSubmission();
-    $submission->student->roles()->detach();
-
-    $this->actingAs(pathwiseUser('admin'))
-        ->get(route('submissions.edit', $submission))
-        ->assertOk()
-        ->assertSee('value="'.$submission->student_id.'" selected', false);
-});
-
-test('the submission list and details pages render', function () {
+test('the submission list and details pages render, view only', function () {
     $submission = recordPagesSubmission();
     $admin = pathwiseUser('admin');
 
@@ -73,32 +43,60 @@ test('the submission list and details pages render', function () {
         ->assertSee('Rita Record')
         ->assertSee('Record Essay')
         ->assertSee(route('submissions.show', $submission), false)
-        ->assertSee(route('submissions.edit', $submission), false);
+        // No create, edit or delete controls.
+        ->assertDontSee('Add Submission')
+        ->assertDontSee('/submissions/'.$submission->id.'/edit', false)
+        ->assertDontSee('Delete submission?', false);
 
     $this->actingAs($admin)
         ->get(route('submissions.show', $submission))
         ->assertOk()
         ->assertSee('Record Course')
-        ->assertSee("line one\n    indented line", false);
+        ->assertSee("line one\n    indented line", false)
+        ->assertDontSee('/submissions/'.$submission->id.'/edit', false);
 });
 
-test('the submission form shows validation errors and keeps the input', function () {
+test('an administrator cannot create, edit, grade or delete a submission', function () {
     $submission = recordPagesSubmission();
+    $submission->update(['file_path' => 'assignment-submissions/1/original.txt', 'score' => 40, 'status' => 'graded']);
+    $admin = pathwiseUser('admin');
+    $before = $submission->fresh()->getAttributes();
 
-    $this->actingAs(pathwiseUser('admin'))
-        ->from(route('submissions.create'))
-        ->followingRedirects()
-        ->post(route('submissions.store'), [
-            'assignment_id' => $submission->assignment_id,
-            'student_id' => $submission->student_id,
-            'answer_text' => 'Kept answer',
-            'score' => 150,
-            'status' => 'graded',
-        ])
-        ->assertOk()
-        ->assertSee('Please correct the following:')
-        ->assertSee('Score cannot exceed the assignment maximum score.')
-        ->assertSee('Kept answer');
+    $payload = [
+        'assignment_id' => $submission->assignment_id,
+        'student_id' => pathwiseUser('student')->id,
+        'answer_text' => 'Injected answer',
+        'score' => 100,
+        'status' => 'graded',
+        // The administrator must never be able to set or change the file path.
+        'file_path' => 'payment-proofs/someone-elses-receipt.jpg',
+    ];
+
+    // The create and edit pages are gone.
+    $this->actingAs($admin)->get('/submissions/create')->assertNotFound();
+    $this->actingAs($admin)->get('/submissions/'.$submission->id.'/edit')->assertNotFound();
+
+    // Crafted write requests are refused: these routes no longer exist.
+    $this->actingAs($admin)->post('/submissions', $payload)->assertStatus(405);
+    $this->actingAs($admin)->put('/submissions/'.$submission->id, $payload)->assertStatus(405);
+    $this->actingAs($admin)->patch('/submissions/'.$submission->id, $payload)->assertStatus(405);
+    $this->actingAs($admin)->delete('/submissions/'.$submission->id)->assertStatus(405);
+
+    expect(Submission::count())->toBe(1)
+        ->and($submission->fresh()->getAttributes())->toBe($before)
+        ->and($submission->fresh()->file_path)->toBe('assignment-submissions/1/original.txt');
+});
+
+test('the course teacher can still grade a submission', function () {
+    $submission = recordPagesSubmission();
+    $teacher = $submission->assignment->course->teacher;
+
+    $this->actingAs($teacher)
+        ->put(route('teacher.submissions.grade', $submission), ['status' => 'graded', 'score' => 88, 'feedback' => 'Good work.'])
+        ->assertRedirect(route('teacher.submissions.show', $submission));
+
+    expect($submission->fresh()->score)->toBe(88)
+        ->and($submission->fresh()->status)->toBe('graded');
 });
 
 test('the certificate pages render and the form shows validation errors', function () {
@@ -186,36 +184,4 @@ test('the receipt page uses the light PathWise style', function () {
 
     expect($html)->not->toContain('bg-neutral-900')
         ->not->toContain('bg-neutral-800');
-});
-
-test('an administrator can never set or change a submission file path', function () {
-    $submission = recordPagesSubmission();
-    $submission->update(['file_path' => 'assignment-submissions/1/original.txt']);
-    $admin = pathwiseUser('admin');
-    $otherStudent = pathwiseUser('student');
-
-    // The forms no longer offer the field.
-    $this->actingAs($admin)->get(route('submissions.create'))->assertOk()->assertDontSee('name="file_path"', false);
-    $this->actingAs($admin)->get(route('submissions.edit', $submission))->assertOk()->assertDontSee('name="file_path"', false);
-
-    // A crafted request that still sends file_path is ignored.
-    $this->actingAs($admin)->post(route('submissions.store'), [
-        'assignment_id' => $submission->assignment_id,
-        'student_id' => $otherStudent->id,
-        'answer_text' => 'New answer',
-        'status' => 'submitted',
-        'file_path' => 'payment-proofs/someone-elses-receipt.jpg',
-    ])->assertRedirect(route('submissions.index'));
-
-    expect(Submission::where('student_id', $otherStudent->id)->sole()->file_path)->toBeNull();
-
-    $this->actingAs($admin)->put(route('submissions.update', $submission), [
-        'assignment_id' => $submission->assignment_id,
-        'student_id' => $submission->student_id,
-        'answer_text' => 'Edited answer',
-        'status' => 'submitted',
-        'file_path' => 'payment-proofs/someone-elses-receipt.jpg',
-    ])->assertRedirect(route('submissions.index'));
-
-    expect($submission->fresh()->file_path)->toBe('assignment-submissions/1/original.txt');
 });

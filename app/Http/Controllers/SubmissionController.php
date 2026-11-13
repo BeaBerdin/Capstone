@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exceptions\AiEvaluationException;
 use App\Models\Assignment;
 use App\Models\Submission;
-use App\Models\User;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
 use App\Support\PrivateFiles;
@@ -18,7 +17,10 @@ class SubmissionController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | ADMIN - EXISTING CRUD
+    | ADMIN - VIEW ONLY
+    |--------------------------------------------------------------------------
+    | Administrators can list and open submissions. They cannot create,
+    | edit, grade or delete them: grading belongs to the course teacher.
     |--------------------------------------------------------------------------
     */
 
@@ -31,47 +33,6 @@ class SubmissionController extends Controller
         return view('submissions.index', compact('submissions'));
     }
 
-    public function create()
-    {
-        $assignments = Assignment::orderBy('title')->get();
-        $students = $this->studentOptions();
-
-        return view('submissions.create', compact('assignments', 'students'));
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'assignment_id' => 'required|integer|exists:assignments,id',
-            'student_id' => 'required|exists:users,id',
-            'answer_text' => 'nullable|string',
-            'score' => 'nullable|integer|min:0',
-            'feedback' => 'nullable|string',
-            'status' => 'required|in:submitted,graded,returned',
-        ]);
-
-        $assignment = Assignment::findOrFail(
-            (int) $validated['assignment_id']
-        );
-
-        if (
-            isset($validated['score'])
-            && $validated['score'] > $assignment->max_score
-        ) {
-            throw ValidationException::withMessages([
-                'score' => 'Score cannot exceed the assignment maximum score.',
-            ]);
-        }
-
-        $validated['submitted_at'] = now();
-
-        Submission::create($validated);
-
-        return redirect()
-            ->route('submissions.index')
-            ->with('success', 'Submission created successfully.');
-    }
-
     public function show(Submission $submission)
     {
         $submission->load([
@@ -80,78 +41,6 @@ class SubmissionController extends Controller
         ]);
 
         return view('submissions.show', compact('submission'));
-    }
-
-    public function edit(Submission $submission)
-    {
-        $assignments = Assignment::orderBy('title')->get();
-        $students = $this->studentOptions($submission->student_id);
-
-        return view('submissions.edit', compact(
-            'submission',
-            'assignments',
-            'students'
-        ));
-    }
-
-    /**
-     * Students for the administrator's submission form. When editing, the
-     * submission's own student is always included, so saving never moves
-     * the submission to someone else.
-     */
-    private function studentOptions(?int $currentStudentId = null)
-    {
-        return User::where(function ($query) use ($currentStudentId) {
-            $query->whereHas('roles', fn ($roles) => $roles->where('name', 'student'));
-
-            if ($currentStudentId) {
-                $query->orWhere('id', $currentStudentId);
-            }
-        })
-            ->orderBy('name')
-            ->get(['id', 'name']);
-    }
-
-    public function update(Request $request, Submission $submission)
-    {
-        $validated = $request->validate([
-            'assignment_id' => 'required|integer|exists:assignments,id',
-            'student_id' => 'required|exists:users,id',
-            'answer_text' => 'nullable|string',
-            'score' => 'nullable|integer|min:0',
-            'feedback' => 'nullable|string',
-            'status' => 'required|in:submitted,graded,returned',
-        ]);
-
-        $assignment = Assignment::findOrFail(
-            (int) $validated['assignment_id']
-        );
-
-        if (
-            isset($validated['score'])
-            && $validated['score'] > $assignment->max_score
-        ) {
-            throw ValidationException::withMessages([
-                'score' => 'Score cannot exceed the assignment maximum score.',
-            ]);
-        }
-
-        $submission->update($validated);
-
-        return redirect()
-            ->route('submissions.index')
-            ->with('success', 'Submission updated successfully.');
-    }
-
-    public function destroy(Submission $submission)
-    {
-        PrivateFiles::delete($submission->file_path);
-
-        $submission->delete();
-
-        return redirect()
-            ->route('submissions.index')
-            ->with('success', 'Submission deleted successfully.');
     }
 
     /*

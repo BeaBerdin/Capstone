@@ -44,16 +44,6 @@
                     </p>
                 </div>
 
-                <a
-                    href="{{ route('submissions.create') }}"
-                    class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white transition hover:bg-violet-700"
-                >
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    Add Submission
-                </a>
-
             </div>
 
 
@@ -138,28 +128,6 @@
                                                 View
                                             </a>
 
-                                            <a
-                                                href="{{ route('submissions.edit', $submission) }}"
-                                                class="inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700"
-                                            >
-                                                Edit
-                                            </a>
-
-                                            <form
-                                                action="{{ route('submissions.destroy', $submission) }}"
-                                                method="POST"
-                                                onsubmit="return confirm('Delete submission?')"
-                                            >
-                                                @csrf
-                                                @method('DELETE')
-
-                                                <button
-                                                    type="submit"
-                                                    class="inline-flex h-9 items-center rounded-lg border border-rose-100 bg-white px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </form>
 
                                         </div>
                                     </td>
