@@ -187,3 +187,35 @@ test('the receipt page uses the light PathWise style', function () {
     expect($html)->not->toContain('bg-neutral-900')
         ->not->toContain('bg-neutral-800');
 });
+
+test('an administrator can never set or change a submission file path', function () {
+    $submission = recordPagesSubmission();
+    $submission->update(['file_path' => 'assignment-submissions/1/original.txt']);
+    $admin = pathwiseUser('admin');
+    $otherStudent = pathwiseUser('student');
+
+    // The forms no longer offer the field.
+    $this->actingAs($admin)->get(route('submissions.create'))->assertOk()->assertDontSee('name="file_path"', false);
+    $this->actingAs($admin)->get(route('submissions.edit', $submission))->assertOk()->assertDontSee('name="file_path"', false);
+
+    // A crafted request that still sends file_path is ignored.
+    $this->actingAs($admin)->post(route('submissions.store'), [
+        'assignment_id' => $submission->assignment_id,
+        'student_id' => $otherStudent->id,
+        'answer_text' => 'New answer',
+        'status' => 'submitted',
+        'file_path' => 'payment-proofs/someone-elses-receipt.jpg',
+    ])->assertRedirect(route('submissions.index'));
+
+    expect(Submission::where('student_id', $otherStudent->id)->sole()->file_path)->toBeNull();
+
+    $this->actingAs($admin)->put(route('submissions.update', $submission), [
+        'assignment_id' => $submission->assignment_id,
+        'student_id' => $submission->student_id,
+        'answer_text' => 'Edited answer',
+        'status' => 'submitted',
+        'file_path' => 'payment-proofs/someone-elses-receipt.jpg',
+    ])->assertRedirect(route('submissions.index'));
+
+    expect($submission->fresh()->file_path)->toBe('assignment-submissions/1/original.txt');
+});

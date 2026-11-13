@@ -43,12 +43,8 @@
                   class="sad-field font-mono">{{ old('answer_text', $submission?->answer_text) }}</textarea>
     </x-pw.field>
 
-    <x-pw.field label="File Path" for="file_path" hint="Optional. Where the uploaded file is stored.">
-        <input id="file_path" type="text" name="file_path"
-               value="{{ old('file_path', $submission?->file_path) }}"
-               placeholder="e.g. submissions/essay.pdf"
-               class="sad-field">
-    </x-pw.field>
+    {{-- The file path is never editable here: it is set only when the
+         student uploads a file (see SubmissionController::studentStore). --}}
 </x-pw.form-section>
 
 <x-pw.form-section title="Grading">
