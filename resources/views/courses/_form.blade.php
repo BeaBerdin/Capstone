@@ -6,7 +6,8 @@
 @php
     $course = $course ?? null;
 
-    $statuses = ['draft' => 'Draft', 'pending' => 'Pending', 'approved' => 'Approved']
+    // "Approved" is not offered: no page treats it as visible to students.
+    $statuses = ['draft' => 'Draft', 'pending' => 'Pending']
         + ($course ? ['rejected' => 'Rejected'] : [])
         + ['published' => 'Published'];
 @endphp

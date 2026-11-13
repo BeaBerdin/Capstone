@@ -95,7 +95,7 @@ class CourseController extends Controller
 
             'status' => [
                 'required',
-                'in:draft,pending,approved,rejected,published',
+                'in:draft,pending,rejected,published',
             ],
 
             'estimated_hours' => 'nullable|integer|min:1',
@@ -155,7 +155,7 @@ class CourseController extends Controller
 
             'status' => [
                 'required',
-                'in:draft,pending,approved,rejected,published',
+                'in:draft,pending,rejected,published',
             ],
 
             'estimated_hours' => 'nullable|integer|min:1',
