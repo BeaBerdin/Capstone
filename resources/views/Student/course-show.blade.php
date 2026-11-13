@@ -1493,10 +1493,11 @@
 
 
                             {{-- INTRO VIDEO --}}
-                            @if($course->intro_video)
+                            {{-- Only http/https links are ever printed (Course::safeIntroVideoUrl). --}}
+                            @if($introVideoUrl = $course->safeIntroVideoUrl())
 
                                 <a
-                                    href="{{ $course->intro_video }}"
+                                    href="{{ $introVideoUrl }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="mt-3

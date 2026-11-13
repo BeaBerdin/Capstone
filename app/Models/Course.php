@@ -120,6 +120,36 @@ public function learningPaths(): BelongsToMany
 }
 
 /**
+ * Validation rules for the introduction video link, used by every form
+ * that saves it. Only https links are accepted, so javascript:, data:
+ * and other schemes can never be stored. 255 is the column length.
+ *
+ * @return list<string>
+ */
+public static function introVideoRules(): array
+{
+    return ['nullable', 'string', 'max:255', 'url:https'];
+}
+
+/**
+ * The introduction video link, only when it is a plain http or https
+ * address. Anything else (for example an old javascript: value) is
+ * never printed as a link.
+ */
+public function safeIntroVideoUrl(): ?string
+{
+    $url = trim((string) $this->intro_video);
+
+    if ($url === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
+        return null;
+    }
+
+    $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+    return in_array($scheme, ['http', 'https'], true) ? $url : null;
+}
+
+/**
  * @return HasMany<CourseReview, $this>
  */
 public function reviews(): HasMany

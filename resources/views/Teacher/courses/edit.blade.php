@@ -168,7 +168,7 @@
                         {{-- Intro video --}}
                         <div>
                             <label for="intro_video" class="text-sm font-semibold text-slate-700">Introduction video URL</label>
-                            <input id="intro_video" name="intro_video" type="url" maxlength="500"
+                            <input id="intro_video" name="intro_video" type="url" maxlength="255"
                                    value="{{ old('intro_video', $course->intro_video) }}"
                                    placeholder="https://youtube.com/watch?v=..."
                                    class="{{ $field }}">

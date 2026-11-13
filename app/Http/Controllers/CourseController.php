@@ -84,7 +84,7 @@ class CourseController extends Controller
                 'max:5120',
             ],
 
-            'intro_video' => 'nullable|max:255',
+            'intro_video' => Course::introVideoRules(),
 
             'difficulty_level' => [
                 'required',
@@ -144,7 +144,7 @@ class CourseController extends Controller
                 'max:5120',
             ],
 
-            'intro_video' => 'nullable|max:255',
+            'intro_video' => Course::introVideoRules(),
 
             'difficulty_level' => [
                 'required',
@@ -581,11 +581,7 @@ class CourseController extends Controller
                     'max:4096',
                 ],
 
-                'intro_video' => [
-                    'nullable',
-                    'url',
-                    'max:500',
-                ],
+                'intro_video' => Course::introVideoRules(),
 
                 'difficulty_level' => [
                     'required',
@@ -614,6 +610,8 @@ class CourseController extends Controller
             [
                 'title.unique' =>
                     'You already have a course with this title. Please use a different title.',
+                'intro_video.url' =>
+                    'The introduction video must be a link that starts with https://.',
             ]
         );
 
@@ -783,11 +781,7 @@ class CourseController extends Controller
                     'max:4096',
                 ],
 
-                'intro_video' => [
-                    'nullable',
-                    'url',
-                    'max:500',
-                ],
+                'intro_video' => Course::introVideoRules(),
 
                 'difficulty_level' => [
                     'required',
@@ -808,6 +802,8 @@ class CourseController extends Controller
             [
                 'title.unique' =>
                     'You already have a course with this title. Please use a different title.',
+                'intro_video.url' =>
+                    'The introduction video must be a link that starts with https://.',
             ]
         );
 
