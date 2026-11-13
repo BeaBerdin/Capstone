@@ -372,7 +372,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/teacher/analytics', [ReportsController::class, 'teacherAnalytics'])
             ->name('teacher.analytics');
         
-        Route::post('/teacher/submissions/{submission}/ai-evaluate',[\App\Http\Controllers\SubmissionController::class, 'aiEvaluate'])                                              
+        // Limited per teacher: every evaluation is one Gemini request.
+        Route::post('/teacher/submissions/{submission}/ai-evaluate',[\App\Http\Controllers\SubmissionController::class, 'aiEvaluate'])
+             ->middleware('throttle:ai-evaluation')
              ->name('teacher.submissions.ai-evaluate');
 
         // Course invitations
@@ -418,6 +420,7 @@ Route::middleware('role:student')->group(function () {
         ->name('student.course.show');
 
     Route::post('/marketplace/{course}/enroll', [CourseController::class, 'enroll'])
+        ->middleware('throttle:enrollment')
         ->name('student.enroll');
 
     // Course reviews: limited to 5 changes per minute per student.
@@ -478,6 +481,7 @@ Route::middleware('role:student')->group(function () {
         ->name('student.learning-paths.show');
 
     Route::post('/student/learning-paths/generate', [LearningPathController::class, 'generateForStudent'])
+        ->middleware('throttle:learning-path')
         ->name('student.learning-paths.generate');
 
     Route::get('/recommended-courses', [AIRecommendationController::class, 'studentRecommendations'])
@@ -487,6 +491,7 @@ Route::middleware('role:student')->group(function () {
         ->name('student.transactions');
 
     Route::post('/marketplace/{course}/purchase', [TransactionController::class, 'store'])
+        ->middleware('throttle:purchase')
         ->name('student.transactions.store');
 
     Route::get('/transactions/{transaction}', [TransactionController::class, 'studentShow'])
