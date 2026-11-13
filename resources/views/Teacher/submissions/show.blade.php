@@ -127,6 +127,21 @@
             @endif
 
 
+            {{-- Refused action, for example an AI evaluation that could not start --}}
+            @if(session('error'))
+
+                <div
+                    class="mt-6 rounded-2xl border border-rose-200
+                           bg-rose-50 px-5 py-4 text-sm font-medium
+                           text-rose-700"
+                    role="alert"
+                >
+                    {{ session('error') }}
+                </div>
+
+            @endif
+
+
             {{-- Errors --}}
             @if($errors->any())
 

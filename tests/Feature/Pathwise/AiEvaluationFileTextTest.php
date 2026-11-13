@@ -221,3 +221,22 @@ test('AI evaluation leaves room for Gemini to think and lists the JSON keys', fu
         && $request['generation_config']['max_output_tokens'] === 8000
         && str_contains($request['input'], '"feedback": "..."'));
 });
+
+test('the teacher sees why the AI evaluation was not started', function () {
+    fakeFileDisks();
+    Storage::disk('local')->put('assignment-submissions/1/Big.java', str_repeat('a', Assignment::AI_TEXT_MAX_KB * 1024 + 1));
+    Http::fake();
+
+    [$teacher, $submission] = aiEvaluationSetup(['file_path' => 'assignment-submissions/1/Big.java']);
+
+    // The refusal is shown on the Review Submission page, not only kept in the session.
+    $this->actingAs($teacher)
+        ->from(route('teacher.submissions.show', $submission))
+        ->followingRedirects()
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertOk()
+        ->assertSee('is larger than '.Assignment::AI_TEXT_MAX_KB.' KB and cannot be read for AI evaluation')
+        ->assertSee('please grade this submission manually');
+
+    Http::assertNothingSent();
+});
