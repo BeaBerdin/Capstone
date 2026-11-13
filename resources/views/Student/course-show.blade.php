@@ -64,13 +64,15 @@
 
     $lessons = $course
         ->lessons()
+        ->where('is_published', true)
+        ->with('course')
         ->orderBy('lesson_order')
         ->get();
 
     $totalLessons = $lessons->count();
 
     $previewLessons = $lessons
-        ->where('is_preview', true)
+        ->filter(fn ($lesson) => $lesson->isAvailableForPreview())
         ->count();
 
     $totalMinutes = $lessons->sum(
@@ -1872,8 +1874,7 @@
                                     $typeLabels[$lessonType]
                                     ?? ucfirst($lessonType);
 
-                                $isPreview =
-                                    (bool) $lesson->is_preview;
+                                $isPreview = $lesson->isAvailableForPreview();
                             @endphp
 
 
@@ -2058,7 +2059,8 @@
 
                                     @elseif($isPreview)
 
-                                        <span
+                                        <a
+                                            href="{{ route('student.lesson.preview', $lesson) }}"
                                             class="inline-flex h-9
                                                    items-center
                                                    justify-center
@@ -2066,10 +2068,12 @@
                                                    bg-violet-50
                                                    px-3
                                                    text-xs font-semibold
-                                                   text-violet-600"
+                                                   text-violet-600
+                                                   transition hover:bg-violet-100
+                                                   focus-visible:outline-2 focus-visible:outline-violet-600"
                                         >
-                                            Preview available
-                                        </span>
+                                            Preview Lesson
+                                        </a>
 
                                     @else
 

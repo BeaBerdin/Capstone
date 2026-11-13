@@ -59,6 +59,14 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Application-only backups without global MySQL administration privileges.
+            'dump' => [
+                'dump_binary_path' => env('MYSQL_DUMP_BINARY_PATH', ''),
+                'mysql_gtid_purged' => 'OFF',
+                'add_extra_option' => '--no-tablespaces',
+                'use_single_transaction',
+                'skip_lock_tables',
+            ],
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],

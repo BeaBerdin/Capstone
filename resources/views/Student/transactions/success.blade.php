@@ -29,12 +29,19 @@
                                 <strong>
                                     {{ $transaction->course->title ?? 'the course' }}
                                 </strong>
-                                has been securely verified through PayMongo.
+                                has been confirmed.
                             </p>
 
-                            <p class="mt-2 text-sm text-green-600">
-                                You are now enrolled and can start learning.
-                            </p>
+                            @if($enrollmentHasAccess)
+                                <p class="mt-2 text-sm text-green-600">
+                                    {{ $enrollmentStatus === 'completed' ? 'Your course enrollment remains completed.' : 'Your enrollment is active and you can start learning.' }}
+                                </p>
+                            @else
+                                <p role="alert" class="mt-2 text-sm text-amber-700">
+                                    {{ $enrollmentStatus === 'cancelled' ? 'Your enrollment remains cancelled. Payment confirmation does not restore course access.' : 'No enrollment access is available for this payment.' }}
+                                    Please contact the course administrator.
+                                </p>
+                            @endif
 
                         @else
 
@@ -116,9 +123,9 @@
 
                             @if($paymentVerified)
 
-                                <a href="{{ route('student.my-courses') }}"
+                                <a href="{{ route($enrollmentHasAccess ? 'student.my-courses' : 'student.transactions') }}"
                                    class="sad-btn-primary inline-flex items-center px-4 py-2 bg-violet-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-violet-700 transition">
-                                    Go to My Courses
+                                    {{ $enrollmentHasAccess ? 'Go to My Courses' : 'Transaction History' }}
                                 </a>
 
                                 <a href="{{ route('student.marketplace') }}"

@@ -23,4 +23,12 @@ class Lesson extends Model
     {
         return $this->belongsTo(Course::class);
     }
+
+    public function isAvailableForPreview(): bool
+    {
+        return (bool) $this->is_preview
+            && (bool) $this->is_published
+            && in_array($this->lesson_type, ['text', 'video', 'document'], true)
+            && strtolower(trim((string) $this->course?->status)) === 'published';
+    }
 }

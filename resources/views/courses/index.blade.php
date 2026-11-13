@@ -209,6 +209,13 @@
 
                     $status = strtolower($course->status);
 
+                    $thumbnail = $course->thumbnail;
+                    $thumbnailUrl = $thumbnail
+                        ? (\Illuminate\Support\Str::startsWith($thumbnail, ['http://', 'https://'])
+                            ? $thumbnail
+                            : asset('storage/' . ltrim($thumbnail, '/')))
+                        : null;
+
                     $statusClass = match ($status) {
 
                         'published' =>
@@ -247,6 +254,15 @@
 
                     <div class="relative h-44 overflow-hidden bg-linear-to-br from-violet-700 via-violet-600 to-indigo-700">
 
+                        @if($thumbnailUrl)
+                            <img
+                                src="{{ $thumbnailUrl }}"
+                                alt="{{ $course->title }}"
+                                class="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                            >
+                        @else
                         <div class="absolute inset-0 flex items-center justify-center">
 
                             <div class="text-center text-white">
@@ -274,6 +290,7 @@
                             </div>
 
                         </div>
+                        @endif
 
 
                         {{-- STATUS BADGE --}}

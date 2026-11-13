@@ -15,6 +15,14 @@ test('reset password link screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('password reset screen explains unavailable email delivery', function () {
+    config(['mail.default' => 'log']);
+
+    $this->get(route('password.request'))
+        ->assertOk()
+        ->assertSee('Email delivery is not configured yet.');
+});
+
 test('reset password link can be requested', function () {
     Notification::fake();
 

@@ -20,7 +20,13 @@
                 </p>
             </div>
 
-            <x-auth-session-status class="text-center text-emerald-600" :status="session('status')" />
+            @if (! \App\Support\MailSettings::isConfigured())
+                <p role="alert" class="text-center text-sm text-amber-700">
+                    {{ __('Email delivery is not configured yet. Please contact the administrator to enable password reset emails.') }}
+                </p>
+            @else
+                <x-auth-session-status class="text-center text-emerald-600" :status="session('status')" />
+            @endif
 
             <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6">
                 @csrf

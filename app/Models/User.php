@@ -38,6 +38,7 @@ use LogicException;
     'profile_photo_path',
     'department_id',
 ])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */

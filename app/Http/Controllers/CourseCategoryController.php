@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DeletionBlockedException;
 use App\Models\CourseCategory;
+use App\Services\RecordRetentionService;
 use Illuminate\Http\Request;
 
 class CourseCategoryController extends Controller
@@ -63,9 +65,13 @@ class CourseCategoryController extends Controller
             ->with('success', 'Category updated successfully.');
     }
 
-    public function destroy(CourseCategory $courseCategory)
+    public function destroy(CourseCategory $courseCategory, RecordRetentionService $retention)
     {
-        $courseCategory->delete();
+        try {
+            $retention->deleteCategory($courseCategory);
+        } catch (DeletionBlockedException $exception) {
+            return redirect()->route('course-categories.index')->with('error', $exception->getMessage());
+        }
 
         return redirect()
             ->route('course-categories.index')

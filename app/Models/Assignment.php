@@ -2,12 +2,28 @@
 
 namespace App\Models;
 
+use App\Exceptions\DeletionBlockedException;
+use App\Services\RecordRetentionService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Assignment extends Model
 {
+    protected static function booted(): void
+    {
+        static::deleting(function (self $assignment): void {
+            if (($reason = $assignment->deletionBlockReason()) !== null) {
+                throw new DeletionBlockedException($reason);
+            }
+        });
+    }
+
+    public function deletionBlockReason(): ?string
+    {
+        return app(RecordRetentionService::class)->assignmentDeletionBlockReason($this);
+    }
+
     /**
      * Languages a code assignment can use (Manuscript Scope, with MR-17:
      * HTML/CSS/JavaScript, Java, C, PHP and Python). The stored key

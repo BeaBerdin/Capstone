@@ -18,8 +18,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalStudents = User::count();
-        $totalTeachers = User::count();
+        $totalStudents = User::whereHas('roles', fn ($query) => $query->where('name', 'student'))->count();
+        $totalTeachers = User::whereHas('roles', fn ($query) => $query->where('name', 'teacher'))->count();
         $totalCourses = Course::count();
         $totalEnrollments = Enrollment::count();
 

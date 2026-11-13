@@ -89,6 +89,12 @@
                 </div>
             </section>
 
+            @if(session('error'))
+                <div role="alert" class="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             @if(session('success'))
                 <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50
                             px-5 py-4 text-sm font-medium text-emerald-700">
@@ -185,7 +191,7 @@
                                     <form
                                         method="POST"
                                         action="{{ route('teacher.assignments.destroy', $assignment) }}"
-                                        onsubmit="return confirm('Delete this assignment? This will also delete its submissions.');"
+                                        onsubmit="return confirm('Delete this assignment? Assignments with student submissions are protected from deletion.');"
                                     >
                                         @csrf
                                         @method('DELETE')

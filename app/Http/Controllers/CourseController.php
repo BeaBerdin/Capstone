@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DeletionBlockedException;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\CourseCategory;
@@ -14,6 +15,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use App\Notifications\PathwiseNotification;
+use App\Services\RecordRetentionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -185,40 +187,13 @@ class CourseController extends Controller
             ->with('success', 'Course updated successfully.');
     }
 
-    public function destroy(Course $course)
+    public function destroy(Course $course, RecordRetentionService $retention)
     {
-        if ($course->enrollments()->exists()) {
-            return redirect()
-                ->route('courses.index')
-                ->with(
-                    'error',
-                    'This course cannot be deleted because it has enrollment history.'
-                );
+        try {
+            $retention->deleteCourse($course);
+        } catch (DeletionBlockedException $exception) {
+            return redirect()->route('courses.index')->with('error', $exception->getMessage());
         }
-
-        if ($course->transactions()->exists()) {
-            return redirect()
-                ->route('courses.index')
-                ->with(
-                    'error',
-                    'This course cannot be deleted because it has transaction history.'
-                );
-        }
-
-        if ($course->certificates()->exists()) {
-            return redirect()
-                ->route('courses.index')
-                ->with(
-                    'error',
-                    'This course cannot be deleted because it has certificate history.'
-                );
-        }
-
-        if ($course->thumbnail) {
-            Storage::disk('public')->delete($course->thumbnail);
-        }
-
-        $course->delete();
 
         return redirect()
             ->route('courses.index')
@@ -1030,7 +1005,8 @@ class CourseController extends Controller
     */
 
     public function teacherDestroyCourse(
-        Course $course
+        Course $course,
+        RecordRetentionService $retention
     ) {
         $this->ensureTeacherOwnsCourse($course);
 
@@ -1054,13 +1030,17 @@ class CourseController extends Controller
                 );
         }
 
-        if ($course->thumbnail) {
-            Storage::disk('public')->delete(
-                $course->thumbnail
-            );
-        }
+        try {
+            $retention->deleteCourse($course, function (Course $locked): void {
+                $this->ensureTeacherOwnsCourse($locked);
 
-        $course->delete();
+                if (! in_array($locked->status, ['draft', 'rejected'], true)) {
+                    throw new DeletionBlockedException('Only draft or returned courses can be deleted.');
+                }
+            });
+        } catch (DeletionBlockedException $exception) {
+            return redirect()->route('teacher.my-courses')->with('error', $exception->getMessage());
+        }
 
         return redirect()
             ->route(

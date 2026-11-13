@@ -106,7 +106,7 @@
 
                                 {{-- Delete --}}
                                 <form
-                                    action="{{ route('super-admin.departments.destroy', $department) }}"
+                                    action="{{ route('departments.destroy', $department) }}"
                                     method="POST"
                                     class="flex-1"
                                     onsubmit="return confirm('Are you sure you want to delete this department?')"
@@ -197,7 +197,7 @@
                 </div>
 
                 <form
-                    action="{{ route('super-admin.departments.store') }}"
+                    action="{{ route('departments.store') }}"
                     method="POST"
                     class="mt-6 space-y-5"
                 >
@@ -354,7 +354,7 @@
             const modal = document.getElementById('editDepartmentModal');
             const form = document.getElementById('editDepartmentForm');
 
-            form.action = `/super-admin/departments/${id}`;
+            form.action = @js(route('departments.index')) + '/' + encodeURIComponent(id);
 
             document.getElementById('editDepartmentName').value = name;
             document.getElementById('editDepartmentDescription').value = description ?? '';

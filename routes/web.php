@@ -27,8 +27,21 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\StudentRemovalRequestController;
+use App\Http\Controllers\EmailVerificationController;
 
 Route::view('/', 'welcome')->name('home');
+
+// The signed email link proves address ownership without logging in the
+// browser that opened Gmail. Keep the URL/name so existing links still work.
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1,verification-link'])
+    ->whereNumber('id')
+    ->where('hash', '[a-f0-9]{40}')
+    ->name('verification.verify');
+
+Route::get('/email/verification-status', [EmailVerificationController::class, 'status'])
+    ->middleware(['auth', 'throttle:60,1,verification-status'])
+    ->name('verification.status');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -446,6 +459,12 @@ Route::middleware('role:student')->group(function () {
 
     Route::get('/learn/{course}', [LessonController::class, 'studentCourse'])
         ->name('student.learn.course');
+
+    Route::get('/lesson/{lesson}/preview', [LessonController::class, 'preview'])
+        ->name('student.lesson.preview');
+
+    Route::get('/lesson/{lesson}/preview/file', [PrivateFileController::class, 'lessonPreview'])
+        ->name('student.lesson.preview.file');
 
     Route::get('/lesson/{lesson}', [LessonController::class, 'studentLesson'])
         ->name('student.lesson.view');

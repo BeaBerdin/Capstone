@@ -5,16 +5,22 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /*
-| The payments and course_reviews tables were empty placeholders (only id
-| and timestamps) that nothing in the system uses: payments are stored in
-| transactions, and course reviews were never built (see the manuscript
-| revisions MR-12 and MR-26). down() recreates them exactly as the original
-| create migrations did.
+| Remove legacy placeholder tables only when both are empty. Check both
+| before dropping either so existing rows block this migration entirely.
+| down() recreates the original structure; it cannot restore deleted data.
 */
 return new class extends Migration
 {
     public function up(): void
     {
+        foreach (['payments', 'course_reviews'] as $table) {
+            if (Schema::hasTable($table) && Schema::getConnection()->table($table)->exists()) {
+                throw new \RuntimeException(
+                    "Migration stopped: {$table} contains existing data. Preserve or migrate its rows before removing the table."
+                );
+            }
+        }
+
         Schema::dropIfExists('payments');
         Schema::dropIfExists('course_reviews');
     }

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\DeletionBlockedException;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Submission;
 use App\Notifications\PathwiseNotification;
+use App\Services\RecordRetentionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -130,9 +132,13 @@ class AssignmentController extends Controller
             );
     }
 
-    public function destroy(Assignment $assignment)
+    public function destroy(Assignment $assignment, RecordRetentionService $retention)
     {
-        $assignment->delete();
+        try {
+            $retention->deleteAssignment($assignment);
+        } catch (DeletionBlockedException $exception) {
+            return redirect()->route('assignments.index')->with('error', $exception->getMessage());
+        }
 
         return redirect()
             ->route('assignments.index')
@@ -327,7 +333,8 @@ class AssignmentController extends Controller
     }
 
     public function teacherDestroy(
-        Assignment $assignment
+        Assignment $assignment,
+        RecordRetentionService $retention
     ) {
         $assignment->load('course');
 
@@ -344,7 +351,21 @@ class AssignmentController extends Controller
             $assignment->course
         );
 
-        $assignment->delete();
+        try {
+            $retention->deleteAssignment($assignment, function (Assignment $locked): void {
+                $locked->load('course');
+                $lockedCourse = $locked->course;
+
+                if (! ($lockedCourse instanceof Course)) {
+                    abort(404);
+                }
+
+                $this->ensureTeacherOwnsCourse($lockedCourse);
+                $this->ensureTeacherCanEditCourse($lockedCourse);
+            });
+        } catch (DeletionBlockedException $exception) {
+            return redirect()->route('teacher.assignments.index')->with('error', $exception->getMessage());
+        }
 
         return redirect()
             ->route('teacher.assignments.index')

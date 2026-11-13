@@ -54,7 +54,7 @@ class PrivateFileController extends Controller
     /**
      * Lesson file: the course's teacher, administrators, and students with
      * an active or completed enrollment when the course and the lesson are
-     * published. Preview lessons are not open to anyone else.
+     * published. Free previews use the separate lessonPreview endpoint.
      */
     public function lesson(Lesson $lesson)
     {
@@ -78,6 +78,22 @@ class PrivateFileController extends Controller
             );
 
         abort_unless($canOpen, 403);
+
+        return $this->serve($lesson->file_path);
+    }
+
+    /**
+     * A preview document is served separately from enrolled lesson files.
+     * The route requires a verified student, and every read rechecks publication.
+     */
+    public function lessonPreview(Lesson $lesson)
+    {
+        $lesson->loadMissing('course');
+
+        abort_unless(
+            $lesson->isAvailableForPreview() && $lesson->lesson_type === 'document',
+            404
+        );
 
         return $this->serve($lesson->file_path);
     }

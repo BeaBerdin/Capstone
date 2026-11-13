@@ -201,7 +201,7 @@ test('a lesson file is closed to students without access', function (string $cas
         ->assertForbidden();
 })->with(['not enrolled', 'cancelled enrollment', 'unpublished course', 'unpublished lesson']);
 
-test('preview lessons are still for enrolled students only', function () {
+test('the enrolled lesson-file endpoint still requires enrollment for preview lessons', function () {
     fakeFileDisks();
     [, , $lesson] = privateLesson([], ['is_preview' => true]);
 

@@ -231,6 +231,19 @@ class LessonController extends Controller
     }
 
 
+    public function preview(Lesson $lesson)
+    {
+        $lesson->loadMissing('course');
+
+        abort_unless($lesson->isAvailableForPreview(), 404, 'Lesson preview not found.');
+
+        // Previewing never creates an enrollment or a lesson-progress record.
+        return response()->view('Student.lesson-preview', [
+            'lesson' => $lesson,
+            'course' => $lesson->course,
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     public function studentLesson(Lesson $lesson)
     {
         $this->ensureStudentCanAccessLesson(

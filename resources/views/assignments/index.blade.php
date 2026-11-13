@@ -17,6 +17,12 @@
     </div>
 @endif
 
+@if(session('error'))
+    <div role="alert" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ session('error') }}
+    </div>
+@endif
+
 <div class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 <div class="overflow-x-auto">
 <table class="w-full min-w-[820px] text-left text-sm">
@@ -76,7 +82,7 @@
                         @csrf
                         @method('DELETE')
 
-                        <button onclick="return confirm('Delete this assignment?')"
+                        <button onclick="return confirm('Delete this assignment? Assignments with student submissions are protected from deletion.')"
                                 class="text-sm font-semibold text-red-600 hover:text-red-700">
                             Delete
                         </button>

@@ -498,7 +498,11 @@ new #[Title('Profile settings')] class extends Component {
                                 </button>
 
 
-                                @if(session('status') === 'verification-link-sent')
+                                @if (! \App\Support\MailSettings::isConfigured())
+                                    <p role="alert" class="mt-3 text-sm text-amber-800">
+                                        {{ __('Email delivery is not configured yet. Please contact the administrator to enable verification emails.') }}
+                                    </p>
+                                @elseif(session('status') === 'verification-link-sent')
 
                                     <p class="mt-3 text-sm font-medium text-green-600">
                                         {{ __('A new verification link has been sent to your email address.') }}

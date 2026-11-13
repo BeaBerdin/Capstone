@@ -2,10 +2,33 @@
 
 namespace App\Models;
 
+use App\Exceptions\DeletionBlockedException;
+use App\Services\RecordRetentionService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
+    protected static function booted(): void
+    {
+        static::deleting(function (self $course): void {
+            if (($reason = $course->deletionBlockReason()) !== null) {
+                throw new DeletionBlockedException($reason);
+            }
+        });
+    }
+
+    public function deletionBlockReason(): ?string
+    {
+        return app(RecordRetentionService::class)->courseDeletionBlockReason($this);
+    }
+
+    /** @return HasMany<Assignment, $this> */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
+    }
+
     /**
      * Course statuses in which the teacher may add, edit or delete
      * assignments. Only a course waiting for admin review (pending) is
