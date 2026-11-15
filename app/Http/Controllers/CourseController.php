@@ -14,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use App\Notifications\PathwiseNotification;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +32,14 @@ class CourseController extends Controller
 
     public function index(Request $request)
     {
-        $query = Course::with(['category', 'teacher']);
+        $query = Course::with([
+            'category',
+            'teacher',
+            // For the Preview window on each course card.
+            'lessons' => fn ($lessons) => $lessons
+                ->select(['id', 'course_id', 'title', 'lesson_type', 'lesson_order', 'duration_minutes', 'is_preview'])
+                ->orderBy('lesson_order'),
+        ]);
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -351,17 +359,25 @@ class CourseController extends Controller
                 );
         }
 
-        $enrollment = Enrollment::firstOrCreate(
-            [
-                'student_id' => auth()->id(),
-                'course_id' => $course->id,
-            ],
-            [
-                'status' => 'active',
-                'enrolled_at' => now(),
-                'progress_percentage' => 0,
-            ]
-        );
+        // A double-click can send two requests at once; the unique
+        // student/course index lets only one create the enrollment.
+        try {
+            $enrollment = Enrollment::firstOrCreate(
+                [
+                    'student_id' => auth()->id(),
+                    'course_id' => $course->id,
+                ],
+                [
+                    'status' => 'active',
+                    'enrolled_at' => now(),
+                    'progress_percentage' => 0,
+                ]
+            );
+        } catch (UniqueConstraintViolationException) {
+            $enrollment = Enrollment::where('student_id', auth()->id())
+                ->where('course_id', $course->id)
+                ->firstOrFail();
+        }
 
         // In-app notification, plus email when mail is configured.
         if ($enrollment->wasRecentlyCreated) {
@@ -373,11 +389,14 @@ class CourseController extends Controller
             ));
         }
 
+        // Straight into the course the student just joined.
         return redirect()
-            ->route('student.dashboard')
+            ->route('student.learn.course', $course)
             ->with(
                 'success',
-                'Successfully enrolled in course.'
+                $enrollment->wasRecentlyCreated
+                    ? 'Successfully enrolled in course.'
+                    : 'You are already enrolled in this course.'
             );
     }
 

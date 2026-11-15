@@ -30,7 +30,7 @@ test('a student can enroll in a free published course', function () {
 
     $this->actingAs($student)
         ->post(route('student.enroll', $course))
-        ->assertRedirect(route('student.dashboard'));
+        ->assertRedirect(route('student.learn.course', $course));
 
     expect(Enrollment::where('student_id', $student->id)->where('course_id', $course->id)->exists())
         ->toBeTrue();

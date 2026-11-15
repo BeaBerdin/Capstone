@@ -104,15 +104,7 @@
     // Completion ring (circle of radius 42).
     $ringCircumference = 2 * M_PI * 42;
 
-    $thumbnailUrl = function ($thumbnail) {
-        if (! $thumbnail) {
-            return null;
-        }
-
-        return \Illuminate\Support\Str::startsWith($thumbnail, ['http://', 'https://'])
-            ? $thumbnail
-            : asset('storage/' . ltrim($thumbnail, '/'));
-    };
+    $thumbnailUrl = fn ($thumbnail) => \App\Models\Course::thumbnailUrlFor($thumbnail);
 
     $quickActions = [
         ['label' => 'Browse Courses', 'href' => route('student.marketplace'), 'tone' => 'sad-violet', 'icon' => 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35'],
@@ -631,21 +623,8 @@
                     </div>
 
                     @if($recommended)
-                        @php $recThumb = $thumbnailUrl($recommended->thumbnail ?? null); @endphp
-
                         <div class="p-5">
-                            <div class="h-36 overflow-hidden rounded-2xl">
-                                @if($recThumb)
-                                    <img src="{{ $recThumb }}" alt="{{ $recommended->title }}" class="h-full w-full object-cover">
-                                @else
-                                    <div class="flex h-full w-full items-center justify-center bg-linear-to-br from-violet-500 via-indigo-500 to-blue-500">
-                                        <svg class="h-9 w-9 text-white/85" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                                        </svg>
-                                    </div>
-                                @endif
-                            </div>
+                            <x-pw.course-cover :course="$recommended" framed />
 
                             <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-violet-600">
                                 {{ $recommended->category?->name ?? 'Recommended Course' }}

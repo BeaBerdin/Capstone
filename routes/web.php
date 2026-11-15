@@ -30,6 +30,21 @@ use App\Http\Controllers\StudentRemovalRequestController;
 
 Route::view('/', 'welcome')->name('home');
 
+/*
+|--------------------------------------------------------------------------
+| EMAIL VERIFICATION LINK
+|--------------------------------------------------------------------------
+|
+| Replaces Fortify's route of the same name and URL, which required a login.
+| The link still needs Laravel's valid signature and expiry (signed) and is
+| throttled the same way; see VerifyEmailLinkController.
+|
+*/
+
+Route::get('/email/verify/{id}/{hash}', \App\Http\Controllers\Auth\VerifyEmailLinkController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
@@ -519,9 +534,14 @@ Route::middleware('role:student')->group(function () {
 | This route is outside the student role middleware so the invitation
 | link can be opened before the student accepts the invitation.
 |
+| A visitor who is not logged in is sent to the login page first and is
+| brought back to the invitation after logging in (the page uses the
+| signed-in layout, so it cannot be shown to a guest).
+|
 */
 
 Route::get('/invitations/{code}', [CourseInvitationController::class, 'show'])
+    ->middleware('auth')
     ->name('course-invitations.show');
 
 /*

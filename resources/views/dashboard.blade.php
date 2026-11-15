@@ -270,7 +270,12 @@
                             <tbody class="divide-y divide-slate-100">
                                 @forelse($coursesPendingApproval as $course)
                                     <tr class="transition-colors hover:bg-violet-50/40">
-                                        <td class="px-5 py-3 font-semibold text-slate-800 sm:px-6">{{ $course->title }}</td>
+                                        <td class="px-5 py-3 font-semibold text-slate-800 sm:px-6">
+                                            <div class="flex items-center gap-3">
+                                                <x-pw.course-cover :course="$course" variant="thumb" />
+                                                <span class="min-w-0">{{ $course->title }}</span>
+                                            </div>
+                                        </td>
                                         <td class="px-3 py-3 text-slate-600">{{ $course->teacher->name ?? 'Teacher unavailable' }}</td>
                                         <td class="px-3 py-3 text-slate-600">{{ $course->category->name ?? 'Uncategorized' }}</td>
                                         <td class="whitespace-nowrap px-3 py-3 text-slate-500">{{ $course->created_at->format('M d, Y') }}</td>

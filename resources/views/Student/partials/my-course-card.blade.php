@@ -29,13 +29,7 @@
     }
 
     $thumbnail = $course->thumbnail ?? null;
-    $thumbnailUrl = null;
-
-    if ($thumbnail) {
-        $thumbnailUrl = \Illuminate\Support\Str::startsWith($thumbnail, ['http://', 'https://'])
-            ? $thumbnail
-            : asset('storage/' . ltrim($thumbnail, '/'));
-    }
+    $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
 
     $searchText = strtolower(
         ($course->title ?? '') . ' ' .

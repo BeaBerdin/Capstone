@@ -39,41 +39,7 @@
 
         $course->thumbnail ?? null;
 
-    $courseThumbnailUrl = null;
-
-    if ($courseThumbnail) {
-
-        if (
-
-            \Illuminate\Support\Str::startsWith(
-
-                $courseThumbnail,
-
-                ['http://', 'https://']
-
-            )
-
-        ) {
-
-            $courseThumbnailUrl =
-
-                $courseThumbnail;
-
-        } else {
-
-            $courseThumbnailUrl =
-
-                asset(
-
-                    'storage/' .
-
-                    ltrim($courseThumbnail, '/')
-
-                );
-
-        }
-
-    }
+    $courseThumbnailUrl = \App\Models\Course::thumbnailUrlFor($courseThumbnail);
 
 @endphp
 

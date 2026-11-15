@@ -843,6 +843,23 @@
                             <span class="text-base font-bold text-slate-950">{{ $draftOrOther }}</span>
                         </li>
                     </ul>
+
+                    {{-- Latest courses, with their covers --}}
+                    @if($recentCourses->isNotEmpty())
+                        <ul class="mt-4 space-y-2.5 border-t border-slate-100 pt-4">
+                            @foreach($recentCourses as $recentCourse)
+                                <li>
+                                    <a href="{{ route('teacher.my-courses') }}" class="flex items-center gap-3 rounded-2xl p-1.5 transition-colors hover:bg-slate-50">
+                                        <x-pw.course-cover :course="$recentCourse" variant="thumb" />
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-sm font-semibold text-slate-800">{{ $recentCourse->title }}</span>
+                                            <span class="block text-xs text-slate-500">{{ ucfirst((string) $recentCourse->status) }}</span>
+                                        </span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </section>
 
                 {{-- Quick actions (existing teacher pages only) --}}

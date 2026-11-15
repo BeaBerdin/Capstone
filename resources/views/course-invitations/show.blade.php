@@ -43,6 +43,10 @@
 
                 <div class="px-6 py-8">
 
+                    @if($invitation->course)
+                        <x-pw.course-cover :course="$invitation->course" class="mb-6 rounded-xl" />
+                    @endif
+
                     <div class="mb-6">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
                             Course
@@ -149,11 +153,13 @@
                             <form
                                 method="POST"
                                 action="{{ route('course-invitations.accept', $invitation->code) }}"
+                                onsubmit="const button = this.querySelector('[data-accept-button]'); if (button) { if (button.disabled) { return false; } button.disabled = true; button.innerText = 'Joining course...'; }"
                             >
                                 @csrf
 
                                 <button
                                     type="submit"
+                                    data-accept-button
                                     class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                                 >
                                     Accept Invitation & Join Course

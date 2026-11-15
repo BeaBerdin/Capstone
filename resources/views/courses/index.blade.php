@@ -245,40 +245,32 @@
 
                     {{-- THUMBNAIL --}}
 
-                    <div class="relative h-44 overflow-hidden bg-linear-to-br from-violet-700 via-violet-600 to-indigo-700">
+                    <x-pw.course-cover :course="$course">
 
-                        <div class="absolute inset-0 flex items-center justify-center">
+                        {{-- PREVIEW: the whole cover and the button open this course's preview --}}
+                        <button
+                            type="button"
+                            class="absolute inset-0 z-[1] cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-violet-300"
+                            onclick="document.getElementById('course-preview-{{ $course->id }}').showModal()"
+                            aria-label="Preview {{ $course->title }}"
+                        ></button>
 
-                            <div class="text-center text-white">
-
-                                <svg
-                                    class="mx-auto h-12 w-12 opacity-90"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="1.5"
-                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253"
-                                    />
-
-                                </svg>
-
-                                <p class="mt-2 text-sm font-medium text-white/90">
-                                    PathWise
-                                </p>
-
-                            </div>
-
-                        </div>
-
+                        <button
+                            type="button"
+                            class="absolute bottom-3 left-3 z-[2] inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm ring-1 ring-violet-100 transition hover:bg-white hover:text-violet-800"
+                            onclick="document.getElementById('course-preview-{{ $course->id }}').showModal()"
+                            data-test="course-preview-button"
+                        >
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            Preview
+                        </button>
 
                         {{-- STATUS BADGE --}}
 
-                        <div class="absolute right-3 top-3">
+                        <div class="absolute right-3 top-3 z-[2]">
 
                             <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">
                                 {{ ucfirst($course->status) }}
@@ -286,7 +278,7 @@
 
                         </div>
 
-                    </div>
+                    </x-pw.course-cover>
 
 
                     {{-- COURSE DETAILS --}}
@@ -444,6 +436,127 @@
                     </div>
 
                 </div>
+
+
+                {{-- =====================================================
+                     COURSE PREVIEW (one native dialog per course: the
+                     close buttons, Esc or a click outside close it and
+                     leave the admin on Course Management)
+                ====================================================== --}}
+
+                <dialog
+                    id="course-preview-{{ $course->id }}"
+                    class="sad-dialog"
+                    aria-labelledby="course-preview-{{ $course->id }}-title"
+                    onclick="if (event.target === this) this.close()"
+                    data-test="course-preview"
+                >
+
+                    <div class="flex max-h-[88vh] flex-col">
+
+                        {{-- Header --}}
+                        <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-violet-600">Course Preview</p>
+                                <h2 id="course-preview-{{ $course->id }}-title" class="mt-0.5 truncate text-base font-bold text-slate-900">
+                                    {{ $course->title }}
+                                </h2>
+                            </div>
+
+                            <button
+                                type="button"
+                                onclick="this.closest('dialog').close()"
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                                <span class="sr-only">Close preview</span>
+                            </button>
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+
+                            <x-pw.course-cover :course="$course" framed />
+
+                            <div class="mt-4 flex flex-wrap items-center gap-2">
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ ucfirst($course->status) }}</span>
+                                <span class="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">{{ $course->category->name ?? 'No Category' }}</span>
+                                @if($course->difficulty_level)
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ ucfirst($course->difficulty_level) }}</span>
+                                @endif
+                            </div>
+
+                            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                                    <dt class="text-xs text-slate-500">Teacher</dt>
+                                    <dd class="mt-0.5 truncate font-semibold text-slate-800">{{ $course->teacher->name ?? 'No Teacher' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                                    <dt class="text-xs text-slate-500">Price</dt>
+                                    <dd class="mt-0.5 font-semibold {{ $course->price > 0 ? 'text-slate-800' : 'text-green-600' }}">
+                                        {{ $course->price > 0 ? '₱'.number_format($course->price, 2) : 'Free' }}
+                                    </dd>
+                                </div>
+                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                                    <dt class="text-xs text-slate-500">Duration</dt>
+                                    <dd class="mt-0.5 font-semibold text-slate-800">{{ $course->estimated_hours ? $course->estimated_hours.' hrs' : '—' }}</dd>
+                                </div>
+                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                                    <dt class="text-xs text-slate-500">Certificate</dt>
+                                    <dd class="mt-0.5 font-semibold text-slate-800">{{ $course->certificate_available ? 'Available' : 'None' }}</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-5">
+                                <h3 class="text-sm font-bold text-slate-900">Description</h3>
+                                <p class="mt-1.5 whitespace-pre-line text-sm leading-6 text-slate-600">{{ $course->description ?: 'No description provided.' }}</p>
+                            </div>
+
+                            @if($course->review_remarks && $status === 'rejected')
+                                <div class="mt-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                                    <h3 class="text-xs font-bold uppercase tracking-wide text-red-700">Revision feedback</h3>
+                                    <p class="mt-1 text-sm text-red-700">{{ $course->review_remarks }}</p>
+                                </div>
+                            @endif
+
+                            <div class="mt-5">
+                                <h3 class="text-sm font-bold text-slate-900">
+                                    Lessons
+                                    <span class="font-medium text-slate-500">({{ $course->lessons->count() }})</span>
+                                </h3>
+
+                                @if($course->lessons->isNotEmpty())
+                                    <ol class="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-100">
+                                        @foreach($course->lessons as $lesson)
+                                            <li class="flex items-center gap-3 px-3 py-2.5 text-sm">
+                                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-700">{{ $loop->iteration }}</span>
+                                                <span class="min-w-0 flex-1 truncate text-slate-700">{{ $lesson->title }}</span>
+                                                <span class="shrink-0 text-xs text-slate-400">{{ ucfirst((string) $lesson->lesson_type) }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ol>
+                                @else
+                                    <p class="mt-1.5 text-sm text-slate-500">No lessons yet.</p>
+                                @endif
+                            </div>
+
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="flex justify-end border-t border-slate-100 px-5 py-3 sm:px-6">
+                            <button
+                                type="button"
+                                onclick="this.closest('dialog').close()"
+                                class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                data-test="course-preview-close"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                    </div>
+
+                </dialog>
 
             @empty
 

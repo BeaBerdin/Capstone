@@ -206,22 +206,7 @@
                             }
 
                             $thumbnail = $course->thumbnail ?? null;
-                            $thumbnailUrl = null;
-
-                            if ($thumbnail) {
-                                if (
-                                    \Illuminate\Support\Str::startsWith(
-                                        $thumbnail,
-                                        ['http://', 'https://']
-                                    )
-                                ) {
-                                    $thumbnailUrl = $thumbnail;
-                                } else {
-                                    $thumbnailUrl = asset(
-                                        'storage/' . ltrim($thumbnail, '/')
-                                    );
-                                }
-                            }
+                            $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
                         @endphp
 
 
@@ -255,30 +240,13 @@
                                 {{-- COURSE CARD --}}
                                 <article class="sad-card flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-violet-200 hover:shadow-sm">
 
-                                    <div class="grid grid-cols-1 lg:grid-cols-[150px_minmax(0,1fr)_170px]">
+                                    <div class="grid grid-cols-1 lg:grid-cols-[216px_minmax(0,1fr)_160px] xl:grid-cols-[266px_minmax(0,1fr)_170px]">
 
 
-                                        {{-- IMAGE --}}
-                                        <div class="relative min-h-[140px] overflow-hidden bg-slate-100">
+                                        {{-- IMAGE: the course cover, full 16:9, same size on every step --}}
+                                        <div class="p-3 lg:self-center lg:pr-0">
 
-                                            @if($thumbnailUrl)
-
-                                                <img
-                                                    src="{{ $thumbnailUrl }}"
-                                                    alt="{{ $course->title }}"
-                                                    class="absolute inset-0 h-full w-full object-cover"
-                                                >
-
-                                            @else
-
-                                                <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-violet-100 via-indigo-50 to-blue-100 text-violet-600">
-                                                    <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                                                    </svg>
-                                                </div>
-
-                                            @endif
+                                            <x-pw.course-cover :course="$course" framed />
 
                                         </div>
 

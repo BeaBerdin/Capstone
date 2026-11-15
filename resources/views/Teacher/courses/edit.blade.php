@@ -184,7 +184,7 @@
                             <label for="thumbnail" class="text-sm font-semibold text-slate-700">Thumbnail</label>
 
                             @if($course->thumbnail)
-                                <img src="{{ asset('storage/' . $course->thumbnail) }}" alt="Current thumbnail"
+                                <img src="{{ $course->thumbnail_url }}" alt="Current thumbnail"
                                      class="mt-2 h-28 w-48 rounded-xl border border-slate-200 object-cover">
                             @endif
 

@@ -116,14 +116,16 @@
 
                             @if($paymentVerified)
 
-                                <a href="{{ route('student.my-courses') }}"
-                                   class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition">
-                                    Go to My Courses
+                                {{-- Payment verified: the enrollment is active, so go straight into the course. --}}
+                                <a href="{{ route('student.learn.course', $transaction->course_id) }}"
+                                   class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition"
+                                   data-test="start-learning">
+                                    Start Learning
                                 </a>
 
-                                <a href="{{ route('student.marketplace') }}"
+                                <a href="{{ route('student.my-courses') }}"
                                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">
-                                    Back to Marketplace
+                                    Go to My Courses
                                 </a>
 
                             @else

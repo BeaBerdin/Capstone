@@ -91,31 +91,7 @@
 
     $thumbnail = $course->thumbnail ?? null;
 
-    $thumbnailUrl = null;
-
-    if ($thumbnail) {
-
-        if (
-            \Illuminate\Support\Str::startsWith(
-                $thumbnail,
-                [
-                    'http://',
-                    'https://',
-                ]
-            )
-        ) {
-            $thumbnailUrl = $thumbnail;
-        } else {
-
-            $thumbnailUrl = asset(
-                'storage/' .
-                ltrim(
-                    $thumbnail,
-                    '/'
-                )
-            );
-        }
-    }
+    $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
 
 
     /*
@@ -1447,11 +1423,28 @@
                                     action="{{ route('student.enroll', $course) }}"
                                     method="POST"
                                     class="mt-4"
+                                    onsubmit="
+                                        const button =
+                                            this.querySelector(
+                                                '[data-enroll-button]'
+                                            );
+
+                                        if (button) {
+                                            if (button.disabled) {
+                                                return false;
+                                            }
+
+                                            button.disabled = true;
+                                            button.innerText =
+                                                'Enrolling...';
+                                        }
+                                    "
                                 >
                                     @csrf
 
                                     <button
                                         type="submit"
+                                        data-enroll-button
                                         class="sad-btn-primary inline-flex
                                                h-11 w-full
                                                items-center

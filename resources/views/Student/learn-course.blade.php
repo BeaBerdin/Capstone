@@ -227,23 +227,7 @@
 
     $thumbnail = $course->thumbnail ?? null;
 
-    $thumbnailUrl = null;
-
-    if ($thumbnail) {
-
-        if (
-            \Illuminate\Support\Str::startsWith(
-                $thumbnail,
-                ['http://', 'https://']
-            )
-        ) {
-            $thumbnailUrl = $thumbnail;
-        } else {
-            $thumbnailUrl = asset(
-                'storage/' . ltrim($thumbnail, '/')
-            );
-        }
-    }
+    $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
 
     $teacherName =
         $course->teacher?->name
@@ -406,49 +390,11 @@
                 <div class="grid grid-cols-1 lg:grid-cols-[290px_minmax(0,1fr)]">
 
 
-                    {{-- IMAGE --}}
-                    <div class="relative min-h-55 overflow-hidden">
+                    {{-- IMAGE: the course cover, full 16:9 with rounded
+                         corners, as on AI Recommendations --}}
+                    <div class="p-4 sm:p-5 lg:self-center lg:pr-0">
 
-                        @if($thumbnailUrl)
-
-                            <img
-                                src="{{ $thumbnailUrl }}"
-                                alt="{{ $course->title }}"
-                                class="h-full w-full object-cover"
-                            >
-
-                            <div
-                                class="absolute inset-0
-                                       bg-linear-to-t
-                                       from-slate-950/45
-                                       to-transparent"
-                            ></div>
-
-                        @else
-
-                            <div
-                                class="flex h-full min-h-55 w-full
-                                       items-center justify-center
-                                       bg-linear-to-br
-                                       from-violet-500
-                                       via-indigo-500
-                                       to-blue-500"
-                            >
-
-                                <svg
-                                    class="h-14 w-14 text-white/80"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="1.4"
-                                >
-                                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                                </svg>
-
-                            </div>
-
-                        @endif
+                        <x-pw.course-cover :course="$course" framed />
 
                     </div>
 
@@ -1953,29 +1899,7 @@
                     $recommendThumbnail =
                         $recommendedCourse->thumbnail ?? null;
 
-                    $recommendThumbnailUrl = null;
-
-                    if ($recommendThumbnail) {
-
-                        if (
-                            \Illuminate\Support\Str::startsWith(
-                                $recommendThumbnail,
-                                ['http://', 'https://']
-                            )
-                        ) {
-                            $recommendThumbnailUrl =
-                                $recommendThumbnail;
-                        } else {
-                            $recommendThumbnailUrl =
-                                asset(
-                                    'storage/' .
-                                    ltrim(
-                                        $recommendThumbnail,
-                                        '/'
-                                    )
-                                );
-                        }
-                    }
+                    $recommendThumbnailUrl = \App\Models\Course::thumbnailUrlFor($recommendThumbnail);
                 @endphp
 
 
@@ -2027,48 +1951,15 @@
                     <div
                         class="grid grid-cols-1
                                gap-5 p-5
-                               md:grid-cols-[190px_minmax(0,1fr)]
+                               md:grid-cols-[240px_minmax(0,1fr)]
                                sm:p-6"
                     >
 
 
                         {{-- IMAGE --}}
-                        <div
-                            class="h-36 overflow-hidden
-                                   rounded-2xl"
-                        >
+                        <div>
 
-                            @if($recommendThumbnailUrl)
-
-                                <img
-                                    src="{{ $recommendThumbnailUrl }}"
-                                    alt="{{ $recommendedCourse->title }}"
-                                    class="h-full w-full object-cover"
-                                >
-
-                            @else
-
-                                <div
-                                    class="flex h-full w-full
-                                           items-center justify-center
-                                           bg-linear-to-br
-                                           from-violet-500
-                                           via-indigo-500
-                                           to-blue-500"
-                                >
-                                    <svg
-                                        class="h-8 w-8 text-white/80"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.5"
-                                    >
-                                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                                    </svg>
-                                </div>
-
-                            @endif
+                            <x-pw.course-cover :course="$recommendedCourse" framed />
 
                         </div>
 

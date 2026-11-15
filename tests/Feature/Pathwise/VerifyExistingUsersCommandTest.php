@@ -100,7 +100,8 @@ test('a user who registers after the command still has to verify their email', f
     $this->travel(1)->minutes();
 
     $this->post(route('register.store'), [
-        'name' => 'New Student',
+        'first_name' => 'New',
+        'last_name' => 'Student',
         'email' => 'new-student@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',

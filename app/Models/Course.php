@@ -29,6 +29,34 @@ class Course extends Model
         );
     }
 
+    /**
+     * Public URL of a stored course cover, or null when there is none.
+     * Covers live on the public disk; a full http(s) URL is used as is.
+     * Every page that shows a course cover should resolve it through here.
+     */
+    public static function thumbnailUrlFor(?string $thumbnail): ?string
+    {
+        $thumbnail = trim((string) $thumbnail);
+
+        if ($thumbnail === '') {
+            return null;
+        }
+
+        if (str_starts_with($thumbnail, 'http://') || str_starts_with($thumbnail, 'https://')) {
+            return $thumbnail;
+        }
+
+        return asset('storage/' . ltrim($thumbnail, '/'));
+    }
+
+    /**
+     * $course->thumbnail_url
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        return self::thumbnailUrlFor($this->thumbnail);
+    }
+
     protected $fillable = [
         'teacher_id',
         'category_id',

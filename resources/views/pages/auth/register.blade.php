@@ -26,26 +26,71 @@
             <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
                 @csrf
 
-                <!-- Name -->
+                <!-- First Name -->
                 <div>
-                    <label for="name" class="mb-2 block text-sm font-medium text-gray-700">
-                        {{ __('Name') }}
+                    <label for="first_name" class="mb-2 block text-sm font-medium text-gray-700">
+                        {{ __('First Name') }}
                     </label>
                     <input
-                        id="name"
-                        name="name"
-                        value="{{ old('name') }}"
+                        id="first_name"
+                        name="first_name"
+                        value="{{ old('first_name') }}"
                         type="text"
                         required
                         autofocus
-                        autocomplete="name"
-                        placeholder="{{ __('Full name') }}"
+                        maxlength="100"
+                        autocomplete="given-name"
+                        placeholder="{{ __('First name') }}"
                         class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
                     >
-                    @error('name')
+                    @error('first_name')
                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <!-- Middle Initial (optional) and Last Name -->
+                <div class="grid grid-cols-[6.5rem_minmax(0,1fr)] items-end gap-3">
+                    <div>
+                        <label for="middle_initial" class="mb-2 block text-sm font-medium text-gray-700">
+                            {{ __('Middle Initial') }}
+                            <span class="font-normal text-gray-400">{{ __('(optional)') }}</span>
+                        </label>
+                        <input
+                            id="middle_initial"
+                            name="middle_initial"
+                            value="{{ old('middle_initial') }}"
+                            type="text"
+                            maxlength="2"
+                            autocomplete="additional-name"
+                            placeholder="{{ __('M.I.') }}"
+                            class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-center uppercase text-gray-900 placeholder:normal-case placeholder:text-gray-400 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="last_name" class="mb-2 block text-sm font-medium text-gray-700">
+                            {{ __('Last Name') }}
+                        </label>
+                        <input
+                            id="last_name"
+                            name="last_name"
+                            value="{{ old('last_name') }}"
+                            type="text"
+                            required
+                            maxlength="100"
+                            autocomplete="family-name"
+                            placeholder="{{ __('Last name') }}"
+                            class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30"
+                        >
+                    </div>
+                </div>
+
+                @error('middle_initial')
+                    <p class="-mt-4 text-sm text-red-500">{{ $message }}</p>
+                @enderror
+                @error('last_name')
+                    <p class="-mt-4 text-sm text-red-500">{{ $message }}</p>
+                @enderror
 
                 <!-- Email Address -->
                 <div>

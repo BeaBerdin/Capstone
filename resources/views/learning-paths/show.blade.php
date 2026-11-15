@@ -131,6 +131,11 @@
                                     </div>
 
 
+                                    {{-- COURSE COVER --}}
+
+                                    <x-pw.course-cover :course="$course" variant="thumb" />
+
+
                                     {{-- COURSE INFO --}}
 
                                     <div class="min-w-0 flex-1">

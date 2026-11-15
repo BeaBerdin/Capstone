@@ -535,7 +535,7 @@ class ReportsController extends Controller
         $teacherCourses = Course::query()
             ->where('teacher_id', $teacherId)
             ->orderBy('title')
-            ->get(['id', 'title', 'status']);
+            ->get(['id', 'title', 'status', 'thumbnail']);
 
         $teacherCourseIds = $teacherCourses->pluck('id');
 
@@ -780,6 +780,7 @@ class ReportsController extends Controller
                 return [
                     'id' => $course->id,
                     'title' => $course->title,
+                    'thumbnail' => $course->thumbnail,
                     'status' => $course->status,
                     'students' => $courseEnrollments
                         ->pluck('student_id')

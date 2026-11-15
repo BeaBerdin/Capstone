@@ -388,13 +388,25 @@
 
                                         <td class="px-6 py-5">
 
-                                            <p class="text-sm font-semibold text-slate-800">
-                                                {{ $recommendation->course->title ?? 'N/A' }}
-                                            </p>
+                                            <div class="flex items-center gap-3">
 
-                                            <p class="mt-0.5 text-xs text-slate-500">
-                                                Recommended Course
-                                            </p>
+                                                @if($recommendation->course)
+                                                    <x-pw.course-cover :course="$recommendation->course" variant="thumb" />
+                                                @endif
+
+                                                <div class="min-w-0">
+
+                                                    <p class="text-sm font-semibold text-slate-800">
+                                                        {{ $recommendation->course->title ?? 'N/A' }}
+                                                    </p>
+
+                                                    <p class="mt-0.5 text-xs text-slate-500">
+                                                        Recommended Course
+                                                    </p>
+
+                                                </div>
+
+                                            </div>
 
                                         </td>
 

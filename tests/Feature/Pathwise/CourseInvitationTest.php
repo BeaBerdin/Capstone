@@ -106,6 +106,21 @@ test('an invitation to a course that was unpublished cannot be accepted', functi
         ->and($invitation->fresh()->accepted_at)->toBeNull();
 });
 
+test('a logged-out visitor opening an invitation link logs in first, then sees the invitation', function () {
+    $teacher = pathwiseUser('teacher');
+    $student = pathwiseUser('student');
+    $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
+    $invitation = invitationFor($course, $teacher);
+    $link = route('course-invitations.show', $invitation->code);
+
+    $this->get($link)->assertRedirect(route('login'));
+
+    // Laravel remembers the link, so logging in returns to the invitation.
+    expect(session('url.intended'))->toBe($link);
+
+    $this->actingAs($student)->get($link)->assertOk();
+});
+
 function enrollIn(App\Models\User $student, App\Models\Course $course): void
 {
     Enrollment::create([

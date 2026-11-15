@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\PathwiseNotification;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -97,11 +98,13 @@ class CourseInvitationController extends Controller
 $expiresAt = null;
 
 if (! empty($validated['expires_at'])) {
-    // The teacher enters Philippine time; it is stored in UTC.
+    // The teacher enters Philippine time. It is converted to the
+    // application timezone (APP_TIMEZONE), because that is the timezone
+    // the database timestamps are saved and read in.
     $expiresAt = Carbon::parse(
         $validated['expires_at'],
         'Asia/Manila'
-    )->utc();
+    )->setTimezone(config('app.timezone'));
 
     if ($expiresAt->isPast()) {
         throw ValidationException::withMessages([
@@ -276,20 +279,31 @@ if (! empty($validated['expires_at'])) {
             ]);
 
             return redirect()
-                ->route('student.my-courses')
+                ->route('student.learn.course', $course)
                 ->with(
                     'success',
                     'You are already enrolled in this course.'
                 );
         }
 
-        Enrollment::create([
-            'student_id' => auth()->id(),
-            'course_id' => $course->id,
-            'status' => 'active',
-            'enrolled_at' => now(),
-            'progress_percentage' => 0,
-        ]);
+        // A double-click can send two requests at once; the unique
+        // student/course index lets only one create the enrollment.
+        try {
+            Enrollment::create([
+                'student_id' => auth()->id(),
+                'course_id' => $course->id,
+                'status' => 'active',
+                'enrolled_at' => now(),
+                'progress_percentage' => 0,
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return redirect()
+                ->route('student.learn.course', $course)
+                ->with(
+                    'success',
+                    'You are already enrolled in this course.'
+                );
+        }
 
         $invitation->update([
             'accepted_at' => now(),
@@ -305,8 +319,9 @@ if (! empty($validated['expires_at'])) {
             invitationId: $invitation->id
         ));
 
+        // Straight into the course the student just joined.
         return redirect()
-            ->route('student.my-courses')
+            ->route('student.learn.course', $course)
             ->with(
                 'success',
                 'Invitation accepted. You are now enrolled in the course.'

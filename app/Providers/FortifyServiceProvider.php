@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -29,6 +31,22 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureVerificationEmail();
+    }
+
+    /**
+     * Use the PathWise-branded email for Laravel's verification notification.
+     * $url is the signed link Laravel already built, so verification and its
+     * security checks are unchanged; only the message design is replaced.
+     */
+    private function configureVerificationEmail(): void
+    {
+        VerifyEmail::toMailUsing(fn (object $notifiable, string $url) => (new MailMessage)
+            ->subject('Welcome to PathWise! Please Verify Your Email')
+            ->view(
+                ['emails.verify-email', 'emails.verify-email-text'],
+                ['url' => $url, 'name' => $notifiable->name ?? null],
+            ));
     }
 
     /**

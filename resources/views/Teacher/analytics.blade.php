@@ -838,11 +838,18 @@
                             <tr>
 
                                 <td>
-                                    <div
-                                        class="font-bold
-                                               text-slate-800"
-                                    >
-                                        {{ $course['title'] }}
+                                    <div class="flex items-center gap-3">
+                                        <x-pw.course-cover
+                                            :thumbnail="$course['thumbnail'] ?? null"
+                                            :title="$course['title']"
+                                            variant="thumb"
+                                        />
+                                        <div
+                                            class="font-bold
+                                                   text-slate-800"
+                                        >
+                                            {{ $course['title'] }}
+                                        </div>
                                     </div>
                                 </td>
 

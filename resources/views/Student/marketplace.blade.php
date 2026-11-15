@@ -470,22 +470,7 @@
 
                         @php
                             $thumbnail = $course->thumbnail ?? null;
-                            $thumbnailUrl = null;
-
-                            if ($thumbnail) {
-                                if (
-                                    \Illuminate\Support\Str::startsWith(
-                                        $thumbnail,
-                                        ['http://', 'https://']
-                                    )
-                                ) {
-                                    $thumbnailUrl = $thumbnail;
-                                } else {
-                                    $thumbnailUrl = asset(
-                                        'storage/' . ltrim($thumbnail, '/')
-                                    );
-                                }
-                            }
+                            $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
 
                             $price = (float) ($course->price ?? 0);
                             $isFree = $price <= 0;

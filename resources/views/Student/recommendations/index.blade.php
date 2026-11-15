@@ -79,22 +79,7 @@
                     $course = $recommendation->course;
 
                     $thumbnail = $course?->thumbnail ?? null;
-                    $thumbnailUrl = null;
-
-                    if ($thumbnail) {
-                        if (
-                            \Illuminate\Support\Str::startsWith(
-                                $thumbnail,
-                                ['http://', 'https://']
-                            )
-                        ) {
-                            $thumbnailUrl = $thumbnail;
-                        } else {
-                            $thumbnailUrl = asset(
-                                'storage/' . ltrim($thumbnail, '/')
-                            );
-                        }
-                    }
+                    $thumbnailUrl = \App\Models\Course::thumbnailUrlFor($thumbnail);
 
                     $score = min(
                         max(
@@ -108,55 +93,28 @@
 
                 <section class="sad-card overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-violet-200 hover:shadow-md">
 
-                    <div class="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_210px]">
+                    <div class="grid grid-cols-1 lg:grid-cols-[232px_minmax(0,1fr)_200px] xl:grid-cols-[282px_minmax(0,1fr)_210px]">
 
 
                         {{-- COURSE VISUAL --}}
-                        <div class="relative min-h-[220px] overflow-hidden bg-slate-100 lg:min-h-full">
+                        <div class="p-4 sm:p-5 lg:pr-0">
 
-                            @if($thumbnailUrl)
+                            {{-- The course cover, full 16:9, as on Learning Paths. --}}
+                            <x-pw.course-cover :course="$course" framed />
 
-                                <img
-                                    src="{{ $thumbnailUrl }}"
-                                    alt="{{ $course?->title ?? 'Recommended Course' }}"
-                                    class="absolute inset-0 h-full w-full object-cover"
-                                >
+                            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
 
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent"></div>
-
-                            @else
-
-                                <div class="absolute inset-0 bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500"></div>
-
-                                <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full border border-white/20"></div>
-                                <div class="absolute -bottom-12 -left-12 h-40 w-40 rounded-full border border-white/15"></div>
-
-                                <div class="relative flex h-full min-h-[220px] items-center justify-center">
-                                    <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/15 text-white backdrop-blur">
-                                        <svg class="h-9 w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path>
-                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-
-                            @endif
-
-
-                            <div class="absolute left-4 top-4">
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-violet-700 shadow-sm backdrop-blur">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-violet-700">
                                     <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                     </svg>
                                     Recommended
                                 </span>
-                            </div>
 
-
-                            <div class="absolute bottom-4 left-4 right-4">
-                                <p class="text-xs font-bold uppercase tracking-[0.12em] text-white/75">
+                                <p class="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                                     {{ $course?->category?->name ?? 'Recommended Course' }}
                                 </p>
+
                             </div>
 
                         </div>

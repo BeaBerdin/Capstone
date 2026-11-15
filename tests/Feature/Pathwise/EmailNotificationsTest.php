@@ -94,7 +94,7 @@ test('a free enrollment sends one confirmation email with the course title and a
 
     $this->actingAs($student)
         ->post(route('student.enroll', $course))
-        ->assertRedirect(route('student.dashboard'));
+        ->assertRedirect(route('student.learn.course', $course));
 
     $emails = sentEmails();
 
@@ -366,7 +366,7 @@ test('a broken mail server does not stop a free enrollment', function () {
 
     $this->actingAs($student)
         ->post(route('student.enroll', $course))
-        ->assertRedirect(route('student.dashboard'))
+        ->assertRedirect(route('student.learn.course', $course))
         ->assertSessionHas('success');
 
     expect(Enrollment::where('student_id', $student->id)->value('status'))->toBe('active')

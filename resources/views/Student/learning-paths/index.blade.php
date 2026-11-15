@@ -1,6 +1,39 @@
 <x-layouts::app :title="'Learning Paths'">
 @include('partials.soft3d')
 
+{{-- Gentle float for the learning path illustration (off for reduced motion). --}}
+<style>
+    @keyframes lp-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+
+    .lp-panel .lp-float,
+    .lp-panel .lp-float-alt,
+    .lp-panel .lp-float-slow {
+        transform-box: fill-box;
+        animation: lp-float 5s ease-in-out infinite;
+    }
+
+    .lp-panel .lp-float-alt {
+        animation-duration: 6s;
+        animation-delay: -2s;
+    }
+
+    .lp-panel .lp-float-slow {
+        animation-duration: 7s;
+        animation-delay: -1s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .lp-panel .lp-float,
+        .lp-panel .lp-float-alt,
+        .lp-panel .lp-float-slow {
+            animation: none;
+        }
+    }
+</style>
+
 <div class="sad-page min-h-screen bg-slate-50/70">
 
     <main class="px-4 py-6 sm:px-5 lg:px-6 lg:py-7">
@@ -109,24 +142,19 @@
 
 
                             {{-- VISUAL --}}
-                            <div class="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600">
+                            {{-- Soft-3D learning illustration on a lavender panel --}}
+                            <div class="lp-panel relative min-h-[220px] overflow-hidden bg-linear-to-b from-violet-100 via-violet-100 to-purple-200 md:min-h-0">
 
-                                <div class="absolute -right-8 -top-8 h-28 w-28 rounded-full border border-white/20"></div>
-                                <div class="absolute -bottom-10 -left-10 h-36 w-36 rounded-full border border-white/15"></div>
+                                <div class="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/60 blur-2xl"></div>
+                                <div class="pointer-events-none absolute -bottom-12 -left-10 h-36 w-36 rounded-full bg-fuchsia-200/50 blur-2xl"></div>
 
-                                <div class="relative flex h-full min-h-[150px] items-center justify-center">
-                                    <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/15 text-white backdrop-blur">
-                                        <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                            <path d="M5 4v16"></path>
-                                            <path d="M5 6h7l2 3h5"></path>
-                                            <path d="M5 18h7l2-3h5"></path>
-                                        </svg>
-                                    </div>
+                                <div class="absolute inset-x-0 bottom-1 mx-auto max-w-[240px] {{ $path->is_generated ? 'top-14' : 'top-4' }}">
+                                    @include('Student.learning-paths.partials.path-illustration', ['uid' => $path->id])
                                 </div>
 
                                 @if($path->is_generated)
-                                    <div class="absolute left-3 top-3">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-violet-700 shadow-sm">
+                                    <div class="absolute left-3 top-3 z-10">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-violet-700 shadow-sm ring-1 ring-violet-200/70">
                                             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z"></path>
                                             </svg>
@@ -166,13 +194,16 @@
 
                                 <div class="mt-auto pt-6">
 
-                                    <div class="mb-4 flex items-center gap-2">
+                                    <div class="mb-4 flex flex-wrap items-center gap-2">
 
-                                        @for($i = 0; $i < min($courseCount, 5); $i++)
-                                            <div class="flex h-7 w-7 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-600 ring-2 ring-white">
-                                                {{ $i + 1 }}
-                                            </div>
-                                        @endfor
+                                        {{-- The covers of the courses in this path, in order. --}}
+                                        @foreach($path->courses->take(5) as $pathCourse)
+                                            <x-pw.course-cover
+                                                :course="$pathCourse"
+                                                variant="thumb"
+                                                title="{{ $loop->iteration }}. {{ $pathCourse->title }}"
+                                            />
+                                        @endforeach
 
                                         @if($courseCount > 5)
                                             <span class="text-xs font-semibold text-slate-500">

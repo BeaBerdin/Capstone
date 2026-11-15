@@ -385,11 +385,7 @@
 
                         <div class="flex items-center gap-3">
 
-                            <div class="sad-chip sad-violet flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600">
-
-                                {{ strtoupper(substr($courseTitle, 0, 1)) }}
-
-                            </div>
+                            <x-pw.course-cover :course="$courseLessons->first()->course" :title="$courseTitle" variant="thumb" />
 
                             <div>
 

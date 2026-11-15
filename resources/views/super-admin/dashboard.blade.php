@@ -105,6 +105,7 @@
     $courseItems = \App\Models\Course::with(['teacher', 'category'])->latest()->take($listLimit)->get()
         ->map(fn ($course) => [
             'initials' => $initialsOf($course->title),
+            'cover' => $course->thumbnail,
             'title' => $course->title,
             'subtitle' => collect([$course->teacher?->name, $course->category?->name])->filter()->implode(' · ') ?: 'No teacher',
             'meta' => (float) $course->price > 0 ? '₱'.number_format((float) $course->price, 2) : 'Free',
@@ -768,9 +769,13 @@
                 <ul class="flex-1 divide-y divide-slate-100 overflow-y-auto">
                     @forelse($row['items'] as $item)
                         <li class="flex items-center gap-3 px-5 py-3 sm:px-6">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-100 to-violet-200 text-[11px] font-bold text-violet-700">
-                                {{ $item['initials'] }}
-                            </span>
+                            @if(array_key_exists('cover', $item))
+                                <x-pw.course-cover :thumbnail="$item['cover']" :title="$item['title']" variant="thumb" />
+                            @else
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-violet-100 to-violet-200 text-[11px] font-bold text-violet-700">
+                                    {{ $item['initials'] }}
+                                </span>
+                            @endif
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-semibold text-slate-800">{{ $item['title'] }}</p>
                                 <p class="truncate text-xs text-slate-500">{{ $item['subtitle'] }}</p>

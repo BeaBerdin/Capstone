@@ -763,6 +763,8 @@
                                         {{ $index + 1 }}
                                     </div>
 
+                                    <x-pw.course-cover :thumbnail="$course->thumbnail" :title="$course->title" variant="thumb" />
+
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-semibold text-slate-900">{{ $course->title }}</p>
                                         <p class="mt-1 text-xs text-slate-500">
@@ -856,6 +858,7 @@
                                     {{ $index + 1 }}
                                 </div>
 
+                                <x-pw.course-cover :course="$course" variant="thumb" />
 
                                 <div class="min-w-0 flex-1">
 
