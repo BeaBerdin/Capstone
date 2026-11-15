@@ -25,7 +25,7 @@ screenshot. They go **only** into the server's `.env`.
 | PHP | **8.4 minimum** (8.4.1 or later; tested on 8.4.22). **PHP 8.3 will not work** | `composer.json` `"php": "^8.4.1"`; 21 locked Symfony 8 packages require `php >=8.4.1` (see `composer why-not php 8.3.99`) |
 | Database | MySQL 8.0 (tested) or a MariaDB that Laravel 13 supports. **Check:** Hostinger web hosting usually provides MariaDB; see the version in phpMyAdmin | `config/database.php` |
 | PHP extensions | `ctype`, `curl`, `dom`, `fileinfo`, `filter`, `hash`, `iconv`, `json`, `libxml`, `mbstring`, `openssl`, `pcre`, `pdo_mysql`, `session`, `tokenizer`, `zip`, **`gd`** (certificate PDF logo), `bcmath`, `intl` (recommended) | `composer check-platform-reqs`; DomPDF needs GD for the PNG logo |
-| Upload limits | `upload_max_filesize = 25M`, `post_max_size = 30M`, `memory_limit = 256M`, `max_execution_time = 120` | Code submissions up to 25 MB, lessons 20 MB. 15 MB upload tested in Round 2 |
+| Upload limits | `upload_max_filesize = 25M`, `post_max_size = 30M`, `memory_limit = 256M`, `max_execution_time = 120` | Code submissions up to 25 MB, lessons 20 MB. 15 MB upload tested in Round 2. Student Study Loads (registration) need at least `12M` / `16M`; the values above already cover them |
 | Composer | 2.x on the server | — |
 | Node.js | Only to build assets. Build **locally** if the plan has no Node | `package.json` |
 | `mysqldump` | Needed by the backups (`spatie/laravel-backup`). **Check:** `which mysqldump` over SSH | `config/backup.php` |
@@ -223,6 +223,38 @@ If `storage:link` fails because `symlink()` is disabled, run
 submissions and lesson files stay in `storage/app/private`, which is never web
 accessible; they are served only through access checks.
 
+### 4.5.1 Student registration approval (Study Loads)
+
+New students upload a Study Load when they register; the Super Admin (EDP)
+approves or rejects it under **Student Applications**. On the server:
+
+- **Migration:** `php artisan migrate --force` creates the
+  `student_applications` table. It does not change existing users: accounts
+  without an application (all existing accounts, teachers, accounts the Super
+  Admin creates) keep working as before.
+- **Private storage:** files are saved in
+  `storage/app/private/study-loads/<user id>/` (created automatically). The
+  `storage` folder must be writable by PHP (the `chmod` above). They are never
+  in `public/` and are served only to the Super Admin. Old submissions are kept
+  for audit; they are included in the backups (section 9), so treat backups as
+  containing personal data.
+- **Upload limits:** Study Loads are PDF, JPG or PNG up to **10 MB**. PHP must
+  allow at least `upload_max_filesize = 12M` and `post_max_size = 16M`
+  (section 1 already asks for 25M / 30M). **Check:** hPanel → Advanced → PHP
+  Configuration → PHP Options. If `upload_max_filesize` is lower than 10 MB,
+  larger files fail with the 10 MB message; if `post_max_size` is exceeded the
+  whole form is lost, so keep it above `upload_max_filesize`. The registration
+  page also stops files over 10 MB in the browser before uploading.
+- **Email (SMTP):** the Super Admin is emailed about each new or resubmitted
+  application, and the student receives the approval email (with a
+  verification link valid for **72 hours**) or the rejection email (with the
+  reason). Mail is sent immediately; **no queue worker and no extra cron job
+  are needed**. If an approval or rejection email fails, the decision is still
+  saved and the Super Admin sees a warning; an approved student can use
+  "Resend verification email".
+- **Super Admin email address:** make sure at least one active Super Admin has
+  a mailbox that is read, or new applications are only visible in the app.
+
 ### 4.6 Production caches [SSH]
 
 ```bash
@@ -317,8 +349,8 @@ name or log line). Never put a secret in the evidence.
 |---|---|---|---|---|---|
 | V-1 | Site and HTTPS | Open `https://your-domain`, then `http://…` | Padlock; http redirects to https; styles load | ☐ | |
 | V-2 | No debug output | Open `https://your-domain/does-not-exist` | Plain 404 page, no stack trace | ☐ | |
-| V-3 | Real email delivery | Register a new student with a real inbox you own | "Verify your email address" arrives (check spam), From = your mailbox | ☐ | |
-| V-4 | Verification flow | Click the link | Lands on the Student dashboard | ☐ | |
+| V-3 | Real email delivery | Register a new student with a real inbox you own and a small PDF Study Load | Student lands on "Student application · Pending review"; **no** verification email yet; the Super Admin's inbox gets "New student application" (check spam), From = your mailbox | ☐ | |
+| V-4 | Approval and verification flow | Super Admin → Student Applications → open it → the Study Load preview shows → Approve; then click the link in the student's "application is approved" email | Email arrives with a link valid 72 hours; the link verifies the account; the student can open the Student dashboard | ☐ | |
 | V-5 | Password reset (production mail) | Log out → Forgot password → enter that email | "Reset your password" arrives; the link opens `https://your-domain/reset-password/…`; new password works; the same link a second time is refused | ☐ | |
 | V-6 | PayMongo test checkout | As a student, buy a paid course → pay with a PayMongo **test** GCash/card | Redirect back to "Payment Confirmed"; transaction **Approved**; student sees the course under My Courses | ☐ | |
 | V-7 | Webhook received and verified | PayMongo Dashboard → Webhooks → the event log for this payment | Delivery answered **200** | ☐ | |
@@ -333,8 +365,10 @@ name or log line). Never put a secret in the evidence.
 | V-16 | Deactivated account | Super Admin deactivates the test student; the student refreshes | Logged out; cannot log in again | ☐ | |
 | V-17 | Logs | `tail storage/logs/laravel-*.log` | No errors from the steps above | ☐ | |
 | V-18 | Timezone | `php artisan schedule:list`; compare the certificate date from V-13 with today's Philippine date | Next database backup at 01:00 Philippine time (`+08:00`); certificate dated today (Philippine date) | ☐ | |
+| V-19 | Rejection and resubmission | Register a second test student; Super Admin rejects with a reason; the student logs in and uploads a corrected Study Load | Rejection email shows the reason; status page shows the reason and the upload form; the new submission is Pending and the Super Admin sees both submissions in its history | ☐ | |
+| V-20 | Study Load privacy | Copy the Study Load link from the Super Admin page; open it while logged out, and as the test student | Login page when logged out; refused (403) for the student; never served from `/storage/...` | ☐ | |
 
-When V-1 to V-18 pass, record the results in `FINALIZATION_REPORT.md`. Only
+When V-1 to V-20 pass, record the results in `FINALIZATION_REPORT.md`. Only
 then is the deployment complete.
 
 ---

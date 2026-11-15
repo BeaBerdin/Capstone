@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -120,5 +121,66 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->roles()
             ->where('name', $role)
             ->exists();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STUDENT APPLICATION (EDP approval)
+    |--------------------------------------------------------------------------
+    |
+    | New student registrations upload a Study Load and wait for the Super
+    | Admin (EDP). Every submission is a StudentApplication row; the newest
+    | one decides the account's status. An account without any row (existing
+    | accounts, teachers, accounts created by the Super Admin) is approved.
+    |
+    */
+
+    /**
+     * @return HasMany<StudentApplication, $this>
+     */
+    public function studentApplications(): HasMany
+    {
+        return $this->hasMany(StudentApplication::class)->orderBy('submission_no');
+    }
+
+    /**
+     * @return HasOne<StudentApplication, $this>
+     */
+    public function latestStudentApplication(): HasOne
+    {
+        return $this->hasOne(StudentApplication::class)->latestOfMany('submission_no');
+    }
+
+    /**
+     * pending | approved | rejected. No application row means approved.
+     */
+    public function applicationStatus(): string
+    {
+        return $this->latestStudentApplication?->status ?? StudentApplication::APPROVED;
+    }
+
+    /**
+     * True while a student's newest application is pending or rejected: the
+     * account may not verify its email or use student pages until approved.
+     * Never true for teachers, admins or the Super Admin.
+     */
+    public function awaitingStudentApproval(): bool
+    {
+        return in_array($this->applicationStatus(), StudentApplication::AWAITING, true)
+            && $this->hasRole('student');
+    }
+
+    /**
+     * No verification email (Laravel's automatic one after registration, a
+     * resend, or any other caller) while the application awaits approval.
+     * After approval the EDP's acceptance email carries the link instead.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        if ($this->awaitingStudentApproval()) {
+            return;
+        }
+
+        parent::sendEmailVerificationNotification();
     }
 }

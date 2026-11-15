@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            // Student applicants wait for the Super Admin (EDP) approval.
+            'student.application' => \App\Http\Middleware\EnsureStudentApplicationApproved::class,
         ]);
 
         /*

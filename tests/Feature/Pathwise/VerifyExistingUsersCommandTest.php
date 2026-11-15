@@ -91,6 +91,7 @@ test('an account without a created_at date counts as existing', function () {
 test('a user who registers after the command still has to verify their email', function () {
     $this->seed(RoleSeeder::class);
     Notification::fake();
+    fakeFileDisks();
 
     $existing = pathwiseUser('student', ['email_verified_at' => null]);
 
@@ -106,6 +107,7 @@ test('a user who registers after the command still has to verify their email', f
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'student',
+        'study_load' => Illuminate\Http\UploadedFile::fake()->create('study-load.pdf', 200, 'application/pdf'),
     ])->assertSessionHasNoErrors();
 
     $newUser = User::where('email', 'new-student@example.com')->sole();
@@ -113,7 +115,8 @@ test('a user who registers after the command still has to verify their email', f
     expect($existing->fresh()->hasVerifiedEmail())->toBeTrue()
         ->and($newUser->hasVerifiedEmail())->toBeFalse();
 
-    $this->get(route('student.dashboard'))->assertRedirect(route('verification.notice'));
+    // A new student first waits for the EDP's approval (Student Applications).
+    $this->get(route('student.dashboard'))->assertRedirect(route('student-application.status'));
 });
 
 test('an account created when the command starts is not changed', function () {

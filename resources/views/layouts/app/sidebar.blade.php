@@ -1369,6 +1369,7 @@
         $pwSearchItems = collect([
             ['label' => 'Dashboard', 'meta' => 'Overview', 'url' => route('super_admin.dashboard')],
             ['label' => 'User Management', 'meta' => 'Manage users and roles', 'url' => route('users.index')],
+            ['label' => 'Student Applications', 'meta' => 'Verify Study Loads and approve students', 'url' => route('super-admin.student-applications.index')],
             ['label' => 'Transactions', 'meta' => 'Review transactions', 'url' => route('super_admin.transactions.index')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
         ]);
@@ -1619,6 +1620,44 @@
                             User Management
                         </span>
 
+                    </a>
+
+                    {{-- Student Applications (EDP approval of Study Loads) --}}
+                    @php
+                        $pwPendingApplications = \App\Models\StudentApplication::query()
+                            ->latestPerStudent()
+                            ->where('status', \App\Models\StudentApplication::PENDING)
+                            ->count();
+                    @endphp
+                    <a
+                        href="{{ route('super-admin.student-applications.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('super-admin.student-applications.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('super-admin.student-applications.*')) aria-current="page" @endif
+                        data-test="nav-student-applications"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 2v6h6M9 15l2 2 4-4" />
+                        </svg>
+
+                        <span class="flex-1">
+                            Student Applications
+                        </span>
+
+                        @if ($pwPendingApplications > 0)
+                            <span class="ml-auto rounded-full bg-violet-600 px-2 py-0.5 text-[11px] font-bold leading-4 text-white" data-test="pending-applications-count">
+                                {{ $pwPendingApplications }}
+                            </span>
+                        @endif
                     </a>
 
                      {{-- Department Management --}}

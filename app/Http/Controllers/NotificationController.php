@@ -59,6 +59,16 @@ class NotificationController extends Controller
         */
 
         switch ($type) {
+            case \App\Notifications\StudentApplicationSubmitted::TYPE:
+                if ($user->hasRole('super_admin')) {
+                    $applicationId = $data['application_id'] ?? null;
+
+                    return $applicationId && \App\Models\StudentApplication::whereKey($applicationId)->exists()
+                        ? redirect()->route('super-admin.student-applications.show', $applicationId)
+                        : redirect()->route('super-admin.student-applications.index');
+                }
+                break;
+
             case 'course_submitted':
                 if ($user->hasRole('admin')) {
                     return redirect()

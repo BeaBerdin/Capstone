@@ -45,7 +45,54 @@ Route::get('/email/verify/{id}/{hash}', \App\Http\Controllers\Auth\VerifyEmailLi
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| FORTIFY ROUTES WITH EXTRA PROTECTION
+|--------------------------------------------------------------------------
+|
+| Same URLs, names and controllers as Fortify's; these replace them (app
+| routes load after Fortify's) to add:
+|  - registration: layered rate limits (per email + IP, and per IP);
+|  - "verify your email" page and resend: a student whose application is
+|    pending or rejected is sent to the application status page instead,
+|    and cannot request a verification email.
+|
+*/
+
+Route::post('/register', [\Laravel\Fortify\Http\Controllers\RegisteredUserController::class, 'store'])
+    ->middleware(['guest:'.config('fortify.guard'), 'throttle:registration'])
+    ->name('register.store');
+
+Route::get('/email/verify', \Laravel\Fortify\Http\Controllers\EmailVerificationPromptController::class)
+    ->middleware(['auth', 'student.application'])
+    ->name('verification.notice');
+
+Route::post('/email/verification-notification', [\Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController::class, 'store'])
+    ->middleware(['auth', 'student.application', 'throttle:6,1'])
+    ->name('verification.send');
+
+/*
+|--------------------------------------------------------------------------
+| STUDENT APPLICATION STATUS (signed in, not yet approved/verified)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+
+    Route::get('/application-status', [\App\Http\Controllers\StudentApplicationStatusController::class, 'show'])
+        ->name('student-application.status');
+
+    Route::post('/application-status/resubmit', [\App\Http\Controllers\StudentApplicationStatusController::class, 'resubmit'])
+        ->middleware('throttle:study-load-resubmission')
+        ->name('student-application.resubmit');
+});
+
+/*
+| The application gate runs BEFORE `verified`: a pending or rejected student
+| is sent to the application status page, never to the verify page.
+*/
+
+Route::middleware(['auth', 'student.application', 'verified'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -157,6 +204,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         Route::get('/super-admin/reports/pdf', [ReportsController::class, 'exportPdf'])
             ->name('reports.export.pdf');
+
+        /*
+        | Student applications (EDP). Only the Super Admin may list, view,
+        | open a Study Load, approve or reject; the role middleware above
+        | refuses everyone else, including the Admin (Dean).
+        */
+        Route::get('/super-admin/student-applications', [\App\Http\Controllers\SuperAdmin\StudentApplicationController::class, 'index'])
+            ->name('super-admin.student-applications.index');
+
+        Route::get('/super-admin/student-applications/{studentApplication}', [\App\Http\Controllers\SuperAdmin\StudentApplicationController::class, 'show'])
+            ->name('super-admin.student-applications.show');
+
+        Route::get('/super-admin/student-applications/{studentApplication}/study-load', [\App\Http\Controllers\SuperAdmin\StudentApplicationController::class, 'studyLoad'])
+            ->name('super-admin.student-applications.study-load');
+
+        Route::post('/super-admin/student-applications/{studentApplication}/approve', [\App\Http\Controllers\SuperAdmin\StudentApplicationController::class, 'approve'])
+            ->name('super-admin.student-applications.approve');
+
+        Route::post('/super-admin/student-applications/{studentApplication}/reject', [\App\Http\Controllers\SuperAdmin\StudentApplicationController::class, 'reject'])
+            ->name('super-admin.student-applications.reject');
 
         /*
         | FIX: assign routes BEFORE the resource,

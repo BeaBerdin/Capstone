@@ -23,7 +23,7 @@
             <!-- Session Status -->
             <x-auth-session-status class="text-center text-emerald-600" :status="session('status')" />
 
-            <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
+            <form method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="flex flex-col gap-6" data-registration-form>
                 @csrf
 
                 <!-- First Name -->
@@ -136,6 +136,39 @@
                     @enderror
                 </div>
 
+                <!-- Study Load: students only (shown and required when Student is selected) -->
+                @php $studentSelected = old('role', 'student') === 'student'; @endphp
+                <div data-study-load-section @if (! $studentSelected) hidden @endif>
+                    <label for="study_load" class="mb-2 block text-sm font-medium text-gray-700">
+                        {{ __('Study Load') }}
+                    </label>
+                    <p class="mb-2 text-xs text-gray-500">
+                        {{ __('Upload your current Study Load so the EDP office can verify that you are enrolled. PDF, JPG or PNG, up to 10 MB.') }}
+                    </p>
+                    <input
+                        id="study_load"
+                        name="study_load"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                        @if ($studentSelected) required @endif
+                        @unless ($studentSelected) disabled @endunless
+                        data-study-load-input
+                        class="block w-full rounded-xl border border-dashed border-purple-300 bg-purple-50/40 p-3 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-purple-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-purple-700"
+                    >
+                    <p class="mt-2 hidden text-sm text-red-500" data-study-load-size-error>
+                        {{ \App\Models\StudentApplication::TOO_LARGE_MESSAGE }}
+                    </p>
+                    @error('study_load')
+                        <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                    @if ($errors->any() && ! $errors->has('study_load') && $studentSelected)
+                        <p class="mt-2 text-xs text-gray-500">{{ __('For your security, please choose your Study Load file again.') }}</p>
+                    @endif
+                    <p class="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-500" data-privacy-notice>
+                        {{ __('Data privacy: your Study Load contains personal information. It is used only to verify your enrollment, is accessed only by authorized EDP (Super Admin) personnel, and is stored securely and retained according to the institution\'s data-retention policy.') }}
+                    </p>
+                </div>
+
                 <!-- Password -->
                 <div>
                     <label for="password" class="mb-2 block text-sm font-medium text-gray-700">
@@ -184,6 +217,66 @@
             </div>
         </div>
     </div>
+
+    {{--
+        Study Load field follows the selected role (no framework needed):
+        Student shows it and makes it required; Teacher hides it, removes
+        "required", clears any chosen file and disables the input so nothing
+        is sent. Files over 10 MB are stopped before uploading. The server
+        enforces all of this again.
+    --}}
+    <script>
+        (function () {
+            var form = document.querySelector('[data-registration-form]');
+            if (!form) { return; }
+
+            var section = form.querySelector('[data-study-load-section]');
+            var input = form.querySelector('[data-study-load-input]');
+            var sizeError = form.querySelector('[data-study-load-size-error]');
+            var maxBytes = {{ \App\Models\StudentApplication::MAX_KILOBYTES }} * 1024;
+
+            function selectedRole() {
+                var checked = form.querySelector('input[name="role"]:checked');
+                return checked ? checked.value : 'student';
+            }
+
+            function sync() {
+                var isStudent = selectedRole() === 'student';
+
+                section.hidden = !isStudent;
+                input.required = isStudent;
+                input.disabled = !isStudent;
+
+                if (!isStudent) {
+                    input.value = '';
+                    sizeError.classList.add('hidden');
+                }
+            }
+
+            function tooLarge() {
+                var file = input.files && input.files[0];
+                return !input.disabled && !!file && file.size > maxBytes;
+            }
+
+            form.querySelectorAll('input[name="role"]').forEach(function (radio) {
+                radio.addEventListener('change', sync);
+            });
+
+            input.addEventListener('change', function () {
+                sizeError.classList.toggle('hidden', !tooLarge());
+            });
+
+            form.addEventListener('submit', function (event) {
+                if (tooLarge()) {
+                    event.preventDefault();
+                    sizeError.classList.remove('hidden');
+                    input.focus();
+                }
+            });
+
+            sync();
+        })();
+    </script>
 
 </body>
 </html>

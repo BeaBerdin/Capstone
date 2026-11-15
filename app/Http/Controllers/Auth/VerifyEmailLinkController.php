@@ -33,6 +33,14 @@ class VerifyEmailLinkController extends Controller
             403
         );
 
+        // A student whose application is pending or rejected cannot verify,
+        // even with a valid signed link; only the EDP's approval allows it.
+        abort_if(
+            $user->awaitingStudentApproval(),
+            403,
+            'This account cannot be verified yet: the student application has not been approved by the EDP office.'
+        );
+
         if (! $user->hasVerifiedEmail() && $user->markEmailAsVerified()) {
             event(new Verified($user));
         }

@@ -7,7 +7,16 @@ beforeEach(function () {
 
     // Registration requires the student/teacher roles to exist.
     $this->seed(\Database\Seeders\RoleSeeder::class);
+
+    // Study Loads go to a fake private disk, never to real storage.
+    fakeFileDisks();
 });
+
+/** A valid Study Load upload for student registration tests. */
+function studyLoadPdf(string $name = 'study-load.pdf', int $kilobytes = 200): Illuminate\Http\UploadedFile
+{
+    return Illuminate\Http\UploadedFile::fake()->create($name, $kilobytes, 'application/pdf');
+}
 
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
@@ -23,10 +32,12 @@ test('new users can register', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'student',
+        'study_load' => studyLoadPdf(),
     ]);
 
+    // A new student waits for the EDP on the application status page.
     $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('student-application.status'));
 
     $this->assertAuthenticated();
 });
@@ -95,6 +106,7 @@ function registerWith(array $fields): Illuminate\Testing\TestResponse
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'student',
+        'study_load' => studyLoadPdf(),
     ], $fields));
 }
 
@@ -128,6 +140,13 @@ test('the middle initial is optional and may include a period', function () {
     registerWith(['email' => 'ana@example.com', 'first_name' => 'Ma. Ana', 'middle_initial' => 'R.', 'last_name' => "O'Neil"])
         ->assertSessionHasNoErrors();
     expect(App\Models\User::where('email', 'ana@example.com')->value('name'))->toBe("Ma. Ana R. O'Neil");
+});
+
+test('a curly apostrophe from a phone keyboard is accepted and saved as a straight one', function () {
+    registerWith(['first_name' => "D\u{2019}Angelo", 'last_name' => "O\u{2019}Neil"])
+        ->assertSessionHasNoErrors();
+
+    expect(App\Models\User::where('email', 'juan@example.com')->value('name'))->toBe("D'Angelo O'Neil");
 });
 
 test('first and last name are required and the middle initial is one letter', function () {

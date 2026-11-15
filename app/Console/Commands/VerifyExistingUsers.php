@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\StudentApplication;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,7 +34,17 @@ class VerifyExistingUsers extends Command
             ->whereNull('email_verified_at')
             ->where(fn (Builder $query) => $query
                 ->where('created_at', '<', $startedAt)
-                ->orWhereNull('created_at'));
+                ->orWhereNull('created_at'))
+            // Never verify a student applicant whose newest application is
+            // pending or rejected; only the EDP's approval allows that.
+            ->whereNotIn('id', fn ($sub) => $sub
+                ->select('user_id')
+                ->from('student_applications')
+                ->whereIn('id', fn ($latest) => $latest
+                    ->selectRaw('MAX(id)')
+                    ->from('student_applications')
+                    ->groupBy('user_id'))
+                ->whereIn('status', StudentApplication::AWAITING));
 
         $emails = $query()->orderBy('id')->pluck('email');
 

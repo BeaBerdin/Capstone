@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureStudentApplicationApproved;
 use Carbon\CarbonImmutable;
+use Livewire\Livewire;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -28,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+
+        // Livewire requests made from a protected page re-check that the
+        // student's application is approved (same as the page itself).
+        Livewire::addPersistentMiddleware([
+            EnsureStudentApplicationApproved::class,
+        ]);
     }
 
     /**
@@ -52,6 +60,34 @@ class AppServiceProvider extends ServiceProvider
             RateLimiter::for($name, fn (Request $request) => Limit::perMinute($perMinute)
                 ->by($name.'|'.($request->user()?->getAuthIdentifier() ?: $request->ip())));
         }
+
+        /*
+         * Registration (layered). Students often register from one school
+         * network or computer laboratory that shares a public IP, so the
+         * tight limit is per email address on that IP, and the IP as a whole
+         * gets a wider limit that changing the email address cannot avoid.
+         */
+        RateLimiter::for('registration', function (Request $request) {
+            $email = self::normalizedEmail($request->input('email'));
+            $ip = (string) $request->ip();
+
+            return [
+                Limit::perMinutes(10, 5)->by('registration-email|'.$email.'|'.$ip),
+                Limit::perMinutes(10, 30)->by('registration-ip|'.$ip),
+            ];
+        });
+
+        // A rejected applicant uploading a corrected Study Load.
+        RateLimiter::for('study-load-resubmission', fn (Request $request) => Limit::perMinutes(10, 5)
+            ->by('study-load-resubmission|'.($request->user()?->getAuthIdentifier() ?: $request->ip())));
+    }
+
+    /**
+     * The same email always gives the same key: trimmed and lowercased.
+     */
+    public static function normalizedEmail(mixed $email): string
+    {
+        return mb_strtolower(trim(is_string($email) ? $email : ''));
     }
 
     /**

@@ -126,6 +126,12 @@ class UserManagementController extends Controller
             return back()->with('success', $user->name.'\'s email is already verified.');
         }
 
+        // A student applicant is approved first (Student Applications); the
+        // approval sends the verification link.
+        if ($user->awaitingStudentApproval()) {
+            return back()->with('error', $user->name.' has a student application that is still '.$user->applicationStatus().'. Approve it in Student Applications first; the student then verifies their email.');
+        }
+
         $user->forceFill(['email_verified_at' => now()])->save();
 
         return back()->with('success', $user->name.'\'s email has been marked as verified.');
