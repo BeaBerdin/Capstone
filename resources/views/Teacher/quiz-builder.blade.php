@@ -233,6 +233,46 @@
 
 
 
+            <section aria-label="Quiz saving and publication" class="sad-card sticky top-[68px] z-20 mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $quiz?->is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700' }}">
+                            {{ $quiz?->is_published ? 'Published' : 'Draft' }}
+                        </span>
+                        @if ($quizCanBeModified)
+                            <span role="status" aria-live="polite" class="font-medium text-slate-700" data-quiz-save-status>
+                                @if (session('quiz_saved'))
+                                    All changes saved
+                                @elseif ($errors->any() && session()->hasOldInput('title'))
+                                    Unsaved changes
+                                @else
+                                    {{ $quiz ? 'No unsaved changes' : 'Ready to save' }}
+                                @endif
+                            </span>
+                        @endif
+                    </div>
+                    @if ($quizCanBeModified)
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="submit" form="quiz-edit-form" name="intent" value="save"
+                                    class="sad-btn-primary min-h-11 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                                Save Changes
+                            </button>
+                            @if ($quiz?->is_published)
+                                <button type="submit" form="quiz-edit-form" name="intent" value="unpublish"
+                                        class="min-h-11 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60">
+                                    Return to Draft
+                                </button>
+                            @else
+                                <button type="submit" form="quiz-edit-form" name="intent" value="publish"
+                                        class="min-h-11 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 disabled:opacity-60">
+                                    Publish Quiz
+                                </button>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </section>
+
             {{-- STATS --}}
             <section class="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
 
@@ -348,12 +388,15 @@
 
 
                         <form
+                            id="quiz-edit-form"
                             action="{{ route('teacher.quiz.save', $lesson) }}"
                             method="POST"
                             class="mt-6 space-y-6"
+                            @if ($quizCanBeModified) data-quiz-edit-form @endif
+                            @if ($errors->any() && session()->hasOldInput('title')) data-quiz-has-unsaved @endif
                         >
-
                             @csrf
+                            <input type="hidden" name="revision" value="{{ session()->hasOldInput('title') ? old('revision', $quizRevision) : $quizRevision }}">
 
 
 
@@ -490,101 +533,11 @@
 
 
 
-                            {{-- PUBLISH --}}
-                            <label
-                                class="flex cursor-pointer items-start
-                                       justify-between gap-5 rounded-xl
-                                       border border-slate-200
-                                       bg-slate-50 p-4"
-                            >
-
-                                <div>
-
-                                    <p class="text-sm font-bold text-slate-800">
-                                        Publish quiz
-                                    </p>
-
-                                    <p class="mt-1 text-xs leading-5 text-slate-500">
-                                        Make this assessment available
-                                        when the course is published.
-                                    </p>
-
-                                </div>
-
-
-                                <div class="relative shrink-0">
-
-                                    <input
-                                        type="checkbox"
-                                        name="is_published"
-                                        value="1"
-                                        class="peer sr-only"
-                                        @disabled(!$quizCanBeModified)
-                                        @checked(
-                                            old(
-                                                'is_published',
-                                                $quiz?->is_published ?? false
-                                            )
-                                        )
-                                    >
-
-                                    <div
-                                        class="h-6 w-11 rounded-full
-                                               bg-slate-300 transition
-
-                                               after:absolute
-                                               after:left-[2px]
-                                               after:top-[2px]
-                                               after:h-5
-                                               after:w-5
-                                               after:rounded-full
-                                               after:bg-white
-                                               after:transition-all
-                                               after:content-['']
-
-                                               peer-checked:bg-violet-600
-
-                                               peer-checked:after:translate-x-full"
-                                    ></div>
-
-                                </div>
-
-                            </label>
-
-
-
-                            <div class="flex justify-end">
-
-                                @if($quizCanBeModified)
-
-                                    <button
-                                        type="submit"
-                                        class="sad-btn-primary inline-flex h-11 items-center
-                                               justify-center rounded-xl
-                                               bg-violet-600 px-5
-                                               text-sm font-semibold text-white
-                                               transition hover:bg-violet-700"
-                                    >
-                                        Save Quiz Settings
-                                    </button>
-
-                                @else
-
-                                    <span
-                                        class="inline-flex h-11 items-center
-                                               justify-center gap-2 rounded-xl
-                                               border border-slate-200
-                                               bg-slate-100 px-5
-                                               text-sm font-semibold
-                                               text-slate-500"
-                                    >
-                                        🔒 Settings Locked
-                                    </span>
-
-                                @endif
-
-                            </div>
-
+                            @if ($quizCanBeModified)
+                                <p class="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-900">
+                                    Save Changes keeps the current status. Publish Quiz saves this form and makes the quiz available when its lesson and course are published.
+                                </p>
+                            @endif
                         </form>
 
                     </section>
@@ -653,9 +606,8 @@
                                             PathWise asks Gemini to create
                                             multiple-choice questions using only
                                             the published Reading lessons from
-                                            this course. Generated questions are
-                                            added to the current quiz and remain
-                                            fully editable.
+                                            this course. Generated questions are saved to the quiz for review.
+                                            If new questions are added, a published quiz returns to draft.
                                         </p>
 
                                     </div>
@@ -682,17 +634,10 @@
                                     action="{{ route('teacher.quiz.questions.generate', $quiz) }}"
                                     method="POST"
                                     class="p-5 sm:p-7"
-                                    onsubmit="
-                                        const button = this.querySelector('[data-ai-generate-button]');
-                                        if (button) {
-                                            button.disabled = true;
-                                            button.textContent = 'Generating with Gemini...';
-                                        }
-                                    "
+                                    data-quiz-operation="generate"
                                 >
-
                                     @csrf
-
+                                    <input type="hidden" name="revision" value="{{ $quizRevision }}">
 
                                     <div
                                         class="grid grid-cols-1 gap-5
@@ -940,633 +885,55 @@
 
 
 
-                    {{-- QUESTIONS --}}
-                    @if($quiz)
-
-                        <section>
-
-                            <div class="mb-4">
-
-                                <h2 class="text-lg font-bold text-slate-900">
-                                    Questions
-                                </h2>
-
-                                <p class="mt-1 text-sm text-slate-500">
-                                    Manage the questions,
-                                    answer choices, correct answers,
-                                    and points.
-                                </p>
-
-                            </div>
-
-
-
-                            <div class="space-y-4">
-
-
-                                @forelse($quiz->questions as $question)
-
-                                    <article
-                                        class="sad-card pw-question-card
-                                               rounded-2xl border
-                                               border-slate-200
-                                               bg-white p-5
-                                               shadow-sm sm:p-6"
-                                    >
-
-
-                                        <form
-                                            action="{{ route('teacher.quiz.question.update', [$quiz, $question]) }}"
-                                            method="POST"
-                                        >
-
-                                            @csrf
-                                            @method('PUT')
-
-
-
-                                            {{-- QUESTION NUMBER --}}
-                                            <div class="flex items-center gap-3">
-
-                                                <div
-                                                    class="flex h-9 w-9
-                                                           items-center justify-center
-                                                           rounded-full bg-violet-50
-                                                           text-sm font-bold
-                                                           text-violet-600"
-                                                >
-                                                    {{ $loop->iteration }}
-                                                </div>
-
-
-                                                <div>
-
-                                                    <p
-                                                        class="text-xs font-bold uppercase
-                                                               tracking-wide text-violet-500"
-                                                    >
-                                                        Question
-                                                        {{ $loop->iteration }}
-                                                    </p>
-
-                                                    <p class="mt-0.5 text-xs text-slate-500">
-                                                        {{ $question->points }}
-                                                        {{
-                                                            \Illuminate\Support\Str::plural(
-                                                                'point',
-                                                                $question->points
-                                                            )
-                                                        }}
-                                                    </p>
-
-                                                </div>
-
-                                            </div>
-
-
-
-                                            {{-- QUESTION --}}
-                                            <div class="mt-5">
-
-                                                <label class="text-sm font-semibold text-slate-700">
-                                                    Question
-                                                </label>
-
-                                                <textarea
-                                                    name="question"
-                                                    rows="3"
-                                                    required
-                                                    class="pw-field mt-2
-                                                           resize-none
-                                                           px-4 py-3"
-                                                    @readonly(!$quizCanBeModified)
-                                                >{{ $question->question }}</textarea>
-
-                                            </div>
-
-
-
-                                            {{-- OPTIONS --}}
-                                            <div
-                                                class="mt-5 grid grid-cols-1
-                                                       gap-4 md:grid-cols-2"
-                                            >
-
-                                                @foreach([
-                                                    'A' => 'option_a',
-                                                    'B' => 'option_b',
-                                                    'C' => 'option_c',
-                                                    'D' => 'option_d',
-                                                ] as $letter => $field)
-
-                                                    <div>
-
-                                                        <label
-                                                            class="text-xs font-bold
-                                                                   text-slate-500"
-                                                        >
-                                                            Option {{ $letter }}
-                                                        </label>
-
-
-                                                        <div class="relative mt-1.5">
-
-                                                            <span
-                                                                class="absolute left-3
-                                                                       top-1/2
-                                                                       flex h-6 w-6
-                                                                       -translate-y-1/2
-                                                                       items-center
-                                                                       justify-center
-                                                                       rounded-full
-                                                                       bg-slate-100
-                                                                       text-xs
-                                                                       font-bold
-                                                                       text-slate-600"
-                                                            >
-                                                                {{ $letter }}
-                                                            </span>
-
-
-                                                            <input
-                                                                type="text"
-                                                                name="{{ $field }}"
-                                                                value="{{ $question->{$field} }}"
-                                                                {{ in_array($letter, ['A', 'B']) ? 'required' : '' }}
-                                                                class="pw-field h-11 pl-11 pr-3"
-                                                                @readonly(!$quizCanBeModified)
-                                                            >
-
-                                                        </div>
-
-                                                    </div>
-
-                                                @endforeach
-
-                                            </div>
-
-
-
-                                            {{-- ANSWER AND POINTS --}}
-                                            <div
-                                                class="mt-5 grid
-                                                       grid-cols-1 gap-4
-                                                       sm:grid-cols-2"
-                                            >
-
-                                                <div>
-
-                                                    <label class="text-sm font-semibold text-slate-700">
-                                                        Correct answer
-                                                    </label>
-
-                                                    <select
-                                                        name="correct_answer"
-                                                        required
-                                                        class="pw-field mt-2 h-11 px-4"
-                                                        @disabled(!$quizCanBeModified)
-                                                    >
-
-                                                        @foreach(['A', 'B', 'C', 'D'] as $answer)
-
-                                                            <option
-                                                                value="{{ $answer }}"
-                                                                @selected(
-                                                                    $question->correct_answer
-                                                                    === $answer
-                                                                )
-                                                            >
-                                                                Option {{ $answer }}
-                                                            </option>
-
-                                                        @endforeach
-
-                                                    </select>
-
-                                                </div>
-
-
-
-                                                <div>
-
-                                                    <label class="text-sm font-semibold text-slate-700">
-                                                        Points
-                                                    </label>
-
-                                                    <input
-                                                        type="number"
-                                                        name="points"
-                                                        min="1"
-                                                        max="100"
-                                                        required
-                                                        value="{{ $question->points }}"
-                                                        class="pw-field mt-2 h-11 px-4"
-                                                        @readonly(!$quizCanBeModified)
-                                                    >
-
-                                                </div>
-
-                                            </div>
-
-
-
-                                            @if($quizCanBeModified)
-
-                                                <div class="mt-5 flex justify-end">
-
-                                                    <button
-                                                        type="submit"
-                                                        class="sad-btn-primary inline-flex h-10
-                                                               items-center justify-center
-                                                               rounded-xl bg-violet-600
-                                                               px-4 text-xs font-semibold
-                                                               text-white
-                                                               hover:bg-violet-700"
-                                                    >
-                                                        Save Question
-                                                    </button>
-
-                                                </div>
-
-                                            @endif
-
-                                        </form>
-
-
-
-                                        {{-- DELETE --}}
-                                        @if($quizCanBeModified)
-
-                                            <form
-                                                action="{{ route('teacher.quiz.question.delete', [$quiz, $question]) }}"
-                                                method="POST"
-                                                class="mt-3"
-                                                onsubmit="return confirm('Delete this question?');"
-                                            >
-
-                                                @csrf
-                                                @method('DELETE')
-
-
-                                                <div class="flex justify-end">
-
-                                                    <button
-                                                        type="submit"
-                                                        class="text-xs font-semibold
-                                                               text-red-500
-                                                               hover:text-red-700"
-                                                    >
-                                                        Delete Question
-                                                    </button>
-
-                                                </div>
-
-                                            </form>
-
-                                        @else
-
-                                            <div class="mt-4 flex justify-end">
-
-                                                <span
-                                                    class="rounded-lg bg-slate-100
-                                                           px-3 py-2 text-xs
-                                                           font-semibold
-                                                           text-slate-500"
-                                                >
-                                                    🔒 Locked
-                                                </span>
-
-                                            </div>
-
-                                        @endif
-
-                                    </article>
-
-
-                                @empty
-
-                                    <div
-                                        class="rounded-2xl
-                                               border-2 border-dashed
-                                               border-slate-200
-                                               bg-white px-6 py-10
-                                               text-center"
-                                    >
-
-                                        <p class="text-sm font-semibold text-slate-700">
-                                            No questions yet.
-                                        </p>
-
-                                        <p class="mt-1 text-xs text-slate-500">
-                                            Add your first question below.
-                                        </p>
-
-                                    </div>
-
-                                @endforelse
-
-                            </div>
-
-                        </section>
-
-
-
-                        {{-- ADD QUESTION --}}
-                        @if($quizCanBeModified)
-
-                        <section class="sad-card pw-card p-5 sm:p-7">
-
-                            <div class="flex items-start gap-4">
-
-                                <div
-                                    class="sad-chip sad-violet flex h-11 w-11
-                                           shrink-0 items-center
-                                           justify-center rounded-xl
-                                           bg-violet-50
-                                           text-xl font-bold
-                                           text-violet-600"
-                                >
-                                    +
-                                </div>
-
-
-                                <div>
-
-                                    <h2 class="text-lg font-bold text-slate-900">
-                                        Add question
-                                    </h2>
-
-                                    <p class="mt-1 text-sm text-slate-500">
-                                        Add a multiple-choice question
-                                        to this quiz.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-
-                            <form
-                                action="{{ route('teacher.quiz.question.store', $quiz) }}"
-                                method="POST"
-                                class="mt-6"
-                            >
-
-                                @csrf
-
-
-
-                                {{-- NEW QUESTION --}}
-                                <div>
-
-                                    <label class="text-sm font-semibold text-slate-800">
-                                        Question
-
-                                        <span class="text-red-500">
-                                            *
-                                        </span>
-                                    </label>
-
-                                    <textarea
-                                        name="question"
-                                        rows="3"
-                                        required
-                                        placeholder="Enter your question..."
-                                        class="pw-field mt-2.5
-                                               resize-none
-                                               px-4 py-3"
-                                    ></textarea>
-
-                                </div>
-
-
-
-                                {{-- NEW OPTIONS --}}
-                                <div
-                                    class="mt-5 grid grid-cols-1
-                                           gap-4 md:grid-cols-2"
-                                >
-
-                                    @foreach([
-                                        'A' => 'option_a',
-                                        'B' => 'option_b',
-                                        'C' => 'option_c',
-                                        'D' => 'option_d',
-                                    ] as $letter => $field)
-
-                                        <div>
-
-                                            <label
-                                                class="text-xs font-bold
-                                                       text-slate-500"
-                                            >
-                                                Option {{ $letter }}
-
-                                                @if(in_array($letter, ['A', 'B']))
-
-                                                    <span class="text-red-500">
-                                                        *
-                                                    </span>
-
-                                                @endif
-
-                                            </label>
-
-
-                                            <div class="relative mt-1.5">
-
-                                                <span
-                                                    class="absolute left-3
-                                                           top-1/2
-                                                           flex h-6 w-6
-                                                           -translate-y-1/2
-                                                           items-center
-                                                           justify-center
-                                                           rounded-full
-                                                           bg-slate-100
-                                                           text-xs
-                                                           font-bold
-                                                           text-slate-600"
-                                                >
-                                                    {{ $letter }}
-                                                </span>
-
-
-                                                <input
-                                                    type="text"
-                                                    name="{{ $field }}"
-                                                    {{ in_array($letter, ['A', 'B']) ? 'required' : '' }}
-                                                    placeholder="Enter option {{ $letter }}"
-                                                    class="pw-field h-11 pl-11 pr-3"
-                                                >
-
-                                            </div>
-
-                                        </div>
-
-                                    @endforeach
-
-                                </div>
-
-
-
-                                {{-- CORRECT ANSWER AND POINTS --}}
-                                <div
-                                    class="mt-5 grid grid-cols-1
-                                           gap-5 sm:grid-cols-2"
-                                >
-
-                                    <div>
-
-                                        <label class="text-sm font-semibold text-slate-800">
-                                            Correct answer
-                                        </label>
-
-                                        <select
-                                            name="correct_answer"
-                                            required
-                                            class="pw-field mt-2.5 h-11 px-4"
-                                        >
-                                            <option value="A">
-                                                Option A
-                                            </option>
-
-                                            <option value="B">
-                                                Option B
-                                            </option>
-
-                                            <option value="C">
-                                                Option C
-                                            </option>
-
-                                            <option value="D">
-                                                Option D
-                                            </option>
-                                        </select>
-
-                                    </div>
-
-
-
-                                    <div>
-
-                                        <label class="text-sm font-semibold text-slate-800">
-                                            Points
-                                        </label>
-
-                                        <input
-                                            type="number"
-                                            name="points"
-                                            min="1"
-                                            max="100"
-                                            value="1"
-                                            required
-                                            class="pw-field mt-2.5 h-11 px-4"
-                                        >
-
-                                    </div>
-
-                                </div>
-
-
-
-                                <div class="mt-6 flex justify-end">
-
-                                    <button
-                                        type="submit"
-                                        class="sad-btn-primary inline-flex h-11
-                                               items-center justify-center
-                                               rounded-xl bg-violet-600
-                                               px-5 text-sm font-semibold
-                                               text-white
-                                               hover:bg-violet-700"
-                                    >
-                                        + Add Question
-                                    </button>
-
-                                </div>
-
-                            </form>
-
-                        </section>
-
-                        @else
-
-                            <section
-                                class="rounded-2xl border border-slate-200
-                                       bg-slate-100 px-6 py-8 text-center"
-                            >
-
-                                <p class="text-sm font-bold text-slate-700">
-                                    🔒 Question editing is locked
-                                </p>
-
-                                <p
-                                    class="mx-auto mt-2 max-w-md
-                                           text-xs leading-5 text-slate-500"
-                                >
-                                    Existing questions can still be reviewed,
-                                    but questions cannot be added, edited,
-                                    or deleted while the course is Pending
-                                    or Published.
-                                </p>
-
-                            </section>
-
-                        @endif
-
-
-                    @else
-
-
-                        {{-- QUIZ DOESN'T EXIST YET --}}
-                        <section
-                            class="rounded-2xl border-2
-                                   border-dashed border-violet-200
-                                   bg-violet-50/30
-                                   px-6 py-12 text-center"
-                        >
-
-                            <div
-                                class="mx-auto flex h-14 w-14
-                                       items-center justify-center
-                                       rounded-2xl bg-white
-                                       text-2xl font-black
-                                       text-violet-600 shadow-sm"
-                            >
-                                ?
-                            </div>
-
-                            <h3 class="mt-4 text-base font-bold text-slate-900">
-                                {{
-                                    $quizCanBeModified
-                                        ? 'Save the quiz settings first'
-                                        : 'Quiz setup is locked'
-                                }}
-                            </h3>
-
-                            <p
-                                class="mx-auto mt-2 max-w-md
-                                       text-sm leading-6 text-slate-500"
-                            >
-                                @if($quizCanBeModified)
-
-                                    After saving the quiz settings,
-                                    the question builder will appear here.
-
-                                @else
-
-                                    This course is Pending or Published,
-                                    so a new quiz configuration cannot
-                                    be created at this time.
-
+                    <section aria-labelledby="quiz-questions-heading" class="space-y-4">
+                        <div>
+                            <h2 id="quiz-questions-heading" class="text-lg font-bold text-slate-900">Questions</h2>
+                            @if ($quizCanBeModified)
+                                <p class="mt-1 text-sm text-slate-600">Use Save Changes above to keep your question edits.</p>
+                            @endif
+                        </div>
+
+                        @forelse ($quiz?->questions ?? [] as $question)
+                            <article class="sad-card pw-question-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                <h3 class="text-base font-semibold text-slate-900">Question {{ $loop->iteration }}</h3>
+                                @include('Teacher.partials.quiz-question-fields', [
+                                    'fieldPrefix' => 'questions['.$question->id.']',
+                                    'inputPrefix' => 'questions.'.$question->id,
+                                    'newQuestion' => false,
+                                ])
+
+                                @if ($quizCanBeModified)
+                                    <form action="{{ route('teacher.quiz.question.delete', [$quiz, $question]) }}"
+                                          method="POST" class="mt-4 text-right" data-quiz-operation="delete">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="revision" value="{{ $quizRevision }}">
+                                        <button type="submit" class="rounded-lg px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                                                aria-label="Delete question {{ $loop->iteration }}">
+                                            Delete Question
+                                        </button>
+                                    </form>
                                 @endif
-                            </p>
+                            </article>
+                        @empty
+                            @unless ($quizCanBeModified)
+                                <p class="text-sm text-slate-600">This quiz has no questions.</p>
+                            @endunless
+                        @endforelse
 
-                        </section>
-
-                    @endif
+                        @if ($quizCanBeModified)
+                            <section aria-labelledby="new-question-heading" class="sad-card rounded-2xl border border-violet-100 bg-white p-5 shadow-sm sm:p-6">
+                                <h3 id="new-question-heading" class="text-base font-semibold text-slate-900">Add a Question</h3>
+                                <p class="mt-1 text-sm text-slate-600">Complete the question and use Save Changes to add it.</p>
+                                @include('Teacher.partials.quiz-question-fields', [
+                                    'fieldPrefix' => 'new_question',
+                                    'inputPrefix' => 'new_question',
+                                    'newQuestion' => true,
+                                    'question' => null,
+                                ])
+                            </section>
+                        @endif
+                    </section>
 
                 </div>
 
@@ -1803,5 +1170,63 @@
     </main>
 
 </div>
+
+@if ($quizCanBeModified)
+    <script>
+        (() => {
+            const form = document.querySelector('[data-quiz-edit-form]');
+            const status = document.querySelector('[data-quiz-save-status]');
+
+            if (!form || !status || form.dataset.saveStatusBound) return;
+
+            form.dataset.saveStatusBound = 'true';
+            let dirty = form.hasAttribute('data-quiz-has-unsaved');
+            let submitting = false;
+
+            function markUnsaved() {
+                dirty = true;
+                status.textContent = 'Unsaved changes';
+            }
+
+            for (const field of form.elements) {
+                if (field.matches('input:not([type="hidden"]), textarea, select')) {
+                    field.addEventListener('input', markUnsaved);
+                    field.addEventListener('change', markUnsaved);
+                }
+            }
+
+            form.addEventListener('submit', (event) => {
+                if (submitting) {
+                    event.preventDefault();
+                    return;
+                }
+
+                submitting = true;
+                status.textContent = 'Saving...';
+            });
+
+            for (const operation of document.querySelectorAll('[data-quiz-operation]')) {
+                operation.addEventListener('submit', (event) => {
+                    const deleting = operation.dataset.quizOperation === 'delete';
+                    const prompt = deleting
+                        ? 'Delete this question?'
+                        : 'Generate and save questions from the last saved version of the quiz?';
+                    const message = dirty
+                        ? 'You have unsaved edits that will be lost. ' + prompt
+                        : prompt;
+
+                    if (submitting || ((deleting || dirty) && !window.confirm(message))) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    submitting = true;
+                    operation.querySelector('button[type="submit"]').disabled = true;
+                    status.textContent = deleting ? 'Deleting question...' : 'Generating with Gemini...';
+                });
+            }
+        })();
+    </script>
+@endif
 
 </x-layouts::app>

@@ -16,6 +16,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class QuizController extends Controller
@@ -339,9 +341,8 @@ class QuizController extends Controller
     public function teacherBuilder(
         Lesson $lesson
     ) {
-        $lesson->load([
-            'course.category',
-        ]);
+        $lesson->load('course.category');
+        abort_unless($lesson->course, 404);
 
 
         if (
@@ -373,11 +374,12 @@ class QuizController extends Controller
         }
 
 
-        $quiz = Quiz::with('questions')
+        $quiz = Quiz::with(['questions' => fn ($questions) => $questions->orderBy('id')])
             ->where(
                 'lesson_id',
                 $lesson->id
             )
+            ->orderBy('id')
             ->first();
 
         abort_if($quiz && (int) $quiz->course_id !== (int) $lesson->course_id, 403);
@@ -397,12 +399,15 @@ class QuizController extends Controller
             );
 
 
+        $quizRevision = $this->quizRevision($quiz);
+
         return view(
             'Teacher.quiz-builder',
             compact(
                 'lesson',
                 'quiz',
-                'quizCanBeModified'
+                'quizCanBeModified',
+                'quizRevision'
             )
         );
     }
@@ -415,109 +420,143 @@ class QuizController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function teacherSaveQuiz(
-        Request $request,
-        Lesson $lesson
-    ) {
+    public function teacherSaveQuiz(Request $request, Lesson $lesson)
+    {
         $lesson->load('course');
+        abort_unless($lesson->course, 404);
+        $this->ensureTeacherCanModifyCourse($lesson->course);
+        abort_unless($lesson->lesson_type === 'quiz', 422, 'This lesson is not a quiz lesson.');
 
+        $questionRules = $this->questionRules();
+        $questionFields = implode(',', array_keys($questionRules));
+        $hasNewQuestion = $this->hasNewQuestionInput($request->input('new_question'));
 
-        $this->ensureTeacherCanModifyCourse(
-            $lesson->course
-        );
+        $rules = [
+            'revision' => ['required', 'string', 'size:64'],
+            'intent' => ['nullable', 'in:save,publish,unpublish'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'passing_score' => ['required', 'integer', 'min:1', 'max:100'],
+            'time_limit_minutes' => ['nullable', 'integer', 'min:1', 'max:2147483647'],
+            'questions' => ['sometimes', 'array'],
+            'questions.*' => ['required', 'array:'.$questionFields],
+            'new_question' => $hasNewQuestion ? ['required', 'array:'.$questionFields] : ['exclude'],
+        ];
 
+        $attributes = [];
+        foreach ($questionRules as $field => $fieldRules) {
+            $rules['questions.*.'.$field] = $fieldRules;
+            $attributes['questions.*.'.$field] = str_replace('_', ' ', $field);
 
-        if (
-            $lesson->lesson_type
-            !==
-            'quiz'
-        ) {
-            abort(
-                422,
-                'This lesson is not a quiz lesson.'
-            );
+            if ($hasNewQuestion) {
+                $rules['new_question.'.$field] = $fieldRules;
+                $attributes['new_question.'.$field] = 'new question '.str_replace('_', ' ', $field);
+            }
         }
 
+        $validated = $request->validate($rules, [], $attributes);
+        $intent = $validated['intent'] ?? 'save';
 
-        $validated = $request->validate([
-            'title' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+        DB::transaction(function () use ($lesson, $validated, $intent) {
+            $course = Course::lockForUpdate()->findOrFail($lesson->course_id);
+            $this->ensureTeacherCanModifyCourse($course);
+            $currentLesson = Lesson::lockForUpdate()->findOrFail($lesson->id);
+            abort_unless((int) $currentLesson->course_id === (int) $course->id, 409, 'This lesson moved while you were editing.');
+            abort_unless($currentLesson->lesson_type === 'quiz', 422, 'This lesson is no longer a quiz lesson.');
 
-            'description' => [
-                'nullable',
-                'string',
-            ],
+            $quiz = Quiz::where('lesson_id', $currentLesson->id)->orderBy('id')->lockForUpdate()->first();
+            abort_if($quiz && (int) $quiz->course_id !== (int) $course->id, 403);
 
-            'passing_score' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:100',
-            ],
+            $quiz?->load(['questions' => fn ($questions) => $questions->orderBy('id')->lockForUpdate()]);
+            $this->requireQuizRevision($quiz, $validated['revision']);
 
-            'time_limit_minutes' => [
-                'nullable',
-                'integer',
-                'min:1',
-            ],
+            $questions = $validated['questions'] ?? [];
+            $existingQuestions = $quiz?->questions ?? collect();
+            $expectedIds = $existingQuestions->pluck('id')->map(fn ($id) => (string) $id)->sort()->values()->all();
+            $submittedIds = collect(array_keys($questions))->map(fn ($id) => (string) $id)->sort()->values()->all();
+            if ($expectedIds !== $submittedIds) {
+                throw ValidationException::withMessages(['quiz' => 'The complete question list could not be saved. Reopen the quiz and try again.']);
+            }
 
-            'is_published' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
+            foreach ($questions as $id => $question) {
+                $this->validateCorrectOption($question, 'questions.'.$id.'.correct_answer');
+            }
+            if (isset($validated['new_question'])) {
+                $this->validateCorrectOption($validated['new_question'], 'new_question.correct_answer');
+            }
 
+            $published = match ($intent) {
+                'publish' => true,
+                'unpublish' => false,
+                default => (bool) $quiz?->is_published,
+            };
+            if ($published && $existingQuestions->isEmpty() && ! isset($validated['new_question'])) {
+                throw ValidationException::withMessages(['quiz' => 'Add at least one complete question before publishing the quiz.']);
+            }
 
-        $quiz = Quiz::firstOrNew([
-            'lesson_id' =>
-                $lesson->id,
-        ]);
+            $quiz ??= new Quiz();
+            $quiz->fill([
+                'course_id' => $course->id,
+                'lesson_id' => $currentLesson->id,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'passing_score' => $validated['passing_score'],
+                'time_limit_minutes' => $validated['time_limit_minutes'] ?? null,
+                'is_published' => $published,
+            ]);
+            $quiz->save();
 
-        abort_if($quiz->exists && (int) $quiz->course_id !== (int) $lesson->course_id, 403);
+            foreach ($existingQuestions as $question) {
+                $question->update($this->questionValues($questions[$question->id]));
+            }
+            if (isset($validated['new_question'])) {
+                $quiz->questions()->create($this->questionValues($validated['new_question']));
+            }
+        }, 3);
 
-        $quiz->course_id =
-            $lesson->course_id;
+        $request->session()->flash('quiz_saved', true);
+        if ($intent !== 'save') {
+            $request->session()->flash('success', $intent === 'publish' ? 'Quiz published.' : 'Quiz returned to draft.');
+        }
 
-        $quiz->lesson()->associate($lesson);
+        if ($request->expectsJson()) {
+            return response()->json(['saved' => true]);
+        }
 
-        $quiz->title =
-            $validated['title'];
-
-        $quiz->description =
-            $validated['description']
-            ?? null;
-
-        $quiz->passing_score =
-            $validated['passing_score'];
-
-        $quiz->time_limit_minutes =
-            $validated['time_limit_minutes']
-            ?? null;
-
-        $quiz->is_published =
-            $request->boolean(
-                'is_published'
-            );
-
-        $quiz->save();
-
-
-        return redirect()
-            ->route(
-                'teacher.quiz.builder',
-                $lesson
-            )
-            ->with(
-                'success',
-                'Quiz settings saved successfully.'
-            );
+        return redirect()->route('teacher.quiz.builder', $lesson);
     }
 
+    private function hasNewQuestionInput(mixed $input): bool
+    {
+        if (! is_array($input)) {
+            return $input !== null;
+        }
 
+        foreach (['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'] as $field) {
+            if (filled($input[$field] ?? null)) {
+                return true;
+            }
+        }
 
+        return array_key_exists('points', $input) && ! in_array($input['points'], [1, '1'], true);
+    }
+
+    private function quizRevision(?Quiz $quiz): string
+    {
+        return hash('sha256', json_encode([
+            $quiz?->getAttributes(),
+            $quiz?->questions->map->getAttributes()->all(),
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    private function requireQuizRevision(?Quiz $quiz, string $revision): void
+    {
+        if (! hash_equals($this->quizRevision($quiz), $revision)) {
+            throw ValidationException::withMessages([
+                'quiz' => 'The saved quiz has changed. Copy any edits you want to keep, then reopen the quiz before saving again.',
+            ]);
+        }
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -558,6 +597,7 @@ class QuizController extends Controller
 
 
         $validated = $request->validate([
+            'revision' => ['required', 'string', 'size:64'],
             'question_count' => [
                 'required',
                 'integer',
@@ -571,6 +611,9 @@ class QuizController extends Controller
             ],
         ]);
 
+
+        $quiz->load(['questions' => fn ($questions) => $questions->orderBy('id')]);
+        $this->requireQuizRevision($quiz, $validated['revision']);
 
         $requestedCount =
             (int) $validated['question_count'];
@@ -747,146 +790,17 @@ class QuizController extends Controller
             );
 
 
-            $existingQuestionKeys =
-                $quiz
-                    ->questions()
-                    ->pluck('question')
-                    ->mapWithKeys(
-                        function ($question) {
-                            $key =
-                                mb_strtolower(
-                                    trim(
-                                        preg_replace(
-                                            '/\s+/u',
-                                            ' ',
-                                            (string) $question
-                                        )
-                                        ??
-                                        (string) $question
-                                    )
-                                );
-
-
-                            return [
-                                $key => true,
-                            ];
-                        }
-                    );
-
-
-            $questionsToInsert = [];
-
-
-            foreach (
-                $generatedQuestions
-                as
-                $generatedQuestion
-            ) {
-                if (
-                    count($questionsToInsert)
-                    >=
-                    $requestedCount
-                ) {
-                    break;
-                }
-
-
-                $questionKey =
-                    mb_strtolower(
-                        trim(
-                            preg_replace(
-                                '/\s+/u',
-                                ' ',
-                                (string) $generatedQuestion['question']
-                            )
-                            ??
-                            (string) $generatedQuestion['question']
-                        )
-                    );
-
-
-                if (
-                    $existingQuestionKeys
-                        ->has(
-                            $questionKey
-                        )
-                ) {
-                    continue;
-                }
-
-
-                $existingQuestionKeys[
-                    $questionKey
-                ] = true;
-
-
-                $questionsToInsert[] =
-                    $generatedQuestion;
-            }
-
-
-            if (
-                empty(
-                    $questionsToInsert
-                )
-            ) {
-                return redirect()
-                    ->route(
-                        'teacher.quiz.builder',
-                        $quiz->lesson_id
-                    )
-                    ->with(
-                        'error',
-                        'Gemini generated questions that already exist in this quiz. No duplicate questions were added.'
-                    );
-            }
-
-
-            DB::transaction(
-                function () use (
-                    $quiz,
-                    $questionsToInsert
-                ) {
-                    foreach (
-                        $questionsToInsert
-                        as
-                        $question
-                    ) {
-                        QuizQuestion::create([
-                            'quiz_id' =>
-                                $quiz->id,
-
-                            'question' =>
-                                $question['question'],
-
-                            'option_a' =>
-                                $question['option_a'],
-
-                            'option_b' =>
-                                $question['option_b'],
-
-                            'option_c' =>
-                                $question['option_c'],
-
-                            'option_d' =>
-                                $question['option_d'],
-
-                            'correct_answer' =>
-                                $question['correct_answer'],
-
-                            'points' =>
-                                $question['points'],
-                        ]);
-                    }
-                }
+            $generatedCount = $this->saveGeneratedQuestions(
+                $quiz,
+                $generatedQuestions,
+                $requestedCount,
+                $validated['revision']
             );
 
-
-            $generatedCount =
-                count(
-                    $questionsToInsert
-                );
-
+            if ($generatedCount === 0) {
+                return redirect()->route('teacher.quiz.builder', $quiz->lesson_id)
+                    ->with('error', 'Gemini generated questions that already exist in this quiz. No duplicate questions were added.');
+            }
 
             $successMessage =
                 $generatedCount
@@ -908,12 +822,15 @@ class QuizController extends Controller
                 $requestedCount
             ) {
                 $successMessage .=
-                    ' Gemini returned some questions that matched existing quiz questions, so duplicates were skipped.';
+                    ' Only new questions within the quiz limit were saved.';
             }
 
 
-            $successMessage .=
-                ' Review and edit them before publishing the quiz.';
+            if ($quiz->is_published) {
+                $successMessage .= ' The quiz was returned to draft.';
+            }
+
+            $successMessage .= ' The questions are saved. Review and edit them before publishing the quiz.';
 
 
             return redirect()
@@ -921,10 +838,10 @@ class QuizController extends Controller
                     'teacher.quiz.builder',
                     $quiz->lesson_id
                 )
-                ->with(
-                    'success',
-                    $successMessage
-                );
+                ->with('quiz_saved', true)
+                ->with('success', $successMessage);
+        } catch (ValidationException|HttpExceptionInterface $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             report(
                 $exception
@@ -998,280 +915,175 @@ class QuizController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function teacherStoreQuestion(
-        Request $request,
-        Quiz $quiz
-    ) {
-        $quiz->load('course');
-
-
+    public function teacherStoreQuestion(Request $request, Quiz $quiz)
+    {
         $this->ensureTeacherCanModifyQuiz($quiz);
+        $validated = $request->validate($this->questionRules() + ['revision' => ['required', 'string', 'size:64']]);
+        $this->validateCorrectOption($validated);
 
+        DB::transaction(function () use ($quiz, $validated) {
+            $current = $this->lockTeacherQuiz($quiz, $validated['revision']);
+            unset($validated['revision']);
+            $current->questions()->create($this->questionValues($validated));
+        }, 3);
 
-        $validated =
-            $this->validateQuestion(
-                $request
-            );
+        return redirect()->route('teacher.quiz.builder', $quiz->lesson_id)
+            ->with('success', 'Question added successfully.');
+    }
 
+    public function teacherUpdateQuestion(Request $request, Quiz $quiz, QuizQuestion $question)
+    {
+        $this->ensureTeacherCanModifyQuiz($quiz);
+        abort_unless((int) $question->quiz_id === (int) $quiz->id, 404);
+        $validated = $request->validate($this->questionRules() + ['revision' => ['required', 'string', 'size:64']]);
+        $this->validateCorrectOption($validated);
 
-        $this->validateCorrectOption(
-            $validated
+        DB::transaction(function () use ($quiz, $question, $validated) {
+            $current = $this->lockTeacherQuiz($quiz, $validated['revision']);
+            $target = $current->questions->find($question->id);
+            abort_unless($target, 404);
+            unset($validated['revision']);
+            $target->update($this->questionValues($validated));
+        }, 3);
+
+        return redirect()->route('teacher.quiz.builder', $quiz->lesson_id)
+            ->with('success', 'Question updated.');
+    }
+
+    public function teacherDeleteQuestion(Request $request, Quiz $quiz, QuizQuestion $question)
+    {
+        $this->ensureTeacherCanModifyQuiz($quiz);
+        abort_unless((int) $question->quiz_id === (int) $quiz->id, 404);
+        $validated = $request->validate(['revision' => ['required', 'string', 'size:64']]);
+
+        DB::transaction(function () use ($quiz, $question, $validated) {
+            $current = $this->lockTeacherQuiz($quiz, $validated['revision']);
+            $target = $current->questions->find($question->id);
+            abort_unless($target, 404);
+            if ($current->is_published && $current->questions->count() === 1) {
+                throw ValidationException::withMessages([
+                    'quiz' => 'Return the quiz to draft or add another question before deleting its last question.',
+                ]);
+            }
+            $target->delete();
+        }, 3);
+
+        return redirect()->route('teacher.quiz.builder', $quiz->lesson_id)
+            ->with('success', 'Question deleted.');
+    }
+
+    private function lockTeacherQuiz(Quiz $quiz, string $revision): Quiz
+    {
+        $course = Course::lockForUpdate()->findOrFail($quiz->course_id);
+        $this->ensureTeacherCanModifyCourse($course);
+        $lesson = $quiz->lesson_id ? Lesson::lockForUpdate()->find($quiz->lesson_id) : null;
+        abort_unless(
+            $lesson && $lesson->lesson_type === 'quiz' && (int) $lesson->course_id === (int) $course->id,
+            422,
+            'This quiz is no longer linked to a valid quiz lesson.'
         );
 
+        $current = Quiz::lockForUpdate()->findOrFail($quiz->id);
+        abort_unless((int) $current->course_id === (int) $course->id
+            && (int) $current->lesson_id === (int) $lesson->id, 409, 'This quiz moved while you were editing.');
 
-        QuizQuestion::create([
-            'quiz_id' =>
-                $quiz->id,
+        $current->load(['questions' => fn ($questions) => $questions->orderBy('id')->lockForUpdate()]);
+        $this->requireQuizRevision($current, $revision);
 
-            'question' =>
-                $validated['question'],
-
-            'option_a' =>
-                $validated['option_a'],
-
-            'option_b' =>
-                $validated['option_b'],
-
-            'option_c' =>
-                $validated['option_c']
-                ?? null,
-
-            'option_d' =>
-                $validated['option_d']
-                ?? null,
-
-            'correct_answer' =>
-                $validated['correct_answer'],
-
-            'points' =>
-                $validated['points'],
-        ]);
-
-
-        return redirect()
-            ->route(
-                'teacher.quiz.builder',
-                $quiz->lesson_id
-            )
-            ->with(
-                'success',
-                'Question added successfully.'
-            );
+        return $current;
     }
 
+    private function saveGeneratedQuestions(Quiz $quiz, array $generated, int $requestedCount, string $revision): int
+    {
+        return DB::transaction(function () use ($quiz, $generated, $requestedCount, $revision) {
+            $current = $this->lockTeacherQuiz($quiz, $revision);
 
+            $limit = min($requestedCount, 50 - $current->questions->count());
+            if ($limit <= 0) {
+                throw ValidationException::withMessages(['question_count' => 'This quiz already has 50 or more questions.']);
+            }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TEACHER - UPDATE QUESTION
-    |--------------------------------------------------------------------------
-    */
+            $seen = $current->questions->mapWithKeys(fn (QuizQuestion $question) => [
+                $this->questionKey($question->question) => true,
+            ])->all();
 
-    public function teacherUpdateQuestion(
-        Request $request,
-        Quiz $quiz,
-        QuizQuestion $question
-    ) {
-        $quiz->load('course');
+            $saved = 0;
+            foreach ($generated as $question) {
+                $key = $this->questionKey($question['question']);
+                if (isset($seen[$key])) {
+                    continue;
+                }
 
+                $current->questions()->create($question);
+                $seen[$key] = true;
+                if (++$saved === $limit) {
+                    break;
+                }
+            }
 
-        $this->ensureTeacherCanModifyQuiz($quiz);
+            // New questions must not become available as a side effect of
+            // AI generation. The teacher can publish the reviewed quiz from
+            // the builder after generation completes.
+            if ($saved > 0 && $current->is_published) {
+                $current->is_published = false;
+                $current->save();
+            }
 
-
-        if (
-            (int) $question->quiz_id
-            !==
-            (int) $quiz->id
-        ) {
-            abort(404);
-        }
-
-
-        $validated =
-            $this->validateQuestion(
-                $request
-            );
-
-
-        $this->validateCorrectOption(
-            $validated
-        );
-
-
-        $question->update([
-            'question' =>
-                $validated['question'],
-
-            'option_a' =>
-                $validated['option_a'],
-
-            'option_b' =>
-                $validated['option_b'],
-
-            'option_c' =>
-                $validated['option_c']
-                ?? null,
-
-            'option_d' =>
-                $validated['option_d']
-                ?? null,
-
-            'correct_answer' =>
-                $validated['correct_answer'],
-
-            'points' =>
-                $validated['points'],
-        ]);
-
-
-        return redirect()
-            ->route(
-                'teacher.quiz.builder',
-                $quiz->lesson_id
-            )
-            ->with(
-                'success',
-                'Question updated successfully.'
-            );
+            return $saved;
+        }, 3);
     }
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | TEACHER - DELETE QUESTION
-    |--------------------------------------------------------------------------
-    */
-
-    public function teacherDeleteQuestion(
-        Quiz $quiz,
-        QuizQuestion $question
-    ) {
-        $quiz->load('course');
-
-
-        $this->ensureTeacherCanModifyQuiz($quiz);
-
-
-        if (
-            (int) $question->quiz_id
-            !==
-            (int) $quiz->id
-        ) {
-            abort(404);
-        }
-
-
-        $question->delete();
-
-
-        return redirect()
-            ->route(
-                'teacher.quiz.builder',
-                $quiz->lesson_id
-            )
-            ->with(
-                'success',
-                'Question deleted successfully.'
-            );
+    private function questionKey(string $question): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $question) ?? $question));
     }
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | QUESTION VALIDATION
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validateQuestion(
-        Request $request
-    ): array {
-        return $request->validate([
-            'question' => [
-                'required',
-                'string',
-            ],
-
-            'option_a' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'option_b' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'option_c' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'option_d' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'correct_answer' => [
-                'required',
-                'in:A,B,C,D',
-            ],
-
-            'points' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:100',
-            ],
-        ]);
+    private function questionRules(): array
+    {
+        return [
+            'question' => ['required', 'string'],
+            'option_a' => ['required', 'string', 'max:255'],
+            'option_b' => ['required', 'string', 'max:255'],
+            'option_c' => ['nullable', 'string', 'max:255'],
+            'option_d' => ['nullable', 'string', 'max:255'],
+            'correct_answer' => ['required', 'in:A,B,C,D'],
+            'points' => ['required', 'integer', 'min:1', 'max:100'],
+        ];
     }
 
+    private function questionValues(array $question): array
+    {
+        return $question + ['option_c' => null, 'option_d' => null];
+    }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function validateCorrectOption(
-        array $validated
-    ): void {
-        $field = match (
-            $validated['correct_answer']
-        ) {
-            'A' => 'option_a',
-            'B' => 'option_b',
-            'C' => 'option_c',
-            'D' => 'option_d',
-            // Unreachable: validateQuestion() only accepts A, B, C or D.
-            default => throw new \UnhandledMatchError('Invalid correct answer.'),
-        };
+    private function validateCorrectOption(array $validated, string $errorKey = 'correct_answer'): void
+    {
+        $answer = $validated['correct_answer'];
+        $field = 'option_'.strtolower($answer);
 
-
-        if (
-            empty(
-                $validated[$field] ?? null
-            )
-        ) {
-            abort(
-                422,
-                'The selected correct answer must contain an option.'
-            );
+        if (blank($validated[$field] ?? null)) {
+            throw ValidationException::withMessages([$errorKey => 'Fill in option '.$answer.' for the selected correct answer.']);
         }
     }
-
-
 
     /*
     |--------------------------------------------------------------------------
     | STUDENT - QUIZ ACCESS GUARD
     |--------------------------------------------------------------------------
     */
+
+    private function loadStudentQuiz(Quiz $quiz, array $relations): Quiz
+    {
+        return DB::transaction(function () use ($quiz, $relations) {
+            // Read the current publication state and questions together with
+            // the builder's writes serialized on the same quiz row.
+            $current = Quiz::sharedLock()->findOrFail($quiz->id);
+            $current->load($relations);
+            $this->ensureStudentCanAccessQuiz($current);
+
+            return $current;
+        }, 3);
+    }
 
     private function ensureStudentCanAccessQuiz(
         Quiz $quiz
@@ -1337,6 +1149,7 @@ class QuizController extends Controller
                     'Quiz lesson not found.'
                 );
             }
+            abort_unless($quiz->lesson->is_published, 403, 'This quiz lesson is not currently available to students.');
         }
 
         // Cancelled enrollments no longer give access (Enrollment::ACCESS_STATUSES).
@@ -1369,16 +1182,7 @@ class QuizController extends Controller
 
     public function take(Quiz $quiz)
     {
-        $quiz->load([
-            'course',
-            'lesson',
-            'questions',
-        ]);
-
-
-        $this->ensureStudentCanAccessQuiz(
-            $quiz
-        );
+        $quiz = $this->loadStudentQuiz($quiz, ['course', 'lesson', 'questions']);
 
 
         /*
@@ -1413,17 +1217,7 @@ class QuizController extends Controller
         Request $request,
         Quiz $quiz
     ) {
-        $quiz->load([
-            'questions',
-            'lesson',
-            'course.category',
-            'course.lessons',
-        ]);
-
-
-        $this->ensureStudentCanAccessQuiz(
-            $quiz
-        );
+        $quiz = $this->loadStudentQuiz($quiz, ['questions', 'lesson', 'course.category', 'course.lessons']);
 
 
         if (
