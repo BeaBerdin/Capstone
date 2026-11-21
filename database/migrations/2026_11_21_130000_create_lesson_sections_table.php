@@ -26,6 +26,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('lesson_sections');
+        // Dropping the table loses ordered Reading content and private file
+        // references. Refuse before issuing any SQL.
+        throw new RuntimeException(
+            'The Reading lesson sections migration is forward-only. Rollback would discard ordered lesson content and private attachment metadata. Use a forward recovery migration or restore a verified backup.'
+        );
     }
 };

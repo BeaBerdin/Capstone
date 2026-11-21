@@ -35,16 +35,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropColumn('payment_review_required_at');
-        });
-
-        Schema::dropIfExists('course_invitation_redemptions');
-
-        Schema::table('course_invitations', function (Blueprint $table) {
-            $table->dropUnique('course_invitation_recipient_unique');
-            $table->dropConstrainedForeignId('parent_invitation_id');
-            $table->dropColumn(['is_private', 'deactivated_at']);
-        });
+        // The old schema cannot retain redemption history, recipient/privacy
+        // boundaries, deactivation state, or payment review metadata.
+        // Refuse before SQL: MySQL DDL can commit implicitly.
+        throw new RuntimeException(
+            'The reusable course invitation migration is forward-only. Rollback would discard redemption history, invitation privacy and recipient metadata, and payment review state. Use a forward recovery migration or restore a verified backup.'
+        );
     }
 };
