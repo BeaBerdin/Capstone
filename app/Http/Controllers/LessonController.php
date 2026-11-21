@@ -22,9 +22,10 @@ class LessonController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $lessons = Lesson::with('course')
+            ->whereHas('course', fn ($course) => $course->manageableBy($request->user()))
             ->orderBy('lesson_order')
             ->get();
 
@@ -32,9 +33,9 @@ class LessonController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
         return view('Lessons.create', compact('courses'));
     }
@@ -42,8 +43,8 @@ class LessonController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'course_id' => 'required|exists:courses,id',
+        $validated = $request->validate([
+            'course_id' => 'required|integer|exists:courses,id',
             'title' => 'required|max:255',
             'content' => 'nullable',
             'lesson_type' => 'required|in:video,document,text,quiz',
@@ -54,8 +55,10 @@ class LessonController extends Controller
             'is_published' => 'nullable',
         ]);
 
+        Course::authorizeManagement($request->user(), $validated['course_id']);
+
         Lesson::create([
-            'course_id' => $request->course_id,
+            'course_id' => $validated['course_id'],
             'title' => $request->title,
             'content' => $request->content,
             'lesson_type' => $request->lesson_type,
@@ -72,9 +75,11 @@ class LessonController extends Controller
     }
 
 
-    public function edit(Lesson $lesson)
+    public function edit(Request $request, Lesson $lesson)
     {
-        $courses = Course::orderBy('title')->get();
+        Course::authorizeManagement($request->user(), $lesson->course_id);
+
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
         return view(
             'Lessons.edit',
@@ -85,8 +90,10 @@ class LessonController extends Controller
 
     public function update(Request $request, Lesson $lesson)
     {
-        $request->validate([
-            'course_id' => 'required|exists:courses,id',
+        Course::authorizeManagement($request->user(), $lesson->course_id);
+
+        $validated = $request->validate([
+            'course_id' => 'required|integer|exists:courses,id',
             'title' => 'required|max:255',
             'content' => 'nullable',
             'lesson_type' => 'required|in:video,document,text,quiz',
@@ -97,8 +104,19 @@ class LessonController extends Controller
             'is_published' => 'nullable',
         ]);
 
+        $destination = (int) $validated['course_id'];
+        Course::authorizeManagement($request->user(), $destination);
+
+        if ($destination !== (int) $lesson->course_id) {
+            abort_if(
+                $lesson->hasReferencesOutsideCourse($destination),
+                422,
+                'Detach the linked quizzes and assignments before moving this lesson.'
+            );
+        }
+
         $lesson->update([
-            'course_id' => $request->course_id,
+            'course_id' => $destination,
             'title' => $request->title,
             'content' => $request->content,
             'lesson_type' => $request->lesson_type,
@@ -115,8 +133,11 @@ class LessonController extends Controller
     }
 
 
-    public function destroy(Lesson $lesson)
+    public function destroy(Request $request, Lesson $lesson)
     {
+        Course::authorizeManagement($request->user(), $lesson->course_id);
+        abort_if(! $request->user()->hasRole('super_admin') && $lesson->hasReferencesOutsideCourse((int) $lesson->course_id), 403);
+
         PrivateFiles::delete($lesson->file_path);
 
         $lesson->delete();
@@ -1181,6 +1202,7 @@ class LessonController extends Controller
         $lesson->load('course');
 
         $this->ensureTeacherCanModifyCourse($lesson->course);
+        abort_if($lesson->hasReferencesOutsideCourse((int) $lesson->course_id), 403);
 
         $course = $lesson->course;
 

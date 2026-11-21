@@ -26,13 +26,14 @@ class QuizController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $quizzes = Quiz::with([
             'course',
             'lesson',
             'questions',
         ])
+            ->manageableBy($request->user())
             ->latest()
             ->get();
 
@@ -43,11 +44,13 @@ class QuizController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
-        $lessons = Lesson::orderBy('title')->get();
+        $lessons = Lesson::whereHas('course', fn ($course) => $course->manageableBy($request->user()))
+            ->orderBy('title')
+            ->get();
 
         return view(
             'quizzes.create',
@@ -64,11 +67,13 @@ class QuizController extends Controller
         $validated = $request->validate([
             'course_id' => [
                 'required',
+                'integer',
                 'exists:courses,id',
             ],
 
             'lesson_id' => [
                 'nullable',
+                'integer',
                 'exists:lessons,id',
             ],
 
@@ -102,6 +107,8 @@ class QuizController extends Controller
             ],
         ]);
 
+
+        $this->authorizeQuizDestination($request, $validated);
 
         Quiz::create([
             'course_id' =>
@@ -136,13 +143,16 @@ class QuizController extends Controller
     }
 
 
-    public function edit(Quiz $quiz)
+    public function edit(Request $request, Quiz $quiz)
     {
-        $courses =
-            Course::orderBy('title')->get();
+        abort_unless(Quiz::manageableBy($request->user())->whereKey($quiz)->exists(), 403);
 
-        $lessons =
-            Lesson::orderBy('title')->get();
+        $courses =
+            Course::manageableBy($request->user())->orderBy('title')->get();
+
+        $lessons = Lesson::whereHas('course', fn ($course) => $course->manageableBy($request->user()))
+            ->orderBy('title')
+            ->get();
 
         return view(
             'quizzes.edit',
@@ -159,14 +169,18 @@ class QuizController extends Controller
         Request $request,
         Quiz $quiz
     ) {
+        abort_unless(Quiz::manageableBy($request->user())->whereKey($quiz)->exists(), 403);
+
         $validated = $request->validate([
             'course_id' => [
                 'required',
+                'integer',
                 'exists:courses,id',
             ],
 
             'lesson_id' => [
                 'nullable',
+                'integer',
                 'exists:lessons,id',
             ],
 
@@ -201,6 +215,8 @@ class QuizController extends Controller
         ]);
 
 
+        $this->authorizeQuizDestination($request, $validated);
+
         $quiz->update([
             'course_id' =>
                 $validated['course_id'],
@@ -234,8 +250,10 @@ class QuizController extends Controller
     }
 
 
-    public function destroy(Quiz $quiz)
+    public function destroy(Request $request, Quiz $quiz)
     {
+        abort_unless(Quiz::manageableBy($request->user())->whereKey($quiz)->exists(), 403);
+
         $quiz->delete();
 
         return redirect()
@@ -244,6 +262,19 @@ class QuizController extends Controller
                 'success',
                 'Quiz deleted successfully.'
             );
+    }
+
+    private function authorizeQuizDestination(Request $request, array $validated): void
+    {
+        Course::authorizeManagement($request->user(), $validated['course_id']);
+
+        if (isset($validated['lesson_id'])) {
+            abort_unless(
+                Lesson::whereKey($validated['lesson_id'])->where('course_id', $validated['course_id'])->exists(),
+                422,
+                'Selected lesson does not belong to the selected course.'
+            );
+        }
     }
 
 
@@ -287,6 +318,15 @@ class QuizController extends Controller
                 'This quiz cannot be modified while the course is pending approval or published.'
             );
         }
+    }
+
+    private function ensureTeacherCanModifyQuiz(Quiz $quiz): void
+    {
+        abort_unless($quiz->course, 403);
+
+        $this->ensureTeacherCanModifyCourse($quiz->course);
+
+        abort_unless($quiz->hasConsistentLesson(), 403);
     }
 
 
@@ -340,6 +380,7 @@ class QuizController extends Controller
             )
             ->first();
 
+        abort_if($quiz && (int) $quiz->course_id !== (int) $lesson->course_id, 403);
 
         $quizCanBeModified =
             in_array(
@@ -435,6 +476,7 @@ class QuizController extends Controller
                 $lesson->id,
         ]);
 
+        abort_if($quiz->exists && (int) $quiz->course_id !== (int) $lesson->course_id, 403);
 
         $quiz->course_id =
             $lesson->course_id;
@@ -498,9 +540,7 @@ class QuizController extends Controller
         ]);
 
 
-        $this->ensureTeacherCanModifyCourse(
-            $quiz->course
-        );
+        $this->ensureTeacherCanModifyQuiz($quiz);
 
 
         if (
@@ -965,9 +1005,7 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        $this->ensureTeacherCanModifyCourse(
-            $quiz->course
-        );
+        $this->ensureTeacherCanModifyQuiz($quiz);
 
 
         $validated =
@@ -1037,9 +1075,7 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        $this->ensureTeacherCanModifyCourse(
-            $quiz->course
-        );
+        $this->ensureTeacherCanModifyQuiz($quiz);
 
 
         if (
@@ -1114,9 +1150,7 @@ class QuizController extends Controller
         $quiz->load('course');
 
 
-        $this->ensureTeacherCanModifyCourse(
-            $quiz->course
-        );
+        $this->ensureTeacherCanModifyQuiz($quiz);
 
 
         if (

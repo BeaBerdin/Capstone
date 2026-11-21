@@ -6,6 +6,7 @@ use App\Models\AIRecommendation;
 use App\Models\Course;
 use App\Models\QuizResult;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class AIRecommendationController extends Controller
@@ -16,12 +17,13 @@ class AIRecommendationController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $recommendations = AIRecommendation::with([
                 'student',
                 'course',
             ])
+            ->whereHas('course', fn ($course) => $course->manageableBy($request->user()))
             ->latest()
             ->get();
 
@@ -32,8 +34,9 @@ class AIRecommendationController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
+        $administrator = $request->user();
         $students = User::whereHas(
                 'roles',
                 function ($query) {
@@ -43,6 +46,8 @@ class AIRecommendationController extends Controller
                     );
                 }
             )
+            ->when(! $administrator->hasRole('super_admin'), fn (Builder $students) => $students
+                ->whereIn('id', $this->eligibleQuizResults($administrator)->select('student_id')))
             ->orderBy('name')
             ->get();
 
@@ -88,29 +93,8 @@ class AIRecommendationController extends Controller
         | unpublished quizzes should not affect a student's recommendation.
         */
 
-        $averageScore = QuizResult::where(
-                'student_id',
-                $studentId
-            )
-            ->whereHas(
-                'quiz',
-                function ($query) {
-                    $query
-                        ->where(
-                            'is_published',
-                            true
-                        )
-                        ->whereHas(
-                            'course',
-                            function ($courseQuery) {
-                                $courseQuery->where(
-                                    'status',
-                                    'published'
-                                );
-                            }
-                        );
-                }
-            )
+        $averageScore = $this->eligibleQuizResults($request->user())
+            ->where('student_id', $studentId)
             ->avg('percentage');
 
         if ($averageScore === null) {
@@ -152,6 +136,7 @@ class AIRecommendationController extends Controller
                 'difficulty_level',
                 $difficulty
             )
+            ->manageableBy($request->user())
             ->where(
                 'status',
                 'published'
@@ -167,12 +152,7 @@ class AIRecommendationController extends Controller
             )
             ->whereHas(
                 'quizzes',
-                function ($query) {
-                    $query->where(
-                        'is_published',
-                        true
-                    );
-                }
+                fn ($quiz) => $quiz->manageableBy($request->user())->where('is_published', true)
             )
             ->latest()
             ->first();
@@ -226,16 +206,24 @@ class AIRecommendationController extends Controller
     }
 
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        AIRecommendation::findOrFail(
-            $id
-        )->delete();
+        $recommendation = AIRecommendation::findOrFail($id);
+        Course::authorizeManagement($request->user(), $recommendation->course_id);
+        $recommendation->delete();
 
         return back()->with(
             'success',
             'Recommendation deleted successfully.'
         );
+    }
+
+    private function eligibleQuizResults(User $administrator): Builder
+    {
+        return QuizResult::whereHas('quiz', fn (Builder $quiz) => $quiz
+            ->manageableBy($administrator)
+            ->where('is_published', true)
+            ->whereHas('course', fn (Builder $course) => $course->where('status', 'published')));
     }
 
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Lesson;
 
 /*
@@ -109,10 +110,11 @@ test('a teacher cannot edit another teacher\'s course', function () {
 });
 
 test('returning a course for revision requires feedback', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.reject', $course), ['remarks' => ''])
         ->assertSessionHasErrors('remarks');
 
@@ -120,10 +122,11 @@ test('returning a course for revision requires feedback', function () {
 });
 
 test('returning a course saves the feedback and notifies the teacher', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.reject', $course), ['remarks' => 'Please add learning outcomes.'])
         ->assertRedirect(route('courses.index'));
 
@@ -140,10 +143,11 @@ test('returning a course saves the feedback and notifies the teacher', function 
 });
 
 test('approving a course publishes it and clears old feedback', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending', 'review_remarks' => 'Old feedback']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.approve', $course))
         ->assertRedirect(route('courses.index'));
 

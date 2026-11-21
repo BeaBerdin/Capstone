@@ -15,12 +15,13 @@ class LearningPathController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $learningPaths = LearningPath::with([
                 'courses',
                 'student',
             ])
+            ->manageableBy($request->user())
             ->latest()
             ->get();
 
@@ -31,9 +32,9 @@ class LearningPathController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
-        $courses = Course::orderBy('title')
+        $courses = Course::manageableBy($request->user())->orderBy('title')
             ->get();
 
         return view(
@@ -45,7 +46,7 @@ class LearningPathController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' =>
                 'required|max:255',
 
@@ -56,8 +57,11 @@ class LearningPathController extends Controller
                 'nullable|array',
 
             'course_ids.*' =>
-                'exists:courses,id',
+                'required|integer|exists:courses,id',
         ]);
+
+        $courseIds = $validated['course_ids'] ?? [];
+        $this->authorizeDestinationCourses($request, $courseIds);
 
         $learningPath = LearningPath::create([
             'name' =>
@@ -72,9 +76,7 @@ class LearningPathController extends Controller
 
         $this->syncCoursesWithOrder(
             $learningPath,
-            collect(
-                (array) ($request->course_ids ?? [])
-            )
+            collect($courseIds)
         );
 
         return redirect()
@@ -87,8 +89,11 @@ class LearningPathController extends Controller
 
 
     public function show(
+        Request $request,
         LearningPath $learningPath
     ) {
+        abort_unless(LearningPath::manageableBy($request->user())->whereKey($learningPath)->exists(), 403);
+
         $learningPath->load([
             'courses.category',
             'student',
@@ -102,9 +107,12 @@ class LearningPathController extends Controller
 
 
     public function edit(
+        Request $request,
         LearningPath $learningPath
     ) {
-        $courses = Course::orderBy('title')
+        abort_unless(LearningPath::manageableBy($request->user())->whereKey($learningPath)->exists(), 403);
+
+        $courses = Course::manageableBy($request->user())->orderBy('title')
             ->get();
 
         $selectedCourses = $learningPath
@@ -127,7 +135,9 @@ class LearningPathController extends Controller
         Request $request,
         LearningPath $learningPath
     ) {
-        $request->validate([
+        abort_unless(LearningPath::manageableBy($request->user())->whereKey($learningPath)->exists(), 403);
+
+        $validated = $request->validate([
             'name' =>
                 'required|max:255',
 
@@ -138,8 +148,11 @@ class LearningPathController extends Controller
                 'nullable|array',
 
             'course_ids.*' =>
-                'exists:courses,id',
+                'required|integer|exists:courses,id',
         ]);
+
+        $courseIds = $validated['course_ids'] ?? [];
+        $this->authorizeDestinationCourses($request, $courseIds);
 
         $learningPath->update([
             'name' =>
@@ -151,9 +164,7 @@ class LearningPathController extends Controller
 
         $this->syncCoursesWithOrder(
             $learningPath,
-            collect(
-                (array) ($request->course_ids ?? [])
-            )
+            collect($courseIds)
         );
 
         return redirect()
@@ -166,8 +177,11 @@ class LearningPathController extends Controller
 
 
     public function destroy(
+        Request $request,
         LearningPath $learningPath
     ) {
+        abort_unless(LearningPath::manageableBy($request->user())->whereKey($learningPath)->exists(), 403);
+
         $learningPath
             ->courses()
             ->detach();
@@ -180,6 +194,15 @@ class LearningPathController extends Controller
                 'success',
                 'Learning path deleted successfully.'
             );
+    }
+
+    private function authorizeDestinationCourses(Request $request, array $courseIds): void
+    {
+        $administrator = $request->user();
+        abort_if($courseIds === [] && ! $administrator->hasRole('super_admin'), 403);
+
+        $courseIds = array_unique($courseIds);
+        abort_unless(Course::manageableBy($administrator)->whereKey($courseIds)->count() === count($courseIds), 403);
     }
 
 

@@ -13,7 +13,7 @@
     $teacherQuizzes = $results->map(fn ($r) => $r->quiz)->filter()->unique('id')->sortBy('title')->values();
 
     // This page is shared by teachers and the Department Head (admin).
-    $courseContentUrl = auth()->user()->hasRole('admin')
+    $courseContentUrl = request()->routeIs('quiz-results.index')
         ? route('lessons.index')
         : route('teacher.lessons.index');
 @endphp

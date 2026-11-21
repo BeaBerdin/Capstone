@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Assignment;
+use App\Models\Department;
 use App\Models\Enrollment;
 use App\Models\Submission;
 
@@ -16,7 +17,8 @@ test('a teacher can open the student removal requests page', function () {
 });
 
 test('an administrator can open an assignment and a submission', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -44,7 +46,7 @@ test('an administrator can open an assignment and a submission', function () {
         'submitted_at' => now(),
     ]);
 
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('assignments.show', $assignment))

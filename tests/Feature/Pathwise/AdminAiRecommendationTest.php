@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\AIRecommendation;
 use App\Models\Lesson;
 use App\Models\Quiz;
@@ -12,7 +13,8 @@ use App\Models\QuizResult;
 
 function completePublishedCourse(string $difficulty, string $title)
 {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'difficulty_level' => $difficulty, 'title' => $title]);
+    $department = Department::firstOrCreate(['name' => 'Computing']);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'published', 'difficulty_level' => $difficulty, 'title' => $title]);
     $lesson = Lesson::create([
         'course_id' => $course->id, 'title' => 'Lesson 1', 'content' => 'Content', 'lesson_type' => 'text',
         'lesson_order' => 1, 'duration_minutes' => 20, 'is_preview' => false, 'is_published' => true,
@@ -40,7 +42,7 @@ test('the administrator can generate a recommendation for a student', function (
     $student = studentWithQuizScore(80);
     [$intermediate] = completePublishedCourse('intermediate', 'Python Programming Basics');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $intermediate->teacher->department_id]))
         ->post(route('ai-recommendations.store'), ['student_id' => $student->id])
         ->assertSessionHas('success');
 
@@ -85,7 +87,7 @@ test('the administrator can delete a recommendation', function () {
         'student_id' => $student->id, 'course_id' => $course->id, 'recommendation_score' => 80, 'reason' => 'Next step', 'is_viewed' => false,
     ]);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $course->teacher->department_id]))
         ->from(route('ai-recommendations.index'))
         ->delete(route('ai-recommendations.destroy', $recommendation))
         ->assertSessionHas('success', 'Recommendation deleted successfully.');
@@ -93,7 +95,7 @@ test('the administrator can delete a recommendation', function () {
     expect(AIRecommendation::find($recommendation->id))->toBeNull();
 });
 
-test('only the administrator can generate or delete recommendations', function (string $role) {
+test('teachers and students cannot generate or delete recommendations', function (string $role) {
     $student = studentWithQuizScore(80);
     [$course] = completePublishedCourse('intermediate', 'Python Programming Basics');
     $recommendation = AIRecommendation::create([
@@ -105,4 +107,4 @@ test('only the administrator can generate or delete recommendations', function (
     $this->actingAs($user)->delete(route('ai-recommendations.destroy', $recommendation))->assertForbidden();
 
     expect(AIRecommendation::count())->toBe(1);
-})->with(['teacher', 'student', 'super_admin']);
+})->with(['teacher', 'student']);

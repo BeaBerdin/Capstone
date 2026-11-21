@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LearningPath;
 use App\Models\QuizResult;
 use App\Models\Submission;
 use App\Models\Transaction;
@@ -18,17 +19,27 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalStudents = User::count();
-        $totalTeachers = User::count();
-        $totalCourses = Course::count();
-        $totalEnrollments = Enrollment::count();
+        $administrator = auth()->user();
+        $departmentOnly = ! $administrator->hasRole('super_admin');
+        $courses = Course::manageableBy($administrator);
+        $enrollments = Enrollment::whereHas('course', fn ($course) => $course->manageableBy($administrator));
+        $pending = (clone $courses)->where('status', 'pending');
 
-        return view('dashboard', compact(
-            'totalStudents',
-            'totalTeachers',
-            'totalCourses',
-            'totalEnrollments'
-        ));
+        return view('dashboard', [
+            'totalStudents' => User::whereHas('roles', fn ($role) => $role->where('name', 'student'))
+                ->when($departmentOnly, fn ($users) => $users->whereIn('id', $enrollments->select('student_id')))
+                ->count(),
+            'totalTeachers' => User::whereHas('roles', fn ($role) => $role->where('name', 'teacher'))
+                ->when($departmentOnly, fn ($users) => $users->whereIn('id', (clone $courses)->select('teacher_id')))
+                ->count(),
+            'totalCourses' => $courses->count(),
+            'publishedCourses' => (clone $courses)->where('status', 'published')->count(),
+            'pendingCourses' => $pending->count(),
+            'coursesPendingApproval' => $pending->with(['teacher', 'category'])->latest()->take(5)->get(),
+            'certificatesIssued' => Certificate::whereHas('course', fn ($course) => $course->manageableBy($administrator))->count(),
+            'activeLearningPaths' => LearningPath::manageableBy($administrator)->count(),
+            'studentCountLabel' => $departmentOnly ? 'Learners in department courses' : 'Registered learners',
+        ]);
     }
 
     public function superAdmin()

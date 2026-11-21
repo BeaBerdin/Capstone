@@ -15,12 +15,14 @@ class StudentRemovalRequestController extends Controller
      */
     public function instructorIndex()
     {
+        $instructorId = auth()->id();
         $requests = StudentRemovalRequest::with([
             'student',
             'course',
             'reviewer',
         ])
-            ->where('instructor_id', auth()->id())
+            ->where('instructor_id', $instructorId)
+            ->whereHas('course', fn ($course) => $course->where('teacher_id', $instructorId))
             ->latest()
             ->paginate(10);
 
@@ -96,21 +98,14 @@ class StudentRemovalRequestController extends Controller
             'status' => 'pending',
         ]);
 
-        $reviewers = auth()->user()->department_id
-            ? 'the Department Head approves it'
-            : 'an administrator approves it (your account has no department, so the request was sent to all administrators)';
-
         return back()->with(
             'success',
-            'Student removal request submitted successfully. The student remains enrolled until '.$reviewers.'.'
+            'Student removal request submitted successfully. The student remains enrolled until an authorized reviewer approves it.'
         );
     }
 
     /**
-     * Show the requests this administrator may review (see the rules in
-     * StudentRemovalRequest): the own department, teachers without a
-     * department and departments without an administrator; everything
-     * for an administrator without a department.
+     * Show requests for courses this administrator may manage.
      */
     public function departmentHeadIndex()
     {
@@ -126,7 +121,7 @@ class StudentRemovalRequestController extends Controller
             ->latest()
             ->paginate(10);
 
-        $campusWide = ! $administrator->department_id;
+        $campusWide = $administrator->hasRole('super_admin');
 
         return view(
             'student-removal-requests.index',
@@ -153,14 +148,8 @@ class StudentRemovalRequestController extends Controller
             ],
         ]);
 
-        // A Department Head reviews only the requests routed to them.
-        abort_unless(
-            $studentRemovalRequest->isReviewableBy(auth()->user()),
-            403,
-            'You cannot review requests from another department.'
-        );
-
         DB::transaction(function () use (
+            $request,
             $validated,
             $studentRemovalRequest
         ) {
@@ -169,6 +158,8 @@ class StudentRemovalRequestController extends Controller
             )
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            abort_unless($removalRequest->isReviewableBy($request->user()), 403);
 
             abort_if(
                 $removalRequest->status !== 'pending',

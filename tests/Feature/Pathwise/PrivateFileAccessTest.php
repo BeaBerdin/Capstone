@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Assignment;
+use App\Models\Department;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Submission;
@@ -144,7 +145,10 @@ test('the student, the course teacher and administrators can open a submission',
     fakeFileDisks();
     [$teacher, $student, $submission] = privateSubmission();
 
-    foreach ([$student, $teacher, pathwiseUser('admin')] as $user) {
+    $department = Department::create(['name' => 'Computing']);
+    $teacher->update(['department_id' => $department->id]);
+
+    foreach ([$student, $teacher, pathwiseUser('admin', ['department_id' => $department->id]), pathwiseUser('super_admin')] as $user) {
         $this->actingAs($user)->get(route('files.submission', $submission))->assertOk();
     }
 });
@@ -156,7 +160,7 @@ test('other users cannot open a submission', function (string $role) {
     $this->actingAs(pathwiseUser($role))
         ->get(route('files.submission', $submission))
         ->assertForbidden();
-})->with(['another student' => 'student', 'another teacher' => 'teacher', 'Super Admin' => 'super_admin']);
+})->with(['another student' => 'student', 'another teacher' => 'teacher', 'unassigned admin' => 'admin']);
 
 /*
 |--------------------------------------------------------------------------
@@ -177,8 +181,12 @@ test('the course teacher and administrators can open a lesson file of an unpubli
     fakeFileDisks();
     [$teacher, , $lesson] = privateLesson(['status' => 'draft'], ['is_published' => false]);
 
+    $department = Department::create(['name' => 'Computing']);
+    $teacher->update(['department_id' => $department->id]);
+
     $this->actingAs($teacher)->get(route('files.lesson', $lesson))->assertOk();
-    $this->actingAs(pathwiseUser('admin'))->get(route('files.lesson', $lesson))->assertOk();
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))->get(route('files.lesson', $lesson))->assertOk();
+    $this->actingAs(pathwiseUser('super_admin'))->get(route('files.lesson', $lesson))->assertOk();
 });
 
 test('a lesson file is closed to students without access', function (string $case) {
@@ -210,14 +218,14 @@ test('preview lessons are still for enrolled students only', function () {
         ->assertForbidden();
 });
 
-test('the Super Admin and other teachers cannot open a lesson file', function (string $role) {
+test('unassigned administrators and other teachers cannot open a lesson file', function (string $role) {
     fakeFileDisks();
     [, , $lesson] = privateLesson();
 
     $this->actingAs(pathwiseUser($role))
         ->get(route('files.lesson', $lesson))
         ->assertForbidden();
-})->with(['Super Admin' => 'super_admin', 'another teacher' => 'teacher']);
+})->with(['unassigned admin' => 'admin', 'another teacher' => 'teacher']);
 
 /*
 |--------------------------------------------------------------------------
@@ -402,7 +410,10 @@ test('pages link to the private file routes, not to /storage', function () {
         ->assertSee(route('files.submission', $submission))
         ->assertDontSee('storage/assignment-submissions');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $department = Department::create(['name' => 'Computing']);
+    $teacher->update(['department_id' => $department->id]);
+
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->get(route('submissions.show', $submission))
         ->assertSee(route('files.submission', $submission))
         ->assertDontSee('storage/assignment-submissions');

@@ -2,6 +2,7 @@
 
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\Department;
 
 /*
 | The course introduction video link: only https links can be saved, by
@@ -54,8 +55,9 @@ test('a teacher cannot save an unsafe intro video link', function (string $link)
 })->with('unsafe intro video links');
 
 test('an administrator cannot save an unsafe intro video link', function (string $link) {
-    $admin = pathwiseUser('admin');
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'draft', 'title' => 'Existing Draft']);
+    $department = Department::create(['name' => 'Computing']);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'draft', 'title' => 'Existing Draft']);
 
     $this->actingAs($admin)
         ->post(route('courses.store'), introVideoCourseInput(['intro_video' => $link]))
@@ -72,7 +74,8 @@ test('an administrator cannot save an unsafe intro video link', function (string
 
 test('an https intro video link is saved by a teacher and by an administrator', function () {
     $link = 'https://www.youtube.com/watch?v=abc123';
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
 
     $this->actingAs($teacher)
         ->post(route('teacher.courses.store'), introVideoCourseInput(['intro_video' => $link]))
@@ -86,7 +89,7 @@ test('an https intro video link is saved by a teacher and by an administrator', 
         ->assertSessionHasNoErrors();
     expect($course->fresh()->intro_video)->toBe('https://youtu.be/xyz789');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->put(route('courses.update', $course), introVideoCourseInput(['intro_video' => 'https://vimeo.com/12345']))
         ->assertSessionHasNoErrors();
     expect($course->fresh()->intro_video)->toBe('https://vimeo.com/12345');

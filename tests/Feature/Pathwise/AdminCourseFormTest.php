@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Course;
+use App\Models\Department;
 
 /*
 | The administrator's course form (Courses > Add / Edit).
@@ -19,8 +20,9 @@ function adminCourseInput(Course $course, array $overrides = []): array
 }
 
 test('the admin course form does not offer the unused Approved status', function () {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'pending']);
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'pending']);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     foreach ([route('courses.create'), route('courses.edit', $course)] as $page) {
         $this->actingAs($admin)->get($page)
@@ -33,8 +35,9 @@ test('the admin course form does not offer the unused Approved status', function
 });
 
 test('the Approved status is refused when an administrator saves a course', function () {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'pending']);
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'pending']);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->put(route('courses.update', $course), adminCourseInput($course, ['status' => 'approved']))
@@ -50,9 +53,10 @@ test('the Approved status is refused when an administrator saves a course', func
 });
 
 test('the other statuses are still accepted on the admin course form', function (string $status) {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'pending']);
+    $department = Department::create(['name' => 'Computing']);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->put(route('courses.update', $course), adminCourseInput($course, ['status' => $status]))
         ->assertSessionHasNoErrors();
 

@@ -40,11 +40,15 @@ class PrivateFileController extends Controller
         $user = auth()->user();
 
         $submission->loadMissing('assignment.course');
+        $assignment = $submission->assignment;
 
         abort_unless(
-            (int) $submission->student_id === (int) $user->id
-                || (int) $submission->assignment?->course?->teacher_id === (int) $user->id
-                || $user->hasRole('admin'),
+            ($user->hasRole('student') && (int) $submission->student_id === (int) $user->id)
+                || ($user->hasRole('teacher')
+                    && $assignment?->course
+                    && (int) $assignment->course->teacher_id === (int) $user->id
+                    && $assignment->hasConsistentLesson())
+                || $submission->assignment()->manageableBy($user)->exists(),
             403
         );
 
@@ -66,10 +70,11 @@ class PrivateFileController extends Controller
 
         abort_unless($course !== null, 403);
 
-        $canOpen = (int) $course->teacher_id === (int) $user->id
-            || $user->hasRole('admin')
+        $canOpen = ($user->hasRole('teacher') && (int) $course->teacher_id === (int) $user->id)
+            || $course->isManageableBy($user)
             || (
-                strtolower(trim((string) $course->status)) === 'published'
+                $user->hasRole('student')
+                && strtolower(trim((string) $course->status)) === 'published'
                 && (bool) $lesson->is_published
                 && Enrollment::where('student_id', $user->id)
                     ->where('course_id', $course->id)

@@ -128,6 +128,7 @@ class CourseReviewController extends Controller
         $filter = $request->query('status', 'all');
 
         $reviews = CourseReview::with(['course:id,title', 'student:id,name,email', 'hiddenBy:id,name'])
+            ->whereHas('course', fn ($course) => $course->manageableBy($request->user()))
             ->when($filter === 'visible', fn ($query) => $query->where('is_hidden', false))
             ->when($filter === 'hidden', fn ($query) => $query->where('is_hidden', true))
             ->latest()
@@ -139,6 +140,8 @@ class CourseReviewController extends Controller
 
     public function hide(Request $request, CourseReview $courseReview)
     {
+        abort_unless($courseReview->course()->manageableBy($request->user())->exists(), 403);
+
         $validated = $request->validate(
             ['hidden_reason' => ['required', 'string', 'max:'.CourseReview::HIDDEN_REASON_MAX_LENGTH]],
             ['hidden_reason.required' => 'Please write the reason for hiding this review.']
@@ -155,6 +158,8 @@ class CourseReviewController extends Controller
 
     public function unhide(CourseReview $courseReview)
     {
+        abort_unless($courseReview->course()->manageableBy(auth()->user())->exists(), 403);
+
         $courseReview->forceFill([
             'is_hidden' => false,
             'hidden_reason' => null,

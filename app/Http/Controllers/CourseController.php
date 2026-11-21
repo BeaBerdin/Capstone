@@ -39,7 +39,7 @@ class CourseController extends Controller
             'lessons' => fn ($lessons) => $lessons
                 ->select(['id', 'course_id', 'title', 'lesson_type', 'lesson_order', 'duration_minutes', 'is_preview'])
                 ->orderBy('lesson_order'),
-        ]);
+        ])->manageableBy($request->user());
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -70,6 +70,8 @@ class CourseController extends Controller
 
     public function create()
     {
+        abort_unless(Course::canBeCreatedByAdministrator(auth()->user()), 403);
+
         $categories = CourseCategory::orderBy('name')->get();
 
         return view(
@@ -80,6 +82,8 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(Course::canBeCreatedByAdministrator($request->user()), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:course_categories,id',
             'title' => 'required|string|max:255',
@@ -130,6 +134,8 @@ class CourseController extends Controller
 
     public function edit(Course $course)
     {
+        abort_unless($course->isManageableBy(auth()->user()), 403);
+
         $categories = CourseCategory::orderBy('name')->get();
 
         return view(
@@ -140,6 +146,8 @@ class CourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
+        abort_unless($course->isManageableBy($request->user()), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:course_categories,id',
             'title' => 'required|string|max:255',
@@ -195,6 +203,9 @@ class CourseController extends Controller
 
     public function destroy(Course $course)
     {
+        abort_unless($course->isManageableBy(auth()->user()), 403);
+        abort_if(! auth()->user()->hasRole('super_admin') && $course->hasExternalLessonReferences(), 403);
+
         if ($course->enrollments()->exists()) {
             return redirect()
                 ->route('courses.index')
@@ -1054,6 +1065,7 @@ class CourseController extends Controller
         Course $course
     ) {
         $this->ensureTeacherOwnsCourse($course);
+        abort_if($course->hasExternalLessonReferences(), 403);
 
         if (
             ! in_array(
@@ -1101,6 +1113,8 @@ class CourseController extends Controller
 
     public function approve(Course $course)
     {
+        abort_unless($course->isManageableBy(auth()->user()), 403);
+
         if ($course->status !== 'pending') {
             return redirect()
                 ->route('courses.index')
@@ -1137,6 +1151,8 @@ class CourseController extends Controller
 
     public function reject(Request $request, Course $course)
     {
+        abort_unless($course->isManageableBy($request->user()), 403);
+
         $validated = $request->validate(
             [
                 'remarks' => ['required', 'string', 'min:5', 'max:2000'],

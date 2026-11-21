@@ -16,43 +16,17 @@
 
     $currentDate = $localNow->format('l, F d, Y');
 
-    // Missing stats
-    $totalStudents = \App\Models\User::whereHas('roles', function ($query) {
-        $query->where('name', 'student');
-    })->count();
-
-    $totalCourses = \App\Models\Course::count();
-
-    // Course category & approval stats
     $totalCategories = \App\Models\CourseCategory::count();
-    $pendingCourses = \App\Models\Course::where('status', 'pending')->count();
-
-    // Certificates & learning path stats
-    $certificatesIssued = \App\Models\Certificate::count();
-    $activeLearningPaths = \App\Models\LearningPath::count();
-
-    $totalTeachers = \App\Models\User::whereHas('roles', function ($query) {
-        $query->where('name', 'teacher');
-    })->count();
-
-    $publishedCourses = \App\Models\Course::where('status', 'published')->count();
-
-    // Courses Pending Approval
-    $coursesPendingApproval = \App\Models\Course::with(['teacher', 'category'])
-        ->where('status', 'pending')
-        ->latest()
-        ->take(5)
-        ->get();
 @endphp
 
 {{--
     Admin (Department Head) dashboard in the soft-3D style (styles in
-    partials/soft3d). All figures come from the block above.
+    partials/soft3d).
 --}}
 
 @php
     $adminStats = [
-        ['label' => 'Total Students', 'value' => $totalStudents, 'sub' => 'Registered learners', 'tone' => 'sad-violet', 'href' => route('student-progress.index'),
+        ['label' => 'Total Students', 'value' => $totalStudents, 'sub' => $studentCountLabel, 'tone' => 'sad-violet', 'href' => route('student-progress.index'),
             'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
         ['label' => 'Total Teachers', 'value' => $totalTeachers, 'sub' => 'Course instructors', 'tone' => 'sad-sky', 'href' => null,
             'icon' => 'M12 14l9-5-9-5-9 5 9 5zM5 12.5V17c0 1.66 3.13 3 7 3s7-1.34 7-3v-4.5'],

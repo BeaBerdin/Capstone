@@ -2,6 +2,7 @@
 
 use App\Models\Course;
 use App\Models\CourseCategory;
+use App\Models\Department;
 use App\Models\Enrollment;
 use App\Models\LearningPath;
 use App\Models\Lesson;
@@ -28,9 +29,9 @@ function pathCategory(string $name): CourseCategory
 /**
  * A published course with one published lesson and one published quiz.
  */
-function pathCourse(string $title, CourseCategory $category, string $difficulty, array $attributes = []): Course
+function pathCourse(string $title, CourseCategory $category, string $difficulty, array $attributes = [], ?Department $department = null): Course
 {
-    $course = pathwiseCourse(pathwiseUser('teacher'), array_merge([
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department?->id]), array_merge([
         'title' => $title,
         'category_id' => $category->id,
         'difficulty_level' => $difficulty,
@@ -189,10 +190,11 @@ test('without a quiz result in a published course there is no path', function ()
 
 test('the administrator can choose free and paid courses for a learning path', function () {
     $category = pathCategory('Web Development');
-    pathCourse('Free Course', $category, 'beginner');
-    pathCourse('Paid Course', $category, 'beginner', ['price' => 499]);
+    $department = Department::create(['name' => 'Computing']);
+    $freeCourse = pathCourse('Free Course', $category, 'beginner', department: $department);
+    pathCourse('Paid Course', $category, 'beginner', ['price' => 499], department: $department);
 
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('learning-paths.create'))
@@ -201,6 +203,7 @@ test('the administrator can choose free and paid courses for a learning path', f
         ->assertSee('Paid Course');
 
     $path = LearningPath::create(['name' => 'Admin Path', 'difficulty_level' => 'beginner']);
+    $path->courses()->attach($freeCourse->id, ['course_order' => 1]);
 
     $this->actingAs($admin)
         ->get(route('learning-paths.edit', $path))

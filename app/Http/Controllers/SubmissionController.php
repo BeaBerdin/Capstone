@@ -24,17 +24,20 @@ class SubmissionController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $submissions = Submission::with(['assignment', 'student'])
+            ->whereHas('assignment', fn ($assignment) => $assignment->manageableBy($request->user()))
             ->latest()
             ->get();
 
         return view('submissions.index', compact('submissions'));
     }
 
-    public function show(Submission $submission)
+    public function show(Request $request, Submission $submission)
     {
+        abort_unless($submission->assignment()->manageableBy($request->user())->exists(), 403);
+
         $submission->load([
             'assignment.course',
             'student',
@@ -747,7 +750,8 @@ class SubmissionController extends Controller
         abort_unless(
             $assignment->course
                 && (int) $assignment->course->teacher_id
-                    === (int) auth()->id(),
+                    === (int) auth()->id()
+                && $assignment->hasConsistentLesson(),
             403,
             'You may only review submissions from your own courses.'
         );

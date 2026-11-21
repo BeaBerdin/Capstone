@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Assignment;
 use App\Models\Certificate;
 use App\Models\Enrollment;
@@ -35,7 +36,9 @@ function recordPagesSubmission(): Submission
 
 test('the submission list and details pages render, view only', function () {
     $submission = recordPagesSubmission();
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $submission->assignment->course->teacher->update(['department_id' => $department->id]);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('submissions.index'))
@@ -120,7 +123,9 @@ test('the certificate pages render and the form shows validation errors', functi
         'status' => 'issued',
     ]);
 
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $course->teacher->update(['department_id' => $department->id]);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('certificates.index'))

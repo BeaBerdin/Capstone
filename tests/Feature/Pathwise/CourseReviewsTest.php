@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CourseReviewController;
 use App\Models\Course;
+use App\Models\Department;
 use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Role;
@@ -17,9 +18,9 @@ use Illuminate\Support\Facades\Notification;
 | of the average, the count and the public lists.
 */
 
-function reviewCourse(array $attributes = []): Course
+function reviewCourse(array $attributes = [], ?Department $department = null): Course
 {
-    return pathwiseCourse(pathwiseUser('teacher'), array_merge(['status' => 'published'], $attributes));
+    return pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department?->id]), array_merge(['status' => 'published'], $attributes));
 }
 
 function reviewEnroll(Course $course, string $status = 'active', ?User $user = null): User
@@ -433,9 +434,10 @@ test('the teacher gets an in-app notification for a new review, not for edits', 
 |--------------------------------------------------------------------------
 */
 
-test('an administrator can hide a review with a reason and unhide it', function () {
-    $admin = pathwiseUser('admin');
-    $course = reviewCourse();
+test('an administrator can hide a review with a reason and unhide it', function (string $role) {
+    $department = Department::create(['name' => 'Computing']);
+    $admin = pathwiseUser($role, ['department_id' => $role === 'admin' ? $department->id : null]);
+    $course = reviewCourse(department: $department);
     $review = makeReview($course, reviewEnroll($course), 1);
 
     $this->actingAs($admin)
@@ -458,12 +460,13 @@ test('an administrator can hide a review with a reason and unhide it', function 
     expect($review->is_hidden)->toBeFalse()
         ->and($review->hidden_reason)->toBeNull()
         ->and($review->hidden_by)->toBeNull();
-});
+})->with(['admin', 'super_admin']);
 
 test('hiding a review requires a reason', function () {
-    $review = makeReview($course = reviewCourse(), reviewEnroll($course), 1);
+    $department = Department::create(['name' => 'Computing']);
+    $review = makeReview($course = reviewCourse(department: $department), reviewEnroll($course), 1);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('admin.course-reviews.hide', $review), ['hidden_reason' => ''])
         ->assertSessionHasErrors('hidden_reason');
 
@@ -485,13 +488,14 @@ test('other roles cannot hide or unhide reviews', function (string $role) {
 
     expect($visible->fresh()->is_hidden)->toBeFalse()
         ->and($hidden->fresh()->is_hidden)->toBeTrue();
-})->with(['student', 'teacher', 'super_admin']);
+})->with(['student', 'teacher', 'admin']);
 
 test('the administrator list shows visible and hidden reviews with a filter', function () {
-    $course = reviewCourse();
+    $department = Department::create(['name' => 'Computing']);
+    $course = reviewCourse(department: $department);
     makeReview($course, reviewEnroll($course), 5);
     makeReview($course, reviewEnroll($course), 1, hidden: true);
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)->get(route('admin.course-reviews.index'))
         ->assertOk()

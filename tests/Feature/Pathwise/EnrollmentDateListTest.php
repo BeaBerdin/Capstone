@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Enrollment;
 
 /*
@@ -8,9 +9,13 @@ use App\Models\Enrollment;
 | ranges (Today, Last 7/30/90 days, This year).
 */
 
-function datedEnrollment(string $studentName, ?string $enrolledAt, string $status = 'active'): Enrollment
+beforeEach(function () {
+    $this->department = Department::create(['name' => 'Computing']);
+});
+
+function datedEnrollment(Department $department, string $studentName, ?string $enrolledAt, string $status = 'active'): Enrollment
 {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published']);
+    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'published']);
 
     return Enrollment::create([
         'student_id' => pathwiseUser('student', ['name' => $studentName])->id,
@@ -23,11 +28,11 @@ function datedEnrollment(string $studentName, ?string $enrolledAt, string $statu
 }
 
 test('enrollments are listed newest first with their enrollment date', function () {
-    datedEnrollment('Olive Oldest', '2026-08-01 08:00:00');
-    datedEnrollment('Nina Newest', '2026-10-15 08:00:00', 'completed');
-    datedEnrollment('Mia Middle', '2026-09-10 08:00:00');
+    datedEnrollment($this->department, 'Olive Oldest', '2026-08-01 08:00:00');
+    datedEnrollment($this->department, 'Nina Newest', '2026-10-15 08:00:00', 'completed');
+    datedEnrollment($this->department, 'Mia Middle', '2026-09-10 08:00:00');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $this->department->id]))
         ->get(route('enrollments.index'))
         ->assertOk()
         ->assertSeeInOrder(['Nina Newest', 'Mia Middle', 'Olive Oldest'])
@@ -38,10 +43,10 @@ test('enrollments are listed newest first with their enrollment date', function 
 
 test('an enrollment without an enrolled_at date falls back to its creation date', function () {
     $this->travelTo(now()->setDate(2026, 7, 4));
-    datedEnrollment('Uma Undated', null);
+    datedEnrollment($this->department, 'Uma Undated', null);
     $this->travelBack();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $this->department->id]))
         ->get(route('enrollments.index'))
         ->assertOk()
         ->assertSee('Jul 04, 2026');
@@ -50,14 +55,14 @@ test('an enrollment without an enrolled_at date falls back to its creation date'
 test('the quick ranges keep only enrollments from that period', function () {
     $this->travelTo('2026-10-27 12:00:00');
 
-    datedEnrollment('Tara Today', '2026-10-27 08:00:00');
-    datedEnrollment('Wes Week', '2026-10-21 08:00:00');      // 6 days ago
-    datedEnrollment('Mona Month', '2026-09-28 08:00:00');    // 29 days ago
-    datedEnrollment('Quinn Quarter', '2026-08-01 08:00:00'); // 87 days ago
-    datedEnrollment('Yara Year', '2026-01-02 08:00:00');
-    datedEnrollment('Lars LastYear', '2025-12-31 08:00:00');
+    datedEnrollment($this->department, 'Tara Today', '2026-10-27 08:00:00');
+    datedEnrollment($this->department, 'Wes Week', '2026-10-21 08:00:00');      // 6 days ago
+    datedEnrollment($this->department, 'Mona Month', '2026-09-28 08:00:00');    // 29 days ago
+    datedEnrollment($this->department, 'Quinn Quarter', '2026-08-01 08:00:00'); // 87 days ago
+    datedEnrollment($this->department, 'Yara Year', '2026-01-02 08:00:00');
+    datedEnrollment($this->department, 'Lars LastYear', '2025-12-31 08:00:00');
 
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $this->department->id]);
 
     $expected = [
         'today' => ['Tara Today'],
@@ -89,9 +94,9 @@ test('the quick ranges keep only enrollments from that period', function () {
 
 test('the selected range is highlighted and named in the summary', function () {
     $this->travelTo('2026-10-27 12:00:00');
-    datedEnrollment('Mona Month', '2026-10-10 08:00:00');
+    datedEnrollment($this->department, 'Mona Month', '2026-10-10 08:00:00');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $this->department->id]))
         ->get(route('enrollments.index', ['range' => '30d']))
         ->assertOk()
         ->assertSee('aria-current="page"', false)
@@ -100,18 +105,18 @@ test('the selected range is highlighted and named in the summary', function () {
 
 test('a range with no enrollments says so', function () {
     $this->travelTo('2026-10-27 12:00:00');
-    datedEnrollment('Olive Oldest', '2026-08-01 08:00:00');
+    datedEnrollment($this->department, 'Olive Oldest', '2026-08-01 08:00:00');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $this->department->id]))
         ->get(route('enrollments.index', ['range' => 'today']))
         ->assertOk()
         ->assertSee('No enrollments today.');
 });
 
 test('an unknown range shows all enrollments', function () {
-    datedEnrollment('Olive Oldest', '2020-08-01 08:00:00');
+    datedEnrollment($this->department, 'Olive Oldest', '2020-08-01 08:00:00');
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $this->department->id]))
         ->get(route('enrollments.index', ['range' => 'forever']))
         ->assertOk()
         ->assertSee('Olive Oldest')
@@ -119,8 +124,8 @@ test('an unknown range shows all enrollments', function () {
 });
 
 test('only student accounts are offered and accepted on the enrollment form', function () {
-    $admin = pathwiseUser('admin', ['name' => 'Ada Admin']);
-    $teacher = pathwiseUser('teacher', ['name' => 'Theo Teacher']);
+    $admin = pathwiseUser('admin', ['name' => 'Ada Admin', 'department_id' => $this->department->id]);
+    $teacher = pathwiseUser('teacher', ['name' => 'Theo Teacher', 'department_id' => $this->department->id]);
     pathwiseUser('student', ['name' => 'Sam Student']);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 

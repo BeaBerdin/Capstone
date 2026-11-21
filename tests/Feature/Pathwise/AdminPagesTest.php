@@ -12,7 +12,8 @@ use App\Models\QuizResult;
 
 function adminQuizResultSetup(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $student = pathwiseUser('student', ['name' => 'Quiz Taker Student']);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -37,10 +38,10 @@ function adminQuizResultSetup(): array
     return [$teacher, $student, $course, $quiz];
 }
 
-test('the admin quiz results page lists attempts from every teacher\'s courses', function () {
-    adminQuizResultSetup();
+test('the department admin quiz results page lists attempts for the assigned department', function () {
+    [$teacher] = adminQuizResultSetup();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $teacher->department_id]))
         ->get(route('quiz-results.index'))
         ->assertOk()
         ->assertSee('HTML Basics Checkpoint')
@@ -115,7 +116,7 @@ test('the admin sidebar links to the admin pages and each one opens', function (
 
 test('quiz results are view-only: teachers and administrators cannot add, edit or delete them', function (string $role) {
     [$teacher, , , $quiz] = adminQuizResultSetup();
-    $user = $role === 'teacher' ? $teacher : pathwiseUser('admin');
+    $user = $role === 'teacher' ? $teacher : pathwiseUser('admin', ['department_id' => $teacher->department_id]);
     $prefix = $role === 'teacher' ? '/teacher/quiz-results' : '/quiz-results';
     $result = QuizResult::sole();
     $before = $result->getAttributes();

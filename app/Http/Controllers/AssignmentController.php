@@ -18,19 +18,20 @@ class AssignmentController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
         $assignments = Assignment::with(['course', 'lesson'])
+            ->manageableBy($request->user())
             ->latest()
             ->get();
 
         return view('assignments.index', compact('assignments'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $courses = Course::all();
-        $lessons = Lesson::all();
+        $courses = Course::manageableBy($request->user())->get();
+        $lessons = Lesson::whereIn('course_id', $courses->modelKeys())->get();
 
         return view('assignments.create', compact(
             'courses',
@@ -41,6 +42,8 @@ class AssignmentController extends Controller
     public function store(Request $request)
     {
         $validated = $this->validateAssignment($request);
+
+        Course::authorizeManagement($request->user(), $validated['course_id']);
 
         $this->ensureLessonBelongsToCourse($validated);
 
@@ -59,8 +62,10 @@ class AssignmentController extends Controller
             ->with('success', 'Assignment created successfully.');
     }
 
-    public function show(Assignment $assignment)
+    public function show(Request $request, Assignment $assignment)
     {
+        abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+
         $assignment->load([
             'course',
             'lesson',
@@ -72,10 +77,12 @@ class AssignmentController extends Controller
         );
     }
 
-    public function edit(Assignment $assignment)
+    public function edit(Request $request, Assignment $assignment)
     {
-        $courses = Course::all();
-        $lessons = Lesson::all();
+        abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+
+        $courses = Course::manageableBy($request->user())->get();
+        $lessons = Lesson::whereIn('course_id', $courses->modelKeys())->get();
 
         return view(
             'assignments.edit',
@@ -91,7 +98,11 @@ class AssignmentController extends Controller
         Request $request,
         Assignment $assignment
     ) {
+        abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+
         $validated = $this->validateAssignment($request);
+
+        Course::authorizeManagement($request->user(), $validated['course_id']);
 
         $this->ensureLessonBelongsToCourse($validated);
 
@@ -130,8 +141,10 @@ class AssignmentController extends Controller
             );
     }
 
-    public function destroy(Assignment $assignment)
+    public function destroy(Request $request, Assignment $assignment)
     {
+        abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+
         $assignment->delete();
 
         return redirect()
@@ -155,6 +168,7 @@ class AssignmentController extends Controller
                 'course',
                 'lesson',
             ])
+            ->withConsistentLesson()
             ->whereHas('course', function ($query) {
                 $query->where(
                     'teacher_id',
@@ -344,6 +358,9 @@ class AssignmentController extends Controller
             $assignment->course
         );
 
+
+        abort_unless($assignment->hasConsistentLesson(), 403);
+
         $assignment->delete();
 
         return redirect()
@@ -452,11 +469,13 @@ class AssignmentController extends Controller
 
             'course_id' => [
                 'required',
+                'integer',
                 'exists:courses,id',
             ],
 
             'lesson_id' => [
                 'nullable',
+                'integer',
                 'exists:lessons,id',
             ],
 

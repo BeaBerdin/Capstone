@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,6 +28,68 @@ class Course extends Model
             self::ASSIGNMENT_EDITABLE_STATUSES,
             true
         );
+    }
+
+    /**
+     * @param Builder<Course> $query
+     * @return Builder<Course>
+     */
+    public function scopeManageableBy(Builder $query, User $administrator): Builder
+    {
+        if ($administrator->hasRole('super_admin')) {
+            return $query;
+        }
+
+        if (! self::isAssignedDepartmentAdministrator($administrator)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('teacher', fn (Builder $teacher) => $teacher
+            ->where('department_id', $administrator->department_id));
+    }
+
+    public function isManageableBy(User $administrator): bool
+    {
+        return self::canManageCourse($administrator, $this->getKey());
+    }
+
+    public static function authorizeManagement(User $administrator, int|string|null $courseId): void
+    {
+        abort_unless(self::canManageCourse($administrator, $courseId), 403);
+    }
+
+    private static function canManageCourse(User $administrator, int|string|null $courseId): bool
+    {
+        return $courseId !== null
+            && self::query()->manageableBy($administrator)->whereKey($courseId)->exists();
+    }
+
+    public function hasExternalLessonReferences(): bool
+    {
+        return $this->hasInconsistentLessonLinks(Quiz::query())
+            || $this->hasInconsistentLessonLinks(Assignment::query());
+    }
+
+    private function hasInconsistentLessonLinks(Builder $records): bool
+    {
+        return $records
+            ->whereNotNull('lesson_id')
+            ->where(fn (Builder $query) => $query->where('course_id', $this->getKey())
+                ->orWhereIn('lesson_id', $this->lessons()->select('id')))
+            ->whereDoesntHave('lesson', fn (Builder $lesson) => $lesson
+                ->whereColumn('lessons.course_id', $records->qualifyColumn('course_id')))
+            ->exists();
+    }
+
+    public static function canBeCreatedByAdministrator(User $administrator): bool
+    {
+        return $administrator->hasRole('super_admin')
+            || self::isAssignedDepartmentAdministrator($administrator);
+    }
+
+    private static function isAssignedDepartmentAdministrator(User $administrator): bool
+    {
+        return $administrator->hasRole('admin') && $administrator->department()->exists();
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Course;
+use App\Models\Department;
 use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\LearningPath;
@@ -54,8 +55,9 @@ test('the cover component falls back to a placeholder without an image', functio
 });
 
 test('an administrator sees the cover on course management, the dashboard, lessons and learning paths', function () {
-    $teacher = pathwiseUser('teacher');
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $pending = coveredCourse($teacher, ['status' => 'pending']);
 
@@ -78,9 +80,10 @@ test('an administrator sees the cover on course management, the dashboard, lesso
 });
 
 test('course management still renders for a course without a cover', function () {
-    coveredCourse(pathwiseUser('teacher'), ['thumbnail' => null, 'status' => 'pending']);
+    $department = Department::create(['name' => 'Computing']);
+    coveredCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['thumbnail' => null, 'status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->get(route('courses.index'))
         ->assertOk()
         ->assertDontSee('storage/courses')
@@ -187,7 +190,8 @@ test('a student sees the cover in the marketplace, course details, my courses, t
  */
 function threeCoveredCourses(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
     $student = pathwiseUser('student');
 
     $courses = [
@@ -433,9 +437,9 @@ test('three courses keep their own cover on every teacher page', function () {
 });
 
 test('three courses keep their own cover on every admin and super admin page', function () {
-    ['courses' => $courses, 'path' => $path] = threeCoveredCourses();
+    ['teacher' => $teacher, 'courses' => $courses, 'path' => $path] = threeCoveredCourses();
 
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $teacher->department_id]);
     $superAdmin = pathwiseUser('super_admin');
 
     $adminPages = [
@@ -496,7 +500,7 @@ test('a replaced cover shows everywhere and the old one is gone', function () {
     $newUrl = asset('storage/'.$newPath);
     $oldUrl = asset('storage/courses/python-cover.png');
 
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $teacher->department_id]);
     $superAdmin = pathwiseUser('super_admin');
 
     $visits = [

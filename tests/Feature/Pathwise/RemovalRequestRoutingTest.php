@@ -6,16 +6,8 @@ use App\Models\StudentRemovalRequest;
 use App\Models\User;
 
 /*
-| Final validation audit SYS-1 (approved November 6, 2026): a student removal
-| request must never be left without a reviewer.
-|
-| - Teachers without a department can still submit requests; they go to
-|   every administrator.
-| - Administrators without a department review all requests (campus-wide).
-| - Administrators with a department keep reviewing their own department,
-|   and cannot review another department that has its own administrator.
-| - Requests from a department that has no administrator go to every
-|   administrator.
+| Removal requests follow the owning course's department. A Super Admin
+| can review requests for courses with no assigned department or head.
 */
 
 function routedRemovalRequest(?Department $teacherDepartment): array
@@ -52,7 +44,7 @@ function reviewRemovalRequest(User $administrator, StudentRemovalRequest $reques
         ]);
 }
 
-test('a teacher without a department can submit a removal request and is told it goes to all administrators', function () {
+test('a teacher without a department can still submit a removal request', function () {
     $teacher = pathwiseUser('teacher', ['department_id' => null]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
@@ -71,12 +63,12 @@ test('a teacher without a department can submit a removal request and is told it
             'student_id' => $student->id,
             'reason' => 'The student asked to drop the course.',
         ])
-        ->assertSessionHas('success', fn ($message) => str_contains($message, 'sent to all administrators'));
+        ->assertSessionHas('success', fn ($message) => str_contains($message, 'an authorized reviewer approves it'));
 
     expect(StudentRemovalRequest::where('instructor_id', $teacher->id)->where('status', 'pending')->count())->toBe(1);
 });
 
-test('a request from a teacher without a department is visible to every administrator and can be reviewed', function () {
+test('a request for a course without a department can be reviewed by a super admin', function () {
     $computing = Department::create(['name' => 'College of Computing']);
     $adminWithDepartment = pathwiseUser('admin', ['department_id' => $computing->id]);
     $adminWithoutDepartment = pathwiseUser('admin', ['department_id' => null]);
@@ -87,15 +79,21 @@ test('a request from a teacher without a department is visible to every administ
         $this->actingAs($administrator)
             ->get(route('admin.student-removal-requests.index'))
             ->assertOk()
-            ->assertSee($setup['request']->reason);
+            ->assertDontSee($setup['request']->reason);
+        reviewRemovalRequest($administrator, $setup['request'])->assertForbidden();
     }
 
-    reviewRemovalRequest($adminWithDepartment, $setup['request'])->assertSessionHas('success');
+    $edp = pathwiseUser('super_admin');
+    $this->actingAs($edp)
+        ->get(route('admin.student-removal-requests.index'))
+        ->assertOk()
+        ->assertSee($setup['request']->reason);
+    reviewRemovalRequest($edp, $setup['request'])->assertSessionHas('success');
 
     expect($setup['request']->fresh()->status)->toBe('rejected');
 });
 
-test('an administrator without a department opens the page and sees requests from every department', function () {
+test('an unassigned administrator cannot see or review departmental requests', function () {
     $computing = Department::create(['name' => 'College of Computing']);
     $nursing = Department::create(['name' => 'College of Nursing']);
     pathwiseUser('admin', ['department_id' => $computing->id]);
@@ -108,11 +106,11 @@ test('an administrator without a department opens the page and sees requests fro
     $this->actingAs($campusAdmin)
         ->get(route('admin.student-removal-requests.index'))
         ->assertOk()
-        ->assertSee('Requests from All Departments')
-        ->assertSee($fromComputing['request']->reason)
-        ->assertSee($fromNursing['request']->reason);
+        ->assertDontSee('Requests from All Departments')
+        ->assertDontSee($fromComputing['request']->reason)
+        ->assertDontSee($fromNursing['request']->reason);
 
-    reviewRemovalRequest($campusAdmin, $fromNursing['request'])->assertSessionHas('success');
+    reviewRemovalRequest($campusAdmin, $fromNursing['request'])->assertForbidden();
 });
 
 test('an administrator still cannot see or review another department that has its own administrator', function () {
@@ -136,7 +134,7 @@ test('an administrator still cannot see or review another department that has it
         ->and($other['enrollment']->fresh()->status)->toBe('active');
 });
 
-test('requests from a department without an administrator go to every administrator', function () {
+test('a request from a department without an administrator can be reviewed by a super admin', function () {
     $computing = Department::create(['name' => 'College of Computing']);
     $engineering = Department::create(['name' => 'College of Engineering']);
     $computingHead = pathwiseUser('admin', ['department_id' => $computing->id]);
@@ -146,9 +144,10 @@ test('requests from a department without an administrator go to every administra
     $this->actingAs($computingHead)
         ->get(route('admin.student-removal-requests.index'))
         ->assertOk()
-        ->assertSee($setup['request']->reason);
+        ->assertDontSee($setup['request']->reason);
 
-    reviewRemovalRequest($computingHead, $setup['request'])->assertSessionHas('success');
+    reviewRemovalRequest($computingHead, $setup['request'])->assertForbidden();
+    reviewRemovalRequest(pathwiseUser('super_admin'), $setup['request'])->assertSessionHas('success');
 });
 
 test('teachers and students cannot open or review removal requests', function () {
