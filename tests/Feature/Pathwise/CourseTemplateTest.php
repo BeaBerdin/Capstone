@@ -36,7 +36,7 @@ test('the template seeder creates the built-in templates and can run twice', fun
 test('the create course page lists active templates', function () {
     $this->seed(CourseTemplateSeeder::class);
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.courses.create'))
         ->assertOk()
         ->assertSee('Start from a template')
@@ -45,7 +45,7 @@ test('the create course page lists active templates', function () {
 
 test('creating a course from a template adds unpublished outline lessons', function () {
     $this->seed(CourseTemplateSeeder::class);
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $template = CourseTemplate::where('name', 'Standard Course (3 Modules)')->firstOrFail();
 
     $this->actingAs($teacher)
@@ -64,7 +64,7 @@ test('creating a course from a template adds unpublished outline lessons', funct
 });
 
 test('creating a blank course adds no lessons', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
 
     $this->actingAs($teacher)
         ->post(route('teacher.courses.store'), templateCourseInput())
@@ -83,7 +83,7 @@ test('an inactive template cannot be used', function () {
         'is_active' => false,
     ]);
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->post(route('teacher.courses.store'), templateCourseInput(['template_id' => $template->id]))
         ->assertSessionHasErrors('template_id');
 
@@ -92,7 +92,7 @@ test('an inactive template cannot be used', function () {
 
 test('a template course cannot be submitted until its outline lessons are published', function () {
     $this->seed(CourseTemplateSeeder::class);
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $template = CourseTemplate::firstOrFail();
 
     $this->actingAs($teacher)

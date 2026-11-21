@@ -8,7 +8,7 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'student.application', 'verified'])->group(function () {
     // PathWise is light mode only, so the old Appearance page sends users to their profile.
     Route::redirect('settings/appearance', '/settings/profile')->name('appearance.edit');
 

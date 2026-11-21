@@ -12,7 +12,7 @@ use App\Models\Enrollment;
 
 function progressEnrollment(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student', ['name' => 'Progress Student']);
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Progress Course']);
 

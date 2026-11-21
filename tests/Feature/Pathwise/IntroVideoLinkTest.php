@@ -38,7 +38,7 @@ dataset('unsafe intro video links', [
 ]);
 
 test('a teacher cannot save an unsafe intro video link', function (string $link) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $draft = pathwiseCourse($teacher, ['status' => 'draft', 'title' => 'Existing Draft']);
 
     $this->actingAs($teacher)
@@ -57,7 +57,7 @@ test('a teacher cannot save an unsafe intro video link', function (string $link)
 test('an administrator cannot save an unsafe intro video link', function (string $link) {
     $department = Department::create(['name' => 'Computing']);
     $admin = pathwiseUser('admin', ['department_id' => $department->id]);
-    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'draft', 'title' => 'Existing Draft']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher( ['department_id' => $department->id]), ['status' => 'draft', 'title' => 'Existing Draft']);
 
     $this->actingAs($admin)
         ->post(route('courses.store'), introVideoCourseInput(['intro_video' => $link]))
@@ -75,7 +75,7 @@ test('an administrator cannot save an unsafe intro video link', function (string
 test('an https intro video link is saved by a teacher and by an administrator', function () {
     $link = 'https://www.youtube.com/watch?v=abc123';
     $department = Department::create(['name' => 'Computing']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
 
     $this->actingAs($teacher)
         ->post(route('teacher.courses.store'), introVideoCourseInput(['intro_video' => $link]))
@@ -102,7 +102,7 @@ test('an https intro video link is saved by a teacher and by an administrator', 
 });
 
 test('the student course page never prints a link that is not http or https', function (string $stored) {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'title' => 'Published Course']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published', 'title' => 'Published Course']);
     // An unsafe value that reached the database some other way (old data).
     Course::whereKey($course->id)->update(['intro_video' => $stored]);
 
@@ -124,7 +124,7 @@ test('the student course page never prints a link that is not http or https', fu
 ]);
 
 test('the student course page prints http and https intro video links', function (string $stored) {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'title' => 'Published Course']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published', 'title' => 'Published Course']);
     Course::whereKey($course->id)->update(['intro_video' => $stored]);
 
     $this->actingAs(pathwiseUser('student'))->get(route('student.course.show', $course))

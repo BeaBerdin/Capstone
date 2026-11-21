@@ -6,7 +6,9 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Department;
 use App\Models\Role;
+use App\Models\StudentApplication;
 use App\Models\User;
+use App\Support\StudyLoads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -48,9 +50,8 @@ class UserManagementController extends Controller
     /**
      * Create a new account (for example, an Administrator / Department Head).
      *
-     * Accounts created by the EDP are marked as email-verified because the
-     * Super Admin is vouching for them. The new user should change the
-     * temporary password after the first login.
+     * Teachers enter the EDP queue and confirm their email after review.
+     * Other EDP-created accounts keep the existing trusted setup.
      */
     public function store(Request $request)
     {
@@ -64,7 +65,7 @@ class UserManagementController extends Controller
             'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $review = DB::transaction(function () use ($validated) {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -73,18 +74,24 @@ class UserManagementController extends Controller
             ]);
 
             $user->forceFill([
-                'email_verified_at' => now(),
+                'email_verified_at' => $validated['role'] === 'teacher' ? null : now(),
                 'is_active' => true,
             ])->save();
 
             $role = Role::where('name', $validated['role'])->firstOrFail();
 
             $user->roles()->sync([$role->id]);
+
+            return $role->name === 'teacher'
+                ? StudentApplication::submitForTeacher($user, 'edp_created')
+                : null;
         });
 
         return redirect()
             ->route('users.index')
-            ->with('success', 'Account for ' . $validated['name'] . ' created successfully.');
+            ->with('success', $review
+                ? 'Teacher account created. Review the registration in Applications before the teacher verifies their email.'
+                : 'Account for ' . $validated['name'] . ' created successfully.');
     }
 
     public function updateRole(Request $request, User $user)
@@ -106,13 +113,39 @@ class UserManagementController extends Controller
 
         $role = Role::where('name', $request->role)->firstOrFail();
 
-        // Replace the user's current role with the selected role
-        $user->roles()->sync([$role->id]);
+        $review = DB::transaction(function () use ($user, $role) {
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            $enteringTeacherRole = $role->name === 'teacher' && ! $user->hasRole('teacher');
+            $user->roles()->sync([$role->id]);
+
+            if (! $enteringTeacherRole) {
+                return null;
+            }
+
+            $user->forceFill(['email_verified_at' => null])->save();
+
+            return StudentApplication::submitForTeacher($user, 'role_change');
+        });
 
         return back()->with(
             'success',
-            'User role updated successfully.'
+            $review
+                ? 'Teacher role assigned. EDP review and email confirmation are required before teacher access.'
+                : 'User role updated successfully.'
         );
+    }
+
+    public function queueTeacherReview(User $user)
+    {
+        $review = DB::transaction(function () use ($user) {
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            abort_unless($user->hasRole('teacher'), 403);
+
+            return $user->currentTeacherApplication()
+                ?? StudentApplication::submitForTeacher($user, 'edp_legacy_review');
+        });
+
+        return redirect()->route('super-admin.student-applications.show', $review);
     }
 
     /**
@@ -122,19 +155,25 @@ class UserManagementController extends Controller
      */
     public function verifyEmail(User $user)
     {
-        if ($user->hasVerifiedEmail()) {
-            return back()->with('success', $user->name.'\'s email is already verified.');
-        }
+        return DB::transaction(function () use ($user) {
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
 
-        // A student applicant is approved first (Student Applications); the
-        // approval sends the verification link.
-        if ($user->awaitingStudentApproval()) {
-            return back()->with('error', $user->name.' has a student application that is still '.$user->applicationStatus().'. Approve it in Student Applications first; the student then verifies their email.');
-        }
+            if ($user->hasRole('teacher')) {
+                return back()->with('error', 'Teachers confirm their own email using the link sent after EDP approval.');
+            }
 
-        $user->forceFill(['email_verified_at' => now()])->save();
+            if ($user->hasVerifiedEmail()) {
+                return back()->with('success', $user->name.'\'s email is already verified.');
+            }
 
-        return back()->with('success', $user->name.'\'s email has been marked as verified.');
+            if ($user->awaitingStudentApproval()) {
+                return back()->with('error', $user->name.' has a student application that is still '.$user->applicationStatus().'. Approve it in Student Applications first; the student then verifies their email.');
+            }
+
+            $user->forceFill(['email_verified_at' => now()])->save();
+
+            return back()->with('success', $user->name.'\'s email has been marked as verified.');
+        });
     }
 
     /**
@@ -159,15 +198,7 @@ class UserManagementController extends Controller
             ],
         ]);
 
-        $emailChanged = strcasecmp($validated['email'], $user->email) !== 0;
-
-        $user->forceFill([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            // A new address entered by the EDP is treated as verified, like
-            // accounts the EDP creates, so the user is not locked out.
-            'email_verified_at' => $emailChanged ? now() : $user->email_verified_at,
-        ])->save();
+        $user->updateAccountIdentity($validated);
 
         return redirect()
             ->route('users.index')

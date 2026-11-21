@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 */
 
 test('a student cannot enroll in a paid course through the free enroll route', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 499]);
 
@@ -25,7 +25,7 @@ test('a student cannot enroll in a paid course through the free enroll route', f
 });
 
 test('a student can enroll in a free published course', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
 
@@ -38,7 +38,7 @@ test('a student can enroll in a free published course', function () {
 });
 
 test('a student cannot enroll in a course that is not published', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'pending', 'price' => 0]);
 
@@ -48,7 +48,7 @@ test('a student cannot enroll in a course that is not published', function () {
 });
 
 test('a teacher cannot use the student enroll route', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
 
     $this->actingAs($teacher)
@@ -85,7 +85,7 @@ function paidCheckoutSetup(): array
         'services.paymongo.public_key' => 'pk_test_fake',
     ]);
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 499]);
 

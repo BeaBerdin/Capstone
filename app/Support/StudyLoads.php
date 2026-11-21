@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\StudentApplicationSubmitted;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
@@ -42,6 +43,7 @@ class StudyLoads
         return StudentApplication::create([
             'user_id' => $user->id,
             'submission_no' => $submissionNo,
+            'applicant_role' => StudentApplication::STUDENT,
             'study_load_path' => $path,
             'study_load_original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
             'study_load_mime' => (string) $file->getMimeType(),
@@ -85,6 +87,9 @@ class StudyLoads
             ->whereHas('roles', fn ($query) => $query->where('name', 'super_admin'))
             ->get();
 
+        // In-app notification for every Super Admin. Their login email is
+        // used only when no EDP mailbox is configured and it can receive mail
+        // (see StudentApplicationSubmitted::via()).
         foreach ($superAdmins as $superAdmin) {
             try {
                 $superAdmin->notify(new StudentApplicationSubmitted($application, $resubmission));
@@ -95,6 +100,31 @@ class StudyLoads
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        // The email goes to the configured EDP mailbox
+        // (PATHWISE_EDP_NOTIFICATION_EMAIL). No attachment: the Study Load
+        // stays on the private disk and is opened only through the app.
+        $mailboxes = EdpNotificationRecipients::configured();
+
+        if ($mailboxes !== []) {
+            try {
+                Notification::route('mail', $mailboxes)
+                    ->notify(new StudentApplicationSubmitted($application, $resubmission));
+            } catch (Throwable $e) {
+                Log::warning('PATHWISE could not email the EDP mailbox about a student application.', [
+                    'application_id' => $application->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return;
+        }
+
+        if (MailSettings::isConfigured() && ! $superAdmins->contains(fn (User $user) => EdpNotificationRecipients::isDeliverable($user->email))) {
+            Log::warning('PATHWISE has no deliverable EDP email address: set PATHWISE_EDP_NOTIFICATION_EMAIL. The application is visible in the app.', [
+                'application_id' => $application->id,
+            ]);
         }
     }
 }

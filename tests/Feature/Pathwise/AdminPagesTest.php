@@ -13,7 +13,7 @@ use App\Models\QuizResult;
 function adminQuizResultSetup(): array
 {
     $department = Department::create(['name' => 'Computing']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $student = pathwiseUser('student', ['name' => 'Quiz Taker Student']);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -52,7 +52,7 @@ test('the department admin quiz results page lists attempts for the assigned dep
 test('a teacher still sees only quiz results from their own courses', function () {
     adminQuizResultSetup();
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.quiz-results.index'))
         ->assertOk()
         ->assertDontSee('HTML Basics Checkpoint');

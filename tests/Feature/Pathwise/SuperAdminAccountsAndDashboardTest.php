@@ -33,8 +33,8 @@ test('the users page offers Mark verified only for unverified emails', function 
         ->assertSee(route('users.edit', $verified), false);
 });
 
-test('the Super Admin can edit a user\'s name and email', function () {
-    $teacher = pathwiseUser('teacher', ['name' => 'Old Name', 'email' => 'old@example.com']);
+test('the Super Admin email change queues a new teacher review and clears old verification', function () {
+    $teacher = pathwiseApprovedTeacher(['name' => 'Old Name', 'email' => 'old@example.com']);
 
     $this->actingAs(pathwiseUser('super_admin'))
         ->get(route('users.edit', $teacher))
@@ -54,8 +54,11 @@ test('the Super Admin can edit a user\'s name and email', function () {
 
     expect($teacher->name)->toBe('Maria Santos')
         ->and($teacher->email)->toBe('maria.santos@example.com')
-        ->and($teacher->hasVerifiedEmail())->toBeTrue()
-        ->and($teacher->hasRole('teacher'))->toBeTrue();
+        ->and($teacher->hasVerifiedEmail())->toBeFalse()
+        ->and($teacher->hasRole('teacher'))->toBeTrue()
+        ->and($teacher->currentTeacherApplication()->review_email)->toBe('maria.santos@example.com')
+        ->and($teacher->currentTeacherApplication()->review_origin)->toBe('email_change')
+        ->and($teacher->currentTeacherApplication()->status)->toBe('pending');
 });
 
 test('changing only the name keeps the email verification as it was', function () {
@@ -105,7 +108,9 @@ test('there is no way to delete a user from User Management', function () {
 
 test('only the Super Admin can verify or edit accounts', function (string $role) {
     $student = pathwiseUser('student', ['name' => 'Untouched', 'email_verified_at' => null]);
-    $user = pathwiseUser($role);
+    // Use an approved teacher so this tests the account-management role
+    // boundary rather than the pending-teacher status gate.
+    $user = $role === 'teacher' ? pathwiseApprovedTeacher() : pathwiseUser($role);
 
     $this->actingAs($user)->patch(route('users.verify-email', $student))->assertForbidden();
     $this->actingAs($user)->get(route('users.edit', $student))->assertForbidden();

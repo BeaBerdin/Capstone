@@ -27,6 +27,26 @@ class StudentApplicationRejected extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        if ($this->application->isTeacherApplication()) {
+            return (new MailMessage)
+                ->subject('PathWise - Your teacher registration was not approved')
+                ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [
+                    'heading' => 'Your registration needs another look',
+                    'preheader' => 'The EDP office could not approve your teacher registration yet.',
+                    'name' => $notifiable->name ?? null,
+                    'paragraphs' => [
+                        'The EDP office reviewed your PathWise teacher registration and could not approve it yet.',
+                    ],
+                    'highlight' => [
+                        'label' => 'Reason',
+                        'text' => (string) $this->application->rejection_reason,
+                    ],
+                    'buttonText' => 'Log in to PathWise',
+                    'buttonUrl' => route('login'),
+                    'note' => 'Log in with the same email and password to see your registration status. When the issue is resolved, you can ask the EDP office to review it again. You do not need a new account.',
+                ]);
+        }
+
         return (new MailMessage)
             ->subject('PathWise - Your student application needs a corrected Study Load')
             ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [

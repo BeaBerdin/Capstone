@@ -141,7 +141,7 @@
 
                             <p class="mt-0.5 text-xs text-slate-500">
                                 Add an Administrator, Teacher, Student, or Super Admin account.
-                                Accounts created here are already email-verified.
+                                Teacher accounts require EDP approval and email confirmation.
                             </p>
                         </div>
                     </div>
@@ -644,7 +644,17 @@
 
                                             </div>
 
-                                            @if(! $user->hasVerifiedEmail())
+                                            @if($currentRole === 'teacher')
+                                                <form action="{{ route('users.teacher-review', $user) }}" method="POST" class="mt-1.5">
+                                                    @csrf
+                                                    <button type="submit" class="h-7 rounded-lg border border-violet-200 px-2 text-xs font-semibold text-violet-700 hover:bg-violet-50">
+                                                        Open teacher review
+                                                    </button>
+                                                </form>
+                                                @unless($user->hasVerifiedEmail())
+                                                    <p class="mt-1 text-xs text-amber-600">Email not verified</p>
+                                                @endunless
+                                            @elseif(! $user->hasVerifiedEmail())
                                                 <div class="mt-1.5 flex items-center gap-2">
                                                     <p class="text-xs text-amber-600">Email not verified</p>
 

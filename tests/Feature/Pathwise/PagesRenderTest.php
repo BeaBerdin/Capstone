@@ -11,14 +11,14 @@ use App\Models\Submission;
 */
 
 test('a teacher can open the student removal requests page', function () {
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.student-removal-requests.index'))
         ->assertOk();
 });
 
 test('an administrator can open an assignment and a submission', function () {
     $department = Department::create(['name' => 'Computing']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -67,7 +67,7 @@ test('a student can open the marketplace and their dashboard', function () {
 });
 
 test('a teacher can open their dashboard and courses', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     pathwiseCourse($teacher);
 
     $this->actingAs($teacher)->get(route('teacher.dashboard'))->assertOk();

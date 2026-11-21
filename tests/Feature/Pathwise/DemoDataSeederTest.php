@@ -9,6 +9,7 @@ use App\Models\Lesson;
 use App\Models\Quiz;
 use App\Models\QuizResult;
 use App\Models\Submission;
+use App\Models\StudentApplication;
 use App\Models\Transaction;
 use App\Models\User;
 use Database\Seeders\DemoDataSeeder;
@@ -103,6 +104,14 @@ test('one finished AI evaluation is waiting for the teacher', function () {
         ->and(Submission::where('status', 'graded')->exists())->toBeTrue();
 
     $teacher = $awaiting->first()->assignment->course->teacher;
+    $edp = pathwiseUser('super_admin');
+    $review = StudentApplication::submitForTeacher($teacher, 'test_fixture');
+    $review->forceFill([
+        'status' => StudentApplication::APPROVED,
+        'reviewed_by' => $edp->id,
+        'reviewed_at' => now(),
+    ])->save();
+    $teacher->forceFill(['email_verified_at' => now()])->save();
 
     $this->actingAs($teacher)
         ->get(route('teacher.dashboard'))
@@ -156,7 +165,7 @@ test('existing accounts and data are not changed', function () {
         'email_verified_at' => null,
     ]);
     $category = CourseCategory::create(['name' => 'Business', 'description' => 'Kept as it is', 'is_active' => false]);
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['title' => 'A real course', 'status' => 'published']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['title' => 'A real course', 'status' => 'published']);
 
     $snapshot = fn () => [
         DB::table('users')->where('id', $existing->id)->first(),

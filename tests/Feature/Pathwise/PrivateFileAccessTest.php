@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
 function privateReceipt(array $attributes = []): array
 {
     $student = pathwiseUser('student');
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'price' => 499]);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published', 'price' => 499]);
 
     $transaction = Transaction::create(array_merge([
         'student_id' => $student->id,
@@ -39,7 +39,7 @@ function privateReceipt(array $attributes = []): array
 
 function privateSubmission(string $fileName = 'Main.java'): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -68,7 +68,7 @@ function privateSubmission(string $fileName = 'Main.java'): array
 
 function privateLesson(array $courseAttributes = [], array $lessonAttributes = []): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, array_merge(['status' => 'published'], $courseAttributes));
 
     $lesson = Lesson::create(array_merge([
@@ -119,7 +119,7 @@ test('other users cannot open a receipt', function (string $role) {
     fakeFileDisks();
     [, $transaction] = privateReceipt();
 
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->get(route('files.receipt', $transaction))
         ->assertForbidden();
 })->with(['another student' => 'student', 'teacher' => 'teacher', 'admin' => 'admin']);
@@ -157,7 +157,7 @@ test('other users cannot open a submission', function (string $role) {
     fakeFileDisks();
     [, , $submission] = privateSubmission();
 
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->get(route('files.submission', $submission))
         ->assertForbidden();
 })->with(['another student' => 'student', 'another teacher' => 'teacher', 'unassigned admin' => 'admin']);
@@ -222,7 +222,7 @@ test('unassigned administrators and other teachers cannot open a lesson file', f
     fakeFileDisks();
     [, , $lesson] = privateLesson();
 
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->get(route('files.lesson', $lesson))
         ->assertForbidden();
 })->with(['unassigned admin' => 'admin', 'another teacher' => 'teacher']);
@@ -358,7 +358,7 @@ test('an uploaded submission is stored on the private disk and replacing it remo
 test('an uploaded lesson file is stored on the private disk and deleting the lesson removes it', function () {
     fakeFileDisks();
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $this->actingAs($teacher)

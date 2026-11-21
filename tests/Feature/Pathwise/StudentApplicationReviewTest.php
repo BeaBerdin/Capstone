@@ -59,7 +59,9 @@ function reviewApplicant(string $status = StudentApplication::PENDING): array
 
 test('only the Super Admin can list, view, open, approve or reject applications', function (string $role) {
     [$student, $application] = reviewApplicant();
-    $user = pathwiseUser($role);
+    // An approved teacher reaches the route role check; pending teachers are
+    // covered separately by TeacherVerificationTest and are redirected first.
+    $user = $role === 'teacher' ? pathwiseApprovedTeacher() : pathwiseUser($role);
 
     $this->actingAs($user);
 
@@ -127,6 +129,29 @@ test('the Super Admin sees pending applications with a count, tabs and the revie
         ->assertSee(route('super-admin.student-applications.study-load', $application), false)
         ->assertSee('data-test="approve-button"', false)
         ->assertSee('data-test="reject-button"', false);
+});
+
+test('the EDP can filter teacher reviews and sees email history and faculty attestation', function () {
+    $teacher = pathwiseUser('teacher', ['email' => 'faculty@example.test']);
+    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $edp = pathwiseUser('super_admin');
+
+    $this->actingAs($edp)
+        ->get(route('super-admin.student-applications.index', ['status' => 'pending', 'role' => 'teacher']))
+        ->assertOk()
+        ->assertSee('data-test="role-filter-teacher"', false)
+        ->assertSee('data-test="applicant-type"', false)
+        ->assertSee('Teacher')
+        ->assertSee('faculty@example.test');
+
+    $this->get(route('super-admin.student-applications.show', $review))
+        ->assertOk()
+        ->assertSee('data-test="teacher-registration"', false)
+        ->assertSee('Review email')
+        ->assertSee('faculty@example.test')
+        ->assertSee('name="faculty_confirmed"', false)
+        ->assertSee('I confirmed this person’s faculty status and the review email with their department.')
+        ->assertDontSee(route('super-admin.student-applications.study-load', $review), false);
 });
 
 test('the Study Load is served privately to the Super Admin only, with safe headers', function () {
@@ -252,13 +277,13 @@ test('a tampered approval link is refused', function () {
 
 test('ordinary verification links keep their 60-minute expiry', function () {
     Notification::fake();
-    $teacher = pathwiseUser('teacher', ['email_verified_at' => null]);
+    $student = pathwiseUser('student', ['email_verified_at' => null]);
 
-    $teacher->sendEmailVerificationNotification();
+    $student->sendEmailVerificationNotification();
 
     $link = null;
-    Notification::assertSentTo($teacher, VerifyEmail::class, function (VerifyEmail $notification) use ($teacher, &$link) {
-        $link = $notification->toMail($teacher)->viewData['url'];
+    Notification::assertSentTo($student, VerifyEmail::class, function (VerifyEmail $notification) use ($student, &$link) {
+        $link = $notification->toMail($student)->viewData['url'];
 
         return true;
     });
@@ -268,7 +293,7 @@ test('ordinary verification links keep their 60-minute expiry', function () {
 
     $this->travel(61)->minutes();
     $this->get($link)->assertForbidden();
-    expect($teacher->fresh()->hasVerifiedEmail())->toBeFalse();
+    expect($student->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
 test('after the approval link expires, the approved student can get a fresh one', function () {

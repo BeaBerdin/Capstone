@@ -52,7 +52,9 @@ class AppServiceProvider extends ServiceProvider
         'enrollment' => 10,
         // Creates a transaction and a PayMongo checkout session.
         'purchase' => 5,
+        // Typing an invite code on the Course Invitations page.
         'invite-code' => 10,
+        // Viewing an invitation preview; preserve the Local-Test limiter.
         'invite-preview' => 30,
     ];
 
@@ -82,6 +84,84 @@ class AppServiceProvider extends ServiceProvider
         // A rejected applicant uploading a corrected Study Load.
         RateLimiter::for('study-load-resubmission', fn (Request $request) => Limit::perMinutes(10, 5)
             ->by('study-load-resubmission|'.($request->user()?->getAuthIdentifier() ?: $request->ip())));
+
+        $this->configureVerificationRateLimiting();
+    }
+
+    /**
+     * Email verification and the application status page.
+     *
+     * Laravel's plain `throttle:6,1` keeps ONE counter per signed-in user, or
+     * per IP address for guests, shared by every route that uses it. On a
+     * campus network many students share one public IP, so a handful of
+     * students opening their links used up everyone's limit, and the status
+     * page's polling used up the student's own "resend" limit.
+     *
+     * Each route below has its own named limiter (its own counters). The
+     * tight limit belongs to one account, link session or user; the per-IP
+     * limit is a wide ceiling against a single machine flooding the server.
+     * $request->ip() is the connecting address: no proxy is trusted
+     * (bootstrap/app.php sets none), so X-Forwarded-For cannot change it.
+     */
+    public const VERIFICATION_LIMITS = [
+        // GET /email/verify/{id}/{hash}: per account, and per IP.
+        'link_per_account_per_minute' => 10,
+        'link_per_ip_per_minute' => 300,
+        // POST /email/verified/continue: per browser session, and per IP.
+        'continue_per_session_per_minute' => 6,
+        'continue_per_ip_per_minute' => 300,
+        // POST /email/verification-notification: per user (sends an email).
+        'resend_per_user_per_minute' => 6,
+        'resend_per_user_per_hour' => 20,
+        // GET /application-status/check (polled every 5 seconds): per user.
+        'check_per_user_per_minute' => 60,
+    ];
+
+    protected function configureVerificationRateLimiting(): void
+    {
+        $limits = self::VERIFICATION_LIMITS;
+
+        // Laravel runs the throttle BEFORE `signed` (ThrottleRequests is in
+        // the middleware priority list, ValidateSignature is not). So the
+        // per-account counter is used only for a genuinely signed link:
+        // otherwise anyone could send forged links with a student's id and
+        // lock that student out. Every request, forged or not, still counts
+        // towards the per-IP ceiling; `signed` then refuses forged ones (403).
+        RateLimiter::for('verification-link', function (Request $request) use ($limits) {
+            $perIp = Limit::perMinute($limits['link_per_ip_per_minute'])
+                ->by('verification-link-ip|'.$request->ip());
+
+            if (! $request->hasValidSignature()) {
+                return [$perIp];
+            }
+
+            return [
+                Limit::perMinute($limits['link_per_account_per_minute'])
+                    ->by('verification-link-account|'.(string) $request->route('id')),
+                $perIp,
+            ];
+        });
+
+        // The one-time grant lives in the browser's session, so the session
+        // is the natural owner of this counter.
+        RateLimiter::for('verification-continue', fn (Request $request) => [
+            Limit::perMinute($limits['continue_per_session_per_minute'])
+                ->by('verification-continue-session|'.($request->hasSession() ? $request->session()->getId() : $request->ip())),
+            Limit::perMinute($limits['continue_per_ip_per_minute'])
+                ->by('verification-continue-ip|'.$request->ip()),
+        ]);
+
+        RateLimiter::for('verification-resend', fn (Request $request) => [
+            Limit::perMinute($limits['resend_per_user_per_minute'])
+                ->by('verification-resend-minute|'.($request->user()?->getAuthIdentifier() ?: $request->ip())),
+            Limit::perHour($limits['resend_per_user_per_hour'])
+                ->by('verification-resend-hour|'.($request->user()?->getAuthIdentifier() ?: $request->ip())),
+        ]);
+
+        // Separate from every other counter: polling can never use up the
+        // resend limit (or anything else).
+        RateLimiter::for('application-check', fn (Request $request) => Limit::perMinute($limits['check_per_user_per_minute'])
+            ->by('application-check|'.($request->user()?->getAuthIdentifier() ?: $request->ip())));
     }
 
     /**

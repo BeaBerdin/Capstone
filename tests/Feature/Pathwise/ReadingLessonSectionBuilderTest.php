@@ -25,7 +25,7 @@ function readingFileUpload(): UploadedFile
 
 test('teachers create reorder edit and delete reading sections and related files', function () {
     fakeFileDisks();
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $this->actingAs($teacher)->get(route('teacher.lessons.create', $course))
         ->assertOk()->assertSee('data-section-builder', false);
@@ -85,7 +85,7 @@ test('teachers create reorder edit and delete reading sections and related files
 
 test('students see ordered escaped sections with private inline images and file downloads', function () {
     fakeFileDisks();
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $this->actingAs($teacher)->post(route('teacher.lessons.store', $course), readingLessonFields([
         'sections' => [
@@ -122,7 +122,7 @@ test('students see ordered escaped sections with private inline images and file 
 test('reading media shares lesson ownership publication and enrollment rules', function () {
     fakeFileDisks();
     $department = Department::create(['name' => 'Reading Department']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher(['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $lesson = $course->lessons()->create(readingLessonFields(['is_preview' => 1]));
     $path = 'lesson-files/'.$course->id.'/sections/handout.pdf';
@@ -132,7 +132,7 @@ test('reading media shares lesson ownership publication and enrollment rules', f
 
     $this->get($url)->assertRedirect(route('login'));
     $this->actingAs(pathwiseUser('student'))->get($url)->assertForbidden();
-    $this->actingAs(pathwiseUser('teacher'))->get($url)->assertForbidden();
+    $this->actingAs(pathwiseApprovedTeacher())->get($url)->assertForbidden();
     $this->actingAs(pathwiseUser('admin'))->get($url)->assertForbidden();
     $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))->get($url)->assertOk();
     $this->actingAs(pathwiseUser('super_admin'))->get($url)->assertOk();
@@ -153,7 +153,7 @@ test('reading media shares lesson ownership publication and enrollment rules', f
 
 test('rejected updates never change stored sections or discard existing private files', function () {
     fakeFileDisks();
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $lesson = $course->lessons()->create(readingLessonFields(['content' => 'Keep this content']));
     $oldPath = 'lesson-files/'.$course->id.'/sections/keep.pdf';
@@ -163,7 +163,7 @@ test('rejected updates never change stored sections or discard existing private 
     $outside = $other->sections()->create(['type' => 'text', 'body' => 'Other lesson']);
     $url = route('teacher.lessons.update', $lesson);
 
-    $this->actingAs(pathwiseUser('teacher'))->put($url, readingLessonFields([
+    $this->actingAs(pathwiseApprovedTeacher())->put($url, readingLessonFields([
         'sections' => [['id' => $existing->id, 'type' => 'file']],
     ]))->assertForbidden();
 
@@ -190,7 +190,7 @@ test('rejected updates never change stored sections or discard existing private 
 
 test('reading sections reject disallowed uploads oversized files and an empty builder', function () {
     fakeFileDisks();
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $url = route('teacher.lessons.store', $course);
     $this->actingAs($teacher);
@@ -217,7 +217,7 @@ test('reading sections reject disallowed uploads oversized files and an empty bu
 });
 
 test('legacy reading still renders and can be edited with the builder', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $content = "Legacy introduction.\n\nLegacy conclusion.";
     $lesson = $course->lessons()->create(readingLessonFields(['content' => $content]));
@@ -245,7 +245,7 @@ test('legacy reading still renders and can be edited with the builder', function
 
 test('the admin legacy textarea preserves sections on metadata changes and retains media on text edits', function () {
     fakeFileDisks();
-    $course = pathwiseCourse(pathwiseUser('teacher'));
+    $course = pathwiseCourse(pathwiseApprovedTeacher());
     $content = "First heading\nFirst body\n\nSecond body";
     $lesson = $course->lessons()->create(readingLessonFields(['content' => $content]));
     $first = $lesson->sections()->create(['type' => 'text', 'caption' => 'First heading', 'body' => 'First body']);
@@ -272,7 +272,7 @@ test('the admin legacy textarea preserves sections on metadata changes and retai
 
 test('AI quiz generation reads the text and heading saved by the builder', function () {
     config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-2.5-flash']);
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $this->actingAs($teacher)->post(route('teacher.lessons.store', $course), readingLessonFields([
         'sections' => [['type' => 'text', 'caption' => 'Glacial valleys', 'body' => 'Moving glaciers carve U-shaped valleys.']],
@@ -299,7 +299,7 @@ test('AI quiz generation reads the text and heading saved by the builder', funct
 
 
 test('a standalone heading is ordered and included in the reading text mirror', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     $this->actingAs($teacher)->post(route('teacher.lessons.store', $course), readingLessonFields([
         'sections' => [

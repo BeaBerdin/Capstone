@@ -26,10 +26,25 @@ function invitationFor(App\Models\Course $course, App\Models\User $teacher): Cou
     ]);
 }
 
+/** Existing-flow fixtures represent a teacher who completed EDP review. */
+function invitationTeacher(array $attributes = []): App\Models\User
+{
+    $teacher = pathwiseUser('teacher', array_merge(['email_verified_at' => now()], $attributes));
+    $edp = pathwiseUser('super_admin');
+    $review = StudentApplication::submitForTeacher($teacher, 'test_fixture');
+    $review->forceFill([
+        'status' => StudentApplication::APPROVED,
+        'reviewed_by' => $edp->id,
+        'reviewed_at' => now(),
+    ])->save();
+
+    return $teacher;
+}
+
 test('an invitation expiry in Philippine time is stored in UTC, with or without seconds', function (string $input) {
     $this->travelTo(Carbon::parse('2026-10-16 08:00:00', 'UTC'));
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     $this->actingAs($teacher)
@@ -47,7 +62,7 @@ test('an invitation expiry in Philippine time is stored in UTC, with or without 
 ]);
 
 test('an invitation expiry in another format is a validation error, not a server error', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     $this->actingAs($teacher)
@@ -61,7 +76,7 @@ test('an invitation expiry in another format is a validation error, not a server
 });
 
 test('an invitation expiry in the past is rejected', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     $this->actingAs($teacher)
@@ -75,7 +90,7 @@ test('an invitation expiry in the past is rejected', function () {
 });
 
 test('invitations can only be created for the teacher\'s published courses', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $draft = pathwiseCourse($teacher, ['status' => 'draft', 'title' => 'Draft Course Title']);
     $published = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Published Course Title']);
 
@@ -93,7 +108,7 @@ test('invitations can only be created for the teacher\'s published courses', fun
 });
 
 test('an invitation to a course that was unpublished cannot be accepted', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
     $invitation = invitationFor($course, $teacher);
@@ -110,7 +125,7 @@ test('an invitation to a course that was unpublished cannot be accepted', functi
 });
 
 test('a logged-out visitor opening an invitation link logs in first, then sees the invitation', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
     $invitation = invitationFor($course, $teacher);
@@ -138,7 +153,7 @@ function enrollIn(App\Models\User $student, App\Models\Course $course): void
 }
 
 test('the invitations page does not list students until the teacher searches', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
     $student = pathwiseUser('student', ['name' => 'Listed Nowhere Student']);
 
@@ -150,7 +165,7 @@ test('the invitations page does not list students until the teacher searches', f
 });
 
 test('a student search needs at least 3 characters', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
     pathwiseUser('student', ['name' => 'Ana Reyes']);
 
@@ -162,7 +177,7 @@ test('a student search needs at least 3 characters', function () {
 });
 
 test('a teacher finds students by name or email, from any department', function () {
-    $teacher = pathwiseUser('teacher', [
+    $teacher = invitationTeacher([
         'department_id' => Department::create(['name' => 'College of Computing'])->id,
     ]);
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
@@ -185,13 +200,13 @@ test('a teacher finds students by name or email, from any department', function 
 });
 
 test('the student search leaves out students already enrolled in the course and non-students', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $invitation = invitationFor($course, $teacher);
 
     enrollIn(pathwiseUser('student', ['name' => 'Searchname Enrolled']), $course);
     enrollIn(pathwiseUser('student', ['name' => 'Searchname Other Course']), pathwiseCourse($teacher, ['status' => 'published']));
-    pathwiseUser('teacher', ['name' => 'Searchname Teacher']);
+    invitationTeacher(['name' => 'Searchname Teacher']);
 
     $this->actingAs($teacher)
         ->get(route('course-invitations.index', ['invitation' => $invitation->id, 'q' => 'Searchname']))
@@ -202,7 +217,7 @@ test('the student search leaves out students already enrolled in the course and 
 });
 
 test('the student search returns at most 10 results', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
 
     foreach (range(1, 12) as $number) {
@@ -220,7 +235,7 @@ test('the student search returns at most 10 results', function () {
 test('a teacher cannot send an invitation to a student already enrolled in the course', function () {
     Notification::fake();
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $student = pathwiseUser('student');
     enrollIn($student, $course);
@@ -239,7 +254,7 @@ test('a teacher cannot send an invitation to a student already enrolled in the c
 test('a teacher can send an invitation to any student not yet enrolled in the course', function () {
     Notification::fake();
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student');
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
 
@@ -266,7 +281,7 @@ dataset('used invitations', [
 ]);
 
 test('accepted or expired invitations show no student search or send controls', function (Closure $state) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student', ['name' => 'Searchable Student']);
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
     $invitation->update($state($student));
@@ -288,7 +303,7 @@ test('accepted or expired invitations show no student search or send controls', 
 test('the server refuses to send accepted or expired invitations', function (Closure $state) {
     Notification::fake();
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student');
     $otherStudent = pathwiseUser('student');
     $invitation = invitationFor(pathwiseCourse($teacher, ['status' => 'published']), $teacher);
@@ -307,7 +322,7 @@ test('the server refuses to send accepted or expired invitations', function (Clo
 test('two students can independently redeem a paid course code without a payment', function () {
     Notification::fake();
     Http::fake();
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 499]);
     $invitation = invitationFor($course, $teacher);
     $first = pathwiseUser('student');
@@ -333,7 +348,7 @@ test('two students can independently redeem a paid course code without a payment
 });
 
 test('the student can paste a code or link and reviews it before accepting', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $invitation = invitationFor($course, $teacher);
     $link = route('course-invitations.show', $invitation->code);
@@ -357,7 +372,7 @@ test('the student can paste a code or link and reviews it before accepting', fun
 
 test('private delivery is recipient bound and does not consume the shared code', function () {
     Notification::fake();
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Private invitation course', 'price' => 499]);
     $root = invitationFor($course, $teacher);
     $recipient = pathwiseUser('student');
@@ -391,7 +406,7 @@ test('private delivery is recipient bound and does not consume the shared code',
 });
 
 test('an orphaned private invitation does not become a shared code', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $invitation = invitationFor($course, $teacher);
     // A legacy private record can have lost its recipient.
@@ -405,7 +420,7 @@ test('an orphaned private invitation does not become a shared code', function ()
 
 test('expiring at the current instant and deactivating a parent both block private invitations', function (string $state) {
     Notification::fake();
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $root = invitationFor($course, $teacher);
     $recipient = pathwiseUser('student');
@@ -427,11 +442,11 @@ test('expiring at the current instant and deactivating a parent both block priva
 })->with(['Expired', 'Deactivated']);
 
 test("a teacher cannot alter an invitation for another teacher's course", function () {
-    $owner = pathwiseUser('teacher');
+    $owner = invitationTeacher();
     $course = pathwiseCourse($owner, ['status' => 'published']);
     $root = invitationFor($course, $owner);
 
-    $this->actingAs(pathwiseUser('teacher'))->post(route('course-invitations.store'), ['course_id' => $course->id])
+    $this->actingAs(invitationTeacher())->post(route('course-invitations.store'), ['course_id' => $course->id])
         ->assertSessionHasErrors('course_id');
     $this->post(route('course-invitations.send', $root), ['student_id' => pathwiseUser('student')->id])->assertForbidden();
     $this->delete(route('course-invitations.destroy', $root))->assertForbidden();
@@ -440,7 +455,7 @@ test("a teacher cannot alter an invitation for another teacher's course", functi
 });
 
 test('a pending or unverified student sees no invitation details and cannot join', function (bool $pending) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Hidden invitation details', 'price' => 499]);
     $invitation = invitationFor($course, $teacher);
     $student = pathwiseUser('student', ['email_verified_at' => null]);
@@ -467,11 +482,12 @@ test('a pending or unverified student sees no invitation details and cannot join
 })->with(['pending' => true, 'unverified' => false]);
 
 test('other roles cannot preview redeem or list student invitations', function (string $role) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $invitation = invitationFor($course, $teacher);
 
-    $this->actingAs(pathwiseUser($role))->get(route('course-invitations.show', $invitation->code))->assertForbidden();
+    $otherRoleUser = $role === 'teacher' ? invitationTeacher() : pathwiseUser($role);
+    $this->actingAs($otherRoleUser)->get(route('course-invitations.show', $invitation->code))->assertForbidden();
     $this->get(route('student.invitations.index'))->assertForbidden();
     $this->post(route('course-invitations.accept', $invitation->code))->assertForbidden();
     expect(Enrollment::count())->toBe(0);
@@ -479,7 +495,7 @@ test('other roles cannot preview redeem or list student invitations', function (
 
 test('a redemption cannot recreate a cancelled or removed enrollment', function (string $resolution) {
     Notification::fake();
-    $teacher = pathwiseUser('teacher');
+    $teacher = invitationTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $used = invitationFor($course, $teacher);

@@ -18,6 +18,22 @@ test('the super admin can open the user management page', function () {
         ->assertSee('Create Account');
 });
 
+test('teacher account screens explain EDP review and link existing teachers to their review', function () {
+    $teacher = pathwiseUser('teacher');
+    $edp = pathwiseUser('super_admin');
+
+    $this->actingAs($edp)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertSee('Teacher accounts require EDP approval and email confirmation.')
+        ->assertSee(route('users.teacher-review', $teacher), false)
+        ->assertSee('Open teacher review');
+
+    $this->get(route('users.create'))
+        ->assertOk()
+        ->assertSee('Teacher accounts enter the EDP review queue and confirm their email after approval.');
+});
+
 test('the super admin can create an administrator account', function () {
     $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('users.store'), [

@@ -53,7 +53,7 @@ function activeEnrollment(App\Models\User $student, App\Models\Course $course): 
  */
 function engagementScenario(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $web = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Web Basics']);
     $java = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Java Basics']);
 
@@ -174,7 +174,7 @@ test('the engagement section renders in the PDF view', function () {
 });
 
 test('only the Super Admin can open the system reports', function (string $role) {
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->get(route('reports.index'))
         ->assertForbidden();
 })->with(['admin', 'teacher', 'student']);

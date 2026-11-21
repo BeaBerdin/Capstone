@@ -42,8 +42,13 @@ Route::view('/', 'welcome')->name('home');
 */
 
 Route::get('/email/verify/{id}/{hash}', \App\Http\Controllers\Auth\VerifyEmailLinkController::class)
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['signed', 'throttle:verification-link'])
     ->name('verification.verify');
+
+// Redeems a one-time sign-in grant stored in this browser's session.
+Route::post('/email/verified/continue', [\App\Http\Controllers\Auth\VerifyEmailLinkController::class, 'continue'])
+    ->middleware('throttle:verification-continue')
+    ->name('verification.continue');
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +73,7 @@ Route::get('/email/verify', \Laravel\Fortify\Http\Controllers\EmailVerificationP
     ->name('verification.notice');
 
 Route::post('/email/verification-notification', [\Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'student.application', 'throttle:6,1'])
+    ->middleware(['auth', 'student.application', 'throttle:verification-resend'])
     ->name('verification.send');
 
 /*
@@ -81,6 +86,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/application-status', [\App\Http\Controllers\StudentApplicationStatusController::class, 'show'])
         ->name('student-application.status');
+
+    Route::get('/application-status/check', [\App\Http\Controllers\StudentApplicationStatusController::class, 'check'])
+        ->middleware('throttle:application-check')
+        ->name('student-application.check');
 
     Route::post('/application-status/resubmit', [\App\Http\Controllers\StudentApplicationStatusController::class, 'resubmit'])
         ->middleware('throttle:study-load-resubmission')
@@ -186,6 +195,9 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         Route::patch('/super-admin/users/{user}/verify-email', [UserManagementController::class, 'verifyEmail'])
             ->name('users.verify-email');
+
+        Route::post('/super-admin/users/{user}/teacher-review', [UserManagementController::class, 'queueTeacherReview'])
+            ->name('users.teacher-review');
 
         Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
             ->name('users.edit');

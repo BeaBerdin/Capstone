@@ -22,7 +22,7 @@ function templatePayload(array $overrides = []): array
 
 function issuedCertificate(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student', ['name' => 'Juan Dela Cruz']);
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Web Basics']);
 
@@ -170,7 +170,7 @@ test('the preview shows a sample PDF without creating a certificate', function (
 });
 
 test('only the Administrator can change the certificate template', function (string $role) {
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)
         ->get(route('certificate-template.edit'))

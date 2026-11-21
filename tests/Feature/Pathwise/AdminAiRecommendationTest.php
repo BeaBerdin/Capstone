@@ -14,7 +14,7 @@ use App\Models\QuizResult;
 function completePublishedCourse(string $difficulty, string $title)
 {
     $department = Department::firstOrCreate(['name' => 'Computing']);
-    $course = pathwiseCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['status' => 'published', 'difficulty_level' => $difficulty, 'title' => $title]);
+    $course = pathwiseCourse(pathwiseApprovedTeacher( ['department_id' => $department->id]), ['status' => 'published', 'difficulty_level' => $difficulty, 'title' => $title]);
     $lesson = Lesson::create([
         'course_id' => $course->id, 'title' => 'Lesson 1', 'content' => 'Content', 'lesson_type' => 'text',
         'lesson_order' => 1, 'duration_minutes' => 20, 'is_preview' => false, 'is_published' => true,
@@ -53,7 +53,7 @@ test('the administrator can generate a recommendation for a student', function (
 });
 
 test('a recommendation is only generated for a student account', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
 
     $this->actingAs(pathwiseUser('admin'))
         ->post(route('ai-recommendations.store'), ['student_id' => $teacher->id])
@@ -101,7 +101,7 @@ test('teachers and students cannot generate or delete recommendations', function
     $recommendation = AIRecommendation::create([
         'student_id' => $student->id, 'course_id' => $course->id, 'recommendation_score' => 80, 'reason' => 'Next step', 'is_viewed' => false,
     ]);
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)->post(route('ai-recommendations.store'), ['student_id' => $student->id])->assertForbidden();
     $this->actingAs($user)->delete(route('ai-recommendations.destroy', $recommendation))->assertForbidden();

@@ -74,7 +74,7 @@ function cardValues(string $html, array $labels): array
 }
 
 test('the teacher dashboard shows the Fig. 37 cards with the teacher\'s own figures', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $web = pathwiseCourse($teacher, ['status' => 'published']);
     $java = pathwiseCourse($teacher, ['status' => 'draft']);
 
@@ -91,7 +91,7 @@ test('the teacher dashboard shows the Fig. 37 cards with the teacher\'s own figu
     cardsQuizResult($ben, $web, 60);
 
     // Another teacher's course is not counted.
-    $other = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published']);
+    $other = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published']);
     cardsLesson($other, 1);
     cardsEnroll(pathwiseUser('student'), $other);
     cardsQuizResult(pathwiseUser('student'), $other, 10);
@@ -113,7 +113,7 @@ test('the teacher dashboard shows the Fig. 37 cards with the teacher\'s own figu
 });
 
 test('the teacher dashboard cards link to lessons, students and quiz results', function () {
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.dashboard'))
         ->assertOk()
         ->assertSee('href="'.route('teacher.lessons.index').'"', false)
@@ -123,7 +123,7 @@ test('the teacher dashboard cards link to lessons, students and quiz results', f
 
 test('the student dashboard shows the Fig. 38 cards including Quizzes Taken', function () {
     $student = pathwiseUser('student');
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
 
     $web = pathwiseCourse($teacher, ['status' => 'published']);
     $java = pathwiseCourse($teacher, ['status' => 'published']);

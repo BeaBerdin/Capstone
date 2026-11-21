@@ -75,7 +75,7 @@ function renderedChart(string $html, string $name): ?array
 */
 
 test('the reports page charts enrollments by status', function () {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active');
     chartEnrollment(pathwiseUser('student'), $course, 'active');
@@ -93,7 +93,7 @@ test('the reports page charts enrollments by status', function () {
 });
 
 test('the enrollment status chart follows the selected period', function () {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active');
     chartEnrollment(pathwiseUser('student'), $course, 'completed', now()->subDays(100));
@@ -119,7 +119,7 @@ test('the reports page charts lessons completed per week from the engagement rep
 });
 
 test('the reports page prints the chart data and keeps the fallback visible', function () {
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active');
 
@@ -160,7 +160,7 @@ test('the reports page shows a message instead of an empty status chart', functi
 */
 
 test('teacher analytics charts the enrollment trend for the last six months', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active', now()->setDate(2026, 3, 10));
@@ -168,7 +168,7 @@ test('teacher analytics charts the enrollment trend for the last six months', fu
     chartEnrollment(pathwiseUser('student'), $course, 'completed', now()->setDate(2026, 6, 12));
 
     // Another teacher's enrollment is not counted.
-    chartEnrollment(pathwiseUser('student'), pathwiseCourse(pathwiseUser('teacher')), 'active');
+    chartEnrollment(pathwiseUser('student'), pathwiseCourse(pathwiseApprovedTeacher()), 'active');
 
     $this->actingAs($teacher)
         ->get(route('teacher.analytics'))
@@ -181,13 +181,13 @@ test('teacher analytics charts the enrollment trend for the last six months', fu
 });
 
 test('teacher analytics charts the quiz score distribution', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     chartQuizResults($course, [95, 90, 80, 74, 60, 59, 10]);
 
     // Another teacher's quiz results are not counted.
-    chartQuizResults(pathwiseCourse(pathwiseUser('teacher')), [100, 100]);
+    chartQuizResults(pathwiseCourse(pathwiseApprovedTeacher()), [100, 100]);
 
     $this->actingAs($teacher)
         ->get(route('teacher.analytics'))
@@ -200,7 +200,7 @@ test('teacher analytics charts the quiz score distribution', function () {
 });
 
 test('teacher analytics charts follow the selected course', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $web = pathwiseCourse($teacher, ['status' => 'published']);
     $java = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -217,7 +217,7 @@ test('teacher analytics charts follow the selected course', function () {
 });
 
 test('teacher analytics prints the chart data and keeps the CSS bars as the fallback', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active');
@@ -243,7 +243,7 @@ test('teacher analytics prints the chart data and keeps the CSS bars as the fall
 });
 
 test('teacher analytics without data shows the empty states and no charts', function () {
-    $html = $this->actingAs(pathwiseUser('teacher'))
+    $html = $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.analytics'))
         ->assertOk()
         ->assertSee('No enrollment activity yet')
@@ -263,7 +263,7 @@ test('every chart is sent with one hidden canvas and a visible fallback', functi
     // resources/js/charts.js draws each [data-chart] once per page visit and
     // keeps that state in memory. Livewire saves the page HTML for the Back
     // button, so the server must never send a chart already marked as drawn.
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     chartEnrollment(pathwiseUser('student'), $course, 'active');

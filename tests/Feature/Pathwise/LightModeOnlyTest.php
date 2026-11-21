@@ -7,7 +7,7 @@
 */
 
 test('every role dashboard renders in light mode only', function (string $role, string $route) {
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->get(route($route))
         ->assertOk()
         ->assertSee('<meta name="color-scheme" content="light" />', false)

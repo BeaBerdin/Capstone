@@ -69,7 +69,7 @@ test('an edited category cannot take the name of another category', function () 
 
 test('only the administrator can add or edit categories', function (string $role) {
     $category = CourseCategory::create(['name' => 'Computer Studies', 'is_active' => true]);
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)->post(route('course-categories.store'), ['name' => 'New Category'])->assertForbidden();
     $this->actingAs($user)->put(route('course-categories.update', $category), ['name' => 'Renamed'])->assertForbidden();

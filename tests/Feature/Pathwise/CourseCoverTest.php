@@ -35,13 +35,13 @@ test('the cover URL is resolved in one place', function () {
         ->and(Course::thumbnailUrlFor('/'.COVER_PATH))->toBe(coverUrl())
         ->and(Course::thumbnailUrlFor('https://cdn.example.org/a.jpg'))->toBe('https://cdn.example.org/a.jpg');
 
-    $course = coveredCourse(pathwiseUser('teacher'));
+    $course = coveredCourse(pathwiseApprovedTeacher());
 
     expect($course->thumbnail_url)->toBe(coverUrl());
 });
 
 test('the cover component falls back to a placeholder without an image', function () {
-    $course = coveredCourse(pathwiseUser('teacher'), ['thumbnail' => null]);
+    $course = coveredCourse(pathwiseApprovedTeacher(), ['thumbnail' => null]);
 
     $html = (string) $this->blade('<x-pw.course-cover :course="$course" />', ['course' => $course]);
 
@@ -56,7 +56,7 @@ test('the cover component falls back to a placeholder without an image', functio
 
 test('an administrator sees the cover on course management, the dashboard, lessons and learning paths', function () {
     $department = Department::create(['name' => 'Computing']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $pending = coveredCourse($teacher, ['status' => 'pending']);
@@ -81,7 +81,7 @@ test('an administrator sees the cover on course management, the dashboard, lesso
 
 test('course management still renders for a course without a cover', function () {
     $department = Department::create(['name' => 'Computing']);
-    coveredCourse(pathwiseUser('teacher', ['department_id' => $department->id]), ['thumbnail' => null, 'status' => 'pending']);
+    coveredCourse(pathwiseApprovedTeacher( ['department_id' => $department->id]), ['thumbnail' => null, 'status' => 'pending']);
 
     $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->get(route('courses.index'))
@@ -91,7 +91,7 @@ test('course management still renders for a course without a cover', function ()
 });
 
 test('a super admin sees the cover on the dashboard and in reports', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $superAdmin = pathwiseUser('super_admin');
 
@@ -136,7 +136,7 @@ test('a super admin sees the cover on the dashboard and in reports', function ()
 });
 
 test('a teacher sees the cover on my courses and analytics', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
 
     coveredCourse($teacher, ['status' => 'draft']);
 
@@ -145,7 +145,7 @@ test('a teacher sees the cover on my courses and analytics', function () {
 });
 
 test('a student sees the cover in the marketplace, course details, my courses, the dashboard and an invitation', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
 
     $course = coveredCourse($teacher);
@@ -191,7 +191,7 @@ test('a student sees the cover in the marketplace, course details, my courses, t
 function threeCoveredCourses(): array
 {
     $department = Department::create(['name' => 'Computing']);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $student = pathwiseUser('student');
 
     $courses = [
@@ -402,7 +402,7 @@ test('the course learning page shows the full framed cover, as on AI Recommendat
 });
 
 test('a framed cover still shows the placeholder when the course has no cover', function () {
-    $course = coveredCourse(pathwiseUser('teacher'), ['thumbnail' => null]);
+    $course = coveredCourse(pathwiseApprovedTeacher(), ['thumbnail' => null]);
 
     $html = (string) $this->blade('<x-pw.course-cover :course="$course" framed />', ['course' => $course]);
 

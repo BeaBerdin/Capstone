@@ -19,7 +19,7 @@ class RegisterResponse implements RegisterResponseContract
             return new JsonResponse('', 201);
         }
 
-        if ($request->user()?->awaitingStudentApproval()) {
+        if ($request->user()?->awaitingApproval()) {
             return redirect()->route('student-application.status');
         }
 

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyTeacherEmail;
+use App\Support\StudyLoads;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
@@ -54,6 +57,12 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     protected static function booted(): void
     {
+        static::updating(function (self $user): void {
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
+        });
+
         static::deleting(function (self $user): void {
             throw new LogicException(
                 'PATHWISE accounts are deactivated, not deleted, so their records are kept.'
@@ -125,13 +134,11 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 
     /*
     |--------------------------------------------------------------------------
-    | STUDENT APPLICATION (EDP approval)
+    | REGISTRATION APPLICATIONS (EDP approval)
     |--------------------------------------------------------------------------
     |
-    | New student registrations upload a Study Load and wait for the Super
-    | Admin (EDP). Every submission is a StudentApplication row; the newest
-    | one decides the account's status. An account without any row (existing
-    | accounts, teachers, accounts created by the Super Admin) is approved.
+    | Student Study Load decisions and teacher approvals apply to separate
+    | roles. Only students retain the existing no-application exception.
     |
     */
 
@@ -140,7 +147,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function studentApplications(): HasMany
     {
-        return $this->hasMany(StudentApplication::class)->orderBy('submission_no');
+        return $this->hasMany(StudentApplication::class)
+            ->where('applicant_role', StudentApplication::STUDENT)
+            ->orderBy('submission_no');
     }
 
     /**
@@ -148,14 +157,47 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function latestStudentApplication(): HasOne
     {
-        return $this->hasOne(StudentApplication::class)->latestOfMany('submission_no');
+        return $this->hasOne(StudentApplication::class)->ofMany(
+            ['submission_no' => 'max'],
+            fn ($query) => $query->where('applicant_role', StudentApplication::STUDENT),
+        );
     }
 
-    /**
-     * pending | approved | rejected. No application row means approved.
-     */
+    /** @return HasMany<StudentApplication, $this> */
+    public function teacherApplications(): HasMany
+    {
+        return $this->hasMany(StudentApplication::class)->where('applicant_role', StudentApplication::TEACHER);
+    }
+
+    public function currentTeacherApplication(): ?StudentApplication
+    {
+        $application = $this->teacherApplications()->orderByDesc('submission_no')->first();
+
+        if (! $application?->reviewsEmail($this->email)) {
+            return null;
+        }
+
+        if ($application->status === StudentApplication::APPROVED
+            && ($application->reviewed_by === null || $application->reviewed_at === null)) {
+            return null;
+        }
+
+        return $application;
+    }
+
+    public function approvedTeacherApplication(): ?StudentApplication
+    {
+        $application = $this->currentTeacherApplication();
+
+        return $application?->status === StudentApplication::APPROVED ? $application : null;
+    }
+
     public function applicationStatus(): string
     {
+        if ($this->hasRole('teacher')) {
+            return $this->currentTeacherApplication()?->status ?? StudentApplication::PENDING;
+        }
+
         return $this->latestStudentApplication?->status ?? StudentApplication::APPROVED;
     }
 
@@ -166,8 +208,40 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function awaitingStudentApproval(): bool
     {
-        return in_array($this->applicationStatus(), StudentApplication::AWAITING, true)
-            && $this->hasRole('student');
+        return $this->hasRole('student')
+            && in_array($this->latestStudentApplication?->status, StudentApplication::AWAITING, true);
+    }
+
+    /**
+     * The latest review must explicitly approve this role and email address.
+     */
+    public function awaitingTeacherApproval(): bool
+    {
+        return $this->hasRole('teacher') && $this->approvedTeacherApplication() === null;
+    }
+
+    /** A student or teacher whose registration the EDP has not approved. */
+    public function awaitingApproval(): bool
+    {
+        return $this->awaitingTeacherApproval() || $this->awaitingStudentApproval();
+    }
+
+    /** Keep email changes and the new teacher review in the same transaction. */
+    public function updateAccountIdentity(array $attributes): void
+    {
+        $review = DB::transaction(function () use ($attributes) {
+            $user = static::query()->lockForUpdate()->findOrFail($this->getKey());
+            $user->fill($attributes)->save();
+
+            if ($user->wasChanged('email') && $user->hasRole('teacher')) {
+                return StudentApplication::submitForTeacher($user, 'email_change');
+            }
+
+            return null;
+        });
+
+        $this->refresh();
+        StudyLoads::notifyEdp($review, resubmission: false);
     }
 
     /**
@@ -178,6 +252,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function sendEmailVerificationNotification()
     {
         if ($this->awaitingStudentApproval()) {
+            return;
+        }
+
+        if ($this->hasRole('teacher')) {
+            if ($application = $this->approvedTeacherApplication()) {
+                $this->notify(new VerifyTeacherEmail($application->id));
+            }
+
             return;
         }
 

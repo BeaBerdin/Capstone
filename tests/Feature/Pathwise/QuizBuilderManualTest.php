@@ -63,7 +63,7 @@ function quizBuilderSettings($test, Lesson $lesson, array $overrides = []): arra
 }
 
 test('a teacher can save the quiz settings of a quiz lesson', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
 
     $this->actingAs($teacher);
@@ -86,7 +86,7 @@ test('a teacher can save the quiz settings of a quiz lesson', function () {
 });
 
 test('the quiz settings refuse an invalid passing score', function ($score) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
 
     $this->actingAs($teacher);
@@ -101,7 +101,7 @@ test('the quiz settings refuse an invalid passing score', function ($score) {
 })->with([0, 101, 'seventy', null]);
 
 test('the quiz settings refuse an invalid time limit', function ($minutes) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
 
     $this->actingAs($teacher);
@@ -116,7 +116,7 @@ test('the quiz settings refuse an invalid time limit', function ($minutes) {
 })->with([0, -5, 'fifteen']);
 
 test('the quiz settings require a title', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
 
     $this->actingAs($teacher);
@@ -125,9 +125,9 @@ test('the quiz settings require a title', function () {
 });
 
 test('another teacher cannot save the quiz settings', function () {
-    $lesson = quizLessonFor(pathwiseUser('teacher'));
+    $lesson = quizLessonFor(pathwiseApprovedTeacher());
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->post(route('teacher.quiz.save', $lesson), ['title' => 'Web Basics Quiz', 'passing_score' => 70])
         ->assertForbidden();
 
@@ -135,7 +135,7 @@ test('another teacher cannot save the quiz settings', function () {
 });
 
 test('a teacher can add a question by hand', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $quiz = savedQuizFor(quizLessonFor($teacher));
 
     $this->actingAs($teacher);
@@ -152,7 +152,7 @@ test('a teacher can add a question by hand', function () {
 });
 
 test('a question needs options A and B', function (string $missing) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $quiz = savedQuizFor(quizLessonFor($teacher));
 
     $this->actingAs($teacher);
@@ -164,7 +164,7 @@ test('a question needs options A and B', function (string $missing) {
 })->with(['option_a', 'option_b']);
 
 test('a question needs a correct answer of A, B, C or D', function ($answer) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $quiz = savedQuizFor(quizLessonFor($teacher));
 
     $this->actingAs($teacher);
@@ -176,7 +176,7 @@ test('a question needs a correct answer of A, B, C or D', function ($answer) {
 })->with(['', 'E']);
 
 test('the correct answer must point to an option that has text', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $quiz = savedQuizFor(quizLessonFor($teacher));
 
     $this->actingAs($teacher);
@@ -188,7 +188,7 @@ test('the correct answer must point to an option that has text', function () {
 });
 
 test('questions cannot be added while the course is pending approval', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $quiz = savedQuizFor(quizLessonFor($teacher, 'pending'));
 
     $this->actingAs($teacher)
@@ -199,9 +199,9 @@ test('questions cannot be added while the course is pending approval', function 
 });
 
 test('another teacher cannot add a question', function () {
-    $quiz = savedQuizFor(quizLessonFor(pathwiseUser('teacher')));
+    $quiz = savedQuizFor(quizLessonFor(pathwiseApprovedTeacher()));
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->post(route('teacher.quiz.question.store', $quiz), validQuestion())
         ->assertForbidden();
 
@@ -209,7 +209,7 @@ test('another teacher cannot add a question', function () {
 });
 
 test('Save Changes persists settings, existing edits and a new question in the same form', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
     $this->actingAs($teacher);
     $settings = quizBuilderSettings($this, $lesson, ['new_question' => validQuestion()]);
@@ -250,7 +250,7 @@ test('Save Changes persists settings, existing edits and a new question in the s
 });
 
 test('publishing requires a complete question and only explicit actions change publication', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
     $this->actingAs($teacher);
     $url = route('teacher.quiz.save', $lesson);
@@ -282,7 +282,7 @@ test('publishing requires a complete question and only explicit actions change p
 });
 
 test('stale and tampered edits leave the entire quiz unchanged', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $lesson = quizLessonFor($teacher);
     $quiz = savedQuizFor($lesson);
     $first = $quiz->questions()->create(validQuestion());
@@ -316,7 +316,7 @@ test('stale and tampered edits leave the entire quiz unchanged', function () {
 });
 
 test('a linked quiz opens and grades only for an enrolled student with a published lesson and quiz', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $lesson = quizLessonFor($teacher, 'published');
     $quiz = savedQuizFor($lesson);
@@ -352,7 +352,7 @@ test('a linked quiz opens and grades only for an enrolled student with a publish
 });
 
 test('student quiz access rechecks the publication state after route binding', function (string $action) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $lesson = quizLessonFor($teacher, 'published');
     $quiz = savedQuizFor($lesson);

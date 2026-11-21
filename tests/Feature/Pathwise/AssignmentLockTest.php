@@ -11,7 +11,7 @@ use App\Models\Course;
 
 function lockTestAssignment(string $courseStatus): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => $courseStatus, 'title' => 'Lock Test Course']);
 
     $assignment = Assignment::create([

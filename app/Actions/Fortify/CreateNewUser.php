@@ -73,17 +73,15 @@ class CreateNewUser implements CreatesNewUsers
 
         $isStudent = $input['role'] === 'student';
         $storedPath = null;
+        $application = null;
 
         /*
-         * The account, its role and (for a student) the first application
-         * row are created in ONE transaction, before Fortify fires the
-         * Registered event. A student account can therefore never exist
-         * without its application row (which would count as approved).
-         * If anything fails, both rows are rolled back and the stored Study
-         * Load file is deleted.
+         * Save the account, role and first review before Fortify fires the
+         * Registered event. Roll back the database changes and discard an
+         * uploaded Study Load if any part of registration fails.
          */
         try {
-            $user = DB::transaction(function () use ($input, $name, $isStudent, &$storedPath) {
+            $user = DB::transaction(function () use ($input, $name, $isStudent, &$storedPath, &$application) {
                 $user = User::create([
                     'name' => $name,
                     'email' => $input['email'],
@@ -96,7 +94,11 @@ class CreateNewUser implements CreatesNewUsers
                 $user->roles()->syncWithoutDetaching([$role->id]);
 
                 if ($isStudent) {
-                    StudyLoads::submit($user, $input['study_load'], 1, $storedPath);
+                    $application = StudyLoads::submit($user, $input['study_load'], 1, $storedPath);
+                } else {
+                    // A self-registered teacher also waits for the EDP's
+                    // approval (no Study Load), in the same queue.
+                    $application = StudentApplication::submitForTeacher($user, 'registration');
                 }
 
                 return $user;
@@ -108,9 +110,7 @@ class CreateNewUser implements CreatesNewUsers
         }
 
         // Tell the EDP only once the application is safely saved.
-        if ($isStudent) {
-            StudyLoads::notifyEdp($user->latestStudentApplication()->first(), resubmission: false);
-        }
+        StudyLoads::notifyEdp($application, resubmission: false);
 
         return $user;
     }

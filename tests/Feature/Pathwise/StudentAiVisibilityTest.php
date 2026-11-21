@@ -17,7 +17,7 @@ const AI_IMPROVEMENT_MARKER = 'AI-IMPROVE-SECRET-4d2e';
 
 function aiVisibilitySetup(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -184,7 +184,7 @@ test('the course teacher can review the AI evaluation before grading', function 
 test('another teacher cannot open the AI evaluation', function () {
     [, , , $submission] = aiVisibilitySetup();
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.submissions.show', $submission))
         ->assertForbidden();
 });

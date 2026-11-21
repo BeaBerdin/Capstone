@@ -12,7 +12,7 @@ use App\Models\User;
 
 function routedRemovalRequest(?Department $teacherDepartment): array
 {
-    $teacher = pathwiseUser('teacher', ['department_id' => $teacherDepartment?->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $teacherDepartment?->id]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
 
@@ -45,7 +45,7 @@ function reviewRemovalRequest(User $administrator, StudentRemovalRequest $reques
 }
 
 test('a teacher without a department can still submit a removal request', function () {
-    $teacher = pathwiseUser('teacher', ['department_id' => null]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => null]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
 

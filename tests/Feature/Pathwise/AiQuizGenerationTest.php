@@ -18,7 +18,7 @@ function generationQuiz(string $courseStatus = 'draft'): array
 {
     config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-2.5-flash']);
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => $courseStatus]);
 
     // Source material for Gemini: a published Reading lesson with content.
@@ -180,7 +180,7 @@ test('another teacher cannot generate questions for the quiz', function () {
 
     fakeGeneratedQuestions(['Which tag makes a link?', 'Spare one?', 'Spare two?']);
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
         ->assertForbidden();
 

@@ -9,7 +9,7 @@ use App\Models\Assignment;
 
 function editableAssignment(array $attributes = []): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $assignment = Assignment::create(array_merge([
@@ -130,7 +130,7 @@ test('an unknown language is rejected when editing', function () {
 });
 
 test('the create form still shows the same fields', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $this->actingAs($teacher)

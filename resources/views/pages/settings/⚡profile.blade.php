@@ -36,13 +36,14 @@ new #[Title('Profile settings')] class extends Component {
             $this->profileRules($user->id)
         );
 
-        $user->fill($validated);
+        $previousEmail = $user->email;
+        $user->updateAccountIdentity($validated);
 
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+        if ($previousEmail !== $user->email && $user->hasRole('teacher')) {
+            $this->redirect(route('student-application.status'));
+
+            return;
         }
-
-        $user->save();
 
         Flux::toast(
             variant: 'success',
@@ -159,6 +160,18 @@ new #[Title('Profile settings')] class extends Component {
     public function resendVerificationNotification(): void
     {
         $user = Auth::user();
+
+        if ($user->awaitingApproval()) {
+            $this->redirect(route('student-application.status'));
+
+            return;
+        }
+
+        if ($user->hasRole('teacher') && ! $user->hasVerifiedEmail()) {
+            $this->redirect(route('verification.notice'));
+
+            return;
+        }
 
         if ($user->hasVerifiedEmail()) {
             $this->redirectIntended(

@@ -134,6 +134,9 @@
                     @error('role')
                         <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
                     @enderror
+                    <p class="mt-3 rounded-lg bg-purple-50 px-3 py-2 text-xs leading-5 text-purple-800" data-teacher-registration-note @if (old('role', 'student') !== 'teacher') hidden @endif>
+                        {{ __('Teacher applicants need EDP approval confirming their faculty status. If approved, you will receive an email verification link. Teacher tools become available after both steps are complete.') }}
+                    </p>
                 </div>
 
                 <!-- Study Load: students only (shown and required when Student is selected) -->
@@ -233,6 +236,7 @@
             var section = form.querySelector('[data-study-load-section]');
             var input = form.querySelector('[data-study-load-input]');
             var sizeError = form.querySelector('[data-study-load-size-error]');
+            var teacherNote = form.querySelector('[data-teacher-registration-note]');
             var maxBytes = {{ \App\Models\StudentApplication::MAX_KILOBYTES }} * 1024;
 
             function selectedRole() {
@@ -243,6 +247,7 @@
             function sync() {
                 var isStudent = selectedRole() === 'student';
 
+                teacherNote.hidden = isStudent;
                 section.hidden = !isStudent;
                 input.required = isStudent;
                 input.disabled = !isStudent;

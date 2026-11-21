@@ -25,7 +25,7 @@ function crossAccountFixture(): array
 {
     fakeFileDisks();
 
-    $owner = pathwiseUser('teacher');
+    $owner = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
 
     $course = pathwiseCourse($owner, ['status' => 'published', 'price' => 0]);
@@ -142,7 +142,7 @@ function expectBlocked($response): void
 
 test('another teacher cannot open or change the owner teacher\'s course pages', function () {
     $f = crossAccountFixture();
-    $other = pathwiseUser('teacher');
+    $other = pathwiseApprovedTeacher();
 
     $this->actingAs($other);
 
@@ -243,7 +243,7 @@ test('teachers and students cannot reach administrator or super admin actions', 
     $f = crossAccountFixture();
 
     foreach (['teacher', 'student'] as $role) {
-        $this->actingAs(pathwiseUser($role));
+        $this->actingAs(pathwiseRoleBoundaryUser($role));
 
         foreach ([
             route('admin.dashboard'),

@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 function activityBlockerFixture(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $lesson = $course->lessons()->create([
@@ -226,7 +226,7 @@ test('course deletion keeps role checks and rejects a stale student after deleti
     $course->update(['status' => 'draft', 'thumbnail' => 'covers/delete.jpg']);
     Storage::disk('public')->put($course->thumbnail, 'cover');
 
-    $this->actingAs(pathwiseUser('teacher'))->delete(route('teacher.courses.destroy', $course))->assertForbidden();
+    $this->actingAs(pathwiseApprovedTeacher())->delete(route('teacher.courses.destroy', $course))->assertForbidden();
     $this->actingAs(pathwiseUser('admin'))->delete(route('courses.destroy', $course))->assertForbidden();
     $this->actingAs($teacher)->delete(route('teacher.courses.destroy', $course))
         ->assertRedirect(route('teacher.my-courses'))->assertSessionHas('success');
@@ -259,7 +259,7 @@ test('Activity Gemini is opt-in and its suggestion never saves the final grade',
     $this->actingAs($teacher)->post($url)->assertSessionHas("error", "AI evaluation is not enabled for this assignment.");
     \Illuminate\Support\Facades\Http::assertNothingSent();
     $assignment->update(['ai_evaluation_enabled' => true]);
-    $this->actingAs(pathwiseUser('teacher'))->post($url)->assertForbidden();
+    $this->actingAs(pathwiseApprovedTeacher())->post($url)->assertForbidden();
     $this->actingAs($teacher)->post($url)->assertSessionHas('success');
     expect($submission->fresh()->ai_score)->toBe(85)
         ->and($submission->fresh()->score)->toBeNull()
