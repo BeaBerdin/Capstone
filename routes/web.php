@@ -282,7 +282,7 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
         Route::get('/admin-dashboard', [DashboardController::class, 'index'])
             ->name('admin.dashboard');
 
-        Route::resource('course-categories', CourseCategoryController::class)->except('show')->middleware('role:admin');
+        Route::resource('course-categories', CourseCategoryController::class)->except('show')->middleware('role:super_admin');
 
         Route::resource('courses', CourseController::class)->except('show');
 
@@ -313,13 +313,13 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         // Certificate template used by the certificate PDF (title, body, signatory).
         Route::get('/admin/certificate-template', [CertificateTemplateController::class, 'edit'])
-            ->middleware('role:admin')->name('certificate-template.edit');
+            ->middleware('role:super_admin')->name('certificate-template.edit');
 
         Route::put('/admin/certificate-template', [CertificateTemplateController::class, 'update'])
-            ->middleware('role:admin')->name('certificate-template.update');
+            ->middleware('role:super_admin')->name('certificate-template.update');
 
         Route::get('/admin/certificate-template/preview', [CertificateTemplateController::class, 'preview'])
-            ->middleware('role:admin')->name('certificate-template.preview');
+            ->middleware('role:super_admin')->name('certificate-template.preview');
 
         Route::resource('admin/learning-paths', LearningPathController::class)
             ->names('learning-paths');

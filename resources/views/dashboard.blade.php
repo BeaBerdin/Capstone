@@ -16,7 +16,6 @@
 
     $currentDate = $localNow->format('l, F d, Y');
 
-    $totalCategories = \App\Models\CourseCategory::count();
 @endphp
 
 {{--
@@ -37,8 +36,6 @@
     ];
 
     $academicRows = [
-        ['label' => 'Course Categories', 'value' => $totalCategories, 'tone' => 'sad-violet', 'href' => route('course-categories.index'),
-            'icon' => 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
         ['label' => 'Certificates Issued', 'value' => $certificatesIssued, 'tone' => 'sad-amber', 'href' => route('certificates.index'),
             'icon' => 'M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.5 12.5 7 21l5-2 5 2-1.5-8.5'],
         ['label' => 'Active Learning Paths', 'value' => $activeLearningPaths, 'tone' => 'sad-emerald', 'href' => route('learning-paths.index'),
@@ -55,7 +52,6 @@
     // The former "PATHWISE System Modules" links, now Quick Actions.
     $quickActions = [
         ['label' => 'Courses', 'href' => route('courses.index'), 'tone' => 'sad-violet', 'icon' => 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
-        ['label' => 'Categories', 'href' => route('course-categories.index'), 'tone' => 'sad-sky', 'icon' => 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
         ['label' => 'Assessments', 'href' => route('quizzes.index'), 'tone' => 'sad-emerald', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],
         ['label' => 'AI Recommendations', 'href' => route('ai-recommendations.index'), 'tone' => 'sad-violet', 'icon' => 'm12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z'],
         ['label' => 'Student Progress', 'href' => route('student-progress.index'), 'tone' => 'sad-rose', 'icon' => 'M4 19V9M9 19V5M14 19v-7M19 19V3'],
