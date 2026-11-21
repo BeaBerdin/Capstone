@@ -70,6 +70,7 @@ test('approving a manual transaction saves the approver and the time', function 
 test('a student cancelling a PayMongo checkout saves the cancellation remark', function () {
     [$student, , $transaction] = manualTransactionSetup([
         'payment_method' => 'PayMongo',
+        'payment_reference' => 'cs_test_cancel',
         'payment_proof' => null,
     ]);
 

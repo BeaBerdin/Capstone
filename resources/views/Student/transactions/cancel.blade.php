@@ -20,13 +20,12 @@
                         </svg>
 
                         <h3 class="mt-4 text-lg font-medium">
-                            Payment Cancelled
+                            Payment checkout closed
                         </h3>
 
                         <p class="mt-2 text-sm text-slate-500">
-                            Your payment for
-                            <strong>{{ $transaction->course->title ?? 'the course' }}</strong>
-                            was cancelled.
+                            Check the transaction status before attempting another payment for
+                            <strong>{{ $transaction->course->title ?? 'the course' }}</strong>.
                         </p>
 
                         <p class="mt-1 text-sm text-slate-500">
@@ -34,9 +33,9 @@
                         </p>
 
                         <div class="mt-6">
-                            <a href="{{ route('student.marketplace') }}"
+                            <a href="{{ route('student.transactions.show', $transaction) }}"
                                class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition">
-                                Back to Marketplace
+                                Check payment status
                             </a>
                         </div>
 

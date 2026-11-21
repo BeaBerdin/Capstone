@@ -162,7 +162,6 @@ class NotificationController extends Controller
                     $invitation = CourseInvitation::query()
                         ->whereKey($invitationId)
                         ->where('student_id', $user->id)
-                        ->whereNull('accepted_at')
                         ->first();
 
                     if ($invitation) {
@@ -177,7 +176,7 @@ class NotificationController extends Controller
                 }
 
                 return redirect()
-                    ->route('student.dashboard')
+                    ->route('student.invitations.index')
                     ->with(
                         'error',
                         'This course invitation is no longer available.'

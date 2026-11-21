@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Certificate;
 use App\Models\Course;
+use App\Models\CourseInvitation;
 use App\Models\CourseCategory;
 use App\Models\CourseReview;
 use App\Models\CourseTemplate;
@@ -14,7 +15,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use App\Notifications\PathwiseNotification;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -335,59 +336,47 @@ class CourseController extends Controller
 
     public function enroll(Course $course)
     {
-        abort_unless(
-            $course->status === 'published',
-            404
-        );
+        $studentId = (int) auth()->id();
+        $enrollment = DB::transaction(function () use ($course, $studentId): RedirectResponse|Enrollment {
+            $course = Course::lockForUpdate()->findOrFail($course->id);
+            abort_unless($course->status === 'published', 404);
 
-        /*
-         * SECURITY (P0 fix): this route may only enroll students in FREE
-         * courses. Paid courses must go through the PayMongo purchase
-         * route (student.transactions.store), which creates the
-         * enrollment only after the payment is verified.
-         */
-        if ((float) $course->price > 0) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'This is a paid course. Please complete the payment to enroll.'
-                );
-        }
+            if ((float) $course->price > 0) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', 'This is a paid course. Please complete the payment to enroll.');
+            }
 
-        $existingEnrollment = Enrollment::where('student_id', auth()->id())
-            ->where('course_id', $course->id)
-            ->first();
+            $existing = Enrollment::where('student_id', $studentId)->where('course_id', $course->id)
+                ->lockForUpdate()->first();
+            if ($existing) {
+                return $existing;
+            }
 
-        // A cancelled enrollment is not silently reused: the administrator
-        // must restore it (Admin > Enrollments).
-        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
-                );
-        }
+            if (CourseInvitation::redeemedFor($studentId, $course->id)->exists()) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', 'You previously joined this course by invitation. Contact the course administrator for access.');
+            }
 
-        // A double-click can send two requests at once; the unique
-        // student/course index lets only one create the enrollment.
-        try {
-            $enrollment = Enrollment::firstOrCreate(
-                [
-                    'student_id' => auth()->id(),
-                    'course_id' => $course->id,
-                ],
-                [
-                    'status' => 'active',
-                    'enrolled_at' => now(),
-                    'progress_percentage' => 0,
-                ]
+            if (Transaction::blockingCoursePayment($studentId, $course->id)->lockForUpdate()->first()) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', Transaction::ENROLLMENT_PAYMENT_CONFLICT);
+            }
+
+            return Enrollment::firstOrCreate(
+                ['student_id' => $studentId, 'course_id' => $course->id],
+                ['status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]
             );
-        } catch (UniqueConstraintViolationException) {
-            $enrollment = Enrollment::where('student_id', auth()->id())
-                ->where('course_id', $course->id)
-                ->firstOrFail();
+        }, 3);
+
+        if ($enrollment instanceof RedirectResponse) {
+            return $enrollment;
+        }
+
+        if (! $enrollment->grantsAccess()) {
+            return redirect()->route('student.course.show', $course)->with(
+                'error',
+                'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
+            );
         }
 
         // In-app notification, plus email when mail is configured.

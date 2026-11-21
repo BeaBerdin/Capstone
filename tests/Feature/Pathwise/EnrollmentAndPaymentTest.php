@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
@@ -151,4 +152,97 @@ test('an unreachable PayMongo shows a friendly error and is stored as rejected w
     expect($transaction->status)->toBe('rejected')
         ->and($transaction->remarks)->toContain('PayMongo could not be reached')
         ->and(Enrollment::where('student_id', $student->id)->exists())->toBeFalse();
+});
+
+test('an in-flight checkout reserves the course against invitation redemption and additional checkout attempts', function () {
+    [$student, $course] = paidCheckoutSetup();
+    $invitation = CourseInvitation::create([
+        'course_id' => $course->id,
+        'created_by' => $course->teacher_id,
+        'code' => 'CHECKOUT1234',
+    ]);
+    $this->actingAs($student);
+
+    Http::fake(['api.paymongo.com/v1/checkout_sessions' => function () use ($course, $invitation) {
+        $transaction = Transaction::sole();
+        expect($transaction->status)->toBe('pending')
+            ->and($transaction->payment_reference)->toBeNull();
+
+        $this->get(route('student.transactions.cancel', $transaction))->assertOk();
+        expect($transaction->fresh()->status)->toBe('pending');
+        $this->post(route('course-invitations.accept', $invitation->code))->assertSessionHasErrors('invitation');
+        $this->post(route('student.transactions.store', $course))
+            ->assertRedirect(route('student.transactions.show', $transaction));
+
+        return Http::response([
+            'data' => [
+                'id' => 'cs_test_invite_overlap',
+                'attributes' => ['checkout_url' => 'https://checkout.paymongo.com/cs_test_invite_overlap'],
+            ],
+        ]);
+    }]);
+
+    $this->post(route('student.transactions.store', $course))
+        ->assertRedirect('https://checkout.paymongo.com/cs_test_invite_overlap');
+
+    expect(Transaction::count())->toBe(1)
+        ->and(Enrollment::count())->toBe(0)
+        ->and($invitation->redeemedBy()->count())->toBe(0);
+    Http::assertSentCount(1);
+});
+
+test('a saved legacy checkout blocks invitation redemption even after local cancellation', function () {
+    [$student, $course] = paidCheckoutSetup();
+    Http::fake();
+    $invitation = CourseInvitation::create([
+        'course_id' => $course->id,
+        'created_by' => $course->teacher_id,
+        'code' => 'LEGACYPAY001',
+    ]);
+    $transaction = Transaction::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_invitation_id' => $invitation->id,
+        'transaction_no' => 'INV-LEGACY',
+        'amount' => $course->price,
+        'payment_method' => 'PayMongo',
+        'payment_reference' => 'cs_test_legacy_hold',
+        'checkout_url' => 'https://checkout.paymongo.com/cs_test_legacy_hold',
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($student)->get(route('course-invitations.show', $invitation->code))
+        ->assertOk()->assertSee(Transaction::ENROLLMENT_PAYMENT_CONFLICT)->assertDontSee('data-accept-button');
+    $this->get(route('student.marketplace'))->assertOk()->assertDontSee($transaction->checkout_url, false);
+    $this->get(route('student.transactions.cancel', $transaction))->assertOk();
+    expect($transaction->fresh()->status)->toBe('rejected');
+
+    $this->post(route('course-invitations.accept', $invitation->code))->assertSessionHasErrors('invitation');
+    $this->post(route('student.transactions.store', $course))
+        ->assertRedirect(route('student.transactions.show', $transaction));
+    expect(Transaction::count())->toBe(1)
+        ->and(Enrollment::count())->toBe(0);
+    Http::assertNothingSent();
+});
+
+test('a paid course invitation and submissions from old invitation forms never start checkout', function () {
+    [$student, $course] = paidCheckoutSetup();
+    Http::fake();
+    $invitation = CourseInvitation::create([
+        'course_id' => $course->id,
+        'created_by' => $course->teacher_id,
+        'code' => 'FREEINVITE01',
+    ]);
+
+    $this->actingAs($student)->post(route('student.transactions.store', $course), [
+        'course_invitation_code' => $invitation->code,
+    ])->assertRedirect(route('course-invitations.show', $invitation->code));
+    expect(Enrollment::count())->toBe(0);
+    $this->post(route('course-invitations.accept', $invitation->code))
+        ->assertRedirect(route('student.learn.course', $course));
+    $this->post(route('student.transactions.store', $course))->assertRedirect(route('student.my-courses'));
+
+    expect(Transaction::count())->toBe(0)
+        ->and(Enrollment::sole()->status)->toBe('active');
+    Http::assertNothingSent();
 });

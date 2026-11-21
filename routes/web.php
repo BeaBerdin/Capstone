@@ -588,27 +588,23 @@ Route::middleware('role:student')->group(function () {
     Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
         ->name('student.transactions.upload-proof');
 
-    // Course invitation acceptance
     Route::post('/invitations/{code}/accept', [CourseInvitationController::class, 'accept'])
+        ->middleware('throttle:invite-code')
         ->name('course-invitations.accept');
-});
-});
-/*
-|--------------------------------------------------------------------------
-| COURSE INVITATION PREVIEW
-|--------------------------------------------------------------------------
-|
-| This route is outside the student role middleware so the invitation
-| link can be opened before the student accepts the invitation.
-|
-| A visitor who is not logged in is sent to the login page first and is
-| brought back to the invitation after logging in (the page uses the
-| signed-in layout, so it cannot be shown to a guest).
-|
-*/
 
+    Route::get('/course-invitations', [CourseInvitationController::class, 'studentIndex'])
+        ->name('student.invitations.index');
+
+    Route::post('/course-invitations/join', [CourseInvitationController::class, 'join'])
+        ->middleware('throttle:invite-code')
+        ->name('student.invitations.join');
+});
+});
+
+// Guests keep their intended link after signing in. The preview reveals
+// invitation details only to approved and email-verified students.
 Route::get('/invitations/{code}', [CourseInvitationController::class, 'show'])
-    ->middleware('auth')
+    ->middleware(['auth', 'role:student', 'throttle:invite-preview'])
     ->name('course-invitations.show');
 
 /*

@@ -52,6 +52,8 @@ class AppServiceProvider extends ServiceProvider
         'enrollment' => 10,
         // Creates a transaction and a PayMongo checkout session.
         'purchase' => 5,
+        'invite-code' => 10,
+        'invite-preview' => 30,
     ];
 
     protected function configureRateLimiting(): void

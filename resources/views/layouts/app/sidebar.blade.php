@@ -1410,6 +1410,7 @@
             ['label' => 'Dashboard', 'meta' => 'Learning overview', 'url' => route('student.dashboard')],
             ['label' => 'Marketplace', 'meta' => 'Browse courses', 'url' => route('student.marketplace')],
             ['label' => 'My Courses', 'meta' => 'Your enrolled courses', 'url' => route('student.my-courses')],
+            ['label' => 'Invitations', 'meta' => 'Join a course with an invite code', 'url' => route('student.invitations.index')],
             ['label' => 'Assignments', 'meta' => 'View and submit course assignments', 'url' => route('student.assignments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Personalized learning paths', 'url' => route('student.learning-paths')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommended courses', 'url' => route('student.recommendations')],
@@ -2739,6 +2740,34 @@
 
                         <span>
                             My Courses
+                        </span>
+
+                    </a>
+
+
+                    {{-- COURSE INVITATIONS --}}
+                    <a
+                        href="{{ route('student.invitations.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('student.invitations.*') || request()->routeIs('course-invitations.show') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.invitations.*', 'course-invitations.show')) aria-current="page" @endif
+                        data-test="nav-course-invitations"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m3 7 9 6 9-6" />
+                        </svg>
+
+                        <span>
+                            Invitations
                         </span>
 
                     </a>

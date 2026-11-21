@@ -101,7 +101,7 @@ test('a cancelled enrollment stays listed with a message', function () {
     expect(substr_count($content, 'data-enrollment-cancelled'))->toBe(1);
 });
 
-test('a pending payment is shown with a link to continue it', function () {
+test('a pending payment can resume through the guarded checkout route', function () {
     $student = pathwiseUser('student');
     $courses = marketplaceCourses();
 
@@ -113,6 +113,7 @@ test('a pending payment is shown with a link to continue it', function () {
         'payment_method' => 'PayMongo',
         'status' => 'pending',
         'checkout_url' => 'https://checkout.paymongo.com/cs_test_pending',
+        'payment_reference' => 'cs_test_pending',
     ]);
 
     $this->actingAs($student)
@@ -120,7 +121,14 @@ test('a pending payment is shown with a link to continue it', function () {
         ->assertOk()
         ->assertSee('Pending Payment Course')
         ->assertSee('Payment pending')
-        ->assertSee('https://checkout.paymongo.com/cs_test_pending', false);
+        ->assertSee(route('student.transactions.store', $courses['pending']), false)
+        ->assertSee('Continue payment')
+        ->assertDontSee('https://checkout.paymongo.com/cs_test_pending', false);
+
+    $this->post(route('student.transactions.store', $courses['pending']))
+        ->assertRedirect('https://checkout.paymongo.com/cs_test_pending');
+
+    expect(Transaction::count())->toBe(1);
 });
 
 test('an active enrollment opened by URL shows Continue Learning', function () {

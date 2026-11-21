@@ -97,6 +97,14 @@ test('a verified payment offers Start Learning into the course instead of the Ma
     $student = pathwiseUser('student');
     $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'price' => 499]);
 
+    Enrollment::create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => 'active',
+        'enrolled_at' => now(),
+        'progress_percentage' => 0,
+    ]);
+
     $transaction = Transaction::create([
         'student_id' => $student->id,
         'course_id' => $course->id,

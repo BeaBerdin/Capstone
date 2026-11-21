@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CourseInvitation;
 use App\Models\Enrollment;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
@@ -196,4 +197,112 @@ test('a payment for less than the course price is not approved', function () {
 
     expect($transaction->fresh()->status)->not->toBe('approved')
         ->and(Enrollment::count())->toBe(0);
+});
+
+test('a late verified payment for an invitation enrollment is recorded for review only', function () {
+    Notification::fake();
+    $transaction = webhookTransaction();
+    $enrollment = Enrollment::create([
+        'student_id' => $transaction->student_id,
+        'course_id' => $transaction->course_id,
+        'status' => 'active',
+        'enrolled_at' => now(),
+        'progress_percentage' => 40,
+    ]);
+    $invitation = CourseInvitation::create([
+        'course_id' => $transaction->course_id,
+        'created_by' => $transaction->course->teacher_id,
+        'code' => 'WEBHOOKINV01',
+    ]);
+    $invitation->redeemedBy()->attach($transaction->student_id, ['enrollment_id' => $enrollment->id]);
+    fakeCheckoutSession();
+
+    foreach (range(1, 2) as $attempt) {
+        $body = webhookBody();
+        sendWebhook($this, $body, signedHeader($body))->assertOk()
+            ->assertJsonPath('message', 'Verified payment requires enrollment review.');
+    }
+
+    $transaction->refresh();
+    expect($transaction->status)->toBe('pending')
+        ->and($transaction->payment_review_required_at)->not->toBeNull()
+        ->and($transaction->remarks)->toContain('pay_webhook_1')
+        ->and(Enrollment::count())->toBe(1)
+        ->and((int) $enrollment->fresh()->progress_percentage)->toBe(40)
+        ->and($invitation->redeemedBy()->count())->toBe(1);
+    Notification::assertNothingSent();
+    Http::assertSentCount(1);
+
+    $this->actingAs($transaction->student)->get(route('student.transactions.success', $transaction))
+        ->assertOk()->assertSee('Payment Requires Review')->assertDontSee('Start Learning');
+});
+
+test('a verified legacy payment with an unavailable or foreign private invitation requires review', function (string $reason) {
+    Notification::fake();
+    $transaction = webhookTransaction();
+    $invitation = CourseInvitation::create([
+        'course_id' => $transaction->course_id,
+        'created_by' => $transaction->course->teacher_id,
+        'code' => 'WEBHOOKINV02',
+    ]);
+    $invitation->update(match ($reason) {
+        'expired' => ['expires_at' => now()],
+        'deactivated' => ['deactivated_at' => now()],
+        'foreign recipient' => ['is_private' => true, 'student_id' => pathwiseUser('student')->id],
+    });
+    $transaction->update(['course_invitation_id' => $invitation->id]);
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+    sendWebhook($this, $body, signedHeader($body))->assertOk()
+        ->assertJsonPath('message', 'Verified payment requires enrollment review.');
+    expect($transaction->fresh()->payment_review_required_at)->not->toBeNull()
+        ->and($transaction->fresh()->approved_at)->toBeNull()
+        ->and(Enrollment::count())->toBe(0);
+    Notification::assertNothingSent();
+})->with(['expired', 'deactivated', 'foreign recipient']);
+
+test('replaying an approved payment or opening its success page cannot restore a cancelled enrollment', function () {
+    Notification::fake();
+    Http::fake();
+    $transaction = webhookTransaction();
+    $transaction->update(['status' => 'approved']);
+    $enrollment = Enrollment::create([
+        'student_id' => $transaction->student_id,
+        'course_id' => $transaction->course_id,
+        'status' => 'cancelled',
+        'enrolled_at' => now(),
+        'progress_percentage' => 0,
+    ]);
+
+    $body = webhookBody();
+    sendWebhook($this, $body, signedHeader($body))->assertOk();
+    $this->actingAs($transaction->student)->get(route('student.transactions.success', $transaction))
+        ->assertOk()->assertDontSee('Start Learning');
+
+    expect(Enrollment::count())->toBe(1)
+        ->and($enrollment->fresh()->status)->toBe('cancelled');
+    Http::assertNothingSent();
+    Notification::assertNothingSent();
+});
+
+test('a second verified payment for the same student and course is recorded for review', function () {
+    Notification::fake();
+    $transaction = webhookTransaction();
+    $original = $transaction->replicate();
+    $original->fill([
+        'transaction_no' => 'TXN-ALREADY-APPROVED',
+        'payment_reference' => 'cs_original',
+        'status' => 'approved',
+        'approved_at' => now(),
+    ])->save();
+    fakeCheckoutSession();
+
+    $body = webhookBody();
+    sendWebhook($this, $body, signedHeader($body))->assertOk()
+        ->assertJsonPath('message', 'Verified payment requires enrollment review.');
+    expect($transaction->fresh()->payment_review_required_at)->not->toBeNull()
+        ->and(Transaction::where('status', 'approved')->count())->toBe(1)
+        ->and(Enrollment::count())->toBe(0);
+    Notification::assertNothingSent();
 });
