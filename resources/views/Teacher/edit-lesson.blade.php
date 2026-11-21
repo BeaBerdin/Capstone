@@ -686,14 +686,7 @@
                             </div>
 
 
-                            <textarea
-                                id="readingContent"
-                                data-content-input
-                                rows="14"
-                                placeholder="Write your lesson content here..."
-                                class="pw-field mt-6 resize-y
-                                       px-4 py-4 leading-7"
-                            >{{ old('content', $lesson->content) }}</textarea>
+                            @include('Teacher.partials.lesson-section-builder')
 
                         </section>
 

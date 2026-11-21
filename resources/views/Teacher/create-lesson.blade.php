@@ -621,25 +621,7 @@
                             </div>
 
 
-                            <textarea
-                                id="readingContent"
-                                data-content-input
-                                rows="14"
-                                placeholder="Write your lesson content here...
-
-Example:
-
-Introduction
-
-Accounting is the process of recording, classifying, and summarizing financial transactions.
-
-Learning Objectives
-• Understand the purpose of accounting
-• Identify basic accounting concepts
-• Apply the accounting equation"
-                                class="pw-field mt-6 resize-y
-                                       px-4 py-4 leading-7"
-                            >{{ old('content') }}</textarea>
+                            @include('Teacher.partials.lesson-section-builder')
 
                         </section>
 

@@ -153,6 +153,9 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
     Route::get('/files/lessons/{lesson}', [PrivateFileController::class, 'lesson'])
         ->name('files.lesson');
 
+    Route::get('/files/lesson-sections/{lessonSection}', [PrivateFileController::class, 'lessonSection'])
+        ->name('files.lesson-section');
+
 
     /*
     |--------------------------------------------------------------------------
