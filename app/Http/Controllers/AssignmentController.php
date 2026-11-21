@@ -80,6 +80,7 @@ class AssignmentController extends Controller
     public function edit(Request $request, Assignment $assignment)
     {
         abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+        abort_if($assignment->is_activity, 403, 'Manage this Activity from its teacher lesson editor.');
 
         $courses = Course::manageableBy($request->user())->get();
         $lessons = Lesson::whereIn('course_id', $courses->modelKeys())->get();
@@ -99,6 +100,7 @@ class AssignmentController extends Controller
         Assignment $assignment
     ) {
         abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+        abort_if($assignment->is_activity, 403, 'Manage this Activity from its teacher lesson editor.');
 
         $validated = $this->validateAssignment($request);
 
@@ -144,6 +146,7 @@ class AssignmentController extends Controller
     public function destroy(Request $request, Assignment $assignment)
     {
         abort_unless(Assignment::manageableBy($request->user())->whereKey($assignment)->exists(), 403);
+        abort_if($assignment->is_activity, 403, 'Manage this Activity from its teacher lesson editor.');
 
         $assignment->delete();
 
@@ -276,6 +279,10 @@ class AssignmentController extends Controller
             $assignment->course
         );
 
+        if ($assignment->is_activity && $assignment->lesson) {
+            return redirect()->route('teacher.lessons.edit', $assignment->lesson);
+        }
+
         $course = $assignment->course;
 
         $lessons = $course->lessons()
@@ -310,6 +317,8 @@ class AssignmentController extends Controller
         $this->ensureTeacherCanEditCourse(
             $assignment->course
         );
+
+        abort_unless(! $assignment->is_activity, 403, 'Manage this Activity from its lesson editor.');
 
         $validated = $this->validateTeacherAssignment(
             $request,
@@ -358,6 +367,7 @@ class AssignmentController extends Controller
             $assignment->course
         );
 
+        abort_unless(! $assignment->is_activity, 403, 'Delete this Activity from its lesson editor.');
 
         abort_unless($assignment->hasConsistentLesson(), 403);
 
@@ -380,38 +390,12 @@ class AssignmentController extends Controller
 
     public function studentIndex()
     {
-        $studentId = auth()->id();
-
         $assignments = Assignment::with([
                 'course.teacher',
                 'lesson',
             ])
-            ->where(
-                'is_published',
-                true
-            )
-            ->whereHas(
-                'course',
-                function ($query) use ($studentId) {
-
-                    $query->where(
-                        'status',
-                        'published'
-                    )
-                    ->whereHas(
-                        'enrollments',
-                        function ($enrollmentQuery) use (
-                            $studentId
-                        ) {
-
-                            $enrollmentQuery->where(
-                                'student_id',
-                                $studentId
-                            );
-                        }
-                    );
-                }
-            )
+            ->publishedForStudents()
+            ->forEnrolledStudent(auth()->id())
             ->latest()
             ->get();
 
@@ -424,8 +408,9 @@ class AssignmentController extends Controller
     public function studentShow(
         Assignment $assignment
     ) {
-        $this->ensureStudentCanAccessAssignment(
-            $assignment
+        $assignment->authorizeStudentAccess(
+            auth()->id(),
+            'You must be enrolled in this course to access this assignment.'
         );
 
         $assignment->load([
@@ -889,47 +874,4 @@ class AssignmentController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | STUDENT ACCESS
-    |--------------------------------------------------------------------------
-    */
-
-    private function ensureStudentCanAccessAssignment(
-        Assignment $assignment
-    ): void {
-        $assignment->loadMissing('course');
-
-        abort_unless(
-            $assignment->is_published
-                &&
-                $assignment->course
-                &&
-                $assignment->course->status ===
-                    'published',
-
-            404
-        );
-
-        $isEnrolled =
-            $assignment
-                ->course
-                ->enrollments()
-                ->where(
-                    'student_id',
-                    auth()->id()
-                )
-                // Cancelled enrollments no longer give access.
-                ->whereIn(
-                    'status',
-                    \App\Models\Enrollment::ACCESS_STATUSES
-                )
-                ->exists();
-
-        abort_unless(
-            $isEnrolled,
-            403,
-            'You must be enrolled in this course to access this assignment.'
-        );
-    }
 }

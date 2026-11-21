@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasCourseAndOptionalLesson;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -77,6 +78,7 @@ class Assignment extends Model
     protected $fillable = [
     'course_id',
     'lesson_id',
+    'is_activity',
     'title',
     'description',
     'submission_type',
@@ -96,6 +98,7 @@ class Assignment extends Model
         'max_score' => 'integer',
         'is_published' => 'boolean',
         'ai_evaluation_enabled' => 'boolean',
+        'is_activity' => 'boolean',
     ];
 }
 
@@ -121,6 +124,63 @@ class Assignment extends Model
     public function submissions(): HasMany
     {
         return $this->hasMany(Submission::class);
+    }
+
+    public function scopePublishedForStudents(Builder $query): Builder
+    {
+        return $query->withConsistentLesson()
+            ->where('is_published', true)
+            ->whereHas('course', fn (Builder $course) => $course->where('status', 'published'))
+            ->where(fn (Builder $assignments) => $assignments
+                ->where('is_activity', false)
+                ->orWhereHas('lesson', fn (Builder $lesson) => $lesson
+                    ->where('lesson_type', 'activity')
+                    ->where('is_published', true)));
+    }
+
+    public function scopeForEnrolledStudent(Builder $query, int $studentId): Builder
+    {
+        return $query->whereHas('course.enrollments', fn (Builder $enrollments) => $enrollments
+            ->where('student_id', $studentId)
+            ->withAccess());
+    }
+
+    public function authorizeStudentAccess(int $studentId, string $enrollmentMessage): void
+    {
+        $assignment = static::query()->whereKey($this->getKey());
+
+        abort_unless((clone $assignment)->publishedForStudents()->exists(), 404);
+        abort_unless($assignment->forEnrolledStudent($studentId)->exists(), 403, $enrollmentMessage);
+    }
+
+    /**
+     * Load the current Activity for a student write inside a transaction.
+     * Keep publication and enrollment stable through submission and completion.
+     */
+    public static function lockStudentActivity(
+        Lesson $lesson,
+        int $studentId,
+        string $enrollmentMessage,
+        ?int $assignmentId = null
+    ): self {
+        $course = Course::query()->lockForUpdate()->findOrFail($lesson->course_id);
+        $lesson = $course->lessons()->lockForUpdate()->findOrFail($lesson->getKey());
+
+        $activity = $lesson->assignments()
+            ->where('course_id', $course->getKey())
+            ->where('is_activity', true)
+            ->when($assignmentId !== null, fn ($query) => $query->whereKey($assignmentId))
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $course->enrollments()->where('student_id', $studentId)->lockForUpdate()->get();
+        $activity->authorizeStudentAccess($studentId, $enrollmentMessage);
+
+        $lesson->setRelation('course', $course);
+        $activity->setRelation('lesson', $lesson);
+        $activity->setRelation('course', $course);
+
+        return $activity;
     }
 
     /**

@@ -10,11 +10,14 @@ use App\Services\GeminiEvaluationService;
 use App\Support\PrivateFiles;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class SubmissionController extends Controller
 {
+    private const STUDENT_ENROLLMENT_MESSAGE = 'You must be enrolled in this course to submit this assignment.';
+
     /*
     |--------------------------------------------------------------------------
     | ADMIN - VIEW ONLY
@@ -54,8 +57,70 @@ class SubmissionController extends Controller
 
     public function studentStore(Request $request, Assignment $assignment)
     {
-        $this->ensureStudentCanAccessAssignment($assignment);
+        $newFilePath = null;
+        $obsoleteFilePath = null;
 
+        try {
+            if ($assignment->is_activity) {
+                $lesson = $assignment->lesson;
+                abort_unless($lesson && (int) $assignment->course_id === (int) $lesson->course_id, 404);
+
+                $submission = DB::transaction(function () use ($request, $assignment, $lesson, &$newFilePath, &$obsoleteFilePath) {
+                    $activity = Assignment::lockStudentActivity(
+                        $lesson,
+                        auth()->id(),
+                        self::STUDENT_ENROLLMENT_MESSAGE,
+                        $assignment->getKey()
+                    );
+
+                    $submission = $this->saveStudentSubmission($request, $activity, $newFilePath, $obsoleteFilePath);
+                    app(LessonController::class)->completeStudentActivity($activity);
+
+                    return $submission;
+                });
+            } else {
+                $assignment->authorizeStudentAccess(auth()->id(), self::STUDENT_ENROLLMENT_MESSAGE);
+                $submission = $this->saveStudentSubmission($request, $assignment, $newFilePath, $obsoleteFilePath);
+            }
+        } catch (Throwable $exception) {
+            PrivateFiles::delete($newFilePath);
+
+            throw $exception;
+        }
+
+        PrivateFiles::delete($obsoleteFilePath);
+
+        $teacher = $assignment->course?->teacher;
+
+        if ($teacher) {
+            $teacher->notify(
+                new PathwiseNotification(
+                    title: $submission->wasRecentlyCreated ? 'Assignment submitted' : 'Assignment resubmitted',
+                    message: 'A student submitted "' . $assignment->title . '".',
+                    type: $submission->wasRecentlyCreated ? 'assignment_submitted' : 'assignment_resubmitted',
+                    courseId: $assignment->course_id,
+                    assignmentId: $assignment->id,
+                    submissionId: $submission->id
+                )
+            );
+        }
+
+        return redirect()
+            ->route('student.assignments.show', $assignment)
+            ->with(
+                'success',
+                $submission->wasRecentlyCreated
+                    ? 'Assignment submitted successfully.'
+                    : 'Assignment resubmitted successfully.'
+            );
+    }
+
+    private function saveStudentSubmission(
+        Request $request,
+        Assignment $assignment,
+        ?string &$newFilePath,
+        ?string &$obsoleteFilePath
+    ): Submission {
         if (
             $assignment->due_date
             && now()->greaterThan($assignment->due_date)
@@ -171,6 +236,7 @@ class SubmissionController extends Controller
             $assignment->id
         )
             ->where('student_id', auth()->id())
+            ->when($assignment->is_activity, fn ($query) => $query->lockForUpdate())
             ->first();
 
         if ($submission && $submission->status === 'graded') {
@@ -196,17 +262,24 @@ class SubmissionController extends Controller
             && ! $request->hasFile('submission_file')
             && $filePath
         ) {
-            PrivateFiles::delete($filePath);
+            $obsoleteFilePath = $filePath;
             $filePath = null;
         }
 
         if ($request->hasFile('submission_file')) {
-            PrivateFiles::delete($filePath);
-
-            $filePath = $request->file('submission_file')->store(
+            $newPath = $request->file('submission_file')->store(
                 'assignment-submissions/' . $assignment->id,
                 PrivateFiles::DISK
             );
+
+            if ($newPath === false) {
+                throw ValidationException::withMessages([
+                    'submission_file' => 'The file could not be saved. Please try again.',
+                ]);
+            }
+
+            $obsoleteFilePath = $filePath;
+            $newFilePath = $filePath = $newPath;
         }
 
         /*
@@ -242,47 +315,10 @@ class SubmissionController extends Controller
 
         if ($submission) {
             $submission->update($submissionData);
-            $submission->refresh();
-
-            $notificationTitle = 'Assignment resubmitted';
-            $notificationType = 'assignment_resubmitted';
-        } else {
-            $submission = Submission::create($submissionData);
-
-            $notificationTitle = 'Assignment submitted';
-            $notificationType = 'assignment_submitted';
+            return $submission;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | NOTIFY TEACHER
-        |--------------------------------------------------------------------------
-        */
-
-        $teacher = $assignment->course?->teacher;
-
-        if ($teacher) {
-            $teacher->notify(
-                new PathwiseNotification(
-                    title: $notificationTitle,
-                    message: 'A student submitted "' .
-                        $assignment->title . '".',
-                    type: $notificationType,
-                    courseId: $assignment->course->id,
-                    assignmentId: $assignment->id,
-                    submissionId: $submission->id
-                )
-            );
-        }
-
-        return redirect()
-            ->route('student.assignments.show', $assignment)
-            ->with(
-                'success',
-                $submission->wasRecentlyCreated
-                    ? 'Assignment submitted successfully.'
-                    : 'Assignment resubmitted successfully.'
-            );
+        return Submission::create($submissionData);
     }
 
     /*
@@ -715,32 +751,6 @@ class SubmissionController extends Controller
     | HELPERS
     |--------------------------------------------------------------------------
     */
-
-    private function ensureStudentCanAccessAssignment(
-        Assignment $assignment
-    ): void {
-        $assignment->loadMissing('course');
-
-        abort_unless(
-            $assignment->is_published
-                && $assignment->course
-                && $assignment->course->status === 'published',
-            404
-        );
-
-        $isEnrolled = $assignment->course
-            ->enrollments()
-            ->where('student_id', auth()->id())
-            // Cancelled enrollments no longer give access.
-            ->whereIn('status', \App\Models\Enrollment::ACCESS_STATUSES)
-            ->exists();
-
-        abort_unless(
-            $isEnrolled,
-            403,
-            'You must be enrolled in this course to submit this assignment.'
-        );
-    }
 
     private function ensureTeacherOwnsAssignment(
         Assignment $assignment

@@ -21,6 +21,7 @@
         'text' => 'Reading',
         'document' => 'Document',
         'quiz' => 'Quiz',
+        'activity' => 'Activity',
     ];
 
     $typeLabel =

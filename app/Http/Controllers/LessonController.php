@@ -13,6 +13,7 @@ use App\Models\AIRecommendation;
 use App\Models\Quiz;
 use App\Models\QuizResult;
 use App\Models\LessonSection;
+use App\Models\Assignment;
 use App\Support\PrivateFiles;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -84,6 +85,7 @@ class LessonController extends Controller
     public function edit(Request $request, Lesson $lesson)
     {
         Course::authorizeManagement($request->user(), $lesson->course_id);
+        abort_if($lesson->lesson_type === 'activity', 403, 'Manage this Activity from its teacher lesson editor.');
 
         $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
@@ -97,6 +99,7 @@ class LessonController extends Controller
     public function update(Request $request, Lesson $lesson)
     {
         Course::authorizeManagement($request->user(), $lesson->course_id);
+        abort_if($lesson->lesson_type === 'activity', 403, 'Manage this Activity from its teacher lesson editor.');
 
         $validated = $request->validate([
             'course_id' => 'required|integer|exists:courses,id',
@@ -116,6 +119,7 @@ class LessonController extends Controller
         $paths = DB::transaction(function () use ($request, $lesson, $destination) {
             $lesson = Lesson::query()->lockForUpdate()->findOrFail($lesson->id);
             Course::authorizeManagement($request->user(), $lesson->course_id);
+            abort_if($lesson->lesson_type === 'activity', 403, 'Manage this Activity from its teacher lesson editor.');
             if ($destination !== (int) $lesson->course_id) {
                 abort_if(
                     $lesson->hasReferencesOutsideCourse($destination),
@@ -160,6 +164,7 @@ class LessonController extends Controller
         $paths = DB::transaction(function () use ($request, $lesson) {
             $lesson = Lesson::query()->lockForUpdate()->findOrFail($lesson->id);
             Course::authorizeManagement($request->user(), $lesson->course_id);
+            abort_if($lesson->lesson_type === 'activity', 403, 'Manage this Activity from its teacher lesson editor.');
             abort_if(! $request->user()->hasRole('super_admin') && $lesson->hasReferencesOutsideCourse((int) $lesson->course_id), 403);
 
             return $this->deleteLesson($lesson);
@@ -353,6 +358,19 @@ class LessonController extends Controller
                 );
         }
 
+        if (strtolower(trim((string) $lesson->lesson_type)) === 'activity') {
+            $activity = Assignment::where('lesson_id', $lesson->id)
+                ->where('course_id', $lesson->course_id)
+                ->where('is_activity', true)
+                ->publishedForStudents()
+                ->forEnrolledStudent(auth()->id())
+                ->first();
+
+            abort_unless($activity, 404, 'Activity not found.');
+
+            return redirect()->route('student.assignments.show', $activity);
+        }
+
         $progress = LessonProgress::firstOrCreate(
             [
                 'student_id' =>
@@ -420,30 +438,65 @@ class LessonController extends Controller
 
     public function markComplete(Lesson $lesson)
     {
-        $this->ensureStudentCanAccessLesson(
-            $lesson
+        DB::transaction(function () use ($lesson) {
+            $course = Course::query()->lockForUpdate()->findOrFail($lesson->course_id);
+            $lesson = $course->lessons()->lockForUpdate()->findOrFail($lesson->id)->setRelation('course', $course);
+
+            if (strtolower(trim((string) $lesson->lesson_type)) === 'activity') {
+                $activity = Assignment::lockStudentActivity(
+                    $lesson,
+                    auth()->id(),
+                    'You must have an active enrollment in this course to access its learning content.'
+                );
+                $this->completeStudentActivity($activity);
+
+                return;
+            }
+
+            $this->ensureStudentCanAccessLesson($lesson);
+
+            /*
+             * A quiz lesson cannot be completed by directly calling the
+             * lesson-complete endpoint. It is completed only after the quiz
+             * is passed through QuizController.
+             */
+            if (
+                strtolower(
+                    trim(
+                        (string) $lesson->lesson_type
+                    )
+                )
+                ===
+                'quiz'
+            ) {
+                abort(
+                    403,
+                    'Quiz lessons can only be completed by passing the quiz.'
+                );
+            }
+
+            $this->recordLessonCompletion($lesson);
+        });
+
+        return back()->with('success', 'Lesson marked as completed.');
+    }
+
+    /**
+     * Record completion for an Activity loaded by Assignment::lockStudentActivity().
+     */
+    public function completeStudentActivity(Assignment $activity): void
+    {
+        abort_unless(
+            $activity->submissions()->where('student_id', auth()->id())->exists(),
+            403,
+            'Submit this Activity before marking it complete.'
         );
 
-        /*
-         * A quiz lesson cannot be completed by directly calling the
-         * lesson-complete endpoint. It is completed only after the quiz
-         * is passed through QuizController.
-         */
-        if (
-            strtolower(
-                trim(
-                    (string) $lesson->lesson_type
-                )
-            )
-            ===
-            'quiz'
-        ) {
-            abort(
-                403,
-                'Quiz lessons can only be completed by passing the quiz.'
-            );
-        }
+        $this->recordLessonCompletion($activity->lesson);
+    }
 
+    private function recordLessonCompletion(Lesson $lesson): void
+    {
         $studentId =
             auth()->id();
 
@@ -659,10 +712,6 @@ class LessonController extends Controller
             }
         }
 
-        return back()->with(
-            'success',
-            'Lesson marked as completed.'
-        );
     }
 
 
@@ -875,7 +924,9 @@ class LessonController extends Controller
             $initialSections[] = ['type' => 'text', 'body' => $lesson->content];
         }
 
-        return view('Teacher.edit-lesson', compact('lesson', 'initialSections'));
+        $activityAssignment = $lesson->assignments()->where('course_id', $lesson->course_id)->where('is_activity', true)->first();
+
+        return view('Teacher.edit-lesson', compact('lesson', 'initialSections', 'activityAssignment'));
     }
 
 
@@ -899,8 +950,13 @@ class LessonController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'lesson_type' => ['required', 'in:video,document,text,quiz'],
-            'content' => ['nullable', 'string'],
+            'lesson_type' => ['required', 'in:video,document,text,quiz,activity'],
+            'content' => ['nullable', 'string', 'required_if:lesson_type,activity'],
+            'activity_answer_format' => ['exclude_unless:lesson_type,activity', 'nullable', 'in:text,file,either'],
+            'activity_max_score' => ['exclude_unless:lesson_type,activity', 'nullable', 'integer', 'min:1', 'max:10000'],
+            'activity_due_date' => ['exclude_unless:lesson_type,activity', 'nullable', 'date_format:Y-m-d\TH:i'],
+            'activity_ai_enabled' => ['exclude_unless:lesson_type,activity', 'nullable', 'boolean'],
+            'activity_criteria' => ['exclude_unless:lesson_type,activity', 'nullable', 'string', 'max:10000'],
             'video_url' => ['nullable', 'url', 'max:500', 'required_if:lesson_type,video'],
             'lesson_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,txt', 'max:20480'],
             'lesson_order' => ['required', 'integer', 'min:1'],
@@ -931,6 +987,28 @@ class LessonController extends Controller
                     : new Lesson(['course_id' => $course->id]);
 
                 $type = $validated['lesson_type'];
+                $activities = $this->lockActivityAssignments($lesson);
+                if ($type === 'activity' && $lesson->exists && $lesson->lesson_type !== 'activity'
+                    && LessonProgress::where('lesson_id', $lesson->id)->lockForUpdate()->first(['id'])) {
+                    throw ValidationException::withMessages([
+                        'lesson_type' => 'Create a separate Activity to preserve the student progress on this lesson.',
+                    ]);
+                }
+                if ($this->hasActivitySubmissions($activities)) {
+                    if ($type !== 'activity') {
+                        throw ValidationException::withMessages([
+                            'lesson_type' => 'This Activity already has student submissions and cannot be changed to another lesson type.',
+                        ]);
+                    }
+
+                    $activity = $activities->first();
+                    if ((int) ($validated['activity_max_score'] ?? 100) !== $activity->max_score
+                        || ($validated['activity_answer_format'] ?? 'either') !== $activity->answer_format) {
+                        throw ValidationException::withMessages([
+                            'activity_max_score' => 'The maximum score and answer format cannot change after students submit an Activity.',
+                        ]);
+                    }
+                }
                 $filePath = $type === 'document' ? $lesson->file_path : null;
                 if ($type === 'document' && $request->hasFile('lesson_file')) {
                     $filePath = $this->storeLessonUpload($request->file('lesson_file'), 'lesson-files/'.$course->id, 'lesson_file');
@@ -966,7 +1044,7 @@ class LessonController extends Controller
                     'file_path' => $filePath,
                     'lesson_order' => $validated['lesson_order'],
                     'duration_minutes' => $validated['duration_minutes'] ?? null,
-                    'is_preview' => $request->boolean('is_preview'),
+                    'is_preview' => $type !== 'activity' && $request->boolean('is_preview'),
                     'is_published' => $request->boolean('is_published'),
                 ])->save();
 
@@ -979,6 +1057,14 @@ class LessonController extends Controller
                 }
 
                 $lesson->update(['content' => $content]);
+
+                if ($type === 'activity') {
+                    $this->syncActivityAssignment($lesson, $validated, $request);
+                } else {
+                    foreach ($activities as $activity) {
+                        $activity->delete();
+                    }
+                }
             });
         } catch (Throwable $exception) {
             $this->removeLessonFiles($newPaths);
@@ -1150,6 +1236,12 @@ class LessonController extends Controller
             $lesson = $course->lessons()->lockForUpdate()->findOrFail($lesson->id);
             abort_if($lesson->hasReferencesOutsideCourse((int) $course->id), 403);
 
+            $activities = $this->lockActivityAssignments($lesson);
+            abort_if($this->hasActivitySubmissions($activities), 422, 'This Activity has student submissions and cannot be deleted.');
+            foreach ($activities as $activity) {
+                $activity->delete();
+            }
+
             return $this->deleteLesson($lesson);
         });
         $this->removeLessonFiles($paths);
@@ -1184,5 +1276,48 @@ class LessonController extends Controller
                 report($exception);
             }
         }
+    }
+
+    private function syncActivityAssignment(Lesson $lesson, array $validated, Request $request): Assignment
+    {
+        $dueDate = filled($validated['activity_due_date'] ?? null)
+            ? \Illuminate\Support\Carbon::createFromFormat('Y-m-d\\TH:i', $validated['activity_due_date'])
+            : null;
+
+        return Assignment::updateOrCreate(
+            [
+                'lesson_id' => $lesson->id,
+                'course_id' => $lesson->course_id,
+                'is_activity' => true,
+            ],
+            [
+                'title' => $lesson->title,
+                'description' => $validated['content'],
+                'submission_type' => 'essay',
+                'answer_format' => $validated['activity_answer_format'] ?? 'either',
+                'evaluation_criteria' => $validated['activity_criteria'] ?? null,
+                'programming_language' => null,
+                'ai_evaluation_enabled' => $request->boolean('activity_ai_enabled'),
+                'due_date' => $dueDate,
+                'max_score' => $validated['activity_max_score'] ?? 100,
+                'is_published' => $request->boolean('is_published'),
+            ]
+        );
+    }
+
+    private function lockActivityAssignments(Lesson $lesson): \Illuminate\Database\Eloquent\Collection
+    {
+        if (! $lesson->exists) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+
+        return $lesson->assignments()->where('is_activity', true)->orderBy('id')->lockForUpdate()->get();
+    }
+
+    private function hasActivitySubmissions(\Illuminate\Database\Eloquent\Collection $assignments): bool
+    {
+        // A locking read sees a committed submission even under MySQL repeatable read.
+        return $assignments->contains(fn (Assignment $assignment) =>
+            $assignment->submissions()->orderBy('id')->lockForUpdate()->first(['id']) !== null);
     }
 }

@@ -40,4 +40,10 @@ class Lesson extends Model
     {
         return $this->hasMany(LessonSection::class)->orderBy('position')->orderBy('id');
     }
+
+    /** @return HasMany<Assignment, $this> */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class);
+    }
 }

@@ -6,7 +6,7 @@
         <div class="mx-auto max-w-5xl space-y-6">
 
             <x-pw.form-header
-                :crumbs="['Assignments' => route('student.assignments.index'), $assignment->title => null]"
+                :crumbs="$assignment->is_activity && $assignment->lesson ? [$assignment->course->title => route('student.learn.course', $assignment->course), 'Activity' => $assignment->lesson->title] : ['Assignments' => route('student.assignments.index'), $assignment->title => null]"
                 :title="$assignment->title"
                 :subtitle="$assignment->course?->title"
                 :back-url="route('student.assignments.index')"
@@ -36,7 +36,9 @@
                     </x-slot:icon>
 
                     <div class="flex flex-wrap gap-2">
-                        @if($assignment->submission_type === 'code')
+                        @if($assignment->is_activity)
+                            <span class="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700">Activity</span>
+                        @elseif($assignment->submission_type === 'code')
                             <span class="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white">
                                 Code Submission
                             </span>

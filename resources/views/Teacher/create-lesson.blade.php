@@ -124,7 +124,7 @@
 
                             <div
                                 class="mt-6 grid grid-cols-2 gap-3
-                                       lg:grid-cols-4"
+                                       lg:grid-cols-5"
                             >
 
 
@@ -347,6 +347,17 @@
 
                                     </div>
 
+                                </label>
+
+                                <label class="pw-type-card cursor-pointer">
+                                    <input type="radio" name="lesson_type" value="activity" class="sr-only" @checked(old('lesson_type') === 'activity')>
+                                    <div class="h-full rounded-2xl border border-slate-200 p-4 transition hover:border-emerald-200">
+                                        <div class="sad-chip type-icon flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition">
+                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                                        </div>
+                                        <p class="mt-3 text-sm font-bold text-slate-800">Activity</p>
+                                        <p class="mt-1 text-xs leading-4 text-slate-500">Assign work students submit for grading.</p>
+                                    </div>
                                 </label>
 
                             </div>
@@ -834,6 +845,8 @@
 
                         </section>
 
+                        @include('Teacher.partials.activity-settings')
+
 
 
                         {{-- ACTUAL CONTENT FIELD --}}
@@ -1235,6 +1248,9 @@
         const quizSection =
             document.getElementById('quizSection');
 
+        const activitySection =
+            document.getElementById('activitySection');
+
         const hiddenContent =
             document.getElementById('content');
 
@@ -1283,6 +1299,10 @@
                 return document.getElementById(
                     'quizDescription'
                 );
+            }
+
+            if (type === 'activity') {
+                return document.getElementById('activityInstructions');
             }
 
             return document.getElementById(
@@ -1335,6 +1355,8 @@
                 type !== 'quiz'
             );
 
+            activitySection.classList.toggle('hidden', type !== 'activity');
+
 
             synchronizeContent();
 
@@ -1352,14 +1374,16 @@
                 video: 'Video Lesson',
                 text: 'Reading Lesson',
                 document: 'Document Lesson',
-                quiz: 'Quiz'
+                quiz: 'Quiz',
+                activity: 'Activity'
             };
 
             const icons = {
                 video: '▶',
                 text: '📖',
                 document: '📄',
-                quiz: '?'
+                quiz: '?',
+                activity: '✓'
             };
 
 
