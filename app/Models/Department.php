@@ -9,8 +9,15 @@ class Department extends Model
 {
     protected $fillable = [
         'name',
+        'code',
         'description',
     ];
+
+    /** Short code ("CCS") when set, otherwise the full name. */
+    public function shortLabel(): string
+    {
+        return filled($this->code) ? $this->code : $this->name;
+    }
 
     /**
      * @return HasMany<User, $this>

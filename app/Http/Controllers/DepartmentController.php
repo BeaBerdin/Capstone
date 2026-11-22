@@ -33,9 +33,17 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
+        // Short code: optional, stored in upper case ("ccs" -> "CCS").
+        $request->merge(['code' => filled($request->input('code')) ? strtoupper(trim((string) $request->input('code'))) : null]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:departments,name'],
+            'code' => ['nullable', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/', 'unique:departments,code'],
             'description' => ['nullable', 'string'],
+        ], [
+            'code.regex' => 'The short code may only contain letters and numbers, e.g. CCS.',
+            'code.max' => 'The short code may not be longer than 10 characters.',
+            'code.unique' => 'Another department already uses this short code.',
         ]);
 
         Department::create($validated);
@@ -58,6 +66,9 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, Department $department)
     {
+        // Short code: optional, stored in upper case ("ccs" -> "CCS").
+        $request->merge(['code' => filled($request->input('code')) ? strtoupper(trim((string) $request->input('code'))) : null]);
+
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -65,7 +76,12 @@ class DepartmentController extends Controller
                 'max:255',
                 'unique:departments,name,' . $department->id,
             ],
+            'code' => ['nullable', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/', 'unique:departments,code,' . $department->id],
             'description' => ['nullable', 'string'],
+        ], [
+            'code.regex' => 'The short code may only contain letters and numbers, e.g. CCS.',
+            'code.max' => 'The short code may not be longer than 10 characters.',
+            'code.unique' => 'Another department already uses this short code.',
         ]);
 
         $department->update($validated);

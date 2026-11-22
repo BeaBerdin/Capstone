@@ -42,6 +42,10 @@ class DashboardController extends Controller
             // An admin without a department manages no courses (see
             // Course::scopeManageableBy), so the label must not say campus-wide.
             'departmentAssignment' => $administrator->department?->name ?: 'No department assigned — contact the Super Admin',
+            // Greeting: "CCS Department Head" (short code, else full name).
+            'departmentHeadLabel' => $administrator->department
+                ? $administrator->department->shortLabel().' Department Head'
+                : 'Department Head',
         ]);
     }
 

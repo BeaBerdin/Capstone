@@ -216,6 +216,9 @@
                                     <div>
                                         <h3 class="text-base font-bold text-slate-900">
                                             {{ $department->name }}
+                                            @if ($department->code)
+                                                <span class="ml-1 rounded-full bg-violet-50 px-2 py-0.5 align-middle text-[11px] font-bold text-violet-700" data-test="department-code">{{ $department->code }}</span>
+                                            @endif
                                         </h3>
 
                                         <p class="mt-1 max-w-2xl text-sm text-slate-500">

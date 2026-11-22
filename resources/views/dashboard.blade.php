@@ -83,7 +83,7 @@
                         </p>
 
                         <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-[26px]">
-                            {{ $greeting }}, Department Head!&nbsp;<span aria-hidden="true">👋</span>
+                            {{ $greeting }}, {{ $departmentHeadLabel ?? 'Department Head' }}!&nbsp;<span aria-hidden="true">👋</span>
                         </h1>
 
                         <p class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700" data-test="department-assignment">

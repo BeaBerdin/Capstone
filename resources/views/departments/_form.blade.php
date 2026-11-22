@@ -15,6 +15,15 @@
                class="sad-field">
     </x-pw.field>
 
+    <x-pw.field label="Short code" for="code" hint="Optional. Up to 10 letters or numbers, e.g. CCS. Shown in the department head's greeting.">
+        <input id="code" type="text" name="code" maxlength="10"
+               value="{{ old('code', $department?->code) }}"
+               placeholder="e.g. CCS"
+               autocapitalize="characters"
+               style="text-transform: uppercase"
+               class="sad-field">
+    </x-pw.field>
+
     <x-pw.field label="Description" for="description" hint="Optional.">
         <textarea id="description" name="description" rows="4"
                   placeholder="What does this department handle?"
