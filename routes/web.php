@@ -199,6 +199,10 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
         Route::post('/super-admin/users/{user}/teacher-review', [UserManagementController::class, 'queueTeacherReview'])
             ->name('users.teacher-review');
 
+        // Audit Log (read-only: there is no route that edits or deletes it).
+        Route::get('/super-admin/audit-log', [\App\Http\Controllers\SuperAdmin\AuditLogController::class, 'index'])
+            ->name('super-admin.audit-log.index');
+
         Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
             ->name('users.edit');
 

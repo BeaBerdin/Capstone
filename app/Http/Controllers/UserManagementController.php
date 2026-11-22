@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Role;
 use App\Models\StudentApplication;
@@ -94,16 +95,37 @@ class UserManagementController extends Controller
                 : 'Account for ' . $validated['name'] . ' created successfully.');
     }
 
+    /**
+     * Change a user's role (Super Admin only: the route is inside
+     * `role:super_admin`). Every change needs a short reason and is written
+     * to the audit log. Promoting someone to Super Admin also needs the
+     * acting Super Admin's own password. The last active Super Admin cannot
+     * be demoted, and nobody can remove their own Super Admin role.
+     */
     public function updateRole(Request $request, User $user)
     {
-        $request->validate([
-            'role' => 'required|exists:roles,name',
+        $promoting = $request->input('role') === 'super_admin' && ! $user->hasRole('super_admin');
+
+        $validated = $request->validate([
+            'role' => ['required', 'string', Rule::exists('roles', 'name')],
+            'reason' => ['required', 'string', 'max:500'],
+            'current_password' => [
+                Rule::requiredIf($promoting),
+                'nullable',
+                'string',
+                'current_password',
+            ],
+        ], [
+            'reason.required' => 'Please give a short reason for this role change.',
+            'reason.max' => 'The reason may not be longer than 500 characters.',
+            'current_password.required' => 'Please re-enter your password to make this user a Super Admin.',
+            'current_password.current_password' => 'The password you entered is incorrect. The role was not changed.',
         ]);
 
         // Prevent the Super Admin from removing their own Super Admin role
         if (
             $user->id === auth()->id() &&
-            $request->role !== 'super_admin'
+            $validated['role'] !== 'super_admin'
         ) {
             return back()->with(
                 'error',
@@ -111,28 +133,54 @@ class UserManagementController extends Controller
             );
         }
 
-        $role = Role::where('name', $request->role)->firstOrFail();
+        $role = Role::where('name', $validated['role'])->firstOrFail();
+        $reason = $validated['reason'];
 
-        $review = DB::transaction(function () use ($user, $role) {
+        $result = DB::transaction(function () use ($user, $role, $reason) {
             $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            $oldRoles = $user->roles()->pluck('name')->sort()->values();
+
+            if ($oldRoles->all() === [$role->name]) {
+                return 'unchanged';
+            }
+
+            // The last active Super Admin must stay a Super Admin.
+            if (
+                $oldRoles->contains('super_admin')
+                && $role->name !== 'super_admin'
+                && ! $this->anotherActiveSuperAdminExists($user)
+            ) {
+                return 'last_super_admin';
+            }
+
             $enteringTeacherRole = $role->name === 'teacher' && ! $user->hasRole('teacher');
             $user->roles()->sync([$role->id]);
 
+            AuditLog::record(
+                $role->name === 'super_admin' ? AuditLog::PROMOTED_SUPER_ADMIN : AuditLog::ROLE_CHANGED,
+                $user,
+                $oldRoles->implode(', ') ?: 'none',
+                $role->name,
+                $reason,
+            );
+
             if (! $enteringTeacherRole) {
-                return null;
+                return 'changed';
             }
 
             $user->forceFill(['email_verified_at' => null])->save();
 
-            return StudentApplication::submitForTeacher($user, 'role_change');
+            StudentApplication::submitForTeacher($user, 'role_change');
+
+            return 'teacher_review';
         });
 
-        return back()->with(
-            'success',
-            $review
-                ? 'Teacher role assigned. EDP review and email confirmation are required before teacher access.'
-                : 'User role updated successfully.'
-        );
+        return match ($result) {
+            'last_super_admin' => back()->with('error', 'You cannot change the role of the last active Super Admin.'),
+            'unchanged' => back()->with('success', $user->name.' already has this role.'),
+            'teacher_review' => back()->with('success', 'Teacher role assigned. EDP review and email confirmation are required before teacher access.'),
+            default => back()->with('success', 'User role updated successfully.'),
+        };
     }
 
     public function queueTeacherReview(User $user)
@@ -172,6 +220,8 @@ class UserManagementController extends Controller
 
             $user->forceFill(['email_verified_at' => now()])->save();
 
+            AuditLog::record(AuditLog::EMAIL_VERIFIED, $user, 'not verified', 'verified');
+
             return back()->with('success', $user->name.'\'s email has been marked as verified.');
         });
     }
@@ -198,7 +248,21 @@ class UserManagementController extends Controller
             ],
         ]);
 
+        $before = ['Name' => $user->name, 'Email' => $user->email];
+
         $user->updateAccountIdentity($validated);
+
+        $after = ['Name' => $user->name, 'Email' => $user->email];
+        $changed = array_keys(array_diff_assoc($after, $before));
+
+        if ($changed !== []) {
+            AuditLog::record(
+                AuditLog::DETAILS_UPDATED,
+                $user,
+                implode('; ', array_map(fn ($field) => $field.': '.$before[$field], $changed)),
+                implode('; ', array_map(fn ($field) => $field.': '.$after[$field], $changed)),
+            );
+        }
 
         return redirect()
             ->route('users.index')
@@ -226,13 +290,43 @@ class UserManagementController extends Controller
             );
         }
 
-        $user->forceFill([
-            'is_active' => $activate,
-        ])->save();
+        if (! $activate && $user->hasRole('super_admin') && ! $this->anotherActiveSuperAdminExists($user)) {
+            return back()->with('error', 'You cannot deactivate the last active Super Admin.');
+        }
+
+        $wasActive = $user->is_active !== false;
+
+        DB::transaction(function () use ($user, $activate, $wasActive) {
+            $user->forceFill([
+                'is_active' => $activate,
+            ])->save();
+
+            if ($wasActive !== $activate) {
+                AuditLog::record(
+                    $activate ? AuditLog::ACTIVATED : AuditLog::DEACTIVATED,
+                    $user,
+                    $wasActive ? 'active' : 'deactivated',
+                    $activate ? 'active' : 'deactivated',
+                );
+            }
+        });
 
         return back()->with(
             'success',
             $user->name . ($activate ? ' has been activated.' : ' has been deactivated.')
         );
+    }
+
+    /**
+     * True when an active Super Admin other than $user exists. A missing
+     * is_active value counts as active (see EnsureUserIsActive).
+     */
+    private function anotherActiveSuperAdminExists(User $user): bool
+    {
+        return User::query()
+            ->whereKeyNot($user->id)
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereNull('is_active'))
+            ->whereHas('roles', fn ($query) => $query->where('name', 'super_admin'))
+            ->exists();
     }
 }

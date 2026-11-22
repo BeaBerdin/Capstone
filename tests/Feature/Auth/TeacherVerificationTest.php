@@ -308,7 +308,7 @@ test('promotion cannot reuse an approved student application or its verified ema
     ]);
     $oldLink = teacherVerificationLink($student);
 
-    $this->actingAs($edp)->put(route('users.update-role', $student), ['role' => 'teacher'])
+    $this->actingAs($edp)->put(route('users.update-role', $student), ['role' => 'teacher', 'reason' => 'Hired as faculty'])
         ->assertSessionHas('success');
 
     $teacher = $student->fresh();

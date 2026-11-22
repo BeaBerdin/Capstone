@@ -1371,6 +1371,7 @@
             ['label' => 'Categories', 'meta' => 'Course categories', 'url' => route('course-categories.index')],
             ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'User Management', 'meta' => 'Manage users and roles', 'url' => route('users.index')],
+            ['label' => 'Audit Log', 'meta' => 'Role, verification and approval history', 'url' => route('super-admin.audit-log.index')],
             ['label' => 'Student Applications', 'meta' => 'Verify Study Loads and approve students', 'url' => route('super-admin.student-applications.index')],
             ['label' => 'Transactions', 'meta' => 'Review transactions', 'url' => route('super_admin.transactions.index')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
@@ -1717,6 +1718,21 @@
                                 {{ $pwPendingApplications }}
                             </span>
                         @endif
+                    </a>
+
+                    {{-- Audit Log (read-only) --}}
+                    <a
+                        href="{{ route('super-admin.audit-log.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('super-admin.audit-log.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('super-admin.audit-log.*')) aria-current="page" @endif
+                        data-test="nav-audit-log"
+                    >
+                        <svg class="pw-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6l-8-3Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15.5h4M9 8.5h6" />
+                        </svg>
+                        <span>Audit Log</span>
                     </a>
 
                      {{-- Department Management --}}

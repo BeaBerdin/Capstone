@@ -105,6 +105,15 @@
                 @endif
 
 
+                @if ($errors->any())
+                    <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700" data-test="form-errors">
+                        @foreach ($errors->all() as $message)
+                            <p>{{ $message }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
+
                 @if (session('error'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -550,6 +559,9 @@
                                                 action="{{ route('users.update-role', $user) }}"
                                                 method="POST"
                                                 class="flex items-center gap-2"
+                                                data-role-form
+                                                data-user-name="{{ $user->name }}"
+                                                data-current-role="{{ $currentRole }}"
                                             >
 
                                                 @csrf
@@ -593,9 +605,12 @@
                                                 </select>
 
 
+                                                <input type="hidden" name="reason" value="">
+                                                <input type="hidden" name="current_password" value="">
+
                                                 <button
-                                                    type="submit"
-                                                    onclick="return confirm('Are you sure you want to change this user role?')"
+                                                    type="button"
+                                                    data-open-role-dialog
                                                     class="sad-btn-primary h-9 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
                                                 >
                                                     Update
@@ -850,6 +865,83 @@
 
         });
 
+    </script>
+
+    {{-- =====================================================
+        ROLE CHANGE CONFIRMATION (the server checks everything again)
+    ====================================================== --}}
+
+    <dialog id="role-dialog" class="w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40" data-test="role-dialog">
+        <form id="role-dialog-form" class="space-y-4 p-6">
+            <h2 class="text-lg font-bold text-slate-900">Change role</h2>
+            <p class="text-sm text-slate-600" data-role-dialog-text></p>
+
+            <div data-role-dialog-warning hidden class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                A Super Admin can manage every account, role and payment. Re-enter <strong>your own</strong> password to confirm.
+            </div>
+
+            <label class="block text-sm font-semibold text-slate-700">
+                Reason
+                <textarea id="role-dialog-reason" rows="3" required maxlength="500" placeholder="e.g. Appointed as department head" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"></textarea>
+            </label>
+
+            <label class="block text-sm font-semibold text-slate-700" data-role-password-field hidden>
+                Your password
+                <input id="role-dialog-password" type="password" autocomplete="current-password" class="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800">
+            </label>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-dialog-cancel class="h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="h-10 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">Confirm change</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        (function () {
+            var roleLabels = { super_admin: 'Super Admin', admin: 'Admin', teacher: 'Teacher', student: 'Student' };
+            var dialog = document.getElementById('role-dialog');
+            if (!dialog || typeof dialog.showModal !== 'function') { return; }
+
+            var activeForm = null;
+            var reason = document.getElementById('role-dialog-reason');
+            var password = document.getElementById('role-dialog-password');
+
+            dialog.querySelector('[data-dialog-cancel]').addEventListener('click', function () {
+                password.value = '';
+                dialog.close();
+            });
+
+            document.querySelectorAll('[data-open-role-dialog]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeForm = button.closest('[data-role-form]');
+                    var role = activeForm.querySelector('select[name="role"]').value;
+                    var promoting = role === 'super_admin' && activeForm.dataset.currentRole !== 'super_admin';
+
+                    dialog.querySelector('[data-role-dialog-text]').textContent =
+                        'Change ' + activeForm.dataset.userName + ' to ' + (roleLabels[role] || role) + '?'
+                        + (role === 'teacher' ? ' The account goes to EDP review before teacher access.' : '');
+                    dialog.querySelector('[data-role-dialog-warning]').hidden = !promoting;
+                    dialog.querySelector('[data-role-password-field]').hidden = !promoting;
+
+                    reason.value = '';
+                    password.value = '';
+                    password.required = promoting;
+
+                    dialog.showModal();
+                });
+            });
+
+            document.getElementById('role-dialog-form').addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (!activeForm) { return; }
+                activeForm.querySelector('input[name="reason"]').value = reason.value;
+                activeForm.querySelector('input[name="current_password"]').value = password.value;
+                password.value = '';
+                dialog.close();
+                activeForm.submit();
+            });
+        })();
     </script>
 
 </x-layouts::app>

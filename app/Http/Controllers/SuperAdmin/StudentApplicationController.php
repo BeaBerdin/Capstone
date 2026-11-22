@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\StudentApplication;
 use App\Models\User;
 use App\Notifications\StudentApplicationApproved;
@@ -151,6 +152,14 @@ class StudentApplicationController extends Controller
         $student = $studentApplication->user()->first();
         $redirect = redirect()->route('super-admin.student-applications.show', $studentApplication);
 
+        AuditLog::record(
+            AuditLog::APPLICATION_APPROVED,
+            $student,
+            StudentApplication::PENDING,
+            StudentApplication::APPROVED,
+            ($studentApplication->isTeacherApplication() ? 'Teacher' : 'Student').' application #'.$studentApplication->id,
+        );
+
         if ($student->hasVerifiedEmail()) {
             return $redirect->with('success', 'Application approved. '.$student->name.'\'s email is already verified, so they can use PathWise now.');
         }
@@ -195,6 +204,14 @@ class StudentApplicationController extends Controller
         $studentApplication->refresh();
         $student = $studentApplication->user()->first();
         $redirect = redirect()->route('super-admin.student-applications.show', $studentApplication);
+
+        AuditLog::record(
+            AuditLog::APPLICATION_REJECTED,
+            $student,
+            StudentApplication::PENDING,
+            StudentApplication::REJECTED,
+            $validated['rejection_reason'],
+        );
 
         try {
             $student->notify(new StudentApplicationRejected($studentApplication));
