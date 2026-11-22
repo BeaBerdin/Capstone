@@ -11,7 +11,7 @@
         default => 'bg-amber-50 text-amber-700 ring-amber-200',
     };
     $label = match ($status) {
-        'approved' => $isTeacher && ! $user->hasVerifiedEmail() ? 'Approved · Verify Email' : 'Approved',
+        'approved' => $user->hasVerifiedEmail() ? 'Approved' : 'Approved — please verify your email',
         'rejected' => $isTeacher ? 'Rejected' : 'Needs a corrected Study Load',
         default => $latest ? 'Pending review' : 'Review required',
     };
@@ -203,8 +203,9 @@
         Follows the application by itself, so the student never has to
         refresh: the EDP's decision and the email verification usually happen
         elsewhere (the EDP's computer, the Gmail app).
-          - every 5 seconds, and at once when the tab becomes visible again;
-          - pending -> approved/rejected: reload once to show the new state;
+          - every 10 seconds, and at once when the tab becomes visible again;
+          - pending -> approved/rejected: reload once to show the new state
+            (approved but not yet verified: "Approved — please verify your email");
           - approved and verified: go to the dashboard;
           - the session now belongs to another account, or it expired: stop
             (never redirect someone else, never switch accounts).
@@ -219,7 +220,7 @@
             var userId = Number(root.dataset.userId);
             var shownStatus = root.dataset.status;
             var shownVerified = root.dataset.verified === '1';
-            var interval = 5000;
+            var interval = 10000;
             var timer = null;
             var busy = false;
             var stopped = false;

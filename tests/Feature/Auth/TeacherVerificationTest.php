@@ -97,7 +97,7 @@ test('EDP approval requires faculty confirmation and only the current review lin
         return true;
     });
     $this->actingAs($teacher)->get(route('teacher.dashboard'))->assertRedirect(route('verification.notice'));
-    $this->get(route('student-application.status'))->assertSee('Verify Email');
+    $this->get(route('student-application.status'))->assertSee('Approved — please verify your email');
     $this->get(teacherVerificationLink($teacher))->assertForbidden();
     $this->get($mail)->assertRedirect();
     expect($teacher->fresh()->hasVerifiedEmail())->toBeTrue();
