@@ -119,7 +119,7 @@ class StudentApplicationController extends Controller
 
         $name = sprintf(
             '%s-%d-submission-%d.%s',
-            $studentApplication->isTeacherApplication() ? 'teacher-id' : 'study-load',
+            $studentApplication->isTeacherApplication() ? 'faculty-verification-document' : 'study-load',
             $studentApplication->user_id,
             $studentApplication->submission_no,
             $type ? self::INLINE_TYPES[$type] : 'bin',
@@ -140,6 +140,18 @@ class StudentApplicationController extends Controller
 
     public function approve(Request $request, StudentApplication $studentApplication)
     {
+        // A teacher review needs the Faculty Verification Document first.
+        // (Rejecting is still allowed without one.)
+        if (
+            $studentApplication->isTeacherApplication()
+            && $studentApplication->isPending()
+            && ! $studentApplication->hasStudyLoad()
+        ) {
+            return redirect()
+                ->route('super-admin.student-applications.show', $studentApplication)
+                ->with('error', 'This teacher application cannot be approved yet: no Faculty Verification Document has been uploaded. The teacher can upload it from their PathWise status page. You can still reject the application.');
+        }
+
         if ($studentApplication->isTeacherApplication() && $studentApplication->isPending()) {
             $request->validate(['faculty_confirmed' => ['accepted']], [
                 'faculty_confirmed.accepted' => 'Confirm the faculty member and reviewed email with the department first.',

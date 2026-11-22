@@ -13,7 +13,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Study Load and Teacher ID files and application rows.
+ * Study Load and Faculty Verification Document files and application rows.
  *
  * Files are kept on the private disk (storage/app/private) under
  * study-loads/{user id}/ (students) or teacher-ids/{user id}/ (teachers)
@@ -21,7 +21,7 @@ use Throwable;
  * Super Admin (EDP) by StudentApplicationController.
  * Study Loads are never overwritten or deleted after a submission is saved,
  * so every earlier submission stays available for audit. A rejected
- * teacher's old Teacher ID is deleted when the teacher uploads a new one.
+ * teacher's old Faculty Verification Document is deleted when the teacher uploads a new one.
  */
 class StudyLoads
 {
@@ -56,7 +56,7 @@ class StudyLoads
     }
 
     /**
-     * Store a teacher's Teacher ID (random name, private disk) and return
+     * Store a teacher's Faculty Verification Document (random name, private disk) and return
      * the file columns for StudentApplication::submitForTeacher().
      * $storedPath receives the path so the caller can delete the file if the
      * surrounding transaction fails.
@@ -68,7 +68,7 @@ class StudyLoads
         $path = $file->store('teacher-ids/'.$user->id, self::DISK);
 
         if (! is_string($path) || $path === '') {
-            throw new RuntimeException('The Teacher ID could not be saved.');
+            throw new RuntimeException('The Faculty Verification Document could not be saved.');
         }
 
         $storedPath = $path;
@@ -82,7 +82,7 @@ class StudyLoads
     }
 
     /**
-     * Delete a replaced Teacher ID and clear its stored path (the file name,
+     * Delete a replaced Faculty Verification Document and clear its stored path (the file name,
      * decision and rejection reason stay as history, so the EDP page can say
      * the file was replaced). Only teacher rows are touched; a Study Load is
      * never removed here.

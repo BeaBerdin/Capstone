@@ -48,6 +48,11 @@ class StudentApplication extends Model
 
     public const TOO_LARGE_MESSAGE = 'The uploaded file exceeds the 10 MB limit. Please upload a smaller or compressed file.';
 
+    /** Faculty Verification Document rules: PDF, JPG or PNG, up to 5 MB (in kilobytes). */
+    public const FACULTY_DOCUMENT_MAX_KILOBYTES = 5120;
+
+    public const FACULTY_DOCUMENT_TOO_LARGE_MESSAGE = 'The uploaded file exceeds the 5 MB limit. Please upload a smaller or compressed file.';
+
     /**
      * Validation rules for a Study Load upload (extension and real MIME type).
      *
@@ -68,15 +73,20 @@ class StudentApplication extends Model
      * @return array<string, string>
      */
     /**
-     * Validation rules for a teacher's Teacher ID upload: the same limits and
-     * checks as a Study Load (PDF, JPG or PNG, extension and real MIME type,
-     * up to 10 MB).
+     * Validation rules for a teacher's Faculty Verification Document: PDF,
+     * JPG or PNG (extension and real MIME type), up to 5 MB.
      *
      * @return array<int, string>
      */
     public static function teacherIdRules(): array
     {
-        return self::studyLoadRules();
+        return [
+            'required',
+            'file',
+            'mimes:pdf,jpg,jpeg,png',
+            'mimetypes:application/pdf,image/jpeg,image/png',
+            'max:'.self::FACULTY_DOCUMENT_MAX_KILOBYTES,
+        ];
     }
 
     /**
@@ -85,12 +95,12 @@ class StudentApplication extends Model
     public static function teacherIdMessages(string $field = 'teacher_id'): array
     {
         return [
-            "{$field}.required" => 'Please upload your Teacher ID (faculty or employee ID): PDF, JPG or PNG.',
-            "{$field}.file" => 'The Teacher ID must be a PDF, JPG or PNG file.',
-            "{$field}.uploaded" => self::TOO_LARGE_MESSAGE,
-            "{$field}.max" => self::TOO_LARGE_MESSAGE,
-            "{$field}.mimes" => 'The Teacher ID must be a PDF, JPG or PNG file.',
-            "{$field}.mimetypes" => 'The Teacher ID must be a PDF, JPG or PNG file.',
+            "{$field}.required" => 'Please upload your Faculty Verification Document (PDF, JPG or PNG).',
+            "{$field}.file" => 'The Faculty Verification Document must be a PDF, JPG or PNG file.',
+            "{$field}.uploaded" => self::FACULTY_DOCUMENT_TOO_LARGE_MESSAGE,
+            "{$field}.max" => self::FACULTY_DOCUMENT_TOO_LARGE_MESSAGE,
+            "{$field}.mimes" => 'The Faculty Verification Document must be a PDF, JPG or PNG file.',
+            "{$field}.mimetypes" => 'The Faculty Verification Document must be a PDF, JPG or PNG file.',
         ];
     }
 
@@ -179,7 +189,7 @@ class StudentApplication extends Model
     /**
      * Call inside a transaction that creates or locks the user row.
      *
-     * $teacherId holds the stored Teacher ID's columns (see
+     * $teacherId holds the stored Faculty Verification Document's columns (see
      * StudyLoads::storeTeacherId). A teacher's ID uses the same file columns
      * as a student's Study Load; the row is told apart by applicant_role.
      * Reviews started by the EDP (account creation, role or email change)
@@ -209,10 +219,10 @@ class StudentApplication extends Model
         ]))));
     }
 
-    /** Label of the uploaded file: "Teacher ID" or "Study Load". */
+    /** Label of the uploaded file: "Faculty Verification Document" or "Study Load". */
     public function documentLabel(): string
     {
-        return $this->isTeacherApplication() ? 'Teacher ID' : 'Study Load';
+        return $this->isTeacherApplication() ? 'Faculty Verification Document' : 'Study Load';
     }
 
     /**

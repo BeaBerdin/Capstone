@@ -169,15 +169,15 @@ function edpMailText(StudentApplicationSubmitted $notification): array
     return [$mail->subject, $html, $notification->toArray(new AnonymousNotifiable)];
 }
 
-test('a new teacher registration email uses Teacher ID wording', function () {
+test('a new teacher registration email uses Faculty Verification Document wording', function () {
     $teacher = edpRegisterTeacher();
     $review = $teacher->teacherApplications()->sole();
 
     [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($review));
 
     expect($subject)->toBe('PathWise - New teacher registration: Maria Santos')
-        ->and($html)->toContain('Maria Santos registered as a teacher and uploaded a Teacher ID for verification.')
-        ->and($html)->toContain('Please review the Teacher ID and approve or reject the registration.')
+        ->and($html)->toContain('Maria Santos registered as a teacher and uploaded a Faculty Verification Document for verification.')
+        ->and($html)->toContain('Please review the Faculty Verification Document and approve or reject the registration.')
         ->and($html)->toContain('Review registration')
         ->and($html)->not->toContain('Study Load')
         // Only the review link's route path mentions "student-applications".
@@ -185,10 +185,10 @@ test('a new teacher registration email uses Teacher ID wording', function () {
         ->and($html)->not->toContain('student application')
         ->and($html)->not->toContain('The student')
         ->and($inApp['title'])->toBe('New teacher registration')
-        ->and($inApp['message'])->toBe('Maria Santos is waiting for Teacher ID verification.');
+        ->and($inApp['message'])->toBe('Maria Santos is waiting for review of their Faculty Verification Document.');
 });
 
-test('a resubmitted teacher registration email uses Teacher ID wording', function () {
+test('a resubmitted teacher registration email uses Faculty Verification Document wording', function () {
     $teacher = edpRegisterTeacher();
     $review = $teacher->teacherApplications()->sole();
     $review->forceFill(['status' => StudentApplication::REJECTED, 'rejection_reason' => 'The ID photo is blurry.', 'reviewed_at' => now()])->save();
@@ -202,13 +202,13 @@ test('a resubmitted teacher registration email uses Teacher ID wording', functio
     [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($new, resubmission: true));
 
     expect($subject)->toBe('PathWise - Teacher registration resubmitted: Maria Santos')
-        ->and($html)->toContain('Maria Santos uploaded a new Teacher ID (submission #'.$new->submission_no.') after the previous one was rejected.')
+        ->and($html)->toContain('Maria Santos uploaded a new Faculty Verification Document (submission #'.$new->submission_no.') after the previous one was rejected.')
         ->and($html)->not->toContain('Study Load')
         ->and($inApp['title'])->toBe('Teacher registration resubmitted')
-        ->and($inApp['message'])->toBe('Maria Santos uploaded a new Teacher ID for review.');
+        ->and($inApp['message'])->toBe('Maria Santos uploaded a new Faculty Verification Document for review.');
 });
 
-test('a teacher review started by the EDP office is worded without a Teacher ID', function () {
+test('a teacher review started by the EDP office is worded without a document', function () {
     $teacher = pathwiseUser('teacher', ['name' => 'Ana Reyes', 'email_verified_at' => null]);
     $review = StudentApplication::submitForTeacher($teacher, 'edp_created');
 
@@ -216,7 +216,7 @@ test('a teacher review started by the EDP office is worded without a Teacher ID'
 
     expect($subject)->toBe('PathWise - New teacher registration: Ana Reyes')
         ->and($html)->toContain('Please confirm the faculty member with the department')
-        ->and($html)->not->toContain('Teacher ID')
+        ->and($html)->not->toContain('Faculty Verification Document')
         ->and($html)->not->toContain('Study Load')
         ->and($inApp['message'])->toBe('Ana Reyes is waiting for teacher registration review.');
 });

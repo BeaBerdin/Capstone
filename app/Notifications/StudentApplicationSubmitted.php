@@ -92,9 +92,9 @@ class StudentApplicationSubmitted extends Notification
             return [
                 'title' => $this->resubmission ? 'Teacher registration resubmitted' : 'New teacher registration',
                 'message' => $name.match (true) {
-                    $this->resubmission && $this->application->hasStudyLoad() => ' uploaded a new Teacher ID for review.',
+                    $this->resubmission && $this->application->hasStudyLoad() => ' uploaded a new Faculty Verification Document for review.',
                     $this->resubmission => ' asked for the teacher registration to be reviewed again.',
-                    $this->application->hasStudyLoad() => ' is waiting for Teacher ID verification.',
+                    $this->application->hasStudyLoad() => ' is waiting for review of their Faculty Verification Document.',
                     default => ' is waiting for teacher registration review.',
                 },
                 'type' => self::TYPE,
@@ -112,7 +112,7 @@ class StudentApplicationSubmitted extends Notification
     }
 
     /**
-     * A teacher registration (new or resubmitted): Teacher ID wording. A
+     * A teacher registration (new or resubmitted): Faculty Verification Document wording. A
      * review started by the EDP office has no file and is worded without one.
      */
     private function teacherMail(object $notifiable): MailMessage
@@ -126,18 +126,18 @@ class StudentApplicationSubmitted extends Notification
             ->subject('PathWise - '.$heading.': '.($teacher?->name ?? 'Teacher'))
             ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [
                 'heading' => $heading,
-                'preheader' => $name.($hasId ? ' is waiting for Teacher ID verification.' : ' is waiting for teacher registration review.'),
+                'preheader' => $name.($hasId ? ' is waiting for review of their Faculty Verification Document.' : ' is waiting for teacher registration review.'),
                 'name' => $notifiable->name ?? null,
                 'paragraphs' => [
                     match (true) {
-                        $this->resubmission && $hasId => $name.' uploaded a new Teacher ID (submission #'.$this->application->submission_no.') after the previous one was rejected.',
+                        $this->resubmission && $hasId => $name.' uploaded a new Faculty Verification Document (submission #'.$this->application->submission_no.') after the previous one was rejected.',
                         $this->resubmission => $name.' asked for the teacher registration to be reviewed again (submission #'.$this->application->submission_no.').',
-                        $hasId => $name.' registered as a teacher and uploaded a Teacher ID for verification.',
+                        $hasId => $name.' registered as a teacher and uploaded a Faculty Verification Document for verification.',
                         default => $name.' needs a teacher registration review.',
                     },
                     'Email: '.($teacher?->email ?? '-'),
                     $hasId
-                        ? 'Please review the Teacher ID and approve or reject the registration. The teacher cannot use the teacher tools until it is approved.'
+                        ? 'Please review the Faculty Verification Document and approve or reject the registration. The teacher cannot use the teacher tools until it is approved.'
                         : 'Please confirm the faculty member with the department and approve or reject the registration. The teacher cannot use the teacher tools until it is approved.',
                 ],
                 'buttonText' => 'Review registration',

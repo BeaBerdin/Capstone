@@ -316,7 +316,7 @@ test('EDP application approval and rejection are logged', function () {
     $edp = pathwiseUser('super_admin');
     $approved = pathwiseUser('teacher', ['email_verified_at' => null]);
     $rejected = pathwiseUser('teacher', ['email_verified_at' => null]);
-    $approve = StudentApplication::submitForTeacher($approved, 'registration');
+    $approve = withFacultyDocument(StudentApplication::submitForTeacher($approved, 'registration'));
     $reject = StudentApplication::submitForTeacher($rejected, 'registration');
 
     $this->actingAs($edp)

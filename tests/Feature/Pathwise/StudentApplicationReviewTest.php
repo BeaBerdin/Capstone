@@ -133,7 +133,7 @@ test('the Super Admin sees pending applications with a count, tabs and the revie
 
 test('the EDP can filter teacher reviews and sees email history and faculty attestation', function () {
     $teacher = pathwiseUser('teacher', ['email' => 'faculty@example.test']);
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $edp = pathwiseUser('super_admin');
 
     $this->actingAs($edp)
@@ -151,7 +151,8 @@ test('the EDP can filter teacher reviews and sees email history and faculty atte
         ->assertSee('faculty@example.test')
         ->assertSee('name="faculty_confirmed"', false)
         ->assertSee('I confirmed this person’s faculty status and the review email with their department.')
-        ->assertDontSee(route('super-admin.student-applications.study-load', $review), false);
+        // The Faculty Verification Document is previewed through the private route.
+        ->assertSee(route('super-admin.student-applications.study-load', $review), false);
 });
 
 test('the Study Load is served privately to the Super Admin only, with safe headers', function () {

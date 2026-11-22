@@ -52,7 +52,7 @@ class CreateNewUser implements CreatesNewUsers
             // Students only: a Study Load for the EDP to verify. For a
             // teacher the field is excluded, so a file sent anyway is ignored.
             'study_load' => ['exclude_unless:role,student', ...StudentApplication::studyLoadRules()],
-            // Teachers only: a Teacher ID (faculty or employee ID) for the
+            // Teachers only: a Faculty Verification Document for the
             // EDP to verify. For a student the field is excluded and ignored.
             'teacher_id' => ['exclude_unless:role,teacher', ...StudentApplication::teacherIdRules()],
         ], [
@@ -101,7 +101,7 @@ class CreateNewUser implements CreatesNewUsers
                     $application = StudyLoads::submit($user, $input['study_load'], 1, $storedPath);
                 } else {
                     // A self-registered teacher waits for the EDP's approval
-                    // in the same queue, with a Teacher ID instead.
+                    // in the same queue, with a Faculty Verification Document instead.
                     $application = StudentApplication::submitForTeacher(
                         $user,
                         'registration',

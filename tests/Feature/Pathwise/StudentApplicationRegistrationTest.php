@@ -138,7 +138,7 @@ test('a Study Load of exactly 10 MB is accepted', function () {
     expect(StudentApplication::count())->toBe(1);
 });
 
-test('a teacher registers with a Teacher ID instead of a Study Load and waits for EDP review before email verification', function () {
+test('a teacher registers with a Faculty Verification Document instead of a Study Load and waits for EDP review before email verification', function () {
     Notification::fake();
 
     $this->post(route('register.store'), registrationPayload([
@@ -177,7 +177,7 @@ test('a Study Load sent with a teacher registration is ignored and not stored', 
     $review = StudentApplication::sole();
     $files = Storage::disk('local')->allFiles();
 
-    // Only the Teacher ID is kept (privately); the Study Load is ignored.
+    // Only the Faculty Verification Document is kept (privately); the Study Load is ignored.
     expect($review->isTeacherApplication())->toBeTrue()
         ->and($files)->toHaveCount(1)
         ->and($files[0])->toStartWith('teacher-ids/')

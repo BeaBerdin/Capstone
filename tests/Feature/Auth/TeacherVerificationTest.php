@@ -17,7 +17,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     $this->withoutVite();
     Notification::fake();
-    // Teacher IDs go to a fake private disk, never to real storage.
+    // Faculty Verification Documents go to a fake private disk, never to real storage.
     fakeFileDisks();
 });
 
@@ -77,7 +77,7 @@ test('teacher registration creates a pending review and blocks direct teacher to
 
 test('EDP approval requires faculty confirmation and only the current review link verifies a teacher', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $edp = teacherVerificationUser('super_admin');
     $dean = teacherVerificationUser('admin');
     $approve = route('super-admin.student-applications.approve', $review);
@@ -108,7 +108,7 @@ test('EDP approval requires faculty confirmation and only the current review lin
 
 test('an approved teacher can resend a review-bound link with the standard verification expiry', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $edp = teacherVerificationUser('super_admin');
     $this->actingAs($edp)->post(route('super-admin.student-applications.approve', $review), ['faculty_confirmed' => '1']);
 
@@ -171,7 +171,7 @@ test('cross-browser verification never silently switches a signed-in account', f
 test('teacher email verification on another browser does not offer student sign-in continuation', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
     $edp = teacherVerificationUser('super_admin');
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $review->forceFill([
         'status' => StudentApplication::APPROVED,
         'reviewed_by' => $edp->id,
@@ -189,7 +189,7 @@ test('teacher email verification on another browser does not offer student sign-
 
 test('teacher tools require current EDP approval, verified email, and an active account', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => now()]);
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
 
     $this->actingAs($teacher)->get(route('teacher.dashboard'))
         ->assertRedirect(route('student-application.status'));
@@ -230,6 +230,12 @@ test('a verified legacy teacher with no review can be queued by EDP and keeps th
 
     $this->post(route('users.teacher-review', $teacher))
         ->assertRedirect(route('super-admin.student-applications.show', $review));
+
+    // Without a document the EDP cannot approve; with one it can.
+    $this->post(route('super-admin.student-applications.approve', $review), ['faculty_confirmed' => '1'])
+        ->assertSessionHas('error');
+    expect($review->fresh()->status)->toBe(StudentApplication::PENDING);
+    $review = withFacultyDocument($review);
     $this->post(route('super-admin.student-applications.approve', $review), ['faculty_confirmed' => '1']);
     expect($teacher->fresh()->hasVerifiedEmail())->toBeFalse()
         ->and($teacher->fresh()->approvedTeacherApplication()->id)->toBe($review->id);
@@ -270,15 +276,17 @@ test('a historical approval with no recorded email does not grant access and the
         ->and($student->fresh()->awaitingStudentApproval())->toBeTrue();
 
     $this->actingAs($teacher)->get(route('teacher.dashboard'))->assertRedirect(route('student-application.status'));
-    $this->post(route('student-application.resubmit'))->assertSessionHas('success');
+    $this->post(route('student-application.resubmit'))->assertSessionHasErrors('teacher_id');
+    $this->post(route('student-application.resubmit'), ['teacher_id' => teacherIdUpload()])->assertSessionHas('success');
     expect($teacher->currentTeacherApplication()->review_origin)->toBe('legacy_request')
+        ->and($teacher->currentTeacherApplication()->hasStudyLoad())->toBeTrue()
         ->and($teacher->currentTeacherApplication()->status)->toBe(StudentApplication::PENDING)
         ->and($history->fresh()->status)->toBe(StudentApplication::APPROVED);
 });
 
-test('a rejected teacher cannot use a signed link and can resubmit with a new Teacher ID', function () {
+test('a rejected teacher cannot use a signed link and can resubmit with a new Faculty Verification Document', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $edp = teacherVerificationUser('super_admin');
 
     $this->actingAs($edp)->post(route('super-admin.student-applications.reject', $review), [
@@ -326,7 +334,7 @@ test('promotion cannot reuse an approved student application or its verified ema
 test('admin email edits require new approval and invalidate a prior link even if the address changes back', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
     $edp = teacherVerificationUser('super_admin');
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $firstEmail = $teacher->email;
     $oldLink = teacherVerificationLink($teacher, $review);
 
@@ -336,7 +344,7 @@ test('admin email edits require new approval and invalidate a prior link even if
 
     $edit = route('users.update', $teacher);
     $this->actingAs($edp)->put($edit, ['name' => 'Tina Santos', 'email' => 'new-address@example.test']);
-    $stale = $teacher->fresh()->currentTeacherApplication();
+    $stale = withFacultyDocument($teacher->fresh()->currentTeacherApplication());
     $this->put($edit, ['name' => 'Tina Santos', 'email' => $firstEmail]);
     $this->post(route('super-admin.student-applications.approve', $stale), ['faculty_confirmed' => '1'])
         ->assertSessionHas('error');
@@ -345,6 +353,7 @@ test('admin email edits require new approval and invalidate a prior link even if
     expect($teacher->hasVerifiedEmail())->toBeFalse()
         ->and($latest->review_origin)->toBe('email_change')
         ->and($latest->id)->not->toBe($review->id);
+    $latest = withFacultyDocument($latest);
     $this->post(route('super-admin.student-applications.approve', $latest), ['faculty_confirmed' => '1']);
     $this->actingAs($teacher)->get($oldLink)->assertForbidden();
     expect($teacher->fresh()->hasVerifiedEmail())->toBeFalse();
@@ -381,7 +390,7 @@ test('a student still uploads a study load and verifies through the student appr
 test('a teacher changing email in profile gets a fresh review and loses prior verification', function () {
     $teacher = teacherVerificationUser('teacher');
     $edp = teacherVerificationUser('super_admin');
-    $review = StudentApplication::submitForTeacher($teacher, 'registration');
+    $review = withFacultyDocument(StudentApplication::submitForTeacher($teacher, 'registration'));
     $review->forceFill(['status' => StudentApplication::APPROVED, 'reviewed_by' => $edp->id, 'reviewed_at' => now()])->save();
 
     $this->actingAs($teacher);
@@ -414,6 +423,7 @@ test('EDP-created teachers are pending and manual or bulk verification cannot ve
     $review = teacherVerificationPendingReview($teacher);
     expect($review->review_origin)->toBe('edp_created');
     $this->patch(route('users.verify-email', $teacher))->assertSessionHas('error');
+    $review = withFacultyDocument($review);
     $this->post(route('super-admin.student-applications.approve', $review), ['faculty_confirmed' => '1']);
     $this->patch(route('users.verify-email', $teacher))->assertSessionHas('error');
     $teacher->forceFill(['created_at' => now()->subDay()])->save();

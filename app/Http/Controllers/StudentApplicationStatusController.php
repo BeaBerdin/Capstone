@@ -124,52 +124,70 @@ class StudentApplicationStatusController extends Controller
     }
 
     /**
-     * Request review for a teacher without a current application, or after
-     * rejection. After a rejection the teacher uploads a new Teacher ID (like
-     * a student's corrected Study Load); the old one is deleted once the new
-     * one is saved. A review request without any earlier application needs
-     * no file.
+     * A teacher sends their Faculty Verification Document:
+     *  - no current review (legacy teacher): starts a review with it;
+     *  - review rejected: a new review with a new document; the old file is
+     *    deleted once the new one is saved;
+     *  - review pending without a document (for example one started by the
+     *    EDP office): the document is added to that same pending review.
+     * The EDP cannot approve a teacher review without a document, so every
+     * path requires the upload.
      */
     private function requestTeacherReview(Request $request, User $user)
     {
-        $afterRejection = $user->currentTeacherApplication()?->status === StudentApplication::REJECTED;
-
-        if ($afterRejection) {
-            $request->validate(
-                ['teacher_id' => StudentApplication::teacherIdRules()],
-                StudentApplication::teacherIdMessages(),
-            );
-        }
+        $request->validate(
+            ['teacher_id' => StudentApplication::teacherIdRules()],
+            StudentApplication::teacherIdMessages(),
+        );
 
         $storedPath = null;
         $replaced = null;
+        $attached = false;
 
         try {
-            $application = DB::transaction(function () use ($request, $user, &$storedPath, &$replaced) {
+            $application = DB::transaction(function () use ($request, $user, &$storedPath, &$replaced, &$attached) {
                 $user = User::query()->lockForUpdate()->findOrFail($user->id);
                 $latest = $user->currentTeacherApplication();
 
-                if (! $user->hasRole('teacher') || ($latest && $latest->status !== StudentApplication::REJECTED)) {
+                if (! $user->hasRole('teacher')) {
                     return null;
                 }
 
                 if (! $latest) {
-                    return StudentApplication::submitForTeacher($user, 'legacy_request');
+                    return StudentApplication::submitForTeacher(
+                        $user,
+                        'legacy_request',
+                        StudyLoads::storeTeacherId($user, $request->file('teacher_id'), $storedPath),
+                    );
                 }
 
-                // A resubmission must carry the new Teacher ID (checked above
-                // for the same state; checked again here under the lock).
-                if (! $request->hasFile('teacher_id')) {
-                    return null;
+                if ($latest->status === StudentApplication::REJECTED) {
+                    $replaced = $latest;
+
+                    return StudentApplication::submitForTeacher(
+                        $user,
+                        'resubmission',
+                        StudyLoads::storeTeacherId($user, $request->file('teacher_id'), $storedPath),
+                    );
                 }
 
-                $replaced = $latest;
+                // Pending without a document: add it to the same review.
+                if ($latest->status === StudentApplication::PENDING && ! $latest->hasStudyLoad()) {
+                    $locked = StudentApplication::query()->lockForUpdate()->findOrFail($latest->id);
 
-                return StudentApplication::submitForTeacher(
-                    $user,
-                    'resubmission',
-                    StudyLoads::storeTeacherId($user, $request->file('teacher_id'), $storedPath),
-                );
+                    if ($locked->status !== StudentApplication::PENDING || $locked->hasStudyLoad()) {
+                        return null;
+                    }
+
+                    $locked->forceFill(
+                        StudyLoads::storeTeacherId($user, $request->file('teacher_id'), $storedPath)
+                    )->save();
+                    $attached = true;
+
+                    return $locked;
+                }
+
+                return null;
             });
         } catch (Throwable $e) {
             StudyLoads::discard($storedPath);
@@ -185,7 +203,7 @@ class StudentApplicationStatusController extends Controller
                 ->with('error', 'There is already a current teacher review for this email.');
         }
 
-        // The old Teacher ID is no longer needed once the new one is saved.
+        // The old document is no longer needed once the new one is saved.
         if ($replaced) {
             StudyLoads::removeReplacedTeacherId($replaced);
         }
@@ -194,8 +212,10 @@ class StudentApplicationStatusController extends Controller
 
         return redirect()
             ->route('student-application.status')
-            ->with('success', $replaced
-                ? 'Your new Teacher ID was submitted. The EDP office will review your teacher registration again.'
-                : 'Your request was sent. The EDP office will review your teacher registration again.');
+            ->with('success', match (true) {
+                $replaced !== null => 'Your new Faculty Verification Document was submitted. The EDP office will review your teacher registration again.',
+                $attached => 'Your Faculty Verification Document was added. The EDP office can now review your teacher registration.',
+                default => 'Your request was sent. The EDP office will review your teacher registration.',
+            });
     }
 }

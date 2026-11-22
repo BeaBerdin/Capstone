@@ -120,9 +120,28 @@ function fakeFileDisks(): void
 }
 
 /**
- * A Teacher ID upload for teacher registration (faculty or employee ID).
+ * A Faculty Verification Document upload for teacher registration.
  */
 function teacherIdUpload(string $name = 'faculty-id.jpg'): Illuminate\Http\UploadedFile
 {
     return Illuminate\Http\UploadedFile::fake()->image($name, 600, 380);
+}
+
+/**
+ * Give a teacher review a Faculty Verification Document (fake private file),
+ * as the EDP cannot approve a teacher review without one.
+ */
+function withFacultyDocument(App\Models\StudentApplication $review): App\Models\StudentApplication
+{
+    $path = 'teacher-ids/'.$review->user_id.'/document-'.$review->id.'.pdf';
+    Illuminate\Support\Facades\Storage::disk('local')->put($path, '%PDF-1.4 faculty verification document');
+
+    $review->forceFill([
+        'study_load_path' => $path,
+        'study_load_original_name' => 'faculty-document.pdf',
+        'study_load_mime' => 'application/pdf',
+        'study_load_size' => 38,
+    ])->save();
+
+    return $review->fresh();
 }

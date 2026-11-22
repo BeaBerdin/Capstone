@@ -31,14 +31,14 @@
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
 
             @if ($isTeacher)
-            {{-- Teacher registration: Teacher ID (private file, Super Admin only) --}}
+            {{-- Teacher registration: Faculty Verification Document (private file, Super Admin only) --}}
             @php
                 $edpStartedReview = in_array($application->review_origin, ['edp_created', 'role_change', 'email_change', 'edp_legacy_review'], true);
             @endphp
             <section class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white" data-test="teacher-registration">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Teacher ID · Submission #{{ $application->submission_no }}</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Faculty Verification Document · Submission #{{ $application->submission_no }}</p>
                         <h1 class="mt-0.5 text-lg font-bold text-slate-900">{{ $student?->name ?? 'Unknown teacher' }}</h1>
                     </div>
                     @if ($application->hasStudyLoad())
@@ -52,9 +52,9 @@
                 @if ($application->hasStudyLoad())
                     <div class="bg-slate-50 p-3 sm:p-4" data-test="teacher-id-preview">
                         @if ($isPdf)
-                            <iframe src="{{ $fileUrl }}" title="Teacher ID of {{ $student?->name }}" class="h-[70vh] min-h-[420px] w-full rounded-xl border border-slate-200 bg-white"></iframe>
+                            <iframe src="{{ $fileUrl }}" title="Faculty Verification Document of {{ $student?->name }}" class="h-[70vh] min-h-[420px] w-full rounded-xl border border-slate-200 bg-white"></iframe>
                         @elseif ($isImage)
-                            <img src="{{ $fileUrl }}" alt="Teacher ID of {{ $student?->name }}" class="mx-auto max-h-[75vh] w-auto rounded-xl border border-slate-200 bg-white object-contain">
+                            <img src="{{ $fileUrl }}" alt="Faculty Verification Document of {{ $student?->name }}" class="mx-auto max-h-[75vh] w-auto rounded-xl border border-slate-200 bg-white object-contain">
                         @else
                             <p class="px-2 py-10 text-center text-sm text-slate-500">This file cannot be previewed. Use "Open in new tab" to download it.</p>
                         @endif
@@ -66,11 +66,11 @@
                 @else
                     <p class="border-b border-slate-100 bg-slate-50 px-5 py-4 text-sm font-medium text-slate-600 sm:px-6" data-test="no-teacher-id">
                         @if (filled($application->study_load_original_name))
-                            Teacher ID replaced by a newer upload; this older file was removed.
+                            Faculty Verification Document replaced by a newer upload; this older file was removed.
                         @elseif ($edpStartedReview)
-                            No Teacher ID uploaded (this review was started by the EDP office, so no upload was required).
+                            No Faculty Verification Document uploaded yet (this review was started by the EDP office).
                         @else
-                            No Teacher ID uploaded (registered before this requirement)
+                            No Faculty Verification Document uploaded yet (registered before this requirement).
                         @endif
                     </p>
                 @endif
@@ -144,6 +144,13 @@
 
                     @if ($canReview)
                         <div class="mt-6 space-y-4 border-t border-slate-100 pt-5">
+                            @if ($isTeacher && ! $application->hasStudyLoad())
+                            {{-- No document: approval is refused (also on the server). Rejecting is still possible. --}}
+                            <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800" data-test="approve-needs-document">
+                                This teacher application cannot be approved until a Faculty Verification Document is uploaded.
+                                The teacher can upload it from their PathWise status page. You can still reject the application.
+                            </p>
+                            @else
                             <form method="POST" action="{{ route('super-admin.student-applications.approve', $application) }}"
                                   onsubmit="if (!confirm('Approve this application? The {{ $who }} will be emailed a link to verify their email.')) { return false; } this.querySelector('button').disabled = true;">
                                 @csrf
@@ -160,6 +167,7 @@
                                     Approve application
                                 </button>
                             </form>
+                            @endif
 
                             <form method="POST" action="{{ route('super-admin.student-applications.reject', $application) }}" class="space-y-2"
                                   onsubmit="this.querySelector('button').disabled = true;">
