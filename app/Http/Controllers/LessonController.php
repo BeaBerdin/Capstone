@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\CertificateEligibility;
 use App\Models\Lesson;
 use App\Models\Course;
 use Illuminate\Http\RedirectResponse;
@@ -307,6 +308,18 @@ class LessonController extends Controller
             $course
         );
 
+        // Certificate state for the course page: the issued certificate, or
+        // why it is still locked (e.g. an activity waiting to be graded).
+        $certificate = Certificate::query()
+            ->where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->where('status', 'issued')
+            ->first();
+
+        $certificateBlockers = $course->certificate_available && ! $certificate
+            ? CertificateEligibility::activityBlockers($course, (int) auth()->id())
+            : [];
+
         $lessons = $course
             ->lessons()
             ->where(
@@ -322,7 +335,9 @@ class LessonController extends Controller
             'Student.learn-course',
             compact(
                 'course',
-                'lessons'
+                'lessons',
+                'certificate',
+                'certificateBlockers'
             )
         );
     }
@@ -704,35 +719,14 @@ class LessonController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        // Issued only when every requirement is met, including a passing
+        // final teacher grade on every published activity/assignment.
         if (
             $courseCompleted
             &&
             $course->certificate_available
         ) {
-            $certificate = Certificate::firstOrCreate(
-                [
-                    'student_id' =>
-                        $studentId,
-
-                    'course_id' =>
-                        $course->id,
-                ],
-                [
-                    'certificate_number' =>
-                        Certificate::generateNumber(),
-
-                    'issued_date' =>
-                        now()->toDateString(),
-
-                    'status' =>
-                        'issued',
-                ]
-            );
-
-            // Only a newly issued certificate notifies the student.
-            if ($certificate->wasRecentlyCreated) {
-                $certificate->notifyStudent();
-            }
+            CertificateEligibility::issueIfEligible($course, (int) $studentId);
         }
 
     }

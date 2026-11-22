@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\CertificateEligibility;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -1768,29 +1769,8 @@ class QuizController extends Controller
         }
 
 
-        $certificate = Certificate::firstOrCreate(
-            [
-                'student_id' =>
-                    $studentId,
-
-                'course_id' =>
-                    $course->id,
-            ],
-            [
-                'certificate_number' =>
-                    Certificate::generateNumber(),
-
-                'issued_date' =>
-                    now()->toDateString(),
-
-                'status' =>
-                    'issued',
-            ]
-        );
-
-        // Only a newly issued certificate notifies the student.
-        if ($certificate->wasRecentlyCreated) {
-            $certificate->notifyStudent();
-        }
+        // Issued only when every requirement is met, including a passing
+        // final teacher grade on every published activity/assignment.
+        CertificateEligibility::issueIfEligible($course, (int) $studentId);
     }
 }

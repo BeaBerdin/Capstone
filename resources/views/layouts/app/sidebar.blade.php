@@ -1372,6 +1372,7 @@
             ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'User Management', 'meta' => 'Manage users and roles', 'url' => route('users.index')],
             ['label' => 'Audit Log', 'meta' => 'Role, verification and approval history', 'url' => route('super-admin.audit-log.index')],
+            ['label' => 'Certificates to Review', 'meta' => 'Issued certificates with ungraded or failed activities', 'url' => route('super-admin.certificate-review.index')],
             ['label' => 'Student Applications', 'meta' => 'Verify Study Loads and approve students', 'url' => route('super-admin.student-applications.index')],
             ['label' => 'Transactions', 'meta' => 'Review transactions', 'url' => route('super_admin.transactions.index')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
@@ -1733,6 +1734,21 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15.5h4M9 8.5h6" />
                         </svg>
                         <span>Audit Log</span>
+                    </a>
+
+                    {{-- Certificates to Review (read-only report) --}}
+                    <a
+                        href="{{ route('super-admin.certificate-review.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('super-admin.certificate-review.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('super-admin.certificate-review.*')) aria-current="page" @endif
+                        data-test="nav-certificate-review"
+                    >
+                        <svg class="pw-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <circle cx="12" cy="8" r="5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5" />
+                        </svg>
+                        <span>Certificates to Review</span>
                     </a>
 
                      {{-- Department Management --}}

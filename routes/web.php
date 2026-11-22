@@ -203,6 +203,11 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
         Route::get('/super-admin/audit-log', [\App\Http\Controllers\SuperAdmin\AuditLogController::class, 'index'])
             ->name('super-admin.audit-log.index');
 
+        // Issued certificates whose course still has activities without a
+        // passing final grade for that student (read-only report).
+        Route::get('/super-admin/certificates-to-review', [\App\Http\Controllers\SuperAdmin\CertificateReviewController::class, 'index'])
+            ->name('super-admin.certificate-review.index');
+
         Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
             ->name('users.edit');
 

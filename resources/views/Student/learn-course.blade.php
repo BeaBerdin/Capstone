@@ -1527,6 +1527,14 @@
                                             Complete all course requirements.
                                         </p>
 
+                                        @if (! empty($certificateBlockers))
+                                            <ul class="mt-2 space-y-1 text-xs text-amber-700" data-test="certificate-requirements">
+                                                @foreach ($certificateBlockers as $blocker)
+                                                    <li>{{ $blocker }}</li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+
                                     </div>
 
                                 </div>
@@ -1845,7 +1853,19 @@
                         </div>
 
 
-                        @if($course->certificate_available)
+                        @if($course->certificate_available && ! empty($certificateBlockers))
+
+                            {{-- Certificate locked: activities without a passing final grade. --}}
+                            <div class="self-start rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" data-test="certificate-locked">
+                                <p class="font-semibold">Certificate locked</p>
+                                <ul class="mt-1 list-disc space-y-0.5 pl-5 text-xs">
+                                    @foreach ($certificateBlockers as $blocker)
+                                        <li>{{ $blocker }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+
+                        @elseif($course->certificate_available)
 
                             <a
                                 href="{{ route('student.certificates') }}"

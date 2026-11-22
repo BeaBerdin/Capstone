@@ -7,6 +7,7 @@ use App\Models\Assignment;
 use App\Models\Submission;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
+use App\Support\CertificateEligibility;
 use App\Support\AiAvailability;
 use App\Support\PrivateFiles;
 use Illuminate\Http\Request;
@@ -239,7 +240,14 @@ class SubmissionController extends Controller
             ->when($assignment->is_activity, fn ($query) => $query->lockForUpdate())
             ->first();
 
-        if ($submission && $submission->status === 'graded') {
+        // A graded submission is final, unless its final grade is below the
+        // passing score: then the student may resubmit to improve (the
+        // latest graded attempt counts for the certificate).
+        if (
+            $submission
+            && $submission->status === 'graded'
+            && ! CertificateEligibility::failedFinalGrade($submission, $assignment)
+        ) {
             throw ValidationException::withMessages([
                 'submission' =>
                     'This assignment has already been graded and can no longer be changed.',
@@ -745,6 +753,11 @@ class SubmissionController extends Controller
                     )
                 );
             }
+        }
+
+        // A passing final grade may be the last missing requirement.
+        if ($currentStatus === 'graded' && $student) {
+            CertificateEligibility::issueIfEligible($submission->assignment->course, (int) $student->id);
         }
 
         return redirect()

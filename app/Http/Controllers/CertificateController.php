@@ -7,8 +7,10 @@ use App\Models\CertificateSetting;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Support\CertificateEligibility;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class CertificateController extends Controller
@@ -78,6 +80,10 @@ class CertificateController extends Controller
             (int) $validated['student_id'],
             (int) $validated['course_id']
         );
+
+        if ($validated['status'] === 'issued') {
+            $this->ensureActivitiesPassed((int) $validated['student_id'], (int) $validated['course_id']);
+        }
 
         $certificate = Certificate::create($validated);
 
@@ -162,6 +168,20 @@ class CertificateController extends Controller
             )
             ===
             'issued';
+
+        // Issuing (or re-issuing a revoked one, or moving it to another
+        // student or course) needs passing final grades on every activity.
+        // An already-issued certificate that is only edited is left as is.
+        if (
+            $validated['status'] === 'issued'
+            && (
+                ! $wasIssued
+                || (int) $certificate->student_id !== (int) $validated['student_id']
+                || (int) $certificate->course_id !== (int) $validated['course_id']
+            )
+        ) {
+            $this->ensureActivitiesPassed((int) $validated['student_id'], (int) $validated['course_id']);
+        }
 
         $previousStudentId =
             (int) $certificate->student_id;
@@ -376,6 +396,22 @@ class CertificateController extends Controller
         }
     }
 
+
+    /**
+     * Refuse issuing while an activity/assignment has no passing final
+     * teacher grade (see CertificateEligibility).
+     */
+    private function ensureActivitiesPassed(int $studentId, int $courseId): void
+    {
+        $course = Course::findOrFail($courseId);
+        $blockers = CertificateEligibility::activityBlockers($course, $studentId);
+
+        if ($blockers !== []) {
+            throw ValidationException::withMessages([
+                'status' => 'The certificate cannot be issued yet: '.implode('; ', $blockers).'.',
+            ]);
+        }
+    }
 
     private function ensureNoDuplicateCertificate(
         int $studentId,
