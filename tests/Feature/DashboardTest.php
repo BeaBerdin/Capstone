@@ -9,7 +9,7 @@ test('guests are redirected to the login page', function () {
 
 // PathWise sends each role to its own dashboard (Manuscript Figures 35-38).
 test('each role is redirected to its own dashboard', function (string $role, string $routeName) {
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)
         ->get(route('dashboard'))

@@ -447,6 +447,11 @@
                                         {{ ucfirst($transaction->status) }}
 
                                     </span>
+                                    @if ($transaction->payment_review_required_at)
+                                        <p class="mt-2 max-w-52 whitespace-normal break-words text-xs font-semibold text-amber-800">
+                                            Verified payment requires enrollment review.
+                                        </p>
+                                    @endif
 
                                 </td>
 
@@ -494,7 +499,7 @@
 
                                     <div class="flex flex-col items-end justify-start gap-1.5 sm:flex-row sm:items-center">
 
-                                        @if($transaction->status === 'pending')
+                                        @if($transaction->status === 'pending' && ! $transaction->payment_review_required_at)
 
                                             {{-- APPROVE --}}
                                             <form

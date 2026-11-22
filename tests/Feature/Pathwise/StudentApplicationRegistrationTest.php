@@ -138,7 +138,7 @@ test('a Study Load of exactly 10 MB is accepted', function () {
     expect(StudentApplication::count())->toBe(1);
 });
 
-test('a teacher registers without a Study Load, gets no application and keeps the usual verification email', function () {
+test('a teacher registers without a Study Load and waits for EDP review before email verification', function () {
     Notification::fake();
 
     $this->post(route('register.store'), registrationPayload([
@@ -146,18 +146,22 @@ test('a teacher registers without a Study Load, gets no application and keeps th
         'role' => 'teacher',
         'study_load' => null,
     ]))->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('student-application.status'));
 
     $teacher = User::where('email', 'teacher@example.com')->sole();
+    $review = $teacher->teacherApplications()->sole();
 
     expect($teacher->hasRole('teacher'))->toBeTrue()
         ->and($teacher->studentApplications()->count())->toBe(0)
-        ->and($teacher->awaitingStudentApproval())->toBeFalse();
+        ->and($teacher->awaitingStudentApproval())->toBeFalse()
+        ->and($review->status)->toBe(StudentApplication::PENDING)
+        ->and($review->review_origin)->toBe('registration')
+        ->and($review->review_email)->toBe($teacher->email)
+        ->and($review->hasStudyLoad())->toBeFalse();
 
-    Notification::assertSentTo($teacher, VerifyEmail::class);
+    Notification::assertNotSentTo($teacher, VerifyEmail::class);
 
-    // Existing teacher flow: verify first, then the teacher dashboard.
-    $this->get(route('dashboard'))->assertRedirect(route('verification.notice'));
+    $this->get(route('dashboard'))->assertRedirect(route('student-application.status'));
 });
 
 test('a Study Load sent with a teacher registration is ignored and not stored', function () {
@@ -167,7 +171,10 @@ test('a Study Load sent with a teacher registration is ignored and not stored', 
         'study_load' => UploadedFile::fake()->create('sneaky.pdf', 100, 'application/pdf'),
     ]))->assertSessionHasNoErrors();
 
-    expect(StudentApplication::count())->toBe(0)
+    $review = StudentApplication::sole();
+
+    expect($review->isTeacherApplication())->toBeTrue()
+        ->and($review->hasStudyLoad())->toBeFalse()
         ->and(Storage::disk('local')->allFiles())->toBe([])
         ->and(Storage::disk('public')->allFiles())->toBe([]);
 });
@@ -251,7 +258,9 @@ test('the registration form uploads files and shows the required Study Load for 
         ->toContain('data-study-load-section')
         ->toContain('accept=".pdf,.jpg,.jpeg,.png')
         ->toContain('Data privacy: your Study Load contains personal information.')
-        ->toContain('authorized EDP (Super Admin) personnel');
+        ->toContain('authorized EDP (Super Admin) personnel')
+        ->toContain('data-teacher-registration-note')
+        ->toContain('EDP approval confirming their faculty status');
 
     // Student is the default: the field is visible and required.
     $section = substr($html, strpos($html, '<div data-study-load-section'), 2500);
@@ -278,6 +287,7 @@ test('the switching script clears the file for Teacher and requires it again for
     $html = $this->get(route('register'))->getContent();
 
     expect($html)
+        ->toContain('teacherNote.hidden = isStudent;')
         ->toContain("section.hidden = !isStudent;")
         ->toContain('input.required = isStudent;')
         ->toContain('input.disabled = !isStudent;')
@@ -393,7 +403,7 @@ test('an approved and verified student can use the student dashboard', function 
     $this->actingAs($student)->get(route('dashboard'))->assertRedirect(route('student.dashboard'));
 });
 
-test('existing accounts without an application keep their access unchanged', function () {
+test('legacy teachers keep their account but must complete EDP review before tool access', function () {
     $existingStudent = pathwiseUser('student');
     $teacher = pathwiseUser('teacher');
     $dean = pathwiseUser('admin');
@@ -404,7 +414,8 @@ test('existing accounts without an application keep their access unchanged', fun
         ->and(StudentApplication::count())->toBe(0);
 
     $this->actingAs($existingStudent)->get(route('student.dashboard'))->assertOk();
-    $this->actingAs($teacher)->get(route('teacher.dashboard'))->assertOk();
+    $this->actingAs($teacher)->get(route('teacher.dashboard'))->assertRedirect(route('student-application.status'));
+    $this->get(route('student-application.status'))->assertOk()->assertSee('Request EDP review');
     $this->actingAs($dean)->get(route('admin.dashboard'))->assertOk();
     $this->actingAs($edp)->get('/super-admin-dashboard')->assertOk();
 
@@ -416,11 +427,11 @@ test('existing accounts without an application keep their access unchanged', fun
     expect(StudentApplication::count())->toBe(0);
 });
 
-test('a teacher, admin or super admin with no application is never sent to the status page', function (string $role) {
+test('nonteacher roles without a student application are not sent to the status page', function (string $role) {
     $user = pathwiseUser($role);
 
     $this->actingAs($user)->get(route('student-application.status'))->assertRedirect(route('dashboard'));
-})->with(['teacher', 'admin', 'super_admin', 'student']);
+})->with(['admin', 'super_admin', 'student']);
 
 /*
 |--------------------------------------------------------------------------
@@ -480,7 +491,7 @@ test('the Super Admin cannot mark a pending or rejected applicant as verified', 
 
 test('the Super Admin can still mark an approved or existing account as verified', function () {
     $approved = applicant('approved');
-    $existing = pathwiseUser('teacher', ['email_verified_at' => null]);
+    $existing = pathwiseUser('student', ['email_verified_at' => null]);
     $edp = pathwiseUser('super_admin');
 
     $this->actingAs($edp)->patch(route('users.verify-email', $approved))->assertSessionHas('success');

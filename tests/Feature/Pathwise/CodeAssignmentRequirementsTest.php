@@ -18,7 +18,7 @@ function requirementsSetup(array $assignmentAttributes = []): array
 {
     config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-2.5-flash']);
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -337,7 +337,7 @@ test('existing assignments without an answer format keep accepting either', func
 });
 
 test('a teacher can choose and change the answer format', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $this->actingAs($teacher)

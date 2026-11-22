@@ -6,10 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 
-/*
-| Accounts that already exist count as verified; only users who register
-| from now on must verify their email (`php artisan users:verify-existing`).
-*/
+/* Existing non-teacher accounts may be backfilled; teachers require EDP review. */
 
 test('existing unverified users become verified and nothing else changes', function () {
     $student = pathwiseUser('student', ['email_verified_at' => null, 'email' => 'old-student@example.com']);
@@ -19,13 +16,13 @@ test('existing unverified users become verified and nothing else changes', funct
     $this->travel(1)->minutes();
 
     $this->artisan('users:verify-existing')
-        ->expectsOutputToContain('Accounts marked as verified: 2')
+        ->expectsOutputToContain('Accounts marked as verified: 1')
         ->assertSuccessful();
 
     $after = DB::table('users')->where('id', $student->id)->first();
 
     expect($student->fresh()->hasVerifiedEmail())->toBeTrue()
-        ->and($teacher->fresh()->hasVerifiedEmail())->toBeTrue()
+        ->and($teacher->fresh()->hasVerifiedEmail())->toBeFalse()
         ->and($student->fresh()->email_verified_at->equalTo(now()))->toBeTrue()
         ->and($after->password)->toBe($before->password)
         ->and($after->updated_at)->toBe($before->updated_at)

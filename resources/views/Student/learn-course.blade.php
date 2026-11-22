@@ -45,6 +45,13 @@
         ->whereNotNull('lesson_id')
         ->keyBy('lesson_id');
 
+    $activityAssignments = \App\Models\Assignment::where('course_id', $course->id)
+        ->where('is_activity', true)
+        ->publishedForStudents()
+        ->forEnrolledStudent($studentId)
+        ->get()
+        ->keyBy('lesson_id');
+
     /*
      * Optional standalone/final quiz.
      */
@@ -257,6 +264,7 @@
         'text' => 'Reading',
         'document' => 'Document',
         'quiz' => 'Quiz',
+        'activity' => 'Activity',
     ];
 @endphp
 
@@ -795,8 +803,12 @@
                                         $typeLabels[$lessonType]
                                         ?? ucfirst($lessonType);
 
+                                    $linkedActivity = $activityAssignments->get($lesson->id);
+
                                     $lessonUrl =
-                                        $lessonType === 'quiz' &&
+                                        $lessonType === 'activity' && $linkedActivity
+                                            ? route('student.assignments.show', $linkedActivity)
+                                            : ($lessonType === 'quiz' &&
                                         $linkedQuiz
                                             ? route(
                                                 'student.quiz.take',
@@ -805,7 +817,7 @@
                                             : route(
                                                 'student.lesson.view',
                                                 $lesson
-                                            );
+                                            ));
                                 @endphp
 
 
@@ -1117,7 +1129,7 @@
 
 
                                             {{-- BUTTON --}}
-                                            @if($lessonType === 'quiz' && !$linkedQuiz)
+                                            @if(($lessonType === 'quiz' && !$linkedQuiz) || ($lessonType === 'activity' && !$linkedActivity))
 
                                                 <span
                                                     class="inline-flex h-9
@@ -1126,7 +1138,7 @@
                                                            px-3 text-xs font-semibold
                                                            text-slate-500"
                                                 >
-                                                    Quiz unavailable
+                                                    {{ $typeLabel }} unavailable
                                                 </span>
 
                                             @elseif(

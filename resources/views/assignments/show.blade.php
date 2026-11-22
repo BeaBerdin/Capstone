@@ -48,12 +48,14 @@
             </div>
         @endif
 
-        <div class="mt-6">
-            <a href="{{ route('assignments.edit', $assignment) }}"
-               class="sad-btn-primary inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
-                Edit Assignment
-            </a>
-        </div>
+        @if(! $assignment->is_activity)
+            <div class="mt-6">
+                <a href="{{ route('assignments.edit', $assignment) }}"
+                   class="sad-btn-primary inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700">
+                    Edit Assignment
+                </a>
+            </div>
+        @endif
 
     </div>
 

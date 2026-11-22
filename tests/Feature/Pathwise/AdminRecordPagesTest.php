@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Assignment;
 use App\Models\Certificate;
 use App\Models\Enrollment;
@@ -13,7 +14,7 @@ use App\Models\Transaction;
 
 function recordPagesSubmission(): Submission
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Record Course']);
 
     $assignment = Assignment::create([
@@ -35,7 +36,9 @@ function recordPagesSubmission(): Submission
 
 test('the submission list and details pages render, view only', function () {
     $submission = recordPagesSubmission();
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $submission->assignment->course->teacher->update(['department_id' => $department->id]);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('submissions.index'))
@@ -101,7 +104,7 @@ test('the course teacher can still grade a submission', function () {
 
 test('the certificate pages render and the form shows validation errors', function () {
     $student = pathwiseUser('student', ['name' => 'Cora Certified']);
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'title' => 'Cert Course']);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published', 'title' => 'Cert Course']);
 
     Enrollment::create([
         'student_id' => $student->id,
@@ -120,7 +123,9 @@ test('the certificate pages render and the form shows validation errors', functi
         'status' => 'issued',
     ]);
 
-    $admin = pathwiseUser('admin');
+    $department = Department::create(['name' => 'Computing']);
+    $course->teacher->update(['department_id' => $department->id]);
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)
         ->get(route('certificates.index'))
@@ -161,7 +166,7 @@ test('the certificate list says so when it is empty', function () {
 
 test('the receipt page uses the light PathWise style', function () {
     $student = pathwiseUser('student');
-    $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => 'published', 'price' => 499]);
+    $course = pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'published', 'price' => 499]);
 
     $transaction = Transaction::create([
         'student_id' => $student->id,

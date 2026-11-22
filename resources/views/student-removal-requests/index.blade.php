@@ -44,9 +44,9 @@
             </h2>
             <p class="mt-1 text-xs text-neutral-500">
                 @if ($campusWide ?? false)
-                    Your account has no department, so you see every removal request (campus-wide).
+                    You are viewing course removal requests across all departments.
                 @else
-                    Includes requests from teachers without a department and from departments that have no Department Head.
+                    Includes requests for courses taught in your department.
                 @endif
             </p>
         </div>

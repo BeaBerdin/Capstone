@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
+use Illuminate\Http\Request;
 
 class StudentProgressController extends Controller
 {
@@ -12,23 +13,18 @@ class StudentProgressController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
-        /*
-         * Teachers see their own courses only. The Administrator (Department
-         * Head) sees every course: "Student Progress Reports" (Fig. 36).
-         */
+        $user = $request->user();
+        $adminRoute = $request->routeIs('student-progress.index');
+
         $enrollments = Enrollment::with([
                 'student',
                 'course.category',
             ])
-            ->when(
-                ! auth()->user()->hasRole('admin'),
-                fn ($query) => $query->whereHas(
-                    'course',
-                    fn ($course) => $course->where('teacher_id', auth()->id())
-                )
-            )
+            ->whereHas('course', fn ($course) => $adminRoute
+                ? $course->manageableBy($user)
+                : $course->where('teacher_id', $user->id))
             ->latest()
             ->get();
 

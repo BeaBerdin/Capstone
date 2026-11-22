@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 function codeAssignmentSetup(string $language = 'java'): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -40,7 +40,7 @@ function codeAssignmentSetup(string $language = 'java'): array
 }
 
 test('a teacher can create a code assignment in each manuscript language', function (string $language) {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $this->actingAs($teacher)
@@ -57,7 +57,7 @@ test('a teacher can create a code assignment in each manuscript language', funct
 })->with(['javascript', 'java', 'c', 'php', 'python']);
 
 test('a language outside the list is rejected', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $this->actingAs($teacher)
@@ -74,7 +74,7 @@ test('a language outside the list is rejected', function () {
 });
 
 test('the teacher form lists the languages with their display names', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $response = $this->actingAs($teacher)

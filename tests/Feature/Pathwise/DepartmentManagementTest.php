@@ -60,7 +60,7 @@ test('the Super Admin can delete an empty department', function () {
 
 test('a department with assigned users cannot be deleted', function () {
     $department = Department::create(['name' => 'College of Computer Studies']);
-    pathwiseUser('teacher', ['department_id' => $department->id]);
+    pathwiseApprovedTeacher( ['department_id' => $department->id]);
 
     $this->actingAs(pathwiseUser('super_admin'))
         ->delete(route('departments.destroy', $department))
@@ -71,7 +71,7 @@ test('a department with assigned users cannot be deleted', function () {
 
 test('only the Super Admin can create, edit or delete departments', function (string $role) {
     $department = Department::create(['name' => 'Computer Studies']);
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)->post(route('departments.store'), ['name' => 'New Department'])->assertForbidden();
     $this->actingAs($user)->put(route('departments.update', $department), ['name' => 'Renamed'])->assertForbidden();

@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->trimStrings(except: [
             'answer_text',
+            // Reading bodies must reach the controller with intentional whitespace intact.
+            'sections.*.body',
         ]);
 
         /*

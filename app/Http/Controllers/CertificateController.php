@@ -7,17 +7,19 @@ use App\Models\CertificateSetting;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class CertificateController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $certificates = Certificate::with([
                 'student',
                 'course',
             ])
+            ->whereHas('course', fn ($course) => $course->manageableBy($request->user()))
             ->latest()
             ->get();
 
@@ -28,10 +30,10 @@ class CertificateController extends Controller
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
-        $students = User::orderBy('name')->get();
-        $courses = Course::orderBy('title')->get();
+        $students = $this->certificateStudents($request->user())->orderBy('name')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
         return view(
             'certificates.create',
@@ -50,7 +52,7 @@ class CertificateController extends Controller
                 'required|exists:users,id',
 
             'course_id' =>
-                'required|exists:courses,id',
+                'required|integer|exists:courses,id',
 
             'certificate_number' =>
                 'required|string|max:255|unique:certificates,certificate_number',
@@ -64,6 +66,8 @@ class CertificateController extends Controller
             'status' =>
                 'required|in:issued,revoked',
         ]);
+
+        Course::authorizeManagement($request->user(), $validated['course_id']);
 
         $this->ensureNoDuplicateCertificate(
             (int) $validated['student_id'],
@@ -92,10 +96,12 @@ class CertificateController extends Controller
     }
 
 
-    public function edit(Certificate $certificate)
+    public function edit(Request $request, Certificate $certificate)
     {
-        $students = User::orderBy('name')->get();
-        $courses = Course::orderBy('title')->get();
+        Course::authorizeManagement($request->user(), $certificate->course_id);
+
+        $students = $this->certificateStudents($request->user())->orderBy('name')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
         return view(
             'certificates.edit',
@@ -112,12 +118,14 @@ class CertificateController extends Controller
         Request $request,
         Certificate $certificate
     ) {
+        Course::authorizeManagement($request->user(), $certificate->course_id);
+
         $validated = $request->validate([
             'student_id' =>
                 'required|exists:users,id',
 
             'course_id' =>
-                'required|exists:courses,id',
+                'required|integer|exists:courses,id',
 
             'certificate_number' =>
                 'required|string|max:255|unique:certificates,certificate_number,'
@@ -132,6 +140,8 @@ class CertificateController extends Controller
             'status' =>
                 'required|in:issued,revoked',
         ]);
+
+        Course::authorizeManagement($request->user(), $validated['course_id']);
 
         $this->ensureNoDuplicateCertificate(
             (int) $validated['student_id'],
@@ -200,8 +210,10 @@ class CertificateController extends Controller
     }
 
 
-    public function destroy(Certificate $certificate)
+    public function destroy(Request $request, Certificate $certificate)
     {
+        Course::authorizeManagement($request->user(), $certificate->course_id);
+
         $certificate->delete();
 
         return redirect()
@@ -210,6 +222,19 @@ class CertificateController extends Controller
                 'success',
                 'Certificate deleted successfully.'
             );
+    }
+
+    private function certificateStudents(User $administrator): Builder
+    {
+        return User::query()->when(! $administrator->hasRole('super_admin'), fn (Builder $students) => $students
+            ->whereIn('id', $this->completedEnrollments()
+                ->whereHas('course', fn ($course) => $course->manageableBy($administrator))
+                ->select('student_id')));
+    }
+
+    private function completedEnrollments(): Builder
+    {
+        return Enrollment::where('status', 'completed')->where('progress_percentage', '>=', 100);
     }
 
 
@@ -338,23 +363,9 @@ class CertificateController extends Controller
         int $studentId,
         int $courseId
     ): void {
-        $completedEnrollment = Enrollment::where(
-                'student_id',
-                $studentId
-            )
-            ->where(
-                'course_id',
-                $courseId
-            )
-            ->where(
-                'status',
-                'completed'
-            )
-            ->where(
-                'progress_percentage',
-                '>=',
-                100
-            )
+        $completedEnrollment = $this->completedEnrollments()
+            ->where('student_id', $studentId)
+            ->where('course_id', $courseId)
             ->exists();
 
         if (!$completedEnrollment) {

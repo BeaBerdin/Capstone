@@ -1,17 +1,18 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Enrollment;
 
 /*
 | Finalization: student progress pages found broken in the responsive check.
 | - Manuscript Fig. 36 / Table 24: the Administrator views student progress
-|   reports for every course, not only courses the administrator teaches.
+|   reports for courses taught in their assigned department.
 | - Fig. 37: the teacher opens one student's progress from Course Students.
 */
 
 function progressEnrollment(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student', ['name' => 'Progress Student']);
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Progress Course']);
 
@@ -26,14 +27,19 @@ function progressEnrollment(): array
     return [$teacher, $student, $course];
 }
 
-test('the administrator progress report lists enrollments in every teacher\'s courses', function () {
-    [, $student, $course] = progressEnrollment();
+test('the department administrator progress report lists enrollments for the assigned department', function () {
+    [$teacher] = progressEnrollment();
+    $department = Department::create(['name' => 'Computing']);
+    $teacher->update(['department_id' => $department->id]);
+    [, , $foreignCourse] = progressEnrollment();
+    $foreignCourse->update(['title' => 'Out of department course']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->get(route('student-progress.index'))
         ->assertOk()
         ->assertSeeText('Progress Student')
-        ->assertSeeText('Progress Course');
+        ->assertSeeText('Progress Course')
+        ->assertDontSeeText('Out of department course');
 });
 
 test('a teacher progress list shows only the teacher\'s own courses', function () {

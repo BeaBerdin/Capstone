@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Lesson;
 
 /*
@@ -37,7 +38,7 @@ function validCourseInput(array $overrides = []): array
 }
 
 test('a teacher can submit a complete draft course for approval', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     addLesson($course);
 
@@ -49,7 +50,7 @@ test('a teacher can submit a complete draft course for approval', function () {
 });
 
 test('a course with unpublished lessons cannot be submitted', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
     addLesson($course, published: false);
 
@@ -61,7 +62,7 @@ test('a course with unpublished lessons cannot be submitted', function () {
 });
 
 test('a teacher can open the edit page of a draft course', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['title' => 'My Draft Course']);
 
     $this->actingAs($teacher)
@@ -71,7 +72,7 @@ test('a teacher can open the edit page of a draft course', function () {
 });
 
 test('a teacher can update a draft course', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher);
 
     $this->actingAs($teacher)
@@ -83,7 +84,7 @@ test('a teacher can update a draft course', function () {
 });
 
 test('course details are locked while the course is pending approval', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'pending', 'title' => 'Locked Title']);
 
     $this->actingAs($teacher)
@@ -99,8 +100,8 @@ test('course details are locked while the course is pending approval', function 
 });
 
 test('a teacher cannot edit another teacher\'s course', function () {
-    $owner = pathwiseUser('teacher');
-    $otherTeacher = pathwiseUser('teacher');
+    $owner = pathwiseApprovedTeacher();
+    $otherTeacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($owner);
 
     $this->actingAs($otherTeacher)
@@ -109,10 +110,11 @@ test('a teacher cannot edit another teacher\'s course', function () {
 });
 
 test('returning a course for revision requires feedback', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.reject', $course), ['remarks' => ''])
         ->assertSessionHasErrors('remarks');
 
@@ -120,10 +122,11 @@ test('returning a course for revision requires feedback', function () {
 });
 
 test('returning a course saves the feedback and notifies the teacher', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.reject', $course), ['remarks' => 'Please add learning outcomes.'])
         ->assertRedirect(route('courses.index'));
 
@@ -140,10 +143,11 @@ test('returning a course saves the feedback and notifies the teacher', function 
 });
 
 test('approving a course publishes it and clears old feedback', function () {
-    $teacher = pathwiseUser('teacher');
+    $department = Department::create(['name' => 'Computing']);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'pending', 'review_remarks' => 'Old feedback']);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('courses.approve', $course))
         ->assertRedirect(route('courses.index'));
 
@@ -154,7 +158,7 @@ test('approving a course publishes it and clears old feedback', function () {
 });
 
 test('a teacher cannot approve courses', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'pending']);
 
     $this->actingAs($teacher)

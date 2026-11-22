@@ -761,12 +761,19 @@
                                             Payment pending
                                         </p>
 
-                                        <a
-                                            href="{{ $pendingPayment->checkout_url ?: route('student.transactions.show', $pendingPayment) }}"
-                                            class="mt-1 inline-block text-xs font-semibold text-orange-700 underline hover:text-orange-800"
-                                        >
-                                            Continue payment
-                                        </a>
+                                        @if ($pendingPayment->canResumeCheckout())
+                                            <form method="POST" action="{{ route('student.transactions.store', $course) }}">
+                                                @csrf
+                                                <button type="submit" class="mt-1 text-xs font-semibold text-orange-700 underline hover:text-orange-800">
+                                                    Continue payment
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('student.transactions.show', $pendingPayment) }}"
+                                               class="mt-1 inline-block text-xs font-semibold text-orange-700 underline hover:text-orange-800">
+                                                Check payment status
+                                            </a>
+                                        @endif
                                     </div>
                                 @endif
 

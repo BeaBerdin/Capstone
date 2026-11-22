@@ -60,6 +60,31 @@ function pathwiseUser(string $role, array $attributes = []): App\Models\User
     return $user;
 }
 
+/** Teacher fixtures in unrelated regression tests are fully approved users. */
+function pathwiseApprovedTeacher(array $attributes = []): App\Models\User
+{
+    $teacher = pathwiseUser('teacher', array_merge(['email_verified_at' => now()], $attributes));
+    $edp = App\Models\User::query()
+        ->whereHas('roles', fn ($query) => $query->where('name', 'super_admin'))
+        ->first() ?? pathwiseUser('super_admin');
+    $review = App\Models\StudentApplication::submitForTeacher($teacher, 'test_fixture');
+    $review->forceFill([
+        'status' => App\Models\StudentApplication::APPROVED,
+        'reviewed_by' => $edp->id,
+        'reviewed_at' => now(),
+    ])->save();
+
+    return $teacher;
+}
+
+/** A fixture for role-boundary tests where teachers must reach the role check. */
+function pathwiseRoleBoundaryUser(string $role, array $attributes = []): App\Models\User
+{
+    return $role === 'teacher'
+        ? pathwiseApprovedTeacher($attributes)
+        : pathwiseUser($role, $attributes);
+}
+
 /**
  * Create a course owned by the given teacher.
  */

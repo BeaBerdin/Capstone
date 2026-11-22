@@ -45,6 +45,7 @@ class EnrollmentController extends Controller
 
         // Older rows may have no enrolled_at; their created_at stands in for it.
         $enrollments = Enrollment::with(['student', 'course'])
+            ->whereHas('course', fn ($course) => $course->manageableBy($request->user()))
             ->when($since, fn ($query) => $query->whereRaw(
                 'DATE(COALESCE(enrolled_at, created_at)) >= ?',
                 [$since->toDateString()]
@@ -60,26 +61,28 @@ class EnrollmentController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $students = $this->students()->orderBy('name')->get();
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
+        $students = $courses->isEmpty() ? collect() : $this->students()->orderBy('name')->get();
 
         return view('enrollments.create', compact('students', 'courses'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
-            'course_id' => 'required|exists:courses,id',
+            'course_id' => 'required|integer|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
         ]);
 
+        Course::authorizeManagement($request->user(), $validated['course_id']);
+
         Enrollment::create([
             'student_id' => $request->student_id,
-            'course_id' => $request->course_id,
+            'course_id' => $validated['course_id'],
             'status' => $request->status,
             'enrolled_at' => now(),
             'completed_at' => $request->status === 'completed' ? now() : null,
@@ -91,26 +94,32 @@ class EnrollmentController extends Controller
             ->with('success', 'Enrollment created successfully.');
     }
 
-    public function edit(Enrollment $enrollment)
+    public function edit(Request $request, Enrollment $enrollment)
     {
+        Course::authorizeManagement($request->user(), $enrollment->course_id);
+
         $students = $this->students()->orderBy('name')->get();
-        $courses = Course::orderBy('title')->get();
+        $courses = Course::manageableBy($request->user())->orderBy('title')->get();
 
         return view('enrollments.edit', compact('enrollment', 'students', 'courses'));
     }
 
     public function update(Request $request, Enrollment $enrollment)
     {
-        $request->validate([
+        Course::authorizeManagement($request->user(), $enrollment->course_id);
+
+        $validated = $request->validate([
             'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
-            'course_id' => 'required|exists:courses,id',
+            'course_id' => 'required|integer|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
         ]);
 
+        Course::authorizeManagement($request->user(), $validated['course_id']);
+
         $enrollment->update([
             'student_id' => $request->student_id,
-            'course_id' => $request->course_id,
+            'course_id' => $validated['course_id'],
             'status' => $request->status,
             'completed_at' => $request->status === 'completed' ? now() : null,
             'progress_percentage' => $request->progress_percentage,
@@ -121,8 +130,10 @@ class EnrollmentController extends Controller
             ->with('success', 'Enrollment updated successfully.');
     }
 
-    public function destroy(Enrollment $enrollment)
+    public function destroy(Request $request, Enrollment $enrollment)
     {
+        Course::authorizeManagement($request->user(), $enrollment->course_id);
+
         $enrollment->delete();
 
         return redirect()

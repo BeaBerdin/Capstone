@@ -1368,6 +1368,8 @@
     if ($pwUser->hasRole('super_admin')) {
         $pwSearchItems = collect([
             ['label' => 'Dashboard', 'meta' => 'Overview', 'url' => route('super_admin.dashboard')],
+            ['label' => 'Categories', 'meta' => 'Course categories', 'url' => route('course-categories.index')],
+            ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'User Management', 'meta' => 'Manage users and roles', 'url' => route('users.index')],
             ['label' => 'Student Applications', 'meta' => 'Verify Study Loads and approve students', 'url' => route('super-admin.student-applications.index')],
             ['label' => 'Transactions', 'meta' => 'Review transactions', 'url' => route('super_admin.transactions.index')],
@@ -1377,14 +1379,12 @@
         $pwSearchItems = collect([
             ['label' => 'Dashboard', 'meta' => 'Overview', 'url' => route('admin.dashboard')],
             ['label' => 'Courses', 'meta' => 'Course management', 'url' => route('courses.index')],
-            ['label' => 'Categories', 'meta' => 'Course categories', 'url' => route('course-categories.index')],
             ['label' => 'Lessons', 'meta' => 'Learning content', 'url' => route('lessons.index')],
             ['label' => 'Quizzes', 'meta' => 'Assessment management', 'url' => route('quizzes.index')],
             ['label' => 'Quiz Results', 'meta' => 'All quiz attempts', 'url' => route('quiz-results.index')],
             ['label' => 'Enrollments', 'meta' => 'Manage and restore enrollments', 'url' => route('enrollments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Student learning paths', 'url' => route('learning-paths.index')],
             ['label' => 'Certificate Records', 'meta' => 'Issue, edit and revoke certificates', 'url' => route('certificates.index')],
-            ['label' => 'Certificate Template', 'meta' => 'Title, text and signatory on certificates', 'url' => route('certificate-template.edit')],
             ['label' => 'Removal Requests', 'meta' => 'Student removal requests', 'url' => route('admin.student-removal-requests.index')],
             ['label' => 'Course Reviews', 'meta' => 'Hide or unhide student reviews', 'url' => route('admin.course-reviews.index')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommendation tools', 'url' => route('ai-recommendations.index')],
@@ -1410,6 +1410,7 @@
             ['label' => 'Dashboard', 'meta' => 'Learning overview', 'url' => route('student.dashboard')],
             ['label' => 'Marketplace', 'meta' => 'Browse courses', 'url' => route('student.marketplace')],
             ['label' => 'My Courses', 'meta' => 'Your enrolled courses', 'url' => route('student.my-courses')],
+            ['label' => 'Invitations', 'meta' => 'Join a course with an invite code', 'url' => route('student.invitations.index')],
             ['label' => 'Assignments', 'meta' => 'View and submit course assignments', 'url' => route('student.assignments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Personalized learning paths', 'url' => route('student.learning-paths')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommended courses', 'url' => route('student.recommendations')],
@@ -1580,6 +1581,64 @@
                     <div class="pw-nav-heading">
                         Management
                     </div>
+
+                    {{-- Categories --}}
+                    <a
+                        href="{{ route('course-categories.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('course-categories.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('course-categories.*')) aria-current="page" @endif
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M3 6h7l2 2h9v11H3V6Z"
+                            />
+                        </svg>
+
+                        <span>
+                            Categories
+                        </span>
+
+                    </a>
+
+                    {{-- Certificate Template (title, body text, signatory) --}}
+                    <a
+                        href="{{ route('certificate-template.edit') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('certificate-template.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('certificate-template.*')) aria-current="page" @endif
+                    >
+
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+
+                            <path d="M13.5 6.5l3 3" />
+                        </svg>
+
+                        <span>
+                            Certificate Template
+                        </span>
+
+                    </a>
 
 
                     <a
@@ -1867,35 +1926,7 @@
                     </a>
 
 
-                    {{-- Categories --}}
-                    <a
-                        href="{{ route('course-categories.index') }}"
-                        wire:navigate
-                        class="pw-nav-link {{ request()->routeIs('course-categories.*') ? 'is-active' : '' }}"
-                        @if (request()->routeIs('course-categories.*')) aria-current="page" @endif
-                    >
 
-                        <svg
-                            class="pw-nav-icon"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3 6h7l2 2h9v11H3V6Z"
-                            />
-                        </svg>
-
-                        <span>
-                            Categories
-                        </span>
-
-                    </a>
 
 
                     {{-- Lessons --}}
@@ -2179,33 +2210,7 @@
                     </a>
 
 
-                    {{-- Certificate Template (title, body text, signatory) --}}
-                    <a
-                        href="{{ route('certificate-template.edit') }}"
-                        wire:navigate
-                        class="pw-nav-link {{ request()->routeIs('certificate-template.*') ? 'is-active' : '' }}"
-                        @if (request()->routeIs('certificate-template.*')) aria-current="page" @endif
-                    >
 
-                        <svg
-                            class="pw-nav-icon"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-
-                            <path d="M13.5 6.5l3 3" />
-                        </svg>
-
-                        <span>
-                            Certificate Template
-                        </span>
-
-                    </a>
 
 
                     {{-- Learning Paths --}}
@@ -2739,6 +2744,34 @@
 
                         <span>
                             My Courses
+                        </span>
+
+                    </a>
+
+
+                    {{-- COURSE INVITATIONS --}}
+                    <a
+                        href="{{ route('student.invitations.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('student.invitations.*') || request()->routeIs('course-invitations.show') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.invitations.*', 'course-invitations.show')) aria-current="page" @endif
+                        data-test="nav-course-invitations"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m3 7 9 6 9-6" />
+                        </svg>
+
+                        <span>
+                            Invitations
                         </span>
 
                     </a>

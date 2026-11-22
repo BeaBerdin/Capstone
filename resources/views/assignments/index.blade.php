@@ -63,26 +63,28 @@
             </td>
 
             <td class="px-5 py-4">
-                <div class="flex items-center gap-4 whitespace-nowrap">
-                    <a href="{{ route('assignments.edit', $assignment) }}"
-                       class="text-sm font-semibold text-violet-600 hover:text-violet-700">
-                        Edit
-                    </a>
+                @if($assignment->is_activity)
+                    <span class="text-sm text-slate-500">Managed by the course teacher</span>
+                @else
+                    <div class="flex items-center gap-4 whitespace-nowrap">
+                        <a href="{{ route('assignments.edit', $assignment) }}"
+                           class="text-sm font-semibold text-violet-600 hover:text-violet-700">
+                            Edit
+                        </a>
 
-                    <form action="{{ route('assignments.destroy', $assignment) }}"
-                          method="POST"
-                          class="inline">
+                        <form action="{{ route('assignments.destroy', $assignment) }}"
+                              method="POST"
+                              class="inline">
+                            @csrf
+                            @method('DELETE')
 
-                        @csrf
-                        @method('DELETE')
-
-                        <button onclick="return confirm('Delete this assignment?')"
-                                class="text-sm font-semibold text-red-600 hover:text-red-700">
-                            Delete
-                        </button>
-
-                    </form>
-                </div>
+                            <button onclick="return confirm('Delete this assignment?')"
+                                    class="text-sm font-semibold text-red-600 hover:text-red-700">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                @endif
             </td>
         </tr>
     @empty

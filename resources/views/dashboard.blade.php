@@ -16,43 +16,16 @@
 
     $currentDate = $localNow->format('l, F d, Y');
 
-    // Missing stats
-    $totalStudents = \App\Models\User::whereHas('roles', function ($query) {
-        $query->where('name', 'student');
-    })->count();
-
-    $totalCourses = \App\Models\Course::count();
-
-    // Course category & approval stats
-    $totalCategories = \App\Models\CourseCategory::count();
-    $pendingCourses = \App\Models\Course::where('status', 'pending')->count();
-
-    // Certificates & learning path stats
-    $certificatesIssued = \App\Models\Certificate::count();
-    $activeLearningPaths = \App\Models\LearningPath::count();
-
-    $totalTeachers = \App\Models\User::whereHas('roles', function ($query) {
-        $query->where('name', 'teacher');
-    })->count();
-
-    $publishedCourses = \App\Models\Course::where('status', 'published')->count();
-
-    // Courses Pending Approval
-    $coursesPendingApproval = \App\Models\Course::with(['teacher', 'category'])
-        ->where('status', 'pending')
-        ->latest()
-        ->take(5)
-        ->get();
 @endphp
 
 {{--
     Admin (Department Head) dashboard in the soft-3D style (styles in
-    partials/soft3d). All figures come from the block above.
+    partials/soft3d).
 --}}
 
 @php
     $adminStats = [
-        ['label' => 'Total Students', 'value' => $totalStudents, 'sub' => 'Registered learners', 'tone' => 'sad-violet', 'href' => route('student-progress.index'),
+        ['label' => 'Total Students', 'value' => $totalStudents, 'sub' => $studentCountLabel, 'tone' => 'sad-violet', 'href' => route('student-progress.index'),
             'icon' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
         ['label' => 'Total Teachers', 'value' => $totalTeachers, 'sub' => 'Course instructors', 'tone' => 'sad-sky', 'href' => null,
             'icon' => 'M12 14l9-5-9-5-9 5 9 5zM5 12.5V17c0 1.66 3.13 3 7 3s7-1.34 7-3v-4.5'],
@@ -63,8 +36,6 @@
     ];
 
     $academicRows = [
-        ['label' => 'Course Categories', 'value' => $totalCategories, 'tone' => 'sad-violet', 'href' => route('course-categories.index'),
-            'icon' => 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
         ['label' => 'Certificates Issued', 'value' => $certificatesIssued, 'tone' => 'sad-amber', 'href' => route('certificates.index'),
             'icon' => 'M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.5 12.5 7 21l5-2 5 2-1.5-8.5'],
         ['label' => 'Active Learning Paths', 'value' => $activeLearningPaths, 'tone' => 'sad-emerald', 'href' => route('learning-paths.index'),
@@ -81,7 +52,6 @@
     // The former "PATHWISE System Modules" links, now Quick Actions.
     $quickActions = [
         ['label' => 'Courses', 'href' => route('courses.index'), 'tone' => 'sad-violet', 'icon' => 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
-        ['label' => 'Categories', 'href' => route('course-categories.index'), 'tone' => 'sad-sky', 'icon' => 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
         ['label' => 'Assessments', 'href' => route('quizzes.index'), 'tone' => 'sad-emerald', 'icon' => 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'],
         ['label' => 'AI Recommendations', 'href' => route('ai-recommendations.index'), 'tone' => 'sad-violet', 'icon' => 'm12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z'],
         ['label' => 'Student Progress', 'href' => route('student-progress.index'), 'tone' => 'sad-rose', 'icon' => 'M4 19V9M9 19V5M14 19v-7M19 19V3'],

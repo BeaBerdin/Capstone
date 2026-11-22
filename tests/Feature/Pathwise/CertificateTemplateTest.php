@@ -5,7 +5,7 @@ use App\Models\CertificateSetting;
 use App\Models\Enrollment;
 
 /*
-| B1: the Administrator sets the certificate title, body text, signatory
+| B1: the Super Admin sets the certificate title, body text, signatory
 | name and position. The certificate PDF uses them; issued certificates
 | keep their number and date and stay valid.
 */
@@ -22,7 +22,7 @@ function templatePayload(array $overrides = []): array
 
 function issuedCertificate(): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student', ['name' => 'Juan Dela Cruz']);
     $course = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Web Basics']);
 
@@ -72,8 +72,8 @@ test('without saved settings the certificate uses the original wording', functio
         ->toContain('PATH-2026-00042');
 });
 
-test('the Administrator can open and save the certificate template', function () {
-    $admin = pathwiseUser('admin');
+test('the Super Admin can open and save the certificate template', function () {
+    $admin = pathwiseUser('super_admin');
 
     $this->actingAs($admin)
         ->get(route('certificate-template.edit'))
@@ -104,7 +104,7 @@ test('the Administrator can open and save the certificate template', function ()
 test('the certificate PDF uses the saved template and escapes it', function () {
     [, $certificate] = issuedCertificate();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('certificate-template.update'), templatePayload([
             'body_text' => 'Awarded with <b>distinction</b>.',
         ]));
@@ -122,7 +122,7 @@ test('the certificate PDF uses the saved template and escapes it', function () {
 test('an issued certificate stays valid and downloadable after the template changes', function () {
     [$student, $certificate] = issuedCertificate();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('certificate-template.update'), templatePayload());
 
     $response = $this->actingAs($student)
@@ -139,7 +139,7 @@ test('an issued certificate stays valid and downloadable after the template chan
 });
 
 test('the template fields are required and limited in length', function () {
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('super_admin');
 
     $this->actingAs($admin)
         ->put(route('certificate-template.update'), [
@@ -161,7 +161,7 @@ test('the template fields are required and limited in length', function () {
 });
 
 test('the preview shows a sample PDF without creating a certificate', function () {
-    $response = $this->actingAs(pathwiseUser('admin'))
+    $response = $this->actingAs(pathwiseUser('super_admin'))
         ->get(route('certificate-template.preview'))
         ->assertOk();
 
@@ -169,8 +169,8 @@ test('the preview shows a sample PDF without creating a certificate', function (
         ->and(Certificate::count())->toBe(0);
 });
 
-test('only the Administrator can change the certificate template', function (string $role) {
-    $user = pathwiseUser($role);
+test('only the Super Admin can change the certificate template', function (string $role) {
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)
         ->get(route('certificate-template.edit'))
@@ -181,11 +181,11 @@ test('only the Administrator can change the certificate template', function (str
         ->assertForbidden();
 
     expect(CertificateSetting::count())->toBe(0);
-})->with(['teacher', 'student', 'super_admin']);
+})->with(['teacher', 'student', 'admin']);
 
-test('the admin sidebar links to the certificate template', function () {
-    $this->actingAs(pathwiseUser('admin'))
-        ->get(route('admin.dashboard'))
+test('the Super Admin sidebar links to the certificate template', function () {
+    $this->actingAs(pathwiseUser('super_admin'))
+        ->get(route('super_admin.dashboard'))
         ->assertOk()
         ->assertSee('href="'.route('certificate-template.edit').'"', false);
 });
@@ -193,7 +193,7 @@ test('the admin sidebar links to the certificate template', function () {
 test('changing the template changes both the on-screen certificate and the PDF', function () {
     [$student, $certificate] = issuedCertificate();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('certificate-template.update'), templatePayload());
 
     $screen = $this->actingAs($student)
@@ -218,7 +218,7 @@ test('changing the template changes both the on-screen certificate and the PDF',
     expect($pdf)->toContain('Certificate of Achievement');
 
     // A second change shows up on both as well.
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('certificate-template.update'), templatePayload([
             'signatory_name' => 'Engr. Ana Reyes',
             'signatory_position' => 'Program Head',
@@ -238,7 +238,7 @@ test('changing the template changes both the on-screen certificate and the PDF',
 test('the on-screen certificate escapes the template wording', function () {
     [$student, $certificate] = issuedCertificate();
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('certificate-template.update'), templatePayload([
             'body_text' => 'Awarded with <b>distinction</b>.',
         ]));

@@ -1,193 +1,72 @@
 <x-layouts::app :title="__('Course Invitation')">
+    @include('partials.soft3d')
 
-    <div class="flex min-h-[70vh] items-center justify-center px-4 py-12">
+    <main class="sad-page mx-auto max-w-2xl space-y-4 px-4 py-8 sm:px-6">
+        @if (isset($approvalPending))
+            <section class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <h1 class="text-2xl font-bold text-slate-900">Course invitation</h1>
+                <p class="mt-2 text-sm text-slate-600">
+                    {{ $approvalPending ? 'Your application must be approved before you can join a course. Keep the invitation link for later.' : 'Verify your email, then reopen this invitation link to join the course.' }}
+                </p>
+                <a href="{{ route($approvalPending ? 'student-application.status' : 'verification.notice') }}"
+                   class="mt-4 inline-flex text-sm font-semibold text-violet-700 underline">
+                    {{ $approvalPending ? 'View application status' : 'Verify email' }}
+                </a>
+            </section>
+        @else
+            <a href="{{ route('student.invitations.index') }}" class="inline-flex text-sm font-semibold text-violet-700 underline">
+                Back to Course Invitations
+            </a>
+            <section class="sad-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                @php $courseAvailable = $invitation->courseIsAvailable(); @endphp
+                @if ($courseAvailable && $invitation->status() === 'Active')
+                    <x-pw.course-cover :course="$invitation->course" class="mb-5 rounded-xl" />
+                @endif
+                <h1 class="text-2xl font-bold text-slate-900">{{ $courseAvailable ? $invitation->course->title : 'Course invitation' }}</h1>
+                <p class="mt-1 text-sm text-slate-600">
+                    @if ($courseAvailable)
+                        From {{ $invitation->course->teacher?->name ?? 'your teacher' }} ·
+                    @endif
+                    {{ $invitation->expires_at ? 'Expires '.$invitation->expires_at->timezone('Asia/Manila')->format('M d, Y g:i A').' PHT' : 'No expiry' }}
+                </p>
 
-        <div class="w-full max-w-xl">
+                @error('invitation')
+                    <p role="alert" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ $message }}</p>
+                @enderror
+                @if (session('success'))
+                    <p role="status" class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('success') }}</p>
+                @endif
 
-            @if (session('error'))
-                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-                <div class="border-b border-slate-200 bg-violet-50 px-6 py-8 text-center">
-
-                    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="h-7 w-7"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M13.5 6.75h3.75A2.25 2.25 0 0 1 19.5 9v6a2.25 2.25 0 0 1-2.25 2.25h-3.75m-3-10.5H6.75A2.25 2.25 0 0 0 4.5 9v6a2.25 2.25 0 0 0 2.25 2.25h3.75m-3.75-3h9m0 0-3-3m3 3-3 3"
-                            />
-                        </svg>
-                    </div>
-
-                    <h1 class="text-2xl font-bold text-slate-900">
-                        Course Invitation
-                    </h1>
-
-                    <p class="mt-2 text-sm text-slate-600">
-                        You have been invited to join this course.
+                @if ($enrollment?->grantsAccess() && $courseAvailable)
+                    @unless (session('success'))
+                        <p role="status" class="mt-5 text-sm text-slate-700">You are already enrolled in this course.</p>
+                    @endunless
+                    <a href="{{ route('student.learn.course', $invitation->course_id) }}"
+                       class="sad-btn-primary mt-3 inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white">Open course</a>
+                @elseif ($unavailableMessage)
+                    @unless ($errors->has('invitation'))
+                        <p role="status" class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                            {{ $unavailableMessage }}
+                        </p>
+                    @endunless
+                    @if ($unavailableMessage === \App\Models\Transaction::ENROLLMENT_PAYMENT_CONFLICT)
+                        <a href="{{ route('student.transactions') }}" class="mt-3 inline-flex text-sm font-semibold text-violet-700 underline">
+                            View transactions
+                        </a>
+                    @endif
+                @else
+                    <p class="mt-5 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                        This invitation covers the full course fee. You can enroll for free.
                     </p>
-
-                </div>
-
-                <div class="px-6 py-8">
-
-                    @if($invitation->course)
-                        <x-pw.course-cover :course="$invitation->course" class="mb-6 rounded-xl" />
-                    @endif
-
-                    <div class="mb-6">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            Course
-                        </p>
-
-                        <h2 class="mt-1 text-xl font-semibold text-slate-900">
-                            {{ $invitation->course->title ?? 'Course unavailable' }}
-                        </h2>
-                    </div>
-
-                    <div class="mb-6 rounded-lg bg-slate-50 p-4">
-
-                        <div class="flex items-center justify-between gap-4">
-
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    Invitation Code
-                                </p>
-
-                                <p class="mt-1 font-mono text-lg font-bold tracking-wider text-violet-600">
-                                    {{ $invitation->code }}
-                                </p>
-                            </div>
-
-                            @if ($invitation->isAccepted())
-
-                                <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                                    Accepted
-                                </span>
-
-                            @elseif ($invitation->isExpired())
-
-                                <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                                    Expired
-                                </span>
-
-                            @else
-
-                                <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                                    Active
-                                </span>
-
-                            @endif
-
-                        </div>
-
-                    </div>
-
-                    @if ($invitation->expires_at)
-
-                        <p class="mb-6 text-sm text-slate-500">
-                            This invitation expires on
-                            <span class="font-medium text-slate-700">
-                                {{ $invitation->expires_at->format('M d, Y h:i A') }}
-                            </span>.
-                        </p>
-
-                    @endif
-
-                    @if ($invitation->isValid())
-
-                        @if ((float) ($invitation->course->price ?? 0) > 0)
-
-                            <div class="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                                <p class="font-semibold">
-                                    This is a paid course.
-                                </p>
-
-                                <p class="mt-1">
-                                    Payment is required before you can access this course.
-                                </p>
-
-                                <p class="mt-2 font-semibold">
-                                    Course Price:
-                                    ₱{{ number_format((float) $invitation->course->price, 2) }}
-                                </p>
-                            </div>
-
-                            <form
-    method="POST"
-    action="{{ route('student.transactions.store', ['course' => $invitation->course->id]) }}"
->
-    @csrf
-
-    <input
-        type="hidden"
-        name="course_invitation_code"
-        value="{{ $invitation->code }}"
-    >
-
-    <button
-        type="submit"
-        class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-    >
-        View Course & Purchase
-    </button>
-</form>
-                        @else
-
-                            <div class="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-                                This is a free course. You can join immediately.
-                            </div>
-
-                            <form
-                                method="POST"
-                                action="{{ route('course-invitations.accept', $invitation->code) }}"
-                                onsubmit="const button = this.querySelector('[data-accept-button]'); if (button) { if (button.disabled) { return false; } button.disabled = true; button.innerText = 'Joining course...'; }"
-                            >
-                                @csrf
-
-                                <button
-                                    type="submit"
-                                    data-accept-button
-                                    class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                                >
-                                    Accept Invitation & Join Course
-                                </button>
-                            </form>
-
-                        @endif
-
-                    @elseif ($invitation->isAccepted())
-
-                        <div class="rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-700">
-                            This invitation has already been accepted.
-                        </div>
-
-                    @else
-
-                        <div class="rounded-lg bg-red-50 px-4 py-3 text-center text-sm text-red-700">
-                            This invitation has expired and can no longer be used.
-                        </div>
-
-                    @endif
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
+                    <form method="POST" action="{{ route('course-invitations.accept', $invitation->code) }}" class="mt-4"
+                          onsubmit="const button = this.querySelector('[data-accept-button]'); if (button.disabled) return false; button.disabled = true; button.innerText = 'Joining course...';">
+                        @csrf
+                        <button type="submit" data-accept-button class="sad-btn-primary w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white sm:w-auto">
+                            Accept and join for free
+                        </button>
+                    </form>
+                @endif
+            </section>
+        @endif
+    </main>
 </x-layouts::app>

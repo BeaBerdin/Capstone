@@ -32,8 +32,8 @@
                                 has been securely verified through PayMongo.
                             </p>
 
-                            <p class="mt-2 text-sm text-green-600">
-                                You are now enrolled and can start learning.
+                            <p class="mt-2 text-sm text-slate-600">
+                                {{ $courseAccessible ? 'Your enrollment is active. You can start learning.' : 'Your payment is on record. Contact support with your transaction number if you need help with course access.' }}
                             </p>
 
                         @else
@@ -49,16 +49,14 @@
                             </svg>
 
                             <h3 class="mt-4 text-lg font-medium">
-                                Payment Verification Pending
+                                {{ ($paymentNeedsReview ?? false) ? 'Payment Requires Review' : 'Payment Verification Pending' }}
                             </h3>
 
-                            <p class="mt-2 text-sm text-slate-500">
-                                PathWise has not confirmed a completed PayMongo payment for
-                                <strong>
-                                    {{ $transaction->course->title ?? 'this course' }}
-                                </strong>
-                                yet.
-                            </p>
+                            @unless ($paymentNeedsReview ?? false)
+                                <p class="mt-2 text-sm text-slate-500">
+                                    PayMongo confirmation is pending for <strong>{{ $transaction->course->title ?? 'this course' }}</strong>.
+                                </p>
+                            @endunless
 
                             <p class="mt-2 text-sm text-amber-600">
                                 {{ $verificationMessage ?? 'Please check the payment status again.' }}
@@ -116,12 +114,13 @@
 
                             @if($paymentVerified)
 
-                                {{-- Payment verified: the enrollment is active, so go straight into the course. --}}
-                                <a href="{{ route('student.learn.course', $transaction->course_id) }}"
-                                   class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition"
-                                   data-test="start-learning">
-                                    Start Learning
-                                </a>
+                                @if ($courseAccessible)
+                                    <a href="{{ route('student.learn.course', $transaction->course_id) }}"
+                                       class="sad-btn-primary inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white transition"
+                                       data-test="start-learning">
+                                        Start Learning
+                                    </a>
+                                @endif
 
                                 <a href="{{ route('student.my-courses') }}"
                                    class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-600 transition hover:border-violet-200 hover:text-violet-700">

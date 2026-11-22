@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CourseReviewController;
 use App\Models\Course;
+use App\Models\Department;
 use App\Models\CourseReview;
 use App\Models\Enrollment;
 use App\Models\Role;
@@ -17,9 +18,9 @@ use Illuminate\Support\Facades\Notification;
 | of the average, the count and the public lists.
 */
 
-function reviewCourse(array $attributes = []): Course
+function reviewCourse(array $attributes = [], ?Department $department = null): Course
 {
-    return pathwiseCourse(pathwiseUser('teacher'), array_merge(['status' => 'published'], $attributes));
+    return pathwiseCourse(pathwiseApprovedTeacher( ['department_id' => $department?->id]), array_merge(['status' => 'published'], $attributes));
 }
 
 function reviewEnroll(Course $course, string $status = 'active', ?User $user = null): User
@@ -93,7 +94,7 @@ test('cancelled and unenrolled students cannot review', function (string $case) 
 
 test('teachers, administrators and the Super Admin cannot review, even when enrolled', function (string $role) {
     $course = reviewCourse();
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
     $studentRole = Role::firstOrCreate(['name' => 'student']);
     $user->roles()->attach($studentRole->id);
     reviewEnroll($course, 'active', $user);
@@ -104,7 +105,7 @@ test('teachers, administrators and the Super Admin cannot review, even when enro
 })->with(['teacher', 'admin', 'super_admin']);
 
 test('the course\'s own teacher cannot review it', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
     $this->actingAs($teacher)
@@ -173,7 +174,7 @@ test('nobody can edit or delete another student\'s review', function (string $ro
     $course = reviewCourse();
     $review = makeReview($course, reviewEnroll($course), 4);
 
-    $other = $role === 'student' ? reviewEnroll($course) : pathwiseUser($role);
+    $other = $role === 'student' ? reviewEnroll($course) : pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($other)->put(route('student.reviews.update', $review), ['rating' => 1])->assertForbidden();
     $this->actingAs($other)->delete(route('student.reviews.destroy', $review))->assertForbidden();
@@ -393,7 +394,7 @@ test('My Courses links to the review form', function () {
 */
 
 test('a teacher sees the visible reviews of their own courses only', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     makeReview($course, reviewEnroll($course), 5);
     makeReview($course, reviewEnroll($course), 1, hidden: true);
@@ -405,13 +406,13 @@ test('a teacher sees the visible reviews of their own courses only', function ()
         ->assertDontSee('Review 1')
         ->assertSee('1 review');
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.courses.reviews', $course))
         ->assertForbidden();
 });
 
 test('the teacher gets an in-app notification for a new review, not for edits', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     $student = reviewEnroll($course);
 
@@ -433,9 +434,10 @@ test('the teacher gets an in-app notification for a new review, not for edits', 
 |--------------------------------------------------------------------------
 */
 
-test('an administrator can hide a review with a reason and unhide it', function () {
-    $admin = pathwiseUser('admin');
-    $course = reviewCourse();
+test('an administrator can hide a review with a reason and unhide it', function (string $role) {
+    $department = Department::create(['name' => 'Computing']);
+    $admin = pathwiseRoleBoundaryUser($role, ['department_id' => $role === 'admin' ? $department->id : null]);
+    $course = reviewCourse(department: $department);
     $review = makeReview($course, reviewEnroll($course), 1);
 
     $this->actingAs($admin)
@@ -458,12 +460,13 @@ test('an administrator can hide a review with a reason and unhide it', function 
     expect($review->is_hidden)->toBeFalse()
         ->and($review->hidden_reason)->toBeNull()
         ->and($review->hidden_by)->toBeNull();
-});
+})->with(['admin', 'super_admin']);
 
 test('hiding a review requires a reason', function () {
-    $review = makeReview($course = reviewCourse(), reviewEnroll($course), 1);
+    $department = Department::create(['name' => 'Computing']);
+    $review = makeReview($course = reviewCourse(department: $department), reviewEnroll($course), 1);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->post(route('admin.course-reviews.hide', $review), ['hidden_reason' => ''])
         ->assertSessionHasErrors('hidden_reason');
 
@@ -475,23 +478,24 @@ test('other roles cannot hide or unhide reviews', function (string $role) {
     $visible = makeReview($course, reviewEnroll($course), 1);
     $hidden = makeReview($course, reviewEnroll($course), 2, hidden: true);
 
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->post(route('admin.course-reviews.hide', $visible), ['hidden_reason' => 'Nope'])
         ->assertForbidden();
 
-    $this->actingAs(pathwiseUser($role))
+    $this->actingAs(pathwiseRoleBoundaryUser($role))
         ->post(route('admin.course-reviews.unhide', $hidden))
         ->assertForbidden();
 
     expect($visible->fresh()->is_hidden)->toBeFalse()
         ->and($hidden->fresh()->is_hidden)->toBeTrue();
-})->with(['student', 'teacher', 'super_admin']);
+})->with(['student', 'teacher', 'admin']);
 
 test('the administrator list shows visible and hidden reviews with a filter', function () {
-    $course = reviewCourse();
+    $department = Department::create(['name' => 'Computing']);
+    $course = reviewCourse(department: $department);
     makeReview($course, reviewEnroll($course), 5);
     makeReview($course, reviewEnroll($course), 1, hidden: true);
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('admin', ['department_id' => $department->id]);
 
     $this->actingAs($admin)->get(route('admin.course-reviews.index'))
         ->assertOk()
@@ -525,7 +529,7 @@ test('reviews are deleted together with their course', function () {
 */
 
 test('teacher course cards show the visible average and count, linked to that course\'s reviews', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $reviewed = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Reviewed Course']);
     $empty = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Empty Course']);
     makeReview($reviewed, reviewEnroll($reviewed), 5);
@@ -547,7 +551,7 @@ test('teacher course cards show the visible average and count, linked to that co
 });
 
 test('the teacher reviews page lists visible reviews from the teacher\'s own courses only', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $first = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'First Course']);
     $second = pathwiseCourse($teacher, ['status' => 'published', 'title' => 'Second Course']);
     $otherCourse = reviewCourse(['title' => 'Someone Else Course']);
@@ -570,7 +574,7 @@ test('the teacher reviews page lists visible reviews from the teacher\'s own cou
 });
 
 test('the course filter on the teacher reviews page works', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $first = pathwiseCourse($teacher, ['status' => 'published']);
     $second = pathwiseCourse($teacher, ['status' => 'published']);
     makeReview($first, reviewEnroll($first), 5);
@@ -588,7 +592,7 @@ test('the course filter on the teacher reviews page works', function () {
 });
 
 test('filtering by another teacher\'s course never shows their reviews', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     pathwiseCourse($teacher, ['status' => 'published']);
     $otherCourse = reviewCourse(['title' => 'Someone Else Course']);
     makeReview($otherCourse, reviewEnroll($otherCourse), 3);
@@ -602,7 +606,7 @@ test('filtering by another teacher\'s course never shows their reviews', functio
 });
 
 test('the teacher reviews page is paginated and only for teachers', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     for ($i = 0; $i < 11; $i++) {
         makeReview($course, reviewEnroll($course), 4);
@@ -618,7 +622,7 @@ test('the teacher reviews page is paginated and only for teachers', function () 
 });
 
 test('the teacher sidebar links to Course Reviews', function () {
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.course-reviews.index'))
         ->assertSee('href="'.route('teacher.course-reviews.index').'"', false);
 });

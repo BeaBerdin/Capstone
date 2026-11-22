@@ -3,12 +3,12 @@
 use App\Models\CourseCategory;
 
 /*
-| Manage Course Categories (List of Modules): the Administrator adds and edits
+| Manage Course Categories (List of Modules): the Super Admin adds and edits
 | categories. Deleting is covered by CategoryDeletionTest.
 */
 
-test('the administrator can add a category', function () {
-    $this->actingAs(pathwiseUser('admin'))
+test('the Super Admin can add a category', function () {
+    $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('course-categories.store'), ['name' => 'College of Computer Studies', 'description' => 'Computing courses'])
         ->assertRedirect(route('course-categories.index'))
         ->assertSessionHas('success', 'Category created successfully.');
@@ -17,7 +17,7 @@ test('the administrator can add a category', function () {
 });
 
 test('a category needs a name', function () {
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('course-categories.store'), ['name' => ''])
         ->assertSessionHasErrors('name');
 
@@ -27,17 +27,17 @@ test('a category needs a name', function () {
 test('a new category cannot reuse an existing name', function () {
     CourseCategory::create(['name' => 'College of Computer Studies', 'is_active' => true]);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('course-categories.store'), ['name' => 'College of Computer Studies'])
         ->assertSessionHasErrors('name');
 
     expect(CourseCategory::where('name', 'College of Computer Studies')->count())->toBe(1);
 });
 
-test('the administrator can edit a category', function () {
+test('the Super Admin can edit a category', function () {
     $category = CourseCategory::create(['name' => 'Computer Studies', 'is_active' => true]);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('course-categories.update', $category), ['name' => 'College of Computer Studies', 'description' => 'Updated'])
         ->assertRedirect(route('course-categories.index'))
         ->assertSessionHas('success', 'Category updated successfully.');
@@ -49,7 +49,7 @@ test('the administrator can edit a category', function () {
 test('an edited category needs a name', function () {
     $category = CourseCategory::create(['name' => 'Computer Studies', 'is_active' => true]);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('course-categories.update', $category), ['name' => ''])
         ->assertSessionHasErrors('name');
 
@@ -60,20 +60,20 @@ test('an edited category cannot take the name of another category', function () 
     CourseCategory::create(['name' => 'College of Nursing', 'is_active' => true]);
     $category = CourseCategory::create(['name' => 'Computer Studies', 'is_active' => true]);
 
-    $this->actingAs(pathwiseUser('admin'))
+    $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('course-categories.update', $category), ['name' => 'College of Nursing'])
         ->assertSessionHasErrors('name');
 
     expect(CourseCategory::where('name', 'College of Nursing')->count())->toBe(1);
 });
 
-test('only the administrator can add or edit categories', function (string $role) {
+test('only the Super Admin can add or edit categories', function (string $role) {
     $category = CourseCategory::create(['name' => 'Computer Studies', 'is_active' => true]);
-    $user = pathwiseUser($role);
+    $user = pathwiseRoleBoundaryUser($role);
 
     $this->actingAs($user)->post(route('course-categories.store'), ['name' => 'New Category'])->assertForbidden();
     $this->actingAs($user)->put(route('course-categories.update', $category), ['name' => 'Renamed'])->assertForbidden();
 
     expect(CourseCategory::where('name', 'New Category')->exists())->toBeFalse()
         ->and($category->fresh()->name)->toBe('Computer Studies');
-})->with(['teacher', 'student', 'super_admin']);
+})->with(['teacher', 'student', 'admin']);

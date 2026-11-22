@@ -42,7 +42,7 @@ function aiReviewSubmission(Assignment $assignment, array $attributes = [], ?str
 }
 
 test('the dashboard lists finished AI evaluations awaiting review with a Review button', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $assignment = aiReviewAssignment($teacher);
     $submission = aiReviewSubmission($assignment, [], 'Ana Reyes');
 
@@ -60,14 +60,14 @@ test('the dashboard lists finished AI evaluations awaiting review with a Review 
 });
 
 test('graded, unevaluated and other teachers\' submissions are not listed', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $assignment = aiReviewAssignment($teacher);
 
     aiReviewSubmission($assignment, ['status' => 'graded', 'score' => 90], 'Graded Student');
     aiReviewSubmission($assignment, ['ai_evaluation_status' => 'not_requested', 'ai_score' => null], 'No AI Student');
     aiReviewSubmission($assignment, ['status' => 'returned'], 'Returned Student');
 
-    $otherAssignment = aiReviewAssignment(pathwiseUser('teacher'), 'Other Teacher Course');
+    $otherAssignment = aiReviewAssignment(pathwiseApprovedTeacher(), 'Other Teacher Course');
     aiReviewSubmission($otherAssignment, [], 'Other Course Student');
 
     $this->actingAs($teacher)
@@ -82,7 +82,7 @@ test('graded, unevaluated and other teachers\' submissions are not listed', func
 });
 
 test('the count covers all, the list shows the latest 5', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $assignment = aiReviewAssignment($teacher);
 
     foreach (range(1, 7) as $number) {
@@ -104,7 +104,7 @@ test('the count covers all, the list shows the latest 5', function () {
 });
 
 test('failed and stuck AI evaluations get a note; a running one does not', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $assignment = aiReviewAssignment($teacher);
 
     $failed = aiReviewSubmission($assignment, ['ai_evaluation_status' => 'failed', 'ai_score' => null]);
@@ -124,7 +124,7 @@ test('failed and stuck AI evaluations get a note; a running one does not', funct
 });
 
 test('without failed or stuck evaluations there is no note', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     aiReviewSubmission(aiReviewAssignment($teacher));
 
     $this->actingAs($teacher)
@@ -134,7 +134,7 @@ test('without failed or stuck evaluations there is no note', function () {
 });
 
 test('an empty dashboard shows the empty message', function () {
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->get(route('teacher.dashboard'))
         ->assertOk()
         ->assertSee('0 awaiting')

@@ -42,8 +42,13 @@ Route::view('/', 'welcome')->name('home');
 */
 
 Route::get('/email/verify/{id}/{hash}', \App\Http\Controllers\Auth\VerifyEmailLinkController::class)
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['signed', 'throttle:verification-link'])
     ->name('verification.verify');
+
+// Redeems a one-time sign-in grant stored in this browser's session.
+Route::post('/email/verified/continue', [\App\Http\Controllers\Auth\VerifyEmailLinkController::class, 'continue'])
+    ->middleware('throttle:verification-continue')
+    ->name('verification.continue');
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +73,7 @@ Route::get('/email/verify', \Laravel\Fortify\Http\Controllers\EmailVerificationP
     ->name('verification.notice');
 
 Route::post('/email/verification-notification', [\Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'student.application', 'throttle:6,1'])
+    ->middleware(['auth', 'student.application', 'throttle:verification-resend'])
     ->name('verification.send');
 
 /*
@@ -81,6 +86,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/application-status', [\App\Http\Controllers\StudentApplicationStatusController::class, 'show'])
         ->name('student-application.status');
+
+    Route::get('/application-status/check', [\App\Http\Controllers\StudentApplicationStatusController::class, 'check'])
+        ->middleware('throttle:application-check')
+        ->name('student-application.check');
 
     Route::post('/application-status/resubmit', [\App\Http\Controllers\StudentApplicationStatusController::class, 'resubmit'])
         ->middleware('throttle:study-load-resubmission')
@@ -153,6 +162,9 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
     Route::get('/files/lessons/{lesson}', [PrivateFileController::class, 'lesson'])
         ->name('files.lesson');
 
+    Route::get('/files/lesson-sections/{lessonSection}', [PrivateFileController::class, 'lessonSection'])
+        ->name('files.lesson-section');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -183,6 +195,9 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         Route::patch('/super-admin/users/{user}/verify-email', [UserManagementController::class, 'verifyEmail'])
             ->name('users.verify-email');
+
+        Route::post('/super-admin/users/{user}/teacher-review', [UserManagementController::class, 'queueTeacherReview'])
+            ->name('users.teacher-review');
 
         Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
             ->name('users.edit');
@@ -262,12 +277,12 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:admin,super_admin')->group(function () {
 
         Route::get('/admin-dashboard', [DashboardController::class, 'index'])
             ->name('admin.dashboard');
 
-        Route::resource('course-categories', CourseCategoryController::class)->except('show');
+        Route::resource('course-categories', CourseCategoryController::class)->except('show')->middleware('role:super_admin');
 
         Route::resource('courses', CourseController::class)->except('show');
 
@@ -298,13 +313,13 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         // Certificate template used by the certificate PDF (title, body, signatory).
         Route::get('/admin/certificate-template', [CertificateTemplateController::class, 'edit'])
-            ->name('certificate-template.edit');
+            ->middleware('role:super_admin')->name('certificate-template.edit');
 
         Route::put('/admin/certificate-template', [CertificateTemplateController::class, 'update'])
-            ->name('certificate-template.update');
+            ->middleware('role:super_admin')->name('certificate-template.update');
 
         Route::get('/admin/certificate-template/preview', [CertificateTemplateController::class, 'preview'])
-            ->name('certificate-template.preview');
+            ->middleware('role:super_admin')->name('certificate-template.preview');
 
         Route::resource('admin/learning-paths', LearningPathController::class)
             ->names('learning-paths');
@@ -588,27 +603,23 @@ Route::middleware('role:student')->group(function () {
     Route::post('/transactions/{transaction}/upload-proof', [TransactionController::class, 'uploadProof'])
         ->name('student.transactions.upload-proof');
 
-    // Course invitation acceptance
     Route::post('/invitations/{code}/accept', [CourseInvitationController::class, 'accept'])
+        ->middleware('throttle:invite-code')
         ->name('course-invitations.accept');
-});
-});
-/*
-|--------------------------------------------------------------------------
-| COURSE INVITATION PREVIEW
-|--------------------------------------------------------------------------
-|
-| This route is outside the student role middleware so the invitation
-| link can be opened before the student accepts the invitation.
-|
-| A visitor who is not logged in is sent to the login page first and is
-| brought back to the invitation after logging in (the page uses the
-| signed-in layout, so it cannot be shown to a guest).
-|
-*/
 
+    Route::get('/course-invitations', [CourseInvitationController::class, 'studentIndex'])
+        ->name('student.invitations.index');
+
+    Route::post('/course-invitations/join', [CourseInvitationController::class, 'join'])
+        ->middleware('throttle:invite-code')
+        ->name('student.invitations.join');
+});
+});
+
+// Guests keep their intended link after signing in. The preview reveals
+// invitation details only to approved and email-verified students.
 Route::get('/invitations/{code}', [CourseInvitationController::class, 'show'])
-    ->middleware('auth')
+    ->middleware(['auth', 'role:student', 'throttle:invite-preview'])
     ->name('course-invitations.show');
 
 /*

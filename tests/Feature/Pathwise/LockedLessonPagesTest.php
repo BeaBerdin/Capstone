@@ -11,7 +11,7 @@ use App\Models\Lesson;
 
 function lockedLessonFixture(string $status): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => $status]);
 
     $lesson = Lesson::create([
@@ -80,7 +80,7 @@ test('draft and returned courses still open the add and edit lesson pages', func
 
 test('another teacher still gets 403 on a locked course instead of a redirect', function () {
     [, $course, $lesson] = lockedLessonFixture('pending');
-    $otherTeacher = pathwiseUser('teacher');
+    $otherTeacher = pathwiseApprovedTeacher();
 
     $this->actingAs($otherTeacher)->get(route('teacher.lessons.create', $course))->assertForbidden();
     $this->actingAs($otherTeacher)->get(route('teacher.lessons.edit', $lesson))->assertForbidden();

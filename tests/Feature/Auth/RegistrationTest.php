@@ -57,7 +57,7 @@ test('users cannot self-register as an administrator', function () {
     $this->assertGuest();
 });
 
-test('a teacher can register and is asked to verify their email', function () {
+test('a teacher can register but needs EDP approval before email verification', function () {
     Illuminate\Support\Facades\Notification::fake();
 
     $this->post(route('register.store'), [
@@ -67,19 +67,24 @@ test('a teacher can register and is asked to verify their email', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'teacher',
-    ])->assertSessionHasNoErrors();
+    ])->assertSessionHasNoErrors()
+        ->assertRedirect(route('student-application.status'));
 
     $user = App\Models\User::where('email', 'tina@example.com')->sole();
+    $review = $user->teacherApplications()->sole();
 
     expect($user->hasRole('teacher'))->toBeTrue()
         ->and($user->hasRole('student'))->toBeFalse()
         ->and($user->hasRole('admin'))->toBeFalse()
-        ->and($user->hasVerifiedEmail())->toBeFalse();
+        ->and($user->hasVerifiedEmail())->toBeFalse()
+        ->and($review->status)->toBe(App\Models\StudentApplication::PENDING)
+        ->and($review->review_origin)->toBe('registration')
+        ->and($review->review_email)->toBe($user->email);
 
-    Illuminate\Support\Facades\Notification::assertSentTo($user, Illuminate\Auth\Notifications\VerifyEmail::class);
+    Illuminate\Support\Facades\Notification::assertNotSentTo($user, Illuminate\Auth\Notifications\VerifyEmail::class);
 
-    // Teacher pages wait until the email is verified.
-    $this->get(route('teacher.dashboard'))->assertRedirect(route('verification.notice'));
+    // Teacher pages wait for both current EDP approval and email verification.
+    $this->get(route('teacher.dashboard'))->assertRedirect(route('student-application.status'));
 });
 
 test('registration requires choosing student or teacher', function () {

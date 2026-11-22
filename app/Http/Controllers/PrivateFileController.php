@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonSection;
 use App\Models\Submission;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Support\PrivateFiles;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Serves files on the private disk after checking who may open them
@@ -40,11 +43,15 @@ class PrivateFileController extends Controller
         $user = auth()->user();
 
         $submission->loadMissing('assignment.course');
+        $assignment = $submission->assignment;
 
         abort_unless(
-            (int) $submission->student_id === (int) $user->id
-                || (int) $submission->assignment?->course?->teacher_id === (int) $user->id
-                || $user->hasRole('admin'),
+            ($user->hasRole('student') && (int) $submission->student_id === (int) $user->id)
+                || ($user->hasRole('teacher')
+                    && $assignment?->course
+                    && (int) $assignment->course->teacher_id === (int) $user->id
+                    && $assignment->hasConsistentLesson())
+                || $submission->assignment()->manageableBy($user)->exists(),
             403
         );
 
@@ -60,39 +67,56 @@ class PrivateFileController extends Controller
     {
         $user = auth()->user();
 
-        $lesson->loadMissing('course');
+        abort_unless($this->canOpenLessonContent($lesson, $user), 403);
 
+        return $this->serve($lesson->file_path);
+    }
+
+    /** Serve a Reading lesson image inline or learning file as a download. */
+    public function lessonSection(LessonSection $lessonSection)
+    {
+        $lessonSection->loadMissing('lesson.course');
+        $lesson = $lessonSection->lesson;
+
+        abort_unless($lesson !== null && $this->canOpenLessonContent($lesson, auth()->user()), 403);
+        abort_unless($lesson->lesson_type === 'text' && in_array($lessonSection->type, ['image', 'file'], true), 404);
+
+        return $this->serve($lessonSection->file_path, $lessonSection);
+    }
+
+    private function canOpenLessonContent(Lesson $lesson, User $user): bool
+    {
+        $lesson->loadMissing('course');
         $course = $lesson->course;
 
-        abort_unless($course !== null, 403);
+        if (! $course) {
+            return false;
+        }
 
-        $canOpen = (int) $course->teacher_id === (int) $user->id
-            || $user->hasRole('admin')
+        return ($user->hasRole('teacher') && (int) $course->teacher_id === (int) $user->id)
+            || $course->isManageableBy($user)
             || (
-                strtolower(trim((string) $course->status)) === 'published'
+                $user->hasRole('student')
+                && strtolower(trim((string) $course->status)) === 'published'
                 && (bool) $lesson->is_published
                 && Enrollment::where('student_id', $user->id)
                     ->where('course_id', $course->id)
                     ->withAccess()
                     ->exists()
             );
-
-        abort_unless($canOpen, 403);
-
-        return $this->serve($lesson->file_path);
     }
 
     /**
      * PDFs and images open in the browser; other files are downloaded.
      */
-    private function serve(?string $path)
+    private function serve(?string $path, ?LessonSection $section = null)
     {
-        $disk = PrivateFiles::diskFor($path);
+        $disk = $section ? Storage::disk(PrivateFiles::DISK) : PrivateFiles::diskFor($path);
 
-        abort_unless($disk !== null, 404);
+        abort_unless($path && $disk && (! $section || $disk->exists($path)), 404);
 
-        $name = basename($path);
-        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        $name = $section?->original_name ?: basename($path);
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $inlineType = PrivateFiles::INLINE_TYPES[$extension] ?? null;
 
         return $disk->response(
@@ -103,7 +127,7 @@ class PrivateFileController extends Controller
                 'X-Content-Type-Options' => 'nosniff',
                 'Cache-Control' => 'private, no-store',
             ],
-            $inlineType ? 'inline' : 'attachment'
+            $inlineType && $section?->type !== 'file' ? 'inline' : 'attachment'
         );
     }
 }

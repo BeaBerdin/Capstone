@@ -17,7 +17,7 @@ function removalRequestSetup(string $enrollmentStatus = 'active'): array
     $department = Department::create(['name' => 'College of Computing']);
 
     $departmentHead = pathwiseUser('admin', ['department_id' => $department->id]);
-    $teacher = pathwiseUser('teacher', ['department_id' => $department->id]);
+    $teacher = pathwiseApprovedTeacher( ['department_id' => $department->id]);
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published', 'price' => 0]);
 

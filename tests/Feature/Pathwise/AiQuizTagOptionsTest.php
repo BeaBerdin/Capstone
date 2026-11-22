@@ -16,7 +16,7 @@ function tagQuiz(): array
 {
     config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-2.5-flash']);
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     Lesson::create([
@@ -60,10 +60,13 @@ test('generated options that are HTML tags are kept as text', function () {
     [$teacher, $quiz] = tagQuiz();
     fakeTagQuestions();
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    $revision = $this->get(route('teacher.quiz.builder', $quiz->lesson_id))->assertOk()->viewData('quizRevision');
+    $this->post(route('teacher.quiz.questions.generate', $quiz), [
+        'question_count' => 2, 'difficulty' => 'beginner', 'revision' => $revision,
+    ])
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('success', '2 AI-generated questions were added successfully. Review and edit them before publishing the quiz.');
+        ->assertSessionHas('success', '2 AI-generated questions were added successfully. The questions are saved. Review and edit them before publishing the quiz.');
 
     $first = QuizQuestion::where('quiz_id', $quiz->id)->orderBy('id')->first();
 
@@ -78,7 +81,11 @@ test('tag options are shown as text in the Quiz Builder, never as HTML', functio
     [$teacher, $quiz] = tagQuiz();
     fakeTagQuestions();
 
-    $this->actingAs($teacher)->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner']);
+    $this->actingAs($teacher);
+    $revision = $this->get(route('teacher.quiz.builder', $quiz->lesson_id))->assertOk()->viewData('quizRevision');
+    $this->post(route('teacher.quiz.questions.generate', $quiz), [
+        'question_count' => 2, 'difficulty' => 'beginner', 'revision' => $revision,
+    ]);
 
     $this->actingAs($teacher)
         ->get(route('teacher.quiz.builder', $quiz->lesson_id))

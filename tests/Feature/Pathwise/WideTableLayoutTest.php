@@ -11,7 +11,7 @@ use App\Models\Enrollment;
 */
 
 test('the Course Students table uses compact cell padding so the Action column fits', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student', ['name' => 'Bea Berdin']);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
     Enrollment::create([
@@ -38,7 +38,7 @@ test('the Course Students table uses compact cell padding so the Action column f
 
 test('the User Management table uses compact cell padding so the Registered column fits', function () {
     $superAdmin = pathwiseUser('super_admin');
-    pathwiseUser('teacher', ['name' => 'Paolo Reyes']);
+    pathwiseApprovedTeacher( ['name' => 'Paolo Reyes']);
 
     $html = $this->actingAs($superAdmin)
         ->get(route('users.index'))

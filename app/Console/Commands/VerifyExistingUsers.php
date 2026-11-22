@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 /**
- * Accounts that already exist count as verified; only users who register
- * from now on must verify their email.
+ * Legacy verification for non-teacher accounts. Teachers must confirm their
+ * email using the link tied to their EDP review.
  *
  * Sets email_verified_at to now for users where it is NULL and that were
  * created before the command started (a missing created_at also counts as
@@ -32,6 +32,7 @@ class VerifyExistingUsers extends Command
 
         $query = fn (): Builder => User::query()
             ->whereNull('email_verified_at')
+            ->whereDoesntHave('roles', fn (Builder $roles) => $roles->where('name', 'teacher'))
             ->where(fn (Builder $query) => $query
                 ->where('created_at', '<', $startedAt)
                 ->orWhereNull('created_at'))
@@ -43,6 +44,7 @@ class VerifyExistingUsers extends Command
                 ->whereIn('id', fn ($latest) => $latest
                     ->selectRaw('MAX(id)')
                     ->from('student_applications')
+                    ->where('applicant_role', StudentApplication::STUDENT)
                     ->groupBy('user_id'))
                 ->whereIn('status', StudentApplication::AWAITING));
 

@@ -938,6 +938,12 @@
 
                         </option>
 
+                        <option value="activity">
+
+                            Activity
+
+                        </option>
+
                     </select>
 
 
@@ -1147,6 +1153,18 @@
                                     'text' => 'text-orange-600',
 
                                     'label' => 'Quiz',
+
+                                ],
+
+                            'activity' =>
+
+                                [
+
+                                    'bg' => 'bg-emerald-50',
+
+                                    'text' => 'text-emerald-700',
+
+                                    'label' => 'Activity',
 
                                 ],
 

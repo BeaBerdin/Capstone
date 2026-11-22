@@ -1867,7 +1867,7 @@
                                     ?? ucfirst($lessonType);
 
                                 $isPreview =
-                                    (bool) $lesson->is_preview;
+                                    (bool) $lesson->is_preview && $lessonType !== 'activity';
                             @endphp
 
 

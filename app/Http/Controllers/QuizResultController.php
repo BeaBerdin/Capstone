@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Quiz;
 use App\Models\QuizResult;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 /**
  * Quiz results are a record of what students actually scored. They are
@@ -14,23 +14,19 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class QuizResultController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $teacherId = auth()->id();
-
-        // The Department Head (admin) reviews every quiz attempt; a
-        // teacher only sees attempts on their own courses.
-        $isAdmin = auth()->user()->hasRole('admin');
+        $user = $request->user();
+        $adminRoute = $request->routeIs('quiz-results.index');
 
         $results = QuizResult::with([
                 'student',
                 'quiz.course',
             ])
-            ->when(! $isAdmin, function (Builder $query) use ($teacherId) {
-                $query->whereHas('quiz.course', function (Builder $query) use ($teacherId) {
-                    $query->where('teacher_id', $teacherId);
-                });
-            })
+            ->whereHas('quiz', fn (Builder $quiz) => $adminRoute
+                ? $quiz->manageableBy($user)
+                : $quiz->withConsistentLesson()
+                    ->whereHas('course', fn (Builder $course) => $course->where('teacher_id', $user->id)))
             ->latest('completed_at')
             ->get();
 

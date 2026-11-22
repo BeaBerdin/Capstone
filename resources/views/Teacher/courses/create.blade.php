@@ -45,6 +45,37 @@
         display: block;
     }
 
+    /* Course template selector only: native radios keep selection and keyboard behavior. */
+    .pw-course-templates { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .pw-course-templates legend { padding: 0; font-size: .95rem; font-weight: 700; color: #1e293b; }
+    .pw-template-help { margin: .45rem 0 1rem; max-width: 65ch; font-size: .8rem; line-height: 1.7; color: #64748b; }
+    .pw-template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
+    .pw-template-option { position: relative; min-width: 0; }
+    .pw-template-radio { position: absolute; z-index: 1; top: 1.15rem; left: 1rem; width: 1.1rem; height: 1.1rem; margin: 0; accent-color: #7c3aed; cursor: pointer; }
+    .pw-template-card { display: flex; flex-direction: column; height: 100%; min-width: 0; padding: 1rem; border: 1px solid #dfe2e9; border-radius: 1rem; background: #fff; cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease; }
+    .pw-template-card:hover { border-color: #a78bfa; background: #faf8ff; }
+    .pw-template-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem .6rem; padding-left: 1.75rem; margin-bottom: .65rem; }
+    .pw-template-title { font-size: .85rem; font-weight: 700; line-height: 1.6; color: #1e293b; overflow-wrap: anywhere; }
+    .pw-template-selected { visibility: hidden; color: #6d28d9; font-size: .65rem; font-weight: 750; letter-spacing: .02em; }
+    .pw-template-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .65rem; }
+    .pw-template-count { display: inline-flex; align-items: center; border-radius: 999px; padding: .25rem .65rem; background: #f3e8ff; color: #6d28d9; font-size: .7rem; font-weight: 700; }
+    .pw-template-description { display: block; margin-bottom: .9rem; color: #475569; font-size: .8rem; line-height: 1.75; overflow-wrap: anywhere; }
+    .pw-template-outline-label { display: block; padding-top: .8rem; border-top: 1px solid #ede9fe; margin-top: auto; margin-bottom: .5rem; color: #64748b; font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .pw-template-outline { display: grid; gap: .4rem; }
+    .pw-template-outline-item { display: grid; grid-template-columns: 1.15rem minmax(0, 1fr); gap: .4rem; color: #475569; font-size: .75rem; line-height: 1.6; }
+    .pw-template-outline-number { color: #7c3aed; font-weight: 700; }
+    .pw-template-blank-note { display: block; color: #64748b; font-size: .75rem; line-height: 1.7; }
+    .pw-template-radio:checked + .pw-template-card { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 0 0 1px #7c3aed; }
+    .pw-template-radio:checked + .pw-template-card .pw-template-selected { visibility: visible; }
+    .pw-template-radio:focus-visible + .pw-template-card { outline: 3px solid #7c3aed; outline-offset: 4px; }
+    .pw-template-error { margin-top: .7rem; color: #be123c; font-size: .8rem; line-height: 1.6; }
+    @media (max-width: 640px) {
+        .pw-template-grid { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+        .pw-template-card { padding: 1rem; }
+        .pw-template-title { font-size: .9rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { .pw-template-card { transition: none; } }
+
 </style>
 
 
@@ -363,87 +394,45 @@
 
 
 
-                                {{-- Course Template (Manuscript: pre-designed curriculum templates) --}}
-                                @if(isset($templates) && $templates->isNotEmpty())
-
-                                    <div>
-
-                                        <p class="text-sm font-semibold text-slate-800">
-                                            Start from a template
-                                            <span class="font-normal text-slate-500">(optional)</span>
-                                        </p>
-
-                                        <p class="mt-1 text-xs text-slate-500">
-                                            A template adds a ready-made lesson outline to your course.
-                                            The lessons are saved as unpublished drafts with writing tips,
-                                            so you can replace the tips with your own content.
-                                        </p>
-
-                                        <div class="mt-3 grid gap-2.5">
-
-                                            <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50/60">
-                                                <input
-                                                    type="radio"
-                                                    name="template_id"
-                                                    value=""
-                                                    class="mt-1"
-                                                    @checked(blank(old('template_id')))
-                                                >
-                                                <span>
-                                                    <span class="block text-sm font-semibold text-slate-800">Blank course</span>
-                                                    <span class="block text-xs text-slate-500">Start with no lessons and build everything yourself.</span>
-                                                </span>
-                                            </label>
-
+                                {{-- Course Templates: retain existing IDs, validation, and draft generation. --}}
+                                @if($templates->isNotEmpty())
+                                    <fieldset class="pw-course-templates" data-course-template-selector aria-describedby="course-template-help @error('template_id') course-template-error @enderror">
+                                        <legend>Start from a template <span class="text-xs font-normal text-slate-500">(optional)</span></legend>
+                                        <p id="course-template-help" class="pw-template-help">Choose a starting outline or build your own. Template lessons are saved as unpublished drafts with writing tips. Edit and publish them when you are ready.</p>
+                                        <div class="pw-template-grid">
+                                            <div class="pw-template-option">
+                                                <input id="course-template-blank" class="pw-template-radio" type="radio" name="template_id" value="" aria-labelledby="course-template-blank-title" aria-describedby="course-template-blank-description course-template-blank-count" @checked(blank(old('template_id')))>
+                                                <label for="course-template-blank" class="pw-template-card">
+                                                    <span class="pw-template-top"><span id="course-template-blank-title" class="pw-template-title">Blank Course</span><span class="pw-template-selected" aria-hidden="true">Selected</span></span>
+                                                    <span class="pw-template-meta"><span id="course-template-blank-count" class="pw-template-count">0 lessons</span></span>
+                                                    <span id="course-template-blank-description" class="pw-template-description">Start with no lessons and build everything yourself.</span>
+                                                    <span class="pw-template-outline-label">Your own outline</span>
+                                                    <span class="pw-template-blank-note">Add Reading, Video, Document, Quiz, or Activity lessons after creating your course.</span>
+                                                </label>
+                                            </div>
                                             @foreach($templates as $template)
-
-                                                @php
-                                                    $outline = $template->lessonOutline();
-                                                @endphp
-
-                                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50/60">
-                                                    <input
-                                                        type="radio"
-                                                        name="template_id"
-                                                        value="{{ $template->id }}"
-                                                        class="mt-1"
-                                                        @checked((string) old('template_id') === (string) $template->id)
-                                                    >
-                                                    <span class="min-w-0">
-                                                        <span class="block text-sm font-semibold text-slate-800">
-                                                            {{ $template->name }}
-                                                            <span class="ml-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700">
-                                                                {{ count($outline) }} lessons
-                                                            </span>
-                                                        </span>
-
-                                                        @if($template->description)
-                                                            <span class="block text-xs text-slate-500">{{ $template->description }}</span>
-                                                        @endif
-
-                                                        <span class="mt-1.5 block text-xs leading-5 text-slate-500">
+                                                @php $outline = $template->lessonOutline(); @endphp
+                                                <div class="pw-template-option">
+                                                    <input id="course-template-{{ $template->id }}" class="pw-template-radio" type="radio" name="template_id" value="{{ $template->id }}" aria-labelledby="course-template-{{ $template->id }}-title" aria-describedby="course-template-{{ $template->id }}-description course-template-{{ $template->id }}-count" @checked((string) old('template_id') === (string) $template->id)>
+                                                    <label for="course-template-{{ $template->id }}" class="pw-template-card">
+                                                        <span class="pw-template-top"><span id="course-template-{{ $template->id }}-title" class="pw-template-title">{{ $template->name }}</span><span class="pw-template-selected" aria-hidden="true">Selected</span></span>
+                                                        <span class="pw-template-meta"><span id="course-template-{{ $template->id }}-count" class="pw-template-count">{{ count($outline) }} {{ count($outline) === 1 ? 'lesson' : 'lessons' }}</span></span>
+                                                        <span id="course-template-{{ $template->id }}-description" class="pw-template-description">{{ $template->description ?: 'A ready-made lesson outline to help you get started.' }}</span>
+                                                        <span class="pw-template-outline-label">Lesson outline</span>
+                                                        <span class="pw-template-outline" role="list" aria-label="{{ $template->name }} lesson outline">
                                                             @foreach($outline as $item)
-                                                                {{ $loop->iteration }}. {{ $item['title'] }}@if(! $loop->last)<br>@endif
+                                                                <span class="pw-template-outline-item" role="listitem"><span class="pw-template-outline-number" aria-hidden="true">{{ $loop->iteration }}.</span><span>{{ $item['title'] }}</span></span>
                                                             @endforeach
                                                         </span>
-                                                    </span>
-                                                </label>
-
+                                                    </label>
+                                                </div>
                                             @endforeach
-
                                         </div>
-
                                         @error('template_id')
-                                            <p class="mt-2 text-xs text-red-600">
-                                                {{ $message }}
-                                            </p>
+                                            <p id="course-template-error" class="pw-template-error" role="alert">{{ $message }}</p>
                                         @enderror
-
-                                    </div>
-
+                                    </fieldset>
                                 @endif
-
-
 
                                 {{-- Description --}}
                                 <div>
@@ -2028,6 +2017,9 @@
 <script>
 
     function initializeCreateCoursePage() {
+        // Livewire keeps document listeners after this page has been replaced.
+        if (!document.getElementById('createCourseForm')) return;
+
 
         /*
         |--------------------------------------------------------------------------

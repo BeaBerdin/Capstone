@@ -20,6 +20,9 @@ use Illuminate\Support\Carbon;
  * @property string $study_load_mime
  * @property int $study_load_size
  * @property string $status
+ * @property string $applicant_role
+ * @property string|null $review_email
+ * @property string|null $review_origin
  * @property Carbon $submitted_at
  * @property int|null $reviewed_by
  * @property Carbon|null $reviewed_at
@@ -27,6 +30,10 @@ use Illuminate\Support\Carbon;
  */
 class StudentApplication extends Model
 {
+    public const STUDENT = 'student';
+
+    public const TEACHER = 'teacher';
+
     public const PENDING = 'pending';
 
     public const APPROVED = 'approved';
@@ -81,6 +88,9 @@ class StudentApplication extends Model
         'study_load_size',
         'status',
         'submitted_at',
+        'applicant_role',
+        'review_email',
+        'review_origin',
     ];
 
     protected function casts(): array
@@ -115,7 +125,65 @@ class StudentApplication extends Model
     }
 
     /**
-     * Only the newest submission of each student.
+     * Teacher reviews reuse this table without a Study Load.
+     */
+    public function hasStudyLoad(): bool
+    {
+        return filled($this->study_load_path);
+    }
+
+    /** True when the applicant registered as a teacher. */
+    public function isTeacherApplication(): bool
+    {
+        return $this->applicant_role === self::TEACHER;
+    }
+
+    public function reviewsEmail(string $email): bool
+    {
+        return $this->review_email !== null && hash_equals($this->review_email, $email);
+    }
+
+    /** "Teacher" or "Student", for labels. */
+    public function applicantRoleLabel(): string
+    {
+        return $this->isTeacherApplication() ? 'Teacher' : 'Student';
+    }
+
+    /**
+     * Call inside a transaction that creates or locks the user row.
+     */
+    public static function submitForTeacher(User $user, string $origin): self
+    {
+        return self::create([
+            'user_id' => $user->id,
+            'submission_no' => ((int) self::where('user_id', $user->id)->max('submission_no')) + 1,
+            'applicant_role' => self::TEACHER,
+            'review_email' => $user->email,
+            'review_origin' => $origin,
+            'study_load_path' => '',
+            'study_load_original_name' => '',
+            'study_load_mime' => '',
+            'study_load_size' => 0,
+            'status' => self::PENDING,
+            'submitted_at' => now(),
+        ]);
+    }
+
+    /**
+     * Only applications of accounts with the given role ("student" or
+     * "teacher"); any other value leaves the query unchanged.
+     *
+     * @param  Builder<StudentApplication>  $query
+     */
+    public function scopeForApplicantRole(Builder $query, ?string $role): void
+    {
+        if (in_array($role, ['student', 'teacher'], true)) {
+            $query->where('applicant_role', $role);
+        }
+    }
+
+    /**
+     * Only the newest submission per user and application role.
      *
      * @param  Builder<StudentApplication>  $query
      */
@@ -124,7 +192,7 @@ class StudentApplication extends Model
         $query->whereIn('id', fn ($sub) => $sub
             ->selectRaw('MAX(id)')
             ->from('student_applications')
-            ->groupBy('user_id'));
+            ->groupBy('user_id', 'applicant_role'));
     }
 
     public function sizeForHumans(): string

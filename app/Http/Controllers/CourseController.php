@@ -4,17 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Certificate;
 use App\Models\Course;
+use App\Models\CourseInvitation;
 use App\Models\CourseCategory;
 use App\Models\CourseReview;
 use App\Models\CourseTemplate;
 use App\Models\Lesson;
 use App\Models\Enrollment;
 use App\Models\LessonProgress;
+use App\Models\Submission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
 use App\Notifications\PathwiseNotification;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -39,7 +41,7 @@ class CourseController extends Controller
             'lessons' => fn ($lessons) => $lessons
                 ->select(['id', 'course_id', 'title', 'lesson_type', 'lesson_order', 'duration_minutes', 'is_preview'])
                 ->orderBy('lesson_order'),
-        ]);
+        ])->manageableBy($request->user());
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -70,6 +72,8 @@ class CourseController extends Controller
 
     public function create()
     {
+        abort_unless(Course::canBeCreatedByAdministrator(auth()->user()), 403);
+
         $categories = CourseCategory::orderBy('name')->get();
 
         return view(
@@ -80,6 +84,8 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(Course::canBeCreatedByAdministrator($request->user()), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:course_categories,id',
             'title' => 'required|string|max:255',
@@ -130,6 +136,8 @@ class CourseController extends Controller
 
     public function edit(Course $course)
     {
+        abort_unless($course->isManageableBy(auth()->user()), 403);
+
         $categories = CourseCategory::orderBy('name')->get();
 
         return view(
@@ -140,6 +148,8 @@ class CourseController extends Controller
 
     public function update(Request $request, Course $course)
     {
+        abort_unless($course->isManageableBy($request->user()), 403);
+
         $validated = $request->validate([
             'category_id' => 'required|exists:course_categories,id',
             'title' => 'required|string|max:255',
@@ -195,45 +205,53 @@ class CourseController extends Controller
 
     public function destroy(Course $course)
     {
-        if ($course->enrollments()->exists()) {
+        return DB::transaction(function () use ($course) {
+            // Student Activity writes take this same course lock first.
+            $course = Course::query()->lockForUpdate()->findOrFail($course->id);
+            abort_unless($course->isManageableBy(auth()->user()), 403);
+            abort_if(! auth()->user()->hasRole('super_admin') && $course->hasExternalLessonReferences(), 403);
+
+            if ($course->enrollments()->exists()) {
+                return redirect()
+                    ->route('courses.index')
+                    ->with(
+                        'error',
+                        'This course cannot be deleted because it has enrollment history.'
+                    );
+            }
+
+            if ($course->transactions()->exists()) {
+                return redirect()
+                    ->route('courses.index')
+                    ->with(
+                        'error',
+                        'This course cannot be deleted because it has transaction history.'
+                    );
+            }
+
+            if ($course->certificates()->exists()) {
+                return redirect()
+                    ->route('courses.index')
+                    ->with(
+                        'error',
+                        'This course cannot be deleted because it has certificate history.'
+                    );
+            }
+
+            if ($this->hasProtectedActivityWork($course)) {
+                return redirect()->route('courses.index')
+                    ->with('error', 'This course cannot be deleted because it has Activity submissions or student progress.');
+            }
+
+            $this->deleteLockedCourse($course);
+
             return redirect()
                 ->route('courses.index')
                 ->with(
-                    'error',
-                    'This course cannot be deleted because it has enrollment history.'
+                    'success',
+                    'Course deleted successfully.'
                 );
-        }
-
-        if ($course->transactions()->exists()) {
-            return redirect()
-                ->route('courses.index')
-                ->with(
-                    'error',
-                    'This course cannot be deleted because it has transaction history.'
-                );
-        }
-
-        if ($course->certificates()->exists()) {
-            return redirect()
-                ->route('courses.index')
-                ->with(
-                    'error',
-                    'This course cannot be deleted because it has certificate history.'
-                );
-        }
-
-        if ($course->thumbnail) {
-            Storage::disk('public')->delete($course->thumbnail);
-        }
-
-        $course->delete();
-
-        return redirect()
-            ->route('courses.index')
-            ->with(
-                'success',
-                'Course deleted successfully.'
-            );
+        });
     }
 
     /*
@@ -324,59 +342,47 @@ class CourseController extends Controller
 
     public function enroll(Course $course)
     {
-        abort_unless(
-            $course->status === 'published',
-            404
-        );
+        $studentId = (int) auth()->id();
+        $enrollment = DB::transaction(function () use ($course, $studentId): RedirectResponse|Enrollment {
+            $course = Course::lockForUpdate()->findOrFail($course->id);
+            abort_unless($course->status === 'published', 404);
 
-        /*
-         * SECURITY (P0 fix): this route may only enroll students in FREE
-         * courses. Paid courses must go through the PayMongo purchase
-         * route (student.transactions.store), which creates the
-         * enrollment only after the payment is verified.
-         */
-        if ((float) $course->price > 0) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'This is a paid course. Please complete the payment to enroll.'
-                );
-        }
+            if ((float) $course->price > 0) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', 'This is a paid course. Please complete the payment to enroll.');
+            }
 
-        $existingEnrollment = Enrollment::where('student_id', auth()->id())
-            ->where('course_id', $course->id)
-            ->first();
+            $existing = Enrollment::where('student_id', $studentId)->where('course_id', $course->id)
+                ->lockForUpdate()->first();
+            if ($existing) {
+                return $existing;
+            }
 
-        // A cancelled enrollment is not silently reused: the administrator
-        // must restore it (Admin > Enrollments).
-        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
-                );
-        }
+            if (CourseInvitation::redeemedFor($studentId, $course->id)->exists()) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', 'You previously joined this course by invitation. Contact the course administrator for access.');
+            }
 
-        // A double-click can send two requests at once; the unique
-        // student/course index lets only one create the enrollment.
-        try {
-            $enrollment = Enrollment::firstOrCreate(
-                [
-                    'student_id' => auth()->id(),
-                    'course_id' => $course->id,
-                ],
-                [
-                    'status' => 'active',
-                    'enrolled_at' => now(),
-                    'progress_percentage' => 0,
-                ]
+            if (Transaction::blockingCoursePayment($studentId, $course->id)->lockForUpdate()->first()) {
+                return redirect()->route('student.course.show', $course)
+                    ->with('error', Transaction::ENROLLMENT_PAYMENT_CONFLICT);
+            }
+
+            return Enrollment::firstOrCreate(
+                ['student_id' => $studentId, 'course_id' => $course->id],
+                ['status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]
             );
-        } catch (UniqueConstraintViolationException) {
-            $enrollment = Enrollment::where('student_id', auth()->id())
-                ->where('course_id', $course->id)
-                ->firstOrFail();
+        }, 3);
+
+        if ($enrollment instanceof RedirectResponse) {
+            return $enrollment;
+        }
+
+        if (! $enrollment->grantsAccess()) {
+            return redirect()->route('student.course.show', $course)->with(
+                'error',
+                'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
+            );
         }
 
         // In-app notification, plus email when mail is configured.
@@ -1053,44 +1059,78 @@ class CourseController extends Controller
     public function teacherDestroyCourse(
         Course $course
     ) {
-        $this->ensureTeacherOwnsCourse($course);
+        return DB::transaction(function () use ($course) {
+            // Student Activity writes take this same course lock first.
+            $course = Course::query()->lockForUpdate()->findOrFail($course->id);
+            $this->ensureTeacherOwnsCourse($course);
+            abort_if($course->hasExternalLessonReferences(), 403);
 
-        if (
-            ! in_array(
-                $course->status,
-                [
-                    'draft',
-                    'rejected',
-                ],
-                true
-            )
-        ) {
+            if (
+                ! in_array(
+                    $course->status,
+                    [
+                        'draft',
+                        'rejected',
+                    ],
+                    true
+                )
+            ) {
+                return redirect()
+                    ->route(
+                        'teacher.my-courses'
+                    )
+                    ->with(
+                        'error',
+                        'Only draft or returned courses can be deleted.'
+                    );
+            }
+
+            if ($this->hasProtectedActivityWork($course)) {
+                return redirect()->route('teacher.my-courses')
+                    ->with('error', 'This course cannot be deleted because it has Activity submissions or student progress.');
+            }
+
+            $this->deleteLockedCourse($course);
+
             return redirect()
                 ->route(
                     'teacher.my-courses'
                 )
                 ->with(
-                    'error',
-                    'Only draft or returned courses can be deleted.'
+                    'success',
+                    'Course deleted successfully.'
                 );
-        }
+        });
+    }
 
-        if ($course->thumbnail) {
-            Storage::disk('public')->delete(
-                $course->thumbnail
-            );
-        }
+    private function hasProtectedActivityWork(Course $course): bool
+    {
+        $submission = Submission::query()
+            ->whereHas('assignment', fn ($assignment) => $assignment
+                ->where('is_activity', true)
+                ->where(fn ($link) => $link->where('course_id', $course->id)
+                    ->orWhereHas('lesson', fn ($lesson) => $lesson->where('course_id', $course->id))))
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->first(['id']);
 
+        return $submission !== null || LessonProgress::query()
+            ->whereHas('lesson', fn ($lesson) => $lesson
+                ->where('course_id', $course->id)
+                ->where('lesson_type', 'activity'))
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->first(['id']) !== null;
+    }
+
+    private function deleteLockedCourse(Course $course): void
+    {
+        $thumbnail = $course->thumbnail;
         $course->delete();
 
-        return redirect()
-            ->route(
-                'teacher.my-courses'
-            )
-            ->with(
-                'success',
-                'Course deleted successfully.'
-            );
+        if ($thumbnail) {
+            DB::afterCommit(fn () => Storage::disk('public')->delete($thumbnail));
+        }
     }
 
     /*
@@ -1101,6 +1141,8 @@ class CourseController extends Controller
 
     public function approve(Course $course)
     {
+        abort_unless($course->isManageableBy(auth()->user()), 403);
+
         if ($course->status !== 'pending') {
             return redirect()
                 ->route('courses.index')
@@ -1137,6 +1179,8 @@ class CourseController extends Controller
 
     public function reject(Request $request, Course $course)
     {
+        abort_unless($course->isManageableBy($request->user()), 403);
+
         $validated = $request->validate(
             [
                 'remarks' => ['required', 'string', 'min:5', 'max:2000'],

@@ -95,7 +95,7 @@
             title="Account Guidelines"
             :tips="[
                 'Use this for teachers and administrators; students can also register themselves.',
-                'Accounts created here are already email-verified and active.',
+                'Teacher accounts enter the EDP review queue and confirm their email after approval.',
                 'Give the temporary password to the user privately.',
                 'Ask the user to change the password after the first login.',
             ]"

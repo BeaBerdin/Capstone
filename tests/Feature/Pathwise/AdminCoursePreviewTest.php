@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Department;
 use App\Models\Lesson;
 
 /*
@@ -8,7 +9,8 @@ use App\Models\Lesson;
 */
 
 test('each course card has a preview with that course\'s own information', function () {
-    $python = pathwiseCourse(pathwiseUser('teacher', ['name' => 'Ana Teacher']), [
+    $department = Department::create(['name' => 'Computing']);
+    $python = pathwiseCourse(pathwiseApprovedTeacher( ['name' => 'Ana Teacher', 'department_id' => $department->id]), [
         'title' => 'Python Preview Course',
         'description' => 'Learn Python from scratch.',
         'status' => 'pending',
@@ -16,7 +18,7 @@ test('each course card has a preview with that course\'s own information', funct
         'estimated_hours' => 7,
     ]);
 
-    $web = pathwiseCourse(pathwiseUser('teacher', ['name' => 'Ben Teacher']), [
+    $web = pathwiseCourse(pathwiseApprovedTeacher( ['name' => 'Ben Teacher', 'department_id' => $department->id]), [
         'title' => 'Web Preview Course',
         'description' => 'Build web pages.',
         'status' => 'published',
@@ -29,7 +31,7 @@ test('each course card has a preview with that course\'s own information', funct
 
     Lesson::create(['course_id' => $web->id, 'title' => 'Web: HTML basics', 'content' => 'x', 'lesson_type' => 'text', 'lesson_order' => 1, 'is_published' => true]);
 
-    $html = $this->actingAs(pathwiseUser('admin'))
+    $html = $this->actingAs(pathwiseUser('admin', ['department_id' => $department->id]))
         ->get(route('courses.index'))
         ->assertOk()
         ->getContent();
@@ -78,8 +80,8 @@ test('each course card has a preview with that course\'s own information', funct
 });
 
 test('only administrators can open course management and its previews', function () {
-    pathwiseCourse(pathwiseUser('teacher'), ['status' => 'pending']);
+    pathwiseCourse(pathwiseApprovedTeacher(), ['status' => 'pending']);
 
     $this->actingAs(pathwiseUser('student'))->get(route('courses.index'))->assertForbidden();
-    $this->actingAs(pathwiseUser('teacher'))->get(route('courses.index'))->assertForbidden();
+    $this->actingAs(pathwiseApprovedTeacher())->get(route('courses.index'))->assertForbidden();
 });

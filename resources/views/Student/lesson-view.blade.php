@@ -21,6 +21,7 @@
         'text' => 'Reading',
         'document' => 'Document',
         'quiz' => 'Quiz',
+        'activity' => 'Activity',
     ];
 
     $typeLabel =
@@ -1624,10 +1625,15 @@
                         LESSON CONTENT / READING
                     ============================================== --}}
 
+                    @if($lessonType === 'text' && ($lesson->sections->isNotEmpty() || filled($lesson->content)))
+                        @include('Student.partials.reading-content')
+                    @endif
+
                     @if(
                         $lessonType !== 'quiz'
                         &&
                         $lesson->content
+                        && $lessonType !== 'text'
                     )
 
                         <section
@@ -1701,6 +1707,7 @@
                         $lessonType === 'text'
                         &&
                         !$lesson->content
+                        && $lesson->sections->isEmpty()
                     )
 
                         <section
@@ -1808,39 +1815,7 @@
                                     </div>
 
 
-                                    @if($nextUrl)
 
-                                        <a
-                                            href="{{ $nextUrl }}"
-                                            class="sad-btn-primary inline-flex h-10
-                                                   self-start
-                                                   items-center
-                                                   justify-center
-                                                   gap-2 rounded-xl
-                                                   bg-violet-600
-                                                   px-4
-                                                   text-xs font-semibold
-                                                   text-white
-                                                   transition
-                                                   hover:bg-violet-700"
-                                        >
-                                            Next Lesson
-
-                                            <svg
-                                                class="h-3.5 w-3.5"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                            >
-                                                <path
-                                                    d="m9 18
-                                                       6-6-6-6"
-                                                ></path>
-                                            </svg>
-                                        </a>
-
-                                    @endif
 
                                 </div>
 
@@ -1928,7 +1903,7 @@
                         PREVIOUS / NEXT NAVIGATION
                     ============================================== --}}
 
-                    <section
+                    <nav aria-label="Lesson navigation"
                         class="flex flex-col
                                gap-3
                                sm:flex-row
@@ -1983,6 +1958,7 @@
 
                                 <a
                                     href="{{ $nextUrl }}"
+                                    data-next-lesson
                                     class="sad-btn-primary inline-flex h-11
                                            items-center
                                            justify-center
@@ -2046,7 +2022,7 @@
 
                         </div>
 
-                    </section>
+                    </nav>
 
                 </div>
 

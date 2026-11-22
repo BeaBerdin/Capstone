@@ -10,7 +10,7 @@ use App\Models\CourseCategory;
 */
 
 test('deleting a category that still has a course is refused and the course is kept', function (string $status) {
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('super_admin');
     $course = pathwiseCourse(pathwiseUser('teacher'), ['status' => $status]);
     $category = $course->category;
 
@@ -24,7 +24,7 @@ test('deleting a category that still has a course is refused and the course is k
 })->with(['draft', 'pending', 'rejected', 'published']);
 
 test('the refusal message is shown on the Categories page', function () {
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('super_admin');
     $course = pathwiseCourse(pathwiseUser('teacher'));
 
     $this->actingAs($admin)
@@ -35,7 +35,7 @@ test('the refusal message is shown on the Categories page', function () {
 });
 
 test('an empty category can still be deleted', function () {
-    $admin = pathwiseUser('admin');
+    $admin = pathwiseUser('super_admin');
     $category = CourseCategory::create(['name' => 'Unused Category', 'is_active' => true]);
 
     $this->actingAs($admin)

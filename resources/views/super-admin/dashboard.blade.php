@@ -692,7 +692,7 @@
                     </ul>
                 </section>
 
-                {{-- Quick actions (existing Super Admin pages only) --}}
+                {{-- Quick actions --}}
                 <section class="sad-card p-5">
                     <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
                         <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
@@ -707,6 +707,8 @@
                                 ['label' => 'Create Department', 'href' => route('departments.create'), 'tone' => 'sad-sky', 'icon' => 'M3 21h18M5 21V8l7-5 7 5v13M12 10v6M9 13h6'],
                                 ['label' => 'Assign Department', 'href' => route('departments.assign'), 'tone' => 'sad-emerald', 'icon' => 'M17 20h5v-2a3 3 0 0 0-5.36-1.86M9 20H2v-2a3 3 0 0 1 5.36-1.86M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6M7.36 16.14a5 5 0 0 1 9.28 0'],
                                 ['label' => 'View Reports', 'href' => route('reports.index'), 'tone' => 'sad-violet', 'icon' => 'M4 19V5M4 19h16M8 16v-4M12 16V8M16 16v-7M20 16v-3'],
+                                ['label' => 'Manage Courses', 'href' => route('courses.index'), 'tone' => 'sad-sky', 'icon' => 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'],
+                                ['label' => 'Removal Requests', 'href' => route('admin.student-removal-requests.index'), 'tone' => 'sad-amber', 'icon' => 'M9 5h6m-6 4h6m-6 4h3m-5-9H6a2 2 0 0 0-2 2v14h16V6a2 2 0 0 0-2-2h-1M9 3h6v3H9z'],
                                 ['label' => 'Export PDF', 'href' => route('reports.export.pdf'), 'tone' => 'sad-rose', 'icon' => 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M12 12v6M9 15l3 3 3-3'],
                             ];
                         @endphp

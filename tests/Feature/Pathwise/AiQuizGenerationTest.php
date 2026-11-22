@@ -18,7 +18,7 @@ function generationQuiz(string $courseStatus = 'draft'): array
 {
     config(['services.gemini.api_key' => 'test-key', 'services.gemini.model' => 'gemini-2.5-flash']);
 
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => $courseStatus]);
 
     // Source material for Gemini: a published Reading lesson with content.
@@ -74,16 +74,27 @@ function fakeGeneratedQuestions(array $texts): void
     ])]);
 }
 
+function generateWithQuizRevision($test, Quiz $quiz, int $count)
+{
+    $revision = $test->get(route('teacher.quiz.builder', $quiz->lesson_id))->assertOk()->viewData('quizRevision');
+
+    return $test->post(route('teacher.quiz.questions.generate', $quiz), [
+        'question_count' => $count,
+        'difficulty' => 'beginner',
+        'revision' => $revision,
+    ]);
+}
+
 test('generated questions are saved into the quiz for the teacher to review', function () {
     [$teacher, $quiz] = generationQuiz();
 
     // Two requested; the service asks Gemini for two extra candidates.
     fakeGeneratedQuestions(['What does HTML stand for?', 'Which tag makes a link?', 'Spare one?', 'Spare two?']);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('success', '2 AI-generated questions were added successfully. Review and edit them before publishing the quiz.');
+        ->assertSessionHas('success', '2 AI-generated questions were added successfully. The questions are saved. Review and edit them before publishing the quiz.');
 
     $saved = QuizQuestion::where('quiz_id', $quiz->id)->orderBy('id')->get();
 
@@ -108,8 +119,8 @@ test('questions the quiz already has are skipped', function () {
     // Same question with different spacing and case, then new ones.
     fakeGeneratedQuestions(['  what does   HTML stand for? ', 'Which tag makes a link?', 'Which tag adds an image?']);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner']);
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1);
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->orderBy('id')->pluck('question')->all())
         ->toBe(['What does HTML stand for?', 'Which tag makes a link?']);
@@ -131,8 +142,8 @@ test('nothing is added when every generated question is a duplicate', function (
 
     fakeGeneratedQuestions(['Question one?', 'Question two?', 'Question three?']);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('error', 'Gemini generated questions that already exist in this quiz. No duplicate questions were added.');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(3);
@@ -143,8 +154,8 @@ test('a course returned for revision can still generate questions', function () 
 
     fakeGeneratedQuestions(['Which tag makes a link?', 'Spare one?', 'Spare two?']);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('success');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(1);
@@ -169,7 +180,7 @@ test('another teacher cannot generate questions for the quiz', function () {
 
     fakeGeneratedQuestions(['Which tag makes a link?', 'Spare one?', 'Spare two?']);
 
-    $this->actingAs(pathwiseUser('teacher'))
+    $this->actingAs(pathwiseApprovedTeacher())
         ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
         ->assertForbidden();
 
@@ -194,8 +205,8 @@ test('Gemini is asked for a thinking level gemini-2.5-flash accepts', function (
 
     fakeGeneratedQuestions(['What does HTML stand for?', 'Spare one?', 'Spare two?']);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('success');
 
     // gemini-2.5-flash rejects "medium" with a 400; it accepts only low or high.
@@ -214,8 +225,8 @@ test('questions wrapped in a Markdown code fence are still saved', function () {
 
     fakeGeminiQuizText("```json\n".json_encode(['questions' => $questions], JSON_PRETTY_PRINT)."\n```");
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('success');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())->toBe(['Fenced question 1?']);
@@ -233,8 +244,8 @@ test('questions with the choices under "options" are still saved', function () {
 
     fakeGeminiQuizText(json_encode(['questions' => $questions]));
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('success');
 
     $saved = QuizQuestion::where('quiz_id', $quiz->id)->first();
@@ -250,8 +261,8 @@ test('a Gemini timeout shows a clear message and leaves the quiz unchanged', fun
 
     Http::fake(['*' => Http::failedConnection('Operation timed out')]);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
         ->assertSessionHas('error', 'Gemini did not respond in time. Your quiz was not changed. Please try again, or generate fewer questions.');
 
@@ -275,10 +286,66 @@ test('a temporary Gemini server error is retried within the time budget', functi
             'content' => [['type' => 'text', 'text' => json_encode(['questions' => $questions])]],
         ]]])]);
 
-    $this->actingAs($teacher)
-        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 1, 'difficulty' => 'beginner'])
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)
         ->assertSessionHas('success');
 
     Http::assertSentCount(2);
     expect(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())->toBe(['Retried question 1?']);
+});
+
+test('generation of a new question returns a published quiz to draft and requires explicit republication', function () {
+    [$teacher, $quiz] = generationQuiz();
+    $quiz->update(['is_published' => true]);
+    $original = $quiz->questions()->create([
+        'question' => 'Existing question?', 'option_a' => 'A', 'option_b' => 'B',
+        'correct_answer' => 'A', 'points' => 1,
+    ]);
+    fakeGeneratedQuestions(['A new question?', 'Spare one?', 'Spare two?']);
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 1)->assertSessionHas('success',
+        fn (string $message) => str_contains($message, 'returned to draft'));
+
+    $student = pathwiseUser('student');
+    App\Models\Enrollment::create(['course_id' => $quiz->course_id, 'student_id' => $student->id,
+        'status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]);
+    $quiz->course->update(['status' => 'published']);
+    $this->actingAs($student)->get(route('student.quiz.take', $quiz))->assertForbidden();
+
+    $quiz->course->update(['status' => 'draft']);
+    $this->actingAs($teacher);
+    $revision = $this->get(route('teacher.quiz.builder', $quiz->lesson_id))->assertOk()->viewData('quizRevision');
+    $this->post(route('teacher.quiz.save', $quiz->lesson_id), [
+        'revision' => $revision, 'intent' => 'publish', 'title' => $quiz->title, 'passing_score' => 75,
+        'questions' => $quiz->questions()->get()->keyBy('id')->map->only([
+            'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'points',
+        ])->all(),
+    ])->assertSessionHas('success', 'Quiz published.');
+
+    expect((bool) $quiz->fresh()->is_published)->toBeTrue()
+        ->and($original->fresh()->question)->toBe('Existing question?');
+    $quiz->course->update(['status' => 'published']);
+    $this->actingAs($student)->get(route('student.quiz.take', $quiz))->assertOk()->assertSee('A new question?');
+});
+
+test('generation discards its response when the quiz changes while Gemini is working', function () {
+    [$teacher, $quiz] = generationQuiz();
+    $this->actingAs($teacher);
+    Http::fake(['*' => function () use ($quiz) {
+        $quiz->update(['title' => 'A simultaneous edit']);
+        $questions = array_map(fn (int $number) => [
+            'question' => "Generated question $number?", 'option_a' => 'A', 'option_b' => 'B',
+            'option_c' => 'C', 'option_d' => 'D', 'correct_answer' => 'A',
+        ], [1, 2, 3]);
+        $raw = json_encode(['questions' => $questions]);
+
+        return Http::response(['steps' => [[
+            'type' => 'model_output', 'content' => [['type' => 'text', 'text' => $raw]],
+        ]]]);
+    }]);
+
+    generateWithQuizRevision($this, $quiz, 1)->assertSessionHasErrors('quiz');
+    Http::assertSentCount(1);
+    expect($quiz->fresh()->title)->toBe('A simultaneous edit')
+        ->and($quiz->questions()->count())->toBe(0);
 });

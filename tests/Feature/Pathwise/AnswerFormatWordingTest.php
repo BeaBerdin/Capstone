@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 
 function wordingAssignment(string $type, string $format): array
 {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $student = pathwiseUser('student');
     $course = pathwiseCourse($teacher, ['status' => 'published']);
 
@@ -51,7 +51,7 @@ test('the labels are worded for essays and for code, with the same stored values
 });
 
 test('the create form starts with the essay wording and carries both sets for the type switch', function () {
-    $teacher = pathwiseUser('teacher');
+    $teacher = pathwiseApprovedTeacher();
     $course = pathwiseCourse($teacher, ['status' => 'draft']);
 
     $content = $this->actingAs($teacher)

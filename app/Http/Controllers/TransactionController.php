@@ -11,6 +11,7 @@ use App\Support\PaymentMethods;
 use App\Support\PrivateFiles;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +20,8 @@ use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
+    private const PAYMENT_REVIEW_MESSAGE = 'Your payment was verified, but enrollment needs review. Contact support with your transaction number. Please do not pay again.';
+
     /*
     |--------------------------------------------------------------------------
     | STUDENT TRANSACTIONS
@@ -47,221 +50,90 @@ class TransactionController extends Controller
             abort(404);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Check invitation if this purchase came from an invitation link
-        |--------------------------------------------------------------------------
-        */
+        if ($request->has('course_invitation_code')) {
+            $value = $request->input('course_invitation_code');
+            $code = is_string($value) ? CourseInvitation::normalizeCode($value) : null;
 
-        $invitation = null;
-if ($request->filled('course_invitation_code')) {
+            return $code
+                ? redirect()->route('course-invitations.show', $code)
+                : redirect()->route('student.invitations.index')->with('error', 'Enter your invite code to continue.');
+        }
 
-    $invitationCode = strtoupper(
-        (string) $request->input('course_invitation_code')
-    );
+        $student = $request->user();
+        $checkout = DB::transaction(function () use ($course, $student): RedirectResponse|Enrollment|Transaction {
+            // Reserve the payment under the same lock used by invitation redemption.
+            $course = Course::lockForUpdate()->findOrFail($course->id);
+            abort_unless($course->status === 'published', 404);
 
-            $invitation = CourseInvitation::where(
-                'code',
-                $invitationCode
-            )
-                ->where('course_id', $course->id)
-                ->whereNull('accepted_at')
-                ->first();
-
-            if (! $invitation) {
-                return redirect()
-                    ->route(
-                        'course-invitations.show',
-                        $invitationCode
-                    )
-                    ->with(
+            $enrollment = Enrollment::where('student_id', $student->id)->where('course_id', $course->id)
+                ->lockForUpdate()->first();
+            if ($enrollment) {
+                return $enrollment->grantsAccess()
+                    ? redirect()->route('student.my-courses')->with('success', 'You are already enrolled in this course.')
+                    : redirect()->route('student.course.show', $course)->with(
                         'error',
-                        'This course invitation is invalid or has already been used.'
+                        'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
                     );
             }
-if ($invitation->isExpired()) {
-    return redirect()
-        ->route('student.dashboard')
-        ->with(
-            'error',
-            'This course invitation has expired and payment cannot be started.'
-        );
-}
 
-            /*
-            |--------------------------------------------------------------------------
-            | If the invitation was assigned to a specific student,
-            | only that student may use it.
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                $invitation->student_id !== null
-                && (int) $invitation->student_id !== (int) auth()->id()
-            ) {
-                abort(
-                    403,
-                    'This invitation was assigned to another student.'
-                );
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Check if already enrolled
-        |--------------------------------------------------------------------------
-        */
-
-        $existingEnrollment = Enrollment::where(
-            'student_id',
-            auth()->id()
-        )
-            ->where(
-                'course_id',
-                $course->id
-            )
-            ->first();
-
-        // A cancelled enrollment must be restored by the administrator;
-        // the student is not asked to pay again. This runs before the
-        // free-course branch so a free course cannot reactivate it.
-        if ($existingEnrollment && ! $existingEnrollment->grantsAccess()) {
-            return redirect()
-                ->route('student.course.show', $course)
-                ->with(
-                    'error',
-                    'Your enrollment in this course was cancelled. Please contact the course administrator to restore it.'
-                );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | FREE COURSE
-        |--------------------------------------------------------------------------
-        */
-
-        if ((float) $course->price <= 0) {
-
-            $this->activateEnrollment(
-                (int) auth()->id(),
-                $course->id
-            );
-
-            if ($invitation) {
-                $invitation->update([
-                    'accepted_at' => now(),
-                    'accepted_by' => auth()->id(),
-                ]);
+            if (CourseInvitation::redeemedFor($student->id, $course->id)->exists()) {
+                return back()->with('error', 'You previously joined this course by invitation. Contact the course administrator for access.');
             }
 
-            // In-app notification, plus email when mail is configured
-            // (sent once per course; see PathwiseNotification).
-            auth()->user()->notify(
-                new PathwiseNotification(
+            $payments = Transaction::blockingCoursePayment($student->id, $course->id)
+                ->latest('id')->lockForUpdate()->get();
+            if ($payments->isNotEmpty()) {
+                $existing = $payments->first();
+                if ($payments->count() === 1 && $existing->canResumeCheckout() && (float) $course->price > 0) {
+                    return redirect()->away($existing->checkout_url);
+                }
+
+                return redirect()->route('student.transactions.show', $existing)
+                    ->with('error', Transaction::ENROLLMENT_PAYMENT_CONFLICT);
+            }
+
+            if ((float) $course->price <= 0) {
+                return Enrollment::firstOrCreate(
+                    ['student_id' => $student->id, 'course_id' => $course->id],
+                    ['status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]
+                );
+            }
+
+            if (! config('services.paymongo.secret_key') || ! config('services.paymongo.public_key')) {
+                return back()->with('error', 'Payment service is not configured.');
+            }
+
+            return $this->createTransactionWithUniqueNumber([
+                'student_id' => $student->id,
+                'course_id' => $course->id,
+                'amount' => $course->price,
+                'payment_method' => 'PayMongo',
+                'status' => 'pending',
+            ]);
+        }, 3);
+
+        if ($checkout instanceof RedirectResponse) {
+            return $checkout;
+        }
+
+        if ($checkout instanceof Enrollment) {
+            if (! $checkout->grantsAccess()) {
+                return back()->with('error', 'Your enrollment was cancelled. Contact the course administrator for help.');
+            }
+
+            if ($checkout->wasRecentlyCreated) {
+                $student->notify(new PathwiseNotification(
                     title: 'Enrollment activated',
-                    message: 'You are now enrolled in "' . $course->title . '".',
+                    message: 'You are now enrolled in "'.$course->title.'".',
                     type: 'enrollment_activated',
                     courseId: $course->id
-                )
-            );
-
-            return redirect()
-                ->route('student.my-courses')
-                ->with(
-                    'success',
-                    'You are now enrolled in this course.'
-                );
-        }
-
-        if ($existingEnrollment) {
-
-            if ($invitation) {
-                $invitation->update([
-                    'accepted_at' => now(),
-                    'accepted_by' => auth()->id(),
-                ]);
+                ));
             }
 
-            return redirect()
-                ->route('student.my-courses')
-                ->with(
-                    'success',
-                    'You are already enrolled in this course.'
-                );
+            return redirect()->route('student.my-courses')->with('success', 'You are now enrolled in this course.');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | PayMongo configuration
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            ! config('services.paymongo.secret_key')
-            || ! config('services.paymongo.public_key')
-        ) {
-            return back()->with(
-                'error',
-                'Payment service is not configured.'
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Existing pending transaction
-        |--------------------------------------------------------------------------
-        */
-
-        $existingPendingTransaction = Transaction::where(
-            'student_id',
-            auth()->id()
-        )
-            ->where(
-                'course_id',
-                $course->id
-            )
-            ->where(
-                'status',
-                'pending'
-            )
-            ->latest()
-            ->first();
-
-        if ($existingPendingTransaction) {
-
-            if (
-                $invitation
-                && ! $existingPendingTransaction->course_invitation_id
-            ) {
-                $existingPendingTransaction->update([
-                    'course_invitation_id' => $invitation->id,
-                ]);
-            }
-
-            if (
-                $existingPendingTransaction->checkout_url
-                ?? null
-            ) {
-                return redirect()->away(
-                    $existingPendingTransaction->checkout_url
-                );
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create transaction
-        |--------------------------------------------------------------------------
-        */
-
-        $transaction = $this->createTransactionWithUniqueNumber([
-            'student_id' => auth()->id(),
-            'course_id' => $course->id,
-            'course_invitation_id' => $invitation?->id,
-            'amount' => $course->price,
-            'payment_method' => 'PayMongo',
-            'status' => 'pending',
-        ]);
+        $transaction = $checkout;
 
         /*
         |--------------------------------------------------------------------------
@@ -291,7 +163,7 @@ if ($invitation->isExpired()) {
                                 [
                                     'currency' => 'PHP',
                                     'amount' => (int) round(
-                                        $course->price * 100
+                                        $transaction->amount * 100
                                     ),
                                     'name' => $course->title,
                                     'quantity' => 1,
@@ -316,8 +188,6 @@ if ($invitation->isExpired()) {
                                 'transaction_id' => $transaction->id,
                                 'course_id' => $course->id,
                                 'student_id' => auth()->id(),
-                                'invitation_code' =>
-                                    $invitation?->code,
                             ],
                         ],
                     ],
@@ -385,7 +255,8 @@ if ($invitation->isExpired()) {
 
             $this->rejectFailedCheckout(
                 $transaction,
-                'PayMongo checkout could not be created: the response had no checkout URL or session ID.'
+                'PayMongo checkout could not be created: the response had no checkout URL or session ID.',
+                is_string($checkoutSessionId) ? $checkoutSessionId : null
             );
 
             return back()->with(
@@ -428,25 +299,25 @@ if ($invitation->isExpired()) {
         $transaction->load('course');
 
         if ($transaction->status === 'approved') {
-
-            $this->activateEnrollment(
-                $transaction->student_id,
-                $transaction->course_id
-            );
-
-            $this->acceptCourseInvitationForTransaction(
-                $transaction
-            );
-
             return view(
                 'Student.transactions.success',
                 [
                     'transaction' => $transaction->fresh('course'),
                     'paymentVerified' => true,
+                    'courseAccessible' => $this->hasCourseAccess($transaction),
                     'verificationMessage' =>
                         'Your PayMongo payment has already been verified.',
                 ]
             );
+        }
+
+        if ($transaction->payment_review_required_at) {
+            return view('Student.transactions.success', [
+                'transaction' => $transaction,
+                'paymentVerified' => false,
+                'paymentNeedsReview' => true,
+                'verificationMessage' => self::PAYMENT_REVIEW_MESSAGE,
+            ]);
         }
 
         $verification = [
@@ -477,9 +348,9 @@ if ($invitation->isExpired()) {
             }
         }
 
+        $reviewMessage = null;
         if ($verification['paid']) {
-
-            $this->approveVerifiedPayMongoTransaction(
+            $reviewMessage = $this->approveVerifiedPayMongoTransaction(
                 $transaction,
                 $verification['payment_id'],
                 $verification['method'] ?? null
@@ -494,8 +365,9 @@ if ($invitation->isExpired()) {
                 'transaction' => $transaction,
                 'paymentVerified' =>
                     $transaction->status === 'approved',
-                'verificationMessage' =>
-                    $verification['message'],
+                'courseAccessible' => $this->hasCourseAccess($transaction),
+                'paymentNeedsReview' => $reviewMessage !== null,
+                'verificationMessage' => $reviewMessage ?? $verification['message'],
             ]
         );
     }
@@ -510,15 +382,18 @@ if ($invitation->isExpired()) {
     {
         $this->ensureStudentOwnsTransaction($transaction);
 
-        if ($transaction->status === 'pending') {
-
-            $transaction->update([
+        // Closing a page cannot confirm cancellation at PayMongo. An in-flight
+        // reservation stays pending, and a saved session stays on the record.
+        Transaction::whereKey($transaction->id)
+            ->where('status', 'pending')
+            ->whereNull('payment_review_required_at')
+            ->whereNotNull('payment_reference')
+            ->update([
                 'status' => 'rejected',
-                'remarks' =>
-                    'PayMongo checkout was cancelled by the student.',
+                'remarks' => 'PayMongo checkout was cancelled by the student.',
             ]);
-        }
 
+        $transaction->refresh();
         $transaction->load('course');
 
         return view(
@@ -816,16 +691,6 @@ if ($invitation->isExpired()) {
         }
 
         if ($transaction->status === 'approved') {
-
-            $this->activateEnrollment(
-                $transaction->student_id,
-                $transaction->course_id
-            );
-
-            $this->acceptCourseInvitationForTransaction(
-                $transaction
-            );
-
             return response()->json(
                 [
                     'message' =>
@@ -841,6 +706,10 @@ if ($invitation->isExpired()) {
         | Re-query exact Checkout Session for second verification.
         |--------------------------------------------------------------------------
         */
+
+        if ($transaction->payment_review_required_at) {
+            return response()->json(['message' => 'Verified payment requires enrollment review.']);
+        }
 
         $verification =
             $this->verifyPayMongoCheckout(
@@ -858,19 +727,15 @@ if ($invitation->isExpired()) {
             );
         }
 
-        $this->approveVerifiedPayMongoTransaction(
+        $reviewMessage = $this->approveVerifiedPayMongoTransaction(
             $transaction,
             $verification['payment_id'],
             $verification['method'] ?? null
         );
 
-        return response()->json(
-            [
-                'message' =>
-                    'Payment successfully processed.',
-            ],
-            200
-        );
+        return response()->json([
+            'message' => $reviewMessage ? 'Verified payment requires enrollment review.' : 'Payment successfully processed.',
+        ]);
     }
 
     /*
@@ -916,6 +781,10 @@ if ($invitation->isExpired()) {
             );
         }
 
+        if ($transaction->payment_review_required_at) {
+            return back()->with('error', self::PAYMENT_REVIEW_MESSAGE);
+        }
+
         if ($transaction->status !== 'pending') {
 
             return back()->with(
@@ -950,11 +819,15 @@ if ($invitation->isExpired()) {
                 );
             }
 
-            $this->approveVerifiedPayMongoTransaction(
+            $reviewMessage = $this->approveVerifiedPayMongoTransaction(
                 $transaction,
                 $verification['payment_id'],
                 $verification['method'] ?? null
             );
+
+            if ($reviewMessage) {
+                return back()->with('error', $reviewMessage);
+            }
 
             return back()->with(
                 'success',
@@ -976,30 +849,27 @@ if ($invitation->isExpired()) {
             );
         }
 
-        DB::transaction(
-            function () use ($transaction) {
-
-                $transaction->update([
-                    'status' =>
-                        'approved',
-
-                    'approved_by' =>
-                        auth()->id(),
-
-                    'approved_at' =>
-                        now(),
-                ]);
-
-                $this->activateEnrollment(
-                    $transaction->student_id,
-                    $transaction->course_id
-                );
-
-                $this->acceptCourseInvitationForTransaction(
-                    $transaction
-                );
+        $approved = DB::transaction(function () use ($transaction) {
+            $course = Course::lockForUpdate()->findOrFail($transaction->course_id);
+            $current = Transaction::lockForUpdate()->findOrFail($transaction->id);
+            if ($current->status !== 'pending' || $current->payment_review_required_at
+                || ! $this->canGrantEnrollmentForPayment($course, $current)
+                || ! $this->activateEnrollment($current->student_id, $current->course_id)) {
+                return false;
             }
-        );
+
+            $current->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            return true;
+        }, 3);
+
+        if (! $approved) {
+            return back()->with('error', 'Enrollment was not granted. Review the transaction, invitation, and enrollment status.');
+        }
 
         $this->notifyStudentAboutApprovedTransaction(
             $transaction->fresh()
@@ -1042,21 +912,21 @@ if ($invitation->isExpired()) {
                 'nullable|string|max:1000',
         ]);
 
-        $transaction->update([
-            'status' =>
-                'rejected',
+        $rejected = Transaction::whereKey($transaction->id)
+            ->where('status', 'pending')
+            ->whereNull('payment_review_required_at')
+            ->where(fn ($payments) => $payments->whereRaw('LOWER(payment_method) <> ?', ['paymongo'])
+                ->orWhereNotNull('payment_reference'))
+            ->update([
+                'status' => 'rejected',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+                'remarks' => $request->input('remarks', 'Payment rejected by administrator.'),
+            ]);
 
-            'approved_by' =>
-                auth()->id(),
-
-            'approved_at' =>
-                now(),
-
-            'remarks' =>
-                $request->remarks
-                ??
-                'Payment rejected by administrator.',
-        ]);
+        if (! $rejected) {
+            return back()->with('error', 'This transaction is being processed or requires payment reconciliation.');
+        }
 
         return back()->with(
             'success',
@@ -1274,127 +1144,78 @@ if ($invitation->isExpired()) {
         Transaction $transaction,
         ?string $paymentId = null,
         ?string $paymongoMethod = null
-    ): void {
-        $alreadyApproved = false;
-
-        DB::transaction(
-            function () use (
-                $transaction,
-                $paymentId,
-                $paymongoMethod,
-                &$alreadyApproved
-            ) {
-
-                // The success page and the webhook can confirm the same
-                // payment at the same time; only the first one approves it
-                // and notifies the student.
-                $current = Transaction::whereKey($transaction->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $current || $current->status === 'approved') {
-                    $alreadyApproved = true;
-
-                    return;
-                }
-
-                $remarks =
-                    'Payment securely verified through PayMongo.';
-
-                if ($paymentId) {
-
-                    $remarks .=
-                        ' Payment ID: '
-                        . $paymentId;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Keep payment_reference as cs_...
-                |--------------------------------------------------------------------------
-                */
-
-                $transaction->update([
-                    'status' =>
-                        'approved',
-
-                    'payment_method' =>
-                        'PayMongo',
-
-                    // Shown as e.g. "Maya via PayMongo"; null if PayMongo
-                    // did not report a supported method.
-                    'paymongo_method' =>
-                        $paymongoMethod,
-
-                    'remarks' =>
-                        Str::limit(
-                            $remarks,
-                            1000
-                        ),
-
-                    'approved_at' =>
-                        now(),
-                ]);
-
-                /*
-                |--------------------------------------------------------------------------
-                | Activate enrollment
-                |--------------------------------------------------------------------------
-                */
-
-                $this->activateEnrollment(
-                    $transaction->student_id,
-                    $transaction->course_id
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Mark invitation accepted ONLY after payment succeeds
-                |--------------------------------------------------------------------------
-                */
-
-                $this->acceptCourseInvitationForTransaction(
-                    $transaction
-                );
+    ): ?string {
+        [$approved, $reviewMessage] = DB::transaction(function () use ($transaction, $paymentId, $paymongoMethod) {
+            // Keep the order consistent with checkout and invitation writes.
+            $course = Course::lockForUpdate()->findOrFail($transaction->course_id);
+            $current = Transaction::lockForUpdate()->findOrFail($transaction->id);
+            if ($current->status === 'approved') {
+                return [false, null];
             }
-        );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Notify student after successful payment
-        |--------------------------------------------------------------------------
-        */
+            $paymentDetails = $paymentId ? ' Payment ID: '.$paymentId : '';
+            if ($current->payment_review_required_at) {
+                return [false, self::PAYMENT_REVIEW_MESSAGE];
+            }
 
-        if ($alreadyApproved) {
-            return;
+            if (! $this->canGrantEnrollmentForPayment($course, $current)
+                || ! $this->activateEnrollment($current->student_id, $current->course_id)) {
+                $current->forceFill([
+                    'payment_review_required_at' => now(),
+                    'payment_method' => 'PayMongo',
+                    'paymongo_method' => $paymongoMethod,
+                    'remarks' => Str::limit('Verified payment requires enrollment review.'.$paymentDetails, 1000),
+                ])->save();
+
+                return [false, self::PAYMENT_REVIEW_MESSAGE];
+            }
+
+            $current->update([
+                'status' => 'approved',
+                'payment_method' => 'PayMongo',
+                'paymongo_method' => $paymongoMethod,
+                'remarks' => Str::limit('Payment securely verified through PayMongo.'.$paymentDetails, 1000),
+                'approved_at' => now(),
+            ]);
+
+            return [true, null];
+        }, 3);
+
+        if ($approved) {
+            $this->notifyStudentAboutApprovedTransaction($transaction->fresh());
         }
 
-        $this->notifyStudentAboutApprovedTransaction(
-            $transaction->fresh()
-        );
+        return $reviewMessage;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ACCEPT COURSE INVITATION AFTER PAYMENT
-    |--------------------------------------------------------------------------
-    */
-
-    private function acceptCourseInvitationForTransaction(
-        Transaction $transaction
-    ): void {
-        if (! $transaction->course_invitation_id) {
-            return;
+    private function canGrantEnrollmentForPayment(Course $course, Transaction $transaction): bool
+    {
+        $student = $transaction->student;
+        if ($course->status !== 'published' || ! $student || $student->is_active === false
+            || ! $student->hasRole('student') || ! $student->hasVerifiedEmail() || $student->awaitingStudentApproval()) {
+            return false;
         }
 
-        CourseInvitation::whereKey(
-            $transaction->course_invitation_id
-        )
-            ->whereNull('accepted_at')
-            ->update([
-                'accepted_at' => now(),
-                'accepted_by' => $transaction->student_id,
-            ]);
+        if ($transaction->course_invitation_id) {
+            $invitation = CourseInvitation::findForLockedCourse($course, $transaction->course_invitation_id);
+            if (! $invitation || ! $invitation->canBeOpenedBy($student->id) || ! $invitation->isValid()) {
+                return false;
+            }
+        }
+
+        return ! CourseInvitation::redeemedFor($student->id, $course->id)->exists()
+            && ! Transaction::forStudentCourse($student->id, $course->id)->where('id', '<>', $transaction->id)
+                ->where(fn ($payments) => $payments->where('status', 'approved')->orWhereNotNull('payment_review_required_at'))
+                ->lockForUpdate()->first();
+    }
+
+    private function hasCourseAccess(Transaction $transaction): bool
+    {
+        return $transaction->course?->status === 'published'
+            && Enrollment::where('student_id', $transaction->student_id)
+                ->where('course_id', $transaction->course_id)
+                ->withAccess()
+                ->exists();
     }
 
     /*
@@ -1459,13 +1280,14 @@ if ($invitation->isExpired()) {
     |
     */
 
-    private function rejectFailedCheckout(
-        Transaction $transaction,
-        string $reason
-    ): void {
-        $transaction->status = 'rejected';
-        $transaction->remarks = $reason;
-        $transaction->save();
+    private function rejectFailedCheckout(Transaction $transaction, string $reason, ?string $sessionId = null): void
+    {
+        Transaction::whereKey($transaction->id)->where('status', 'pending')->whereNull('payment_review_required_at')
+            ->update([
+                'status' => 'rejected',
+                'remarks' => $reason,
+                'payment_reference' => $sessionId,
+            ]);
     }
 
     /*
@@ -1474,58 +1296,15 @@ if ($invitation->isExpired()) {
     |--------------------------------------------------------------------------
     */
 
-    private function activateEnrollment(
-        int $studentId,
-        int $courseId
-    ): void {
-        $enrollment = Enrollment::firstOrNew([
-            'student_id' =>
-                $studentId,
+    private function activateEnrollment(int $studentId, int $courseId): bool
+    {
+        $enrollment = Enrollment::where('student_id', $studentId)->where('course_id', $courseId)
+            ->lockForUpdate()->first() ?? Enrollment::firstOrCreate(
+                ['student_id' => $studentId, 'course_id' => $courseId],
+                ['status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]
+            );
 
-            'course_id' =>
-                $courseId,
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Never downgrade completed enrollment back to active.
-        |--------------------------------------------------------------------------
-        */
-
-        $alreadyCompleted =
-            $enrollment->exists
-            &&
-            strtolower(
-                trim(
-                    (string) $enrollment->status
-                )
-            )
-            ===
-            'completed';
-
-        if (! $alreadyCompleted) {
-
-            $enrollment->status =
-                'active';
-        }
-
-        if (! $enrollment->enrolled_at) {
-
-            $enrollment->enrolled_at =
-                now();
-        }
-
-        if (
-            $enrollment->getAttribute('progress_percentage')
-            ===
-            null
-        ) {
-
-            $enrollment->progress_percentage =
-                0;
-        }
-
-        $enrollment->save();
+        return $enrollment->grantsAccess();
     }
 
     /*
