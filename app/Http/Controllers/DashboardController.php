@@ -39,8 +39,9 @@ class DashboardController extends Controller
             'certificatesIssued' => Certificate::whereHas('course', fn ($course) => $course->manageableBy($administrator))->count(),
             'activeLearningPaths' => LearningPath::manageableBy($administrator)->count(),
             'studentCountLabel' => $departmentOnly ? 'Learners in department courses' : 'Registered learners',
-            // Departments have a full name only (no short code column).
-            'departmentAssignment' => $administrator->department?->name ?: 'Campus-wide (all departments)',
+            // An admin without a department manages no courses (see
+            // Course::scopeManageableBy), so the label must not say campus-wide.
+            'departmentAssignment' => $administrator->department?->name ?: 'No department assigned — contact the Super Admin',
         ]);
     }
 

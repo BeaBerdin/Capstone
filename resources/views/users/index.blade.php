@@ -540,6 +540,13 @@
 
                                                 </span>
 
+                                                {{-- Teachers and admins need a department for course review. --}}
+                                                @if (in_array($currentRole, ['teacher', 'admin'], true) && ! $user->department_id)
+                                                    <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200" data-test="no-department-badge">
+                                                        No department
+                                                    </span>
+                                                @endif
+
                                             @else
 
                                                 <span class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">

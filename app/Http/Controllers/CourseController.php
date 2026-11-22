@@ -940,7 +940,7 @@ class CourseController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()
+        $redirect = redirect()
             ->route(
                 'teacher.my-courses'
             )
@@ -948,6 +948,16 @@ class CourseController extends Controller
                 'success',
                 'Course submitted for approval successfully.'
             );
+
+        // Department heads only review courses of their own department.
+        if (! auth()->user()->department_id) {
+            $redirect->with(
+                'warning',
+                'Your account has no department, so no department head can review this course yet. Please contact the EDP office.'
+            );
+        }
+
+        return $redirect;
     }
 
     /*
