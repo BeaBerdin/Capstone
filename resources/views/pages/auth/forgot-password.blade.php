@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Forgot Password') }}</title>
+    <link rel="icon" href="/favicon.ico?v=3" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <link rel="icon" href="/favicon.png?v=3" type="image/png">
     @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-white flex items-center justify-center p-4">

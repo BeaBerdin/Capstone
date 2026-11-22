@@ -13,6 +13,17 @@ test('the welcome page uses the PathWise favicon links and no favicon.svg', func
         ->assertDontSee('favicon.svg', false);
 });
 
+test('the login, register and forgot-password pages use the PathWise favicon links', function (string $route) {
+    $this->withoutVite();
+
+    $this->get(route($route))
+        ->assertOk()
+        ->assertSee('<link rel="icon" href="/favicon.ico?v=3" sizes="any">', false)
+        ->assertSee('<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">', false)
+        ->assertSee('<link rel="icon" href="/favicon.png?v=3" type="image/png">', false)
+        ->assertDontSee('favicon.svg', false);
+})->with(['login', 'register', 'password.request']);
+
 test('the shared head partial (every app layout) uses the PathWise favicon links and no favicon.svg', function () {
     $this->withoutVite();
 
