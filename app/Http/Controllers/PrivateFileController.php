@@ -54,7 +54,8 @@ class PrivateFileController extends Controller
     /**
      * Lesson file: the course's teacher, administrators, and students with
      * an active or completed enrollment when the course and the lesson are
-     * published. Preview lessons are not open to anyone else.
+     * published. An approved student who is not enrolled may also open the
+     * file of a published free-preview lesson (not a quiz) of a published course.
      */
     public function lesson(Lesson $lesson)
     {
@@ -75,6 +76,14 @@ class PrivateFileController extends Controller
                     ->where('course_id', $course->id)
                     ->withAccess()
                     ->exists()
+            )
+            || (
+                strtolower(trim((string) $course->status)) === 'published'
+                && (bool) $lesson->is_published
+                && (bool) $lesson->is_preview
+                && strtolower(trim((string) $lesson->lesson_type)) !== 'quiz'
+                && $user->hasRole('student')
+                && ! $user->awaitingStudentApproval()
             );
 
         abort_unless($canOpen, 403);

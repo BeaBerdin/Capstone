@@ -181,6 +181,19 @@
                                             <code class="rounded bg-slate-100 px-2 py-1 text-sm font-semibold text-violet-700">
                                                 {{ $invitation->code }}
                                             </code>
+                                            @if ($invitation->isValid())
+                                                @php $pwInviteLink = route('course-invitations.show', $invitation->code); @endphp
+                                                <div class="mt-2 flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        data-copy="{{ $pwInviteLink }}"
+                                                        data-test="copy-invite-link"
+                                                        onclick="(function (b) { var t = b.getAttribute('data-copy'); var done = function () { b.textContent = 'Link copied'; setTimeout(function () { b.textContent = 'Copy link'; }, 2000); }; if (navigator.clipboard) { navigator.clipboard.writeText(t).then(done, function () { window.prompt('Copy this invitation link:', t); }); } else { window.prompt('Copy this invitation link:', t); } })(this)"
+                                                        class="rounded-md border border-violet-200 px-2 py-0.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
+                                                    >Copy link</button>
+                                                    <span class="max-w-[14rem] whitespace-normal text-[11px] leading-4 text-slate-500">or share the code: students enter it under Course Invitations.</span>
+                                                </div>
+                                            @endif
                                         </td>
 
                                         <td class="whitespace-nowrap px-6 py-4">

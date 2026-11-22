@@ -21,7 +21,8 @@ class SafeMailChannel extends MailChannel
         } catch (Throwable $e) {
             Log::warning('PATHWISE email could not be sent; the action itself was completed.', [
                 'notification' => $notification::class,
-                'notifiable_id' => $notifiable->getKey() ?? null,
+                // On-demand recipients (an email address only) have no key.
+                'notifiable_id' => method_exists($notifiable, 'getKey') ? $notifiable->getKey() : null,
                 'error' => $e->getMessage(),
             ]);
 

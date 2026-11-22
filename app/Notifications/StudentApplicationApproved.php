@@ -42,6 +42,23 @@ class StudentApplicationApproved extends VerifyEmail
      */
     public function toMail($notifiable): MailMessage
     {
+        if (method_exists($notifiable, 'hasRole') && $notifiable->hasRole('teacher')) {
+            return (new MailMessage)
+                ->subject('PathWise - Your teacher registration is approved')
+                ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [
+                    'heading' => 'Your registration is approved!',
+                    'preheader' => 'Verify your email address to start using PathWise.',
+                    'name' => $notifiable->name ?? null,
+                    'paragraphs' => [
+                        'Good news! The EDP office has approved your PathWise teacher account.',
+                        'One last step: please verify your email address by clicking the button below. After that you can log in and use your Teacher Dashboard.',
+                    ],
+                    'buttonText' => 'Verify Email Address',
+                    'buttonUrl' => $this->verificationUrl($notifiable),
+                    'note' => 'This link expires in '.self::EXPIRES_HOURS.' hours. If it expires, log in to PathWise and choose "Resend verification email".',
+                ]);
+        }
+
         return (new MailMessage)
             ->subject('PathWise - Your student application is approved')
             ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [

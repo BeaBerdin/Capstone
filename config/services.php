@@ -49,6 +49,14 @@ return [
         ),
     ],
 
+    'pathwise' => [
+        // Mailbox (or comma-separated mailboxes) that receives the EDP's
+        // "new / resubmitted student application" emails. Separate from the
+        // Super Admin's login email, which may be a non-deliverable address
+        // such as superadmin@pathwise.test. See App\Support\EdpNotificationRecipients.
+        'edp_notification_email' => env('PATHWISE_EDP_NOTIFICATION_EMAIL'),
+    ],
+
     'paymongo' => [
         'secret_key' => env('PAYMONGO_SECRET_KEY'),
         'public_key' => env('PAYMONGO_PUBLIC_KEY'),

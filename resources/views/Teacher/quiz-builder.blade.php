@@ -742,8 +742,8 @@
                                                        text-slate-500"
                                             >
                                                 Generate several questions in
-                                                one request to conserve the
-                                                shared Gemini quota.
+                                                one request instead of one at
+                                                a time.
                                             </p>
 
                                         </div>

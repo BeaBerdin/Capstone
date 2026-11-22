@@ -328,6 +328,85 @@ if (! empty($validated['expires_at'])) {
             );
     }
 
+    /**
+     * Course Invitations (student): invitations the teacher sent to this
+     * student that can still be opened, plus the "Join with invite code" box.
+     */
+    public function studentIndex()
+    {
+        $invitations = CourseInvitation::with('course.teacher')
+            ->where('student_id', auth()->id())
+            ->whereNull('accepted_at')
+            ->where(fn (Builder $query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>', now()))
+            ->whereHas('course', fn (Builder $course) => $course->where('status', 'published'))
+            ->latest()
+            ->get();
+
+        return view('course-invitations.student-index', compact('invitations'));
+    }
+
+    /**
+     * "Join with invite code": checks the code, then opens the usual
+     * invitation page, where the student accepts (free course) or pays
+     * (paid course). The same rules as an invitation link apply there.
+     */
+    public function join(Request $request)
+    {
+        $code = self::normalizeCode((string) $request->input('code'));
+
+        $invalid = fn (string $message) => redirect()
+            ->route('student.invitations.index')
+            ->withInput(['code' => (string) $request->input('code')])
+            ->withErrors(['code' => $message]);
+
+        if (! preg_match('/^[A-Z0-9]{12}$/', $code)) {
+            return $invalid('Enter the 12-character invite code from your teacher.');
+        }
+
+        $invitation = CourseInvitation::with('course')->where('code', $code)->first();
+
+        // An unknown code and a code sent to another student look the same,
+        // so codes cannot be probed.
+        if (
+            ! $invitation
+            || ! $invitation->course
+            || ($invitation->student_id !== null && (int) $invitation->student_id !== (int) auth()->id())
+        ) {
+            return $invalid('That invite code is not valid. Check the code and try again.');
+        }
+
+        if ($invitation->isExpired()) {
+            return $invalid('That invite code has expired. Ask your teacher for a new one.');
+        }
+
+        if ($invitation->isAccepted()) {
+            return $invalid('That invite code has already been used. Ask your teacher for a new one.');
+        }
+
+        if (strtolower((string) $invitation->course->status) !== 'published') {
+            return $invalid('That course is not open for enrollment right now.');
+        }
+
+        return redirect()->route('course-invitations.show', $invitation->code);
+    }
+
+    /**
+     * Accepts the code as typed or the whole invitation link pasted in:
+     * spaces and dashes are ignored, letters are made upper case.
+     */
+    public static function normalizeCode(string $input): string
+    {
+        $input = trim($input);
+
+        if (str_contains($input, '/invitations/')) {
+            $input = (string) str($input)->after('/invitations/')->before('?')->before('/');
+        }
+
+        return strtoupper((string) preg_replace('/[\s\-]+/', '', $input));
+    }
+
     public function destroy(CourseInvitation $courseInvitation)
     {
         abort_unless(

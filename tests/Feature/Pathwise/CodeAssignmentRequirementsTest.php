@@ -478,8 +478,9 @@ test('a failed Gemini evaluation is not saved and the teacher can retry', functi
         ->assertSee('The last AI evaluation did not finish')
         ->assertSee('Retry AI Evaluation');
 })->with([
-    'HTTP error' => [fn () => Http::response(['error' => 'server error'], 500), 'HTTP 500'],
-    'timeout' => [fn () => Http::failedConnection('Operation timed out'), 'did not respond in time'],
+    'HTTP error' => [fn () => Http::response(['error' => 'server error'], 500), 'AI features are currently unavailable. Please try again later.'],
+    'quota reached' => [fn () => Http::response(['error' => ['status' => 'RESOURCE_EXHAUSTED']], 429), 'AI features are currently unavailable. Please try again later.'],
+    'timeout' => [fn () => Http::failedConnection('Operation timed out'), 'AI features are currently unavailable. Please try again later.'],
     'empty output' => [fn () => Http::response(['output_text' => '']), 'empty evaluation response'],
     'invalid JSON' => [fn () => Http::response(['output_text' => 'Sure! Here is my evaluation.']), 'invalid evaluation format'],
     'missing score' => [fn () => Http::response(geminiOutput(['feedback' => 'Looks fine.'])), 'incomplete evaluation'],

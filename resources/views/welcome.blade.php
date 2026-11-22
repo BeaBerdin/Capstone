@@ -6,9 +6,8 @@
 
         <title>{{ __('PATHWISE — AI-Powered E-Learning Platform') }}</title>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=2">
+        <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}?v=2">
 
         @fonts
         @vite(['resources/css/app.css'])
@@ -24,23 +23,23 @@
 
         <div class="relative z-10">
             <!-- Navbar -->
-            <header class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-                <div class="flex items-center gap-3">
-                    <img src="{{ asset('images/pathwise-logo-full.png') }}" alt="PATHWISE" class="h-14 w-auto" />
+            <header class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+                <div class="flex min-w-0 shrink-0 items-center gap-3">
+                    <img src="{{ asset('images/pathwise-logo-full.png') }}" alt="PATHWISE" class="h-10 w-auto shrink-0 sm:h-14" />
                 </div>
 
                 @if (Route::has('login'))
-                    <nav class="flex items-center gap-3">
+                    <nav class="flex shrink-0 items-center gap-2 sm:gap-3">
                         @auth
-                            <a href="{{ route('dashboard') }}" class="rounded-lg border border-gray-200 px-5 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50">
+                            <a href="{{ route('dashboard') }}" class="inline-flex items-center whitespace-nowrap rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 sm:px-5 sm:py-2">
                                 Dashboard
                             </a>
                         @else
-                            <a href="{{ route('login') }}" class="rounded-lg border-2 border-gray-900 px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-900 hover:text-white">
+                            <a href="{{ route('login') }}" class="inline-flex items-center whitespace-nowrap rounded-lg border-2 border-gray-900 px-3 py-1.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-900 hover:text-white sm:px-5 sm:py-2">
                                 Log in
                             </a>
                             @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="pw-btn-primary rounded-xl px-5 py-2 text-sm font-semibold text-white transition">
+                                <a href="{{ route('register') }}" class="pw-btn-primary hidden items-center whitespace-nowrap rounded-xl px-5 py-2 text-sm font-semibold text-white transition sm:inline-flex">
                                     Get Started
                                 </a>
                             @endif
@@ -50,21 +49,21 @@
             </header>
 
             <!-- Hero -->
-            <main class="mx-auto max-w-6xl px-6">
+            <main class="mx-auto max-w-6xl px-4 sm:px-6">
                 <section class="flex flex-col items-center py-16 text-center lg:py-20">
-                    <span class="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-4 py-1.5 text-sm text-purple-700">
-                        <span class="h-2 w-2 animate-pulse rounded-full bg-purple-500"></span>
+                    <span class="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs text-purple-700 sm:px-4 sm:py-1.5 sm:text-sm">
+                        <span class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-purple-500"></span>
                         Powered by AI-Driven Recommendations
                     </span>
 
-                    <h1 class="max-w-4xl text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+                    <h1 class="max-w-4xl text-3xl font-bold leading-tight tracking-tight text-gray-900 break-words sm:text-5xl lg:text-6xl">
                         Learn smarter with
                         <span class="bg-linear-to-r from-purple-600 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">
                             personalized learning paths
                         </span>
                     </h1>
 
-                    <p class="mt-6 max-w-2xl text-lg text-gray-600">
+                    <p class="mt-6 max-w-2xl text-base text-gray-600 sm:text-lg">
                         PATHWISE is an AI-powered e-learning platform that recommends the right course for you based on your performance — connecting students, teachers, and institutions in one place.
                     </p>
 
@@ -121,14 +120,6 @@
                     @endforeach
                 </section>
             </main>
-
-            <!-- Footer -->
-            <footer class="border-t border-gray-200">
-                <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-gray-500 sm:flex-row">
-                    <p>&copy; {{ date('Y') }} PATHWISE. An AI-Powered E-Learning Platform.</p>
-                    <p>Built with Laravel & Google Gemini</p>
-                </div>
-            </footer>
         </div>
     </body>
 </html>

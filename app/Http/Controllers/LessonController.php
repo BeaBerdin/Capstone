@@ -232,8 +232,46 @@ class LessonController extends Controller
     }
 
 
+    /**
+     * A student who is not enrolled may open a lesson that the teacher marked
+     * as a free preview, read only: the course and the lesson must be
+     * published and the lesson must not be a quiz. Nothing is saved and the
+     * other lessons stay locked.
+     */
+    private function isPreviewOnlyAccess(Lesson $lesson): bool
+    {
+        $lesson->loadMissing('course');
+        $course = $lesson->course;
+
+        if (
+            ! $course
+            || strtolower(trim((string) $course->status)) !== 'published'
+            || ! (bool) $lesson->is_published
+            || ! (bool) $lesson->is_preview
+            || strtolower(trim((string) $lesson->lesson_type)) === 'quiz'
+        ) {
+            return false;
+        }
+
+        return ! Enrollment::where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->withAccess()
+            ->exists();
+    }
+
+
     public function studentLesson(Lesson $lesson)
     {
+        if ($this->isPreviewOnlyAccess($lesson)) {
+            return view('Student.lesson-view', [
+                'lesson' => $lesson,
+                'progress' => null,
+                'previousLesson' => null,
+                'nextLesson' => null,
+                'isPreviewOnly' => true,
+            ]);
+        }
+
         $this->ensureStudentCanAccessLesson(
             $lesson
         );

@@ -282,3 +282,33 @@ test('a temporary Gemini server error is retried within the time budget', functi
     Http::assertSentCount(2);
     expect(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())->toBe(['Retried question 1?']);
 });
+
+test('a Gemini quota error shows the friendly message and leaves the quiz unchanged', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED', 'message' => 'Quota exceeded']], 429)]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner'])
+        ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
+});
+
+test('reaching PathWise\'s own AI request limit shows the friendly message without quota details', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    Http::fake(['*' => Http::response(['error' => 'server error'], 500)]);
+
+    // PathWise allows 4 AI generation requests per minute (shared).
+    foreach (range(1, 4) as $attempt) {
+        Illuminate\Support\Facades\RateLimiter::hit('pathwise:gemini:quiz:minute');
+    }
+
+    $response = $this->actingAs($teacher)
+        ->post(route('teacher.quiz.questions.generate', $quiz), ['question_count' => 2, 'difficulty' => 'beginner']);
+
+    $response->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+    expect(session('error'))->not->toContain('quota')->not->toContain('Gemini');
+});

@@ -4,8 +4,10 @@ namespace App\Notifications;
 
 use App\Models\StudentApplication;
 use App\Notifications\Channels\SafeMailChannel;
+use App\Support\EdpNotificationRecipients;
 use App\Support\MailSettings;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -28,9 +30,22 @@ class StudentApplicationSubmitted extends Notification
 
     public function via(object $notifiable): array
     {
+        // The configured EDP mailbox (PATHWISE_EDP_NOTIFICATION_EMAIL),
+        // notified on demand: email only.
+        if ($notifiable instanceof AnonymousNotifiable) {
+            return MailSettings::isConfigured() ? [SafeMailChannel::class] : [];
+        }
+
+        // A Super Admin account: always the in-app notification. Its login
+        // email is used only when no EDP mailbox is configured, and never
+        // when it cannot receive mail (e.g. superadmin@pathwise.test).
         $channels = ['database'];
 
-        if (MailSettings::isConfigured() && filled($notifiable->email ?? null)) {
+        if (
+            MailSettings::isConfigured()
+            && ! EdpNotificationRecipients::hasConfigured()
+            && EdpNotificationRecipients::isDeliverable($notifiable->email ?? null)
+        ) {
             $channels[] = SafeMailChannel::class;
         }
 
@@ -39,6 +54,10 @@ class StudentApplicationSubmitted extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        if ($this->application->isTeacherApplication()) {
+            return $this->teacherMail($notifiable);
+        }
+
         $student = $this->application->user;
         $heading = $this->resubmission ? 'Student application resubmitted' : 'New student application';
 
@@ -67,6 +86,16 @@ class StudentApplicationSubmitted extends Notification
     {
         $student = $this->application->user;
 
+        if ($this->application->isTeacherApplication()) {
+            return [
+                'title' => $this->resubmission ? 'Teacher registration sent for review again' : 'New teacher registration',
+                'message' => ($student?->name ?? 'A teacher')
+                    .($this->resubmission ? ' asked for the teacher registration to be reviewed again.' : ' registered as a teacher and is waiting for approval.'),
+                'type' => self::TYPE,
+                'application_id' => $this->application->id,
+            ];
+        }
+
         return [
             'title' => $this->resubmission ? 'Student application resubmitted' : 'New student application',
             'message' => ($student?->name ?? 'A student')
@@ -74,5 +103,31 @@ class StudentApplicationSubmitted extends Notification
             'type' => self::TYPE,
             'application_id' => $this->application->id,
         ];
+    }
+
+    /**
+     * A teacher registered (or asked to be reviewed again). No Study Load.
+     */
+    private function teacherMail(object $notifiable): MailMessage
+    {
+        $teacher = $this->application->user;
+        $heading = $this->resubmission ? 'Teacher registration sent for review again' : 'New teacher registration';
+
+        return (new MailMessage)
+            ->subject('PathWise - '.$heading.': '.($teacher?->name ?? 'Teacher'))
+            ->view(['emails.pathwise-message', 'emails.pathwise-message-text'], [
+                'heading' => $heading,
+                'preheader' => ($teacher?->name ?? 'A teacher').' is waiting for approval as a teacher.',
+                'name' => $notifiable->name ?? null,
+                'paragraphs' => [
+                    $this->resubmission
+                        ? ($teacher?->name ?? 'A teacher').' asked for the teacher registration to be reviewed again (submission #'.$this->application->submission_no.') after it was rejected.'
+                        : ($teacher?->name ?? 'A teacher').' registered as a teacher on PathWise.',
+                    'Email: '.($teacher?->email ?? '-'),
+                    'Please confirm that this person is a teacher, then approve or reject the registration. The account cannot use the teacher tools until it is approved.',
+                ],
+                'buttonText' => 'Review registration',
+                'buttonUrl' => route('super-admin.student-applications.show', $this->application),
+            ]);
     }
 }

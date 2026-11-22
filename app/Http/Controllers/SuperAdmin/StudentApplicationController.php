@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\StudentApplication;
 use App\Notifications\StudentApplicationApproved;
 use App\Notifications\StudentApplicationRejected;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
- * Student applications for the Super Admin (EDP). The routes sit inside
+ * Student and teacher applications for the Super Admin (EDP). Teacher
+ * registrations use the same rows without a Study Load. The routes sit inside
  * `role:super_admin`, so the Admin (Dean), teachers and students are refused
  * before reaching any method here.
  */
@@ -23,6 +25,13 @@ class StudentApplicationController extends Controller
         StudentApplication::PENDING => 'Pending',
         StudentApplication::APPROVED => 'Approved',
         StudentApplication::REJECTED => 'Rejected',
+    ];
+
+    /** Applicant filter: everyone, students only or teachers only. */
+    public const ROLE_FILTERS = [
+        'all' => 'All',
+        'student' => 'Students',
+        'teacher' => 'Teachers',
     ];
 
     /** Study Load types the browser may show inline. */
@@ -41,16 +50,22 @@ class StudentApplicationController extends Controller
             ? (string) $request->query('status')
             : StudentApplication::PENDING;
 
+        $role = array_key_exists((string) $request->query('role'), self::ROLE_FILTERS)
+            ? (string) $request->query('role')
+            : 'all';
+
         $counts = StudentApplication::query()
             ->latestPerStudent()
+            ->forApplicantRole($role)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
         $applications = StudentApplication::query()
             ->latestPerStudent()
+            ->forApplicantRole($role)
             ->where('status', $tab)
-            ->with(['user', 'reviewer'])
+            ->with(['user.roles', 'reviewer'])
             // Pending: oldest first (first come, first served).
             ->orderBy('submitted_at', $tab === StudentApplication::PENDING ? 'asc' : 'desc')
             ->paginate(20)
@@ -59,6 +74,8 @@ class StudentApplicationController extends Controller
         return view('super-admin.student-applications.index', [
             'tab' => $tab,
             'tabs' => self::TABS,
+            'role' => $role,
+            'roleFilters' => self::ROLE_FILTERS,
             'counts' => $counts,
             'applications' => $applications,
         ]);
@@ -126,6 +143,14 @@ class StudentApplicationController extends Controller
         $student = $studentApplication->user()->first();
         $redirect = redirect()->route('super-admin.student-applications.show', $studentApplication);
 
+        AuditLog::record(
+            AuditLog::APPLICATION_APPROVED,
+            $student,
+            StudentApplication::PENDING,
+            StudentApplication::APPROVED,
+            $studentApplication->applicantRoleLabel().' application, submission #'.$studentApplication->submission_no,
+        );
+
         if ($student->hasVerifiedEmail()) {
             return $redirect->with('success', 'Application approved. '.$student->name.'\'s email is already verified, so they can use PathWise now.');
         }
@@ -140,7 +165,7 @@ class StudentApplicationController extends Controller
 
             return $redirect
                 ->with('success', 'Application approved.')
-                ->with('warning', 'The acceptance email to '.$student->email.' could not be sent. The approval is saved. The student can log in and choose "Resend verification email".');
+                ->with('warning', 'The acceptance email to '.$student->email.' could not be sent. The approval is saved. The '.($student->hasRole('teacher') ? 'teacher' : 'student').' can log in and choose "Resend verification email".');
         }
 
         return $redirect->with('success', 'Application approved. An acceptance email with a verification link (valid for '.StudentApplicationApproved::EXPIRES_HOURS.' hours) was sent to '.$student->email.'.');
@@ -153,8 +178,11 @@ class StudentApplicationController extends Controller
         $validated = $request->validate(
             ['rejection_reason' => ['required', 'string', 'min:10', 'max:2000']],
             [
-                'rejection_reason.required' => 'Please write the reason for rejecting this Study Load.',
-                'rejection_reason.min' => 'The reason must be at least 10 characters so the student knows what to correct.',
+                'rejection_reason.required' => $studentApplication->isTeacherApplication()
+                    ? 'Please write the reason for rejecting this teacher registration.'
+                    : 'Please write the reason for rejecting this Study Load.',
+                'rejection_reason.min' => 'The reason must be at least 10 characters so the '
+                    .($studentApplication->isTeacherApplication() ? 'teacher' : 'student').' knows what to correct.',
             ],
         );
 
@@ -165,6 +193,14 @@ class StudentApplicationController extends Controller
         $studentApplication->refresh();
         $student = $studentApplication->user()->first();
         $redirect = redirect()->route('super-admin.student-applications.show', $studentApplication);
+
+        AuditLog::record(
+            AuditLog::APPLICATION_REJECTED,
+            $student,
+            StudentApplication::PENDING,
+            StudentApplication::REJECTED,
+            $validated['rejection_reason'],
+        );
 
         try {
             $student->notify(new StudentApplicationRejected($studentApplication));
@@ -179,7 +215,8 @@ class StudentApplicationController extends Controller
                 ->with('warning', 'The rejection email to '.$student->email.' could not be sent. The rejection and its reason are saved and shown to the student when they log in.');
         }
 
-        return $redirect->with('success', 'Application rejected. '.$student->name.' was emailed the reason and how to resubmit.');
+        return $redirect->with('success', 'Application rejected. '.$student->name.' was emailed the reason'
+            .($student->hasRole('teacher') ? '.' : ' and how to resubmit.'));
     }
 
     /**

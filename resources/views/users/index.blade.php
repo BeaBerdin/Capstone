@@ -105,6 +105,14 @@
                 @endif
 
 
+                @if ($errors->any())
+                    <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700" data-test="form-errors">
+                        @foreach ($errors->all() as $message)
+                            <p>{{ $message }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
                 @if (session('error'))
 
                     <div class="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -546,10 +554,16 @@
 
                                         <td class="px-4 py-5">
 
+                                            @if ($user->is(auth()->user()))
+                                                <p class="text-xs text-slate-500" data-test="own-role-locked">You cannot change your own role.</p>
+                                            @else
                                             <form
                                                 action="{{ route('users.update-role', $user) }}"
                                                 method="POST"
                                                 class="flex items-center gap-2"
+                                                data-role-form
+                                                data-user-name="{{ $user->name }}"
+                                                data-current-role="{{ $currentRole }}"
                                             >
 
                                                 @csrf
@@ -593,15 +607,19 @@
                                                 </select>
 
 
+                                                <input type="hidden" name="reason" value="">
+                                                <input type="hidden" name="current_password" value="">
+
                                                 <button
-                                                    type="submit"
-                                                    onclick="return confirm('Are you sure you want to change this user role?')"
+                                                    type="button"
+                                                    data-open-role-dialog
                                                     class="sad-btn-primary h-9 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white transition hover:bg-violet-700"
                                                 >
                                                     Update
                                                 </button>
 
                                             </form>
+                                            @endif
 
                                         </td>
 
@@ -648,21 +666,27 @@
                                                 <div class="mt-1.5 flex items-center gap-2">
                                                     <p class="text-xs text-amber-600">Email not verified</p>
 
+                                                    @if (! $user->is(auth()->user()))
                                                     <form
                                                         action="{{ route('users.verify-email', $user) }}"
                                                         method="POST"
-                                                        onsubmit="return confirm('Mark this email address as verified?')"
+                                                        data-verify-form
+                                                        data-user-name="{{ $user->name }}"
                                                     >
                                                         @csrf
                                                         @method('PATCH')
 
+                                                        <input type="hidden" name="reason" value="">
+
                                                         <button
-                                                            type="submit"
+                                                            type="button"
+                                                            data-open-verify-dialog
                                                             class="h-7 rounded-lg border border-amber-200 px-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
                                                         >
                                                             Mark verified
                                                         </button>
                                                     </form>
+                                                    @endif
                                                 </div>
                                             @endif
 
@@ -840,6 +864,124 @@
 
         });
 
+    </script>
+
+    {{-- =====================================================
+        CONFIRMATION DIALOGS (the server checks everything again)
+    ====================================================== --}}
+
+    <dialog id="role-dialog" class="w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40" data-test="role-dialog">
+        <form id="role-dialog-form" class="space-y-4 p-6">
+            <h2 class="text-lg font-bold text-slate-900">Change role</h2>
+            <p class="text-sm text-slate-600" data-role-dialog-text></p>
+
+            <div data-role-dialog-warning hidden class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                A Super Admin can manage every account, role and payment. Re-enter <strong>your own</strong> password to confirm.
+            </div>
+
+            <label class="block text-sm font-semibold text-slate-700">
+                Reason <span class="font-normal text-slate-500" data-role-reason-hint>(optional)</span>
+                <textarea id="role-dialog-reason" rows="3" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"></textarea>
+            </label>
+
+            <label class="block text-sm font-semibold text-slate-700" data-role-password-field hidden>
+                Your password
+                <input id="role-dialog-password" type="password" autocomplete="current-password" class="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-800">
+            </label>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-dialog-cancel class="h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="h-10 rounded-lg bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700">Confirm change</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="verify-dialog" class="w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40" data-test="verify-dialog">
+        <form id="verify-dialog-form" class="space-y-4 p-6">
+            <h2 class="text-lg font-bold text-slate-900">Mark email as verified</h2>
+            <p class="text-sm text-slate-600" data-verify-dialog-text></p>
+            <p class="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                This does not approve a pending student or teacher application. Those are approved in Student Applications.
+            </p>
+            <label class="block text-sm font-semibold text-slate-700">
+                Reason
+                <textarea id="verify-dialog-reason" rows="3" required minlength="5" maxlength="500" placeholder="e.g. Confirmed in person at the EDP office" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800"></textarea>
+            </label>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-dialog-cancel class="h-10 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="h-10 rounded-lg bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-700">Mark verified</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        (function () {
+            var roleLabels = { super_admin: 'Super Admin', admin: 'Admin', teacher: 'Teacher', student: 'Student' };
+            var roleDialog = document.getElementById('role-dialog');
+            var verifyDialog = document.getElementById('verify-dialog');
+            if (!roleDialog || !verifyDialog || typeof roleDialog.showModal !== 'function') { return; }
+
+            var activeRoleForm = null;
+            var activeVerifyForm = null;
+            var reason = document.getElementById('role-dialog-reason');
+            var password = document.getElementById('role-dialog-password');
+
+            document.querySelectorAll('[data-dialog-cancel]').forEach(function (button) {
+                button.addEventListener('click', function () { button.closest('dialog').close(); });
+            });
+
+            document.querySelectorAll('[data-open-role-dialog]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeRoleForm = button.closest('[data-role-form]');
+                    var role = activeRoleForm.querySelector('select[name="role"]').value;
+                    var toSuperAdmin = role === 'super_admin' && activeRoleForm.dataset.currentRole !== 'super_admin';
+                    var toTeacher = role === 'teacher';
+
+                    roleDialog.querySelector('[data-role-dialog-text]').textContent =
+                        'Change ' + activeRoleForm.dataset.userName + ' to ' + (roleLabels[role] || role) + '?'
+                        + (toTeacher ? ' This also approves a pending application.' : '');
+                    roleDialog.querySelector('[data-role-dialog-warning]').hidden = !toSuperAdmin;
+                    roleDialog.querySelector('[data-role-password-field]').hidden = !toSuperAdmin;
+                    roleDialog.querySelector('[data-role-reason-hint]').textContent = toTeacher ? '(required)' : '(optional)';
+
+                    reason.value = '';
+                    reason.required = toTeacher;
+                    reason.minLength = toTeacher ? 5 : 0;
+                    password.value = '';
+                    password.required = toSuperAdmin;
+
+                    roleDialog.showModal();
+                });
+            });
+
+            document.getElementById('role-dialog-form').addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (!activeRoleForm) { return; }
+                activeRoleForm.querySelector('input[name="reason"]').value = reason.value;
+                activeRoleForm.querySelector('input[name="current_password"]').value = password.value;
+                password.value = '';
+                roleDialog.close();
+                activeRoleForm.submit();
+            });
+
+            document.querySelectorAll('[data-open-verify-dialog]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    activeVerifyForm = button.closest('[data-verify-form]');
+                    verifyDialog.querySelector('[data-verify-dialog-text]').textContent =
+                        'Mark the email address of ' + activeVerifyForm.dataset.userName + ' as verified?';
+                    document.getElementById('verify-dialog-reason').value = '';
+                    verifyDialog.showModal();
+                });
+            });
+
+            document.getElementById('verify-dialog-form').addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (!activeVerifyForm) { return; }
+                activeVerifyForm.querySelector('input[name="reason"]').value = document.getElementById('verify-dialog-reason').value;
+                verifyDialog.close();
+                activeVerifyForm.submit();
+            });
+        })();
     </script>
 
 </x-layouts::app>

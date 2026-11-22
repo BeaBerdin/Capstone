@@ -930,6 +930,39 @@ class CourseController extends Controller
                 );
         }
 
+        /*
+         * Every quiz lesson needs a published quiz with at least one
+         * question. Quizzes are locked once the course is pending or
+         * published, so a forgotten "Publish Quiz" toggle would otherwise
+         * leave students with a quiz they can never open.
+         */
+        $unreadyQuizLessons = $course
+            ->lessons()
+            ->where('lesson_type', 'quiz')
+            ->whereNotExists(fn ($quiz) => $quiz
+                ->selectRaw('1')
+                ->from('quizzes')
+                ->whereColumn('quizzes.lesson_id', 'lessons.id')
+                ->where('quizzes.is_published', true)
+                ->whereExists(fn ($question) => $question
+                    ->selectRaw('1')
+                    ->from('quiz_questions')
+                    ->whereColumn('quiz_questions.quiz_id', 'quizzes.id')))
+            ->orderBy('lesson_order')
+            ->pluck('title');
+
+        if ($unreadyQuizLessons->isNotEmpty()) {
+            return redirect()
+                ->route(
+                    'teacher.my-courses'
+                )
+                ->with(
+                    'error',
+                    'These quiz lessons are not ready: ' . $unreadyQuizLessons->implode(', ')
+                    . '. Open each one in the Quiz Builder, add at least one question and turn on "Publish Quiz" before submitting for approval.'
+                );
+        }
+
         $course->update([
             'status' => 'pending',
         ]);

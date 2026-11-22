@@ -15,7 +15,7 @@ test('the Super Admin can mark an unverified email as verified', function () {
     $student = pathwiseUser('student', ['email_verified_at' => null]);
 
     $this->actingAs(pathwiseUser('super_admin'))
-        ->patch(route('users.verify-email', $student))
+        ->patch(route('users.verify-email', $student), ['reason' => 'Confirmed at the EDP office'])
         ->assertSessionHas('success');
 
     expect($student->fresh()->hasVerifiedEmail())->toBeTrue();

@@ -171,13 +171,32 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * True while a self-registered teacher's newest application is pending
+     * or rejected: no teacher pages and no email verification until the EDP
+     * approves. Teachers without an application row (existing teachers and
+     * teachers created by the Super Admin) are approved.
+     */
+    public function awaitingTeacherApproval(): bool
+    {
+        return in_array($this->applicationStatus(), StudentApplication::AWAITING, true)
+            && $this->hasRole('teacher');
+    }
+
+    /** A student or teacher whose registration the EDP has not approved. */
+    public function awaitingApproval(): bool
+    {
+        return in_array($this->applicationStatus(), StudentApplication::AWAITING, true)
+            && ($this->hasRole('student') || $this->hasRole('teacher'));
+    }
+
+    /**
      * No verification email (Laravel's automatic one after registration, a
      * resend, or any other caller) while the application awaits approval.
      * After approval the EDP's acceptance email carries the link instead.
      */
     public function sendEmailVerificationNotification()
     {
-        if ($this->awaitingStudentApproval()) {
+        if ($this->awaitingApproval()) {
             return;
         }
 

@@ -12,6 +12,12 @@
 
     $course = $lesson->course;
 
+    // Read-only free preview for a student who is not enrolled (see LessonController::isPreviewOnlyAccess).
+    $isPreviewOnly = (bool) ($isPreviewOnly ?? false);
+    $courseUrl = $isPreviewOnly
+        ? route('student.course.show', $course)
+        : route('student.learn.course', $course);
+
     $lessonType = strtolower(
         $lesson->lesson_type ?? 'text'
     );
@@ -393,11 +399,11 @@
             >
 
                 <a
-                    href="{{ route('student.my-courses') }}"
+                    href="{{ $isPreviewOnly ? route('student.marketplace') : route('student.my-courses') }}"
                     class="font-medium transition
                            hover:text-violet-600"
                 >
-                    My Courses
+                    {{ $isPreviewOnly ? 'Marketplace' : 'My Courses' }}
                 </a>
 
                 <span>
@@ -405,7 +411,7 @@
                 </span>
 
                 <a
-                    href="{{ route('student.learn.course', $course) }}"
+                    href="{{ $courseUrl }}"
                     class="font-medium transition
                            hover:text-violet-600"
                 >
@@ -541,7 +547,7 @@
 
 
                 <a
-                    href="{{ route('student.learn.course', $course) }}"
+                    href="{{ $courseUrl }}"
                     class="inline-flex h-11
                            self-start lg:self-auto
                            items-center
@@ -1750,7 +1756,29 @@
                         COMPLETION
                     ============================================== --}}
 
-                    @if($lessonType !== 'quiz')
+                    @if($isPreviewOnly)
+
+                        {{-- Free preview: nothing is saved; enrolling unlocks the other lessons. --}}
+                        <section class="sad-card pw-card p-5 sm:p-6" data-test="lesson-preview-notice">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-800">
+                                        You are previewing this lesson
+                                    </h3>
+                                    <p class="mt-1 max-w-xl text-xs leading-5 text-slate-500">
+                                        Enroll in the course to open the other lessons, take the quizzes, and track your progress.
+                                    </p>
+                                </div>
+                                <a
+                                    href="{{ $courseUrl }}"
+                                    class="sad-btn-primary inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold"
+                                >
+                                    Back to Course
+                                </a>
+                            </div>
+                        </section>
+
+                    @elseif($lessonType !== 'quiz')
 
                         <section class="sad-card pw-card p-5 sm:p-6">
 
@@ -2014,7 +2042,7 @@
                             @else
 
                                 <a
-                                    href="{{ route('student.learn.course', $course) }}"
+                                    href="{{ $courseUrl }}"
                                     class="inline-flex h-11
                                            items-center
                                            justify-center
@@ -2382,7 +2410,7 @@
 
                         {{-- BACK --}}
                         <a
-                            href="{{ route('student.learn.course', $course) }}"
+                            href="{{ $courseUrl }}"
                             class="mt-5 inline-flex
                                    h-10 w-full
                                    items-center

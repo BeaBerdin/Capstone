@@ -41,9 +41,21 @@ Route::view('/', 'welcome')->name('home');
 |
 */
 
+// Rate limits: named, per account / session with a wide per-IP ceiling, so
+// students sharing a campus IP do not use up each other's limits (see
+// AppServiceProvider::configureVerificationRateLimiting). Laravel runs the
+// throttle before `signed`; the limiter itself counts a link against its
+// account only when the signature is valid, so forged links cannot lock a
+// student out (they still count towards the per-IP ceiling).
 Route::get('/email/verify/{id}/{hash}', \App\Http\Controllers\Auth\VerifyEmailLinkController::class)
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['signed', 'throttle:verification-link'])
     ->name('verification.verify');
+
+// Redeems the one-time sign-in grant that opening the link stored in this
+// browser's session (CSRF-protected POST; the link itself never logs in).
+Route::post('/email/verified/continue', [\App\Http\Controllers\Auth\VerifyEmailLinkController::class, 'continue'])
+    ->middleware('throttle:verification-continue')
+    ->name('verification.continue');
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +80,7 @@ Route::get('/email/verify', \Laravel\Fortify\Http\Controllers\EmailVerificationP
     ->name('verification.notice');
 
 Route::post('/email/verification-notification', [\Laravel\Fortify\Http\Controllers\EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'student.application', 'throttle:6,1'])
+    ->middleware(['auth', 'student.application', 'throttle:verification-resend'])
     ->name('verification.send');
 
 /*
@@ -81,6 +93,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/application-status', [\App\Http\Controllers\StudentApplicationStatusController::class, 'show'])
         ->name('student-application.status');
+
+    // Polled by the status page (own account only; read-only). Its own
+    // counter, so polling never uses up the resend limit.
+    Route::get('/application-status/check', [\App\Http\Controllers\StudentApplicationStatusController::class, 'check'])
+        ->middleware('throttle:application-check')
+        ->name('student-application.check');
 
     Route::post('/application-status/resubmit', [\App\Http\Controllers\StudentApplicationStatusController::class, 'resubmit'])
         ->middleware('throttle:study-load-resubmission')
@@ -183,6 +201,10 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         Route::patch('/super-admin/users/{user}/verify-email', [UserManagementController::class, 'verifyEmail'])
             ->name('users.verify-email');
+
+        // Audit Log (read-only: there is no route that edits or deletes it).
+        Route::get('/super-admin/audit-log', [\App\Http\Controllers\SuperAdmin\AuditLogController::class, 'index'])
+            ->name('super-admin.audit-log.index');
 
         Route::get('/super-admin/users/{user}/edit', [UserManagementController::class, 'edit'])
             ->name('users.edit');
@@ -591,6 +613,15 @@ Route::middleware('role:student')->group(function () {
     // Course invitation acceptance
     Route::post('/invitations/{code}/accept', [CourseInvitationController::class, 'accept'])
         ->name('course-invitations.accept');
+
+    // Course Invitations page: invitations sent to the student and a box to
+    // join a course with an invite code from the teacher.
+    Route::get('/course-invitations', [CourseInvitationController::class, 'studentIndex'])
+        ->name('student.invitations.index');
+
+    Route::post('/course-invitations/join', [CourseInvitationController::class, 'join'])
+        ->middleware('throttle:invite-code')
+        ->name('student.invitations.join');
 });
 });
 /*

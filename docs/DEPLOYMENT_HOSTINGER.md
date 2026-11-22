@@ -92,6 +92,8 @@ PAYMONGO_WEBHOOK_TOLERANCE=300
 BACKUP_ARCHIVE_PASSWORD=      # backups contain personal data: set this
 BACKUP_NOTIFICATION_EMAIL=    # who is told when a backup fails
 
+PATHWISE_EDP_NOTIFICATION_EMAIL=   # EDP office mailbox for new student applications (comma-separated for several)
+
 SEED_SUPERADMIN_PASSWORD=     # optional; leave empty to have one generated and printed once
 ```
 
@@ -252,8 +254,17 @@ approves or rejects it under **Student Applications**. On the server:
   are needed**. If an approval or rejection email fails, the decision is still
   saved and the Super Admin sees a warning; an approved student can use
   "Resend verification email".
-- **Super Admin email address:** make sure at least one active Super Admin has
-  a mailbox that is read, or new applications are only visible in the app.
+- **EDP notification mailbox:** set `PATHWISE_EDP_NOTIFICATION_EMAIL` to the
+  EDP office's real mailbox (several may be given, comma separated). New and
+  resubmitted applications are emailed there; Super Admin accounts still get
+  the in-app notification. The Super Admin's login email is not used for this
+  and does not need to change (the seeded `superadmin@pathwise.test` cannot
+  receive mail; `.test` addresses only bounce). If the setting is empty, Super
+  Admin account emails are used, but addresses on reserved domains (`.test`,
+  `.local`, `.localhost`, `.invalid`, `.example`, `example.com/.net/.org`) are
+  skipped and a warning is written to the log. The email contains the
+  student's name and email address and a link to the review page; the Study
+  Load is never attached.
 
 ### 4.6 Production caches [SSH]
 
@@ -349,7 +360,7 @@ name or log line). Never put a secret in the evidence.
 |---|---|---|---|---|---|
 | V-1 | Site and HTTPS | Open `https://your-domain`, then `http://…` | Padlock; http redirects to https; styles load | ☐ | |
 | V-2 | No debug output | Open `https://your-domain/does-not-exist` | Plain 404 page, no stack trace | ☐ | |
-| V-3 | Real email delivery | Register a new student with a real inbox you own and a small PDF Study Load | Student lands on "Student application · Pending review"; **no** verification email yet; the Super Admin's inbox gets "New student application" (check spam), From = your mailbox | ☐ | |
+| V-3 | Real email delivery | Register a new student with a real inbox you own and a small PDF Study Load | Student lands on "Student application · Pending review"; **no** verification email yet; the `PATHWISE_EDP_NOTIFICATION_EMAIL` inbox gets "New student application" with no attachment (check spam), From = your mailbox; no bounce in the sending mailbox | ☐ | |
 | V-4 | Approval and verification flow | Super Admin → Student Applications → open it → the Study Load preview shows → Approve; then click the link in the student's "application is approved" email | Email arrives with a link valid 72 hours; the link verifies the account; the student can open the Student dashboard | ☐ | |
 | V-5 | Password reset (production mail) | Log out → Forgot password → enter that email | "Reset your password" arrives; the link opens `https://your-domain/reset-password/…`; new password works; the same link a second time is refused | ☐ | |
 | V-6 | PayMongo test checkout | As a student, buy a paid course → pay with a PayMongo **test** GCash/card | Redirect back to "Payment Confirmed"; transaction **Approved**; student sees the course under My Courses | ☐ | |

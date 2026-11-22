@@ -201,11 +201,32 @@ test('a lesson file is closed to students without access', function (string $cas
         ->assertForbidden();
 })->with(['not enrolled', 'cancelled enrollment', 'unpublished course', 'unpublished lesson']);
 
-test('preview lessons are still for enrolled students only', function () {
+test('a student who is not enrolled may open the file of a published free-preview lesson', function () {
     fakeFileDisks();
     [, , $lesson] = privateLesson([], ['is_preview' => true]);
 
     $this->actingAs(pathwiseUser('student'))
+        ->get(route('files.lesson', $lesson))
+        ->assertOk();
+});
+
+test('preview files stay closed when the lesson or course is not published', function (string $case) {
+    fakeFileDisks();
+    [, , $lesson] = match ($case) {
+        'unpublished course' => privateLesson(['status' => 'pending'], ['is_preview' => true]),
+        default => privateLesson([], ['is_preview' => true, 'is_published' => false]),
+    };
+
+    $this->actingAs(pathwiseUser('student'))
+        ->get(route('files.lesson', $lesson))
+        ->assertForbidden();
+})->with(['unpublished course', 'unpublished lesson']);
+
+test('a teacher who does not own the course cannot open a preview lesson file', function () {
+    fakeFileDisks();
+    [, , $lesson] = privateLesson([], ['is_preview' => true]);
+
+    $this->actingAs(pathwiseUser('teacher'))
         ->get(route('files.lesson', $lesson))
         ->assertForbidden();
 });

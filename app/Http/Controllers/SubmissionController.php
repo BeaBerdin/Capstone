@@ -529,21 +529,22 @@ class SubmissionController extends Controller
 
             report($e);
 
-            $reason = match (true) {
-                $e instanceof ConnectionException =>
-                    'Gemini did not respond in time.',
-                $e instanceof AiEvaluationException =>
-                    $e->getMessage(),
-                default =>
-                    'An unexpected error occurred.',
-            };
+            // Gemini unreachable, over quota or returning an HTTP error:
+            // the friendly message only (the details are in the log).
+            // A problem with the answer itself keeps its specific reason.
+            $unavailable = $e instanceof ConnectionException
+                || ! $e instanceof AiEvaluationException
+                || str_starts_with($e->getMessage(), 'Gemini API request failed')
+                || str_starts_with($e->getMessage(), 'Gemini API key is not configured');
 
             return redirect()
                 ->route('teacher.submissions.show', $submission)
                 ->with(
                     'error',
-                    'AI evaluation failed: '.$reason
-                        .' No AI score was saved. You can retry or grade this submission manually.'
+                    $unavailable
+                        ? self::AI_UNAVAILABLE_MESSAGE.' No AI score was saved. You can grade this submission manually.'
+                        : 'AI evaluation failed: '.$e->getMessage()
+                            .' No AI score was saved. You can retry or grade this submission manually.'
                 );
         }
     }

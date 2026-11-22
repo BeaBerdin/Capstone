@@ -12,8 +12,8 @@
                     <p class="text-sm font-medium text-violet-600">EDP Verification</p>
                     <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Student Applications</h1>
                     <p class="mt-2 max-w-2xl text-sm text-slate-500">
-                        Review each new student's Study Load, then approve or reject the application.
-                        Approved students receive an email to verify their address before they can use PathWise.
+                        Review each new student's Study Load and each new teacher registration, then approve or reject it.
+                        Approved accounts receive an email to verify their address before they can use PathWise.
                     </p>
                 </div>
             </div>
@@ -25,12 +25,26 @@
             @endif
         @endforeach
 
+        {{-- Applicant filter: all, students or teachers --}}
+        <nav class="flex flex-wrap items-center gap-2" aria-label="Applicant type">
+            <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Show</span>
+            @foreach ($roleFilters as $key => $label)
+                @php $active = $role === $key; @endphp
+                <a
+                    href="{{ route('super-admin.student-applications.index', ['status' => $tab, 'role' => $key]) }}"
+                    class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition {{ $active ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:text-violet-700' }}"
+                    @if ($active) aria-current="true" @endif
+                    data-test="role-filter-{{ $key }}"
+                >{{ $label }}</a>
+            @endforeach
+        </nav>
+
         {{-- Tabs --}}
         <nav class="flex flex-wrap gap-2" aria-label="Application status">
             @foreach ($tabs as $key => $label)
                 @php $active = $tab === $key; @endphp
                 <a
-                    href="{{ route('super-admin.student-applications.index', ['status' => $key]) }}"
+                    href="{{ route('super-admin.student-applications.index', ['status' => $key, 'role' => $role]) }}"
                     class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition {{ $active ? 'border-violet-600 bg-violet-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:text-violet-700' }}"
                     @if ($active) aria-current="page" @endif
                     data-test="tab-{{ $key }}"
@@ -47,7 +61,7 @@
                 <div class="px-6 py-14 text-center">
                     <p class="text-sm font-semibold text-slate-800">No {{ strtolower($tabs[$tab]) }} applications.</p>
                     <p class="mt-1 text-xs text-slate-500">
-                        {{ $tab === 'pending' ? 'New student registrations will appear here.' : 'Decided applications will appear here.' }}
+                        {{ $tab === 'pending' ? 'New student and teacher registrations will appear here.' : 'Decided applications will appear here.' }}
                     </p>
                 </div>
             @else
@@ -55,7 +69,8 @@
                     <table class="w-full min-w-[640px] text-left text-sm">
                         <thead>
                             <tr class="border-b border-slate-100 bg-slate-50/70 text-xs text-slate-500">
-                                <th class="px-5 py-3 font-medium sm:px-6">Student</th>
+                                <th class="px-5 py-3 font-medium sm:px-6">Applicant</th>
+                                <th class="px-3 py-3 font-medium">Type</th>
                                 <th class="px-3 py-3 font-medium">Submission</th>
                                 <th class="px-3 py-3 font-medium">Submitted</th>
                                 <th class="px-3 py-3 font-medium">{{ $tab === 'pending' ? 'Status' : 'Decided by' }}</th>
@@ -68,6 +83,13 @@
                                     <td class="px-5 py-3 sm:px-6">
                                         <p class="font-semibold text-slate-800">{{ $application->user?->name ?? 'Unknown student' }}</p>
                                         <p class="text-xs text-slate-500">{{ $application->user?->email }}</p>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        @if ($application->isTeacherApplication())
+                                            <span class="inline-flex rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700" data-test="applicant-type">Teacher</span>
+                                        @else
+                                            <span class="inline-flex rounded-full bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700" data-test="applicant-type">Student</span>
+                                        @endif
                                     </td>
                                     <td class="px-3 py-3 text-slate-600">
                                         #{{ $application->submission_no }}

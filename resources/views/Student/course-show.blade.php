@@ -2050,20 +2050,35 @@
                                             </svg>
                                         </a>
 
-                                    @elseif($isPreview)
+                                    @elseif($isPreview && strtolower((string) $lesson->lesson_type) !== 'quiz')
 
-                                        <span
+                                        {{-- Free-preview lesson: opens a read-only preview before enrolling. --}}
+                                        <a
+                                            href="{{ route('student.lesson.view', $lesson) }}"
+                                            data-test="lesson-preview-link"
                                             class="inline-flex h-9
                                                    items-center
                                                    justify-center
+                                                   gap-1.5
                                                    rounded-lg
                                                    bg-violet-50
                                                    px-3
                                                    text-xs font-semibold
-                                                   text-violet-600"
+                                                   text-violet-700
+                                                   transition
+                                                   hover:bg-violet-100"
                                         >
-                                            Preview available
-                                        </span>
+                                            Preview Lesson
+                                            <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path d="m9 18 6-6-6-6"></path>
+                                            </svg>
+                                        </a>
 
                                     @else
 

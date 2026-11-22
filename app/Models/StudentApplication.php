@@ -115,6 +115,59 @@ class StudentApplication extends Model
     }
 
     /**
+     * Teacher registrations reuse this table without a Study Load: their
+     * Study Load columns are saved empty (the columns are NOT NULL), so no
+     * database change is needed.
+     */
+    public function hasStudyLoad(): bool
+    {
+        return filled($this->study_load_path);
+    }
+
+    /** True when the applicant registered as a teacher. */
+    public function isTeacherApplication(): bool
+    {
+        return (bool) $this->user?->hasRole('teacher');
+    }
+
+    /** "Teacher" or "Student", for labels. */
+    public function applicantRoleLabel(): string
+    {
+        return $this->isTeacherApplication() ? 'Teacher' : 'Student';
+    }
+
+    /**
+     * A teacher's application row (first registration or a request to be
+     * reviewed again). Must be called inside a database transaction.
+     */
+    public static function submitForTeacher(User $user, int $submissionNo): self
+    {
+        return self::create([
+            'user_id' => $user->id,
+            'submission_no' => $submissionNo,
+            'study_load_path' => '',
+            'study_load_original_name' => '',
+            'study_load_mime' => '',
+            'study_load_size' => 0,
+            'status' => self::PENDING,
+            'submitted_at' => now(),
+        ]);
+    }
+
+    /**
+     * Only applications of accounts with the given role ("student" or
+     * "teacher"); any other value leaves the query unchanged.
+     *
+     * @param  Builder<StudentApplication>  $query
+     */
+    public function scopeForApplicantRole(Builder $query, ?string $role): void
+    {
+        if (in_array($role, ['student', 'teacher'], true)) {
+            $query->whereHas('user.roles', fn (Builder $roles) => $roles->where('name', $role));
+        }
+    }
+
+    /**
      * Only the newest submission of each student.
      *
      * @param  Builder<StudentApplication>  $query

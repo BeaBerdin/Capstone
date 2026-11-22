@@ -622,12 +622,6 @@ class QuizController extends Controller
                 4
             )
         ) {
-            $seconds =
-                RateLimiter::availableIn(
-                    $minuteKey
-                );
-
-
             return redirect()
                 ->route(
                     'teacher.quiz.builder',
@@ -635,14 +629,7 @@ class QuizController extends Controller
                 )
                 ->with(
                     'error',
-                    'AI generation is temporarily limited to protect the Gemini quota. Please try again in '
-                    .
-                    max(
-                        1,
-                        $seconds
-                    )
-                    .
-                    ' seconds.'
+                    self::AI_UNAVAILABLE_MESSAGE
                 );
         }
 
@@ -660,7 +647,7 @@ class QuizController extends Controller
                 )
                 ->with(
                     'error',
-                    'PathWise has reached its 20-request AI generation safety limit for today. Please try again tomorrow.'
+                    self::AI_UNAVAILABLE_MESSAGE
                 );
         }
 
@@ -933,7 +920,7 @@ class QuizController extends Controller
                     )
                     ->with(
                         'error',
-                        'Gemini is temporarily rate-limited. Your quiz was not changed. Please wait before trying again.'
+                        self::AI_UNAVAILABLE_MESSAGE
                     );
             }
 

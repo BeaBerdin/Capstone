@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Register') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}?v=2">
     @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-white flex items-center justify-center p-4">
@@ -165,7 +167,7 @@
                         <p class="mt-2 text-xs text-gray-500">{{ __('For your security, please choose your Study Load file again.') }}</p>
                     @endif
                     <p class="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-500" data-privacy-notice>
-                        {{ __('Data privacy: your Study Load contains personal information. It is used only to verify your enrollment, is accessed only by authorized EDP (Super Admin) personnel, and is stored securely and retained according to the institution\'s data-retention policy.') }}
+                        {{ __('Your Study Load contains personal information. It is used only to verify your enrollment and can be opened only by authorized EDP personnel. It is stored in a private location that is not publicly accessible. For questions about your data, please contact the EDP office.') }}
                     </p>
                 </div>
 

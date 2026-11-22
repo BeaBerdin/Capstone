@@ -1,5 +1,4 @@
 <x-layouts::app :title="'My Courses'">
-@include('partials.soft3d')
 
 @php
     $courseEnrollments = collect($enrollments ?? []);
@@ -106,19 +105,22 @@
 </style>
 
 
-<div class="sad-page min-h-screen bg-[#f8f9fc]">
+<div class="min-h-screen bg-[#f8f9fc]">
 
     <main class="px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
 
-        <div class="mx-auto max-w-375">
+        <div class="mx-auto max-w-375
+        
+        ">
 
 
+        
             {{-- =====================================================
                 HEADER
             ====================================================== --}}
 
             {{-- Header card, as on My Certificates. --}}
-            <section class="sad-banner overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
                 <div class="relative px-6 py-6 sm:px-7">
                     <div class="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-violet-100/70 blur-3xl"></div>
 
@@ -183,7 +185,7 @@
 
 
                 {{-- TOTAL --}}
-                <div class="sad-card pw-card p-5">
+                <div class="pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -201,7 +203,7 @@
 
 
                         <div
-                            class="sad-chip sad-chip-sm sad-violet flex h-10 w-10 items-center justify-center
+                            class="flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-violet-50 text-violet-600"
                         >
 
@@ -229,7 +231,7 @@
 
 
                 {{-- ACTIVE --}}
-                <div class="sad-card pw-card p-5">
+                <div class="pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -247,7 +249,7 @@
 
 
                         <div
-                            class="sad-chip sad-chip-sm sad-sky flex h-10 w-10 items-center justify-center
+                            class="flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-blue-50 text-blue-600"
                         >
 
@@ -275,7 +277,7 @@
 
 
                 {{-- COMPLETED --}}
-                <div class="sad-card pw-card p-5">
+                <div class="pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -293,7 +295,7 @@
 
 
                         <div
-                            class="sad-chip sad-chip-sm sad-emerald flex h-10 w-10 items-center justify-center
+                            class="flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-emerald-50 font-bold text-emerald-600"
                         >
                             ✓
@@ -310,7 +312,7 @@
 
 
                 {{-- AVERAGE --}}
-                <div class="sad-card pw-card p-5">
+                <div class="pw-card p-5">
 
                     <div class="flex items-start justify-between gap-4">
 
@@ -328,7 +330,7 @@
 
 
                         <div
-                            class="sad-chip sad-chip-sm sad-amber flex h-10 w-10 items-center justify-center
+                            class="flex h-10 w-10 items-center justify-center
                                    rounded-xl bg-orange-50 text-orange-500"
                         >
 
@@ -361,7 +363,7 @@
                 FILTERS
             ====================================================== --}}
 
-            <section class="sad-card pw-card mt-6 p-5 sm:p-6">
+            <section class="pw-card mt-6 p-5 sm:p-6">
 
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -552,7 +554,7 @@
                         @else
 
                             <div
-                                class="sad-card mt-4 rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-8 text-center sm:px-6"
+                                class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-8 text-center sm:px-6"
                                 data-section-empty
                             >
 
@@ -589,11 +591,11 @@
 
                 <section
                     id="noCourseResults"
-                    class="sad-card pw-card mt-6 hidden px-6 py-16 text-center"
+                    class="pw-card mt-6 hidden px-6 py-16 text-center"
                 >
 
                     <div
-                        class="sad-chip sad-violet mx-auto flex h-14 w-14
+                        class="mx-auto flex h-14 w-14
                                items-center justify-center
                                rounded-2xl bg-slate-100
                                text-slate-500"
@@ -647,7 +649,7 @@
                     NO COURSES
                 ================================================== --}}
 
-                <section class="sad-card pw-card mt-6 px-6 py-20 text-center">
+                <section class="pw-card mt-6 px-6 py-20 text-center">
 
                     <div
                         class="mx-auto flex h-16 w-16
@@ -686,7 +688,7 @@
 
                     <a
                         href="{{ route('student.marketplace') }}"
-                        class="sad-btn-primary mt-5 inline-flex h-11
+                        class="mt-5 inline-flex h-11
                                items-center justify-center
                                gap-2 rounded-xl
                                bg-violet-600 px-5

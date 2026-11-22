@@ -1369,7 +1369,8 @@
         $pwSearchItems = collect([
             ['label' => 'Dashboard', 'meta' => 'Overview', 'url' => route('super_admin.dashboard')],
             ['label' => 'User Management', 'meta' => 'Manage users and roles', 'url' => route('users.index')],
-            ['label' => 'Student Applications', 'meta' => 'Verify Study Loads and approve students', 'url' => route('super-admin.student-applications.index')],
+            ['label' => 'Audit Log', 'meta' => 'Role, verification and approval history', 'url' => route('super-admin.audit-log.index')],
+            ['label' => 'Student Applications', 'meta' => 'Approve student and teacher registrations', 'url' => route('super-admin.student-applications.index')],
             ['label' => 'Transactions', 'meta' => 'Review transactions', 'url' => route('super_admin.transactions.index')],
             ['label' => 'Settings', 'meta' => 'Profile and security', 'url' => route('profile.edit')],
         ]);
@@ -1410,6 +1411,7 @@
             ['label' => 'Dashboard', 'meta' => 'Learning overview', 'url' => route('student.dashboard')],
             ['label' => 'Marketplace', 'meta' => 'Browse courses', 'url' => route('student.marketplace')],
             ['label' => 'My Courses', 'meta' => 'Your enrolled courses', 'url' => route('student.my-courses')],
+            ['label' => 'Course Invitations', 'meta' => 'Join a course with an invite code', 'url' => route('student.invitations.index')],
             ['label' => 'Assignments', 'meta' => 'View and submit course assignments', 'url' => route('student.assignments.index')],
             ['label' => 'Learning Paths', 'meta' => 'Personalized learning paths', 'url' => route('student.learning-paths')],
             ['label' => 'AI Recommendations', 'meta' => 'Recommended courses', 'url' => route('student.recommendations')],
@@ -1658,6 +1660,21 @@
                                 {{ $pwPendingApplications }}
                             </span>
                         @endif
+                    </a>
+
+                    {{-- Audit Log (read-only) --}}
+                    <a
+                        href="{{ route('super-admin.audit-log.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('super-admin.audit-log.*') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('super-admin.audit-log.*')) aria-current="page" @endif
+                        data-test="nav-audit-log"
+                    >
+                        <svg class="pw-nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6l-8-3Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15.5h4M9 8.5h6" />
+                        </svg>
+                        <span>Audit Log</span>
                     </a>
 
                      {{-- Department Management --}}
@@ -2740,6 +2757,46 @@
                         <span>
                             My Courses
                         </span>
+
+                    </a>
+
+
+                    {{-- COURSE INVITATIONS --}}
+                    @php
+                        $pwOpenInvitations = \App\Models\CourseInvitation::query()
+                            ->where('student_id', auth()->id())
+                            ->whereNull('accepted_at')
+                            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                            ->whereHas('course', fn ($course) => $course->where('status', 'published'))
+                            ->count();
+                    @endphp
+                    <a
+                        href="{{ route('student.invitations.index') }}"
+                        wire:navigate
+                        class="pw-nav-link {{ request()->routeIs('student.invitations.*') || request()->routeIs('course-invitations.show') ? 'is-active' : '' }}"
+                        @if (request()->routeIs('student.invitations.*')) aria-current="page" @endif
+                        data-test="nav-course-invitations"
+                    >
+                        <svg
+                            class="pw-nav-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m3 7 9 6 9-6" />
+                        </svg>
+
+                        <span>
+                            Course Invitations
+                        </span>
+
+                        @if ($pwOpenInvitations > 0)
+                            <span class="ml-auto rounded-full bg-violet-600 px-2 py-0.5 text-[11px] font-bold text-white" data-test="nav-course-invitations-count">{{ $pwOpenInvitations }}</span>
+                        @endif
 
                     </a>
 

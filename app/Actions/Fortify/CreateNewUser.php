@@ -97,6 +97,10 @@ class CreateNewUser implements CreatesNewUsers
 
                 if ($isStudent) {
                     StudyLoads::submit($user, $input['study_load'], 1, $storedPath);
+                } else {
+                    // A self-registered teacher also waits for the EDP's
+                    // approval (no Study Load), in the same queue.
+                    StudentApplication::submitForTeacher($user, 1);
                 }
 
                 return $user;
@@ -108,9 +112,7 @@ class CreateNewUser implements CreatesNewUsers
         }
 
         // Tell the EDP only once the application is safely saved.
-        if ($isStudent) {
-            StudyLoads::notifyEdp($user->latestStudentApplication()->first(), resubmission: false);
-        }
+        StudyLoads::notifyEdp($user->latestStudentApplication()->first(), resubmission: false);
 
         return $user;
     }

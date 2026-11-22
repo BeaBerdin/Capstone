@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 /*
 | Student registration with a Study Load, and what a student may do while the
-| application waits for the Super Admin (EDP). Teachers are not affected.
+| application waits for the Super Admin (EDP). Self-registered teachers wait
+| in the same queue without a Study Load (see TeacherApprovalTest).
 */
 
 beforeEach(function () {
@@ -138,7 +139,7 @@ test('a Study Load of exactly 10 MB is accepted', function () {
     expect(StudentApplication::count())->toBe(1);
 });
 
-test('a teacher registers without a Study Load, gets no application and keeps the usual verification email', function () {
+test('a teacher registers without a Study Load and waits for the EDP like a student', function () {
     Notification::fake();
 
     $this->post(route('register.store'), registrationPayload([
@@ -146,18 +147,21 @@ test('a teacher registers without a Study Load, gets no application and keeps th
         'role' => 'teacher',
         'study_load' => null,
     ]))->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('student-application.status', absolute: false));
 
     $teacher = User::where('email', 'teacher@example.com')->sole();
+    $application = $teacher->studentApplications()->sole();
 
     expect($teacher->hasRole('teacher'))->toBeTrue()
-        ->and($teacher->studentApplications()->count())->toBe(0)
-        ->and($teacher->awaitingStudentApproval())->toBeFalse();
+        ->and($application->status)->toBe(StudentApplication::PENDING)
+        ->and($application->hasStudyLoad())->toBeFalse()
+        ->and($teacher->awaitingStudentApproval())->toBeFalse()
+        ->and($teacher->awaitingTeacherApproval())->toBeTrue();
 
-    Notification::assertSentTo($teacher, VerifyEmail::class);
+    // No verification email until the EDP approves (the approval carries it).
+    Notification::assertNotSentTo($teacher, VerifyEmail::class);
 
-    // Existing teacher flow: verify first, then the teacher dashboard.
-    $this->get(route('dashboard'))->assertRedirect(route('verification.notice'));
+    $this->get(route('dashboard'))->assertRedirect(route('student-application.status'));
 });
 
 test('a Study Load sent with a teacher registration is ignored and not stored', function () {
@@ -167,7 +171,9 @@ test('a Study Load sent with a teacher registration is ignored and not stored', 
         'study_load' => UploadedFile::fake()->create('sneaky.pdf', 100, 'application/pdf'),
     ]))->assertSessionHasNoErrors();
 
-    expect(StudentApplication::count())->toBe(0)
+    // The teacher's application row has no Study Load and no file is kept.
+    expect(StudentApplication::count())->toBe(1)
+        ->and(StudentApplication::sole()->hasStudyLoad())->toBeFalse()
         ->and(Storage::disk('local')->allFiles())->toBe([])
         ->and(Storage::disk('public')->allFiles())->toBe([]);
 });
@@ -250,8 +256,12 @@ test('the registration form uploads files and shows the required Study Load for 
         ->toContain('name="study_load"')
         ->toContain('data-study-load-section')
         ->toContain('accept=".pdf,.jpg,.jpeg,.png')
-        ->toContain('Data privacy: your Study Load contains personal information.')
-        ->toContain('authorized EDP (Super Admin) personnel');
+        ->toContain('Your Study Load contains personal information. It is used only to verify your enrollment and can be opened only by authorized EDP personnel. It is stored in a private location that is not publicly accessible. For questions about your data, please contact the EDP office.')
+        // No retention period has been approved, so none is promised.
+        ->not->toContain('retained according to')
+        ->not->toContain('retention policy')
+        // Upload instructions, file types and the 10 MB limit are unchanged.
+        ->toContain('Upload your current Study Load so the EDP office can verify that you are enrolled. PDF, JPG or PNG, up to 10 MB.');
 
     // Student is the default: the field is visible and required.
     $section = substr($html, strpos($html, '<div data-study-load-section'), 2500);
@@ -472,7 +482,7 @@ test('the Super Admin cannot mark a pending or rejected applicant as verified', 
     $student = applicant($status);
 
     $this->actingAs(pathwiseUser('super_admin'))
-        ->patch(route('users.verify-email', $student))
+        ->patch(route('users.verify-email', $student), ['reason' => 'Confirmed at the EDP office'])
         ->assertSessionHas('error');
 
     expect($student->fresh()->hasVerifiedEmail())->toBeFalse();
@@ -483,8 +493,8 @@ test('the Super Admin can still mark an approved or existing account as verified
     $existing = pathwiseUser('teacher', ['email_verified_at' => null]);
     $edp = pathwiseUser('super_admin');
 
-    $this->actingAs($edp)->patch(route('users.verify-email', $approved))->assertSessionHas('success');
-    $this->actingAs($edp)->patch(route('users.verify-email', $existing))->assertSessionHas('success');
+    $this->actingAs($edp)->patch(route('users.verify-email', $approved), ['reason' => 'Confirmed at the EDP office'])->assertSessionHas('success');
+    $this->actingAs($edp)->patch(route('users.verify-email', $existing), ['reason' => 'Confirmed at the EDP office'])->assertSessionHas('success');
 
     expect($approved->fresh()->hasVerifiedEmail())->toBeTrue()
         ->and($existing->fresh()->hasVerifiedEmail())->toBeTrue();

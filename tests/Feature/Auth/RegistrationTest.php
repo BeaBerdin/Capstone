@@ -57,7 +57,7 @@ test('users cannot self-register as an administrator', function () {
     $this->assertGuest();
 });
 
-test('a teacher can register and is asked to verify their email', function () {
+test('a teacher can register and waits for the EDP before verifying their email', function () {
     Illuminate\Support\Facades\Notification::fake();
 
     $this->post(route('register.store'), [
@@ -74,12 +74,14 @@ test('a teacher can register and is asked to verify their email', function () {
     expect($user->hasRole('teacher'))->toBeTrue()
         ->and($user->hasRole('student'))->toBeFalse()
         ->and($user->hasRole('admin'))->toBeFalse()
-        ->and($user->hasVerifiedEmail())->toBeFalse();
+        ->and($user->hasVerifiedEmail())->toBeFalse()
+        ->and($user->awaitingTeacherApproval())->toBeTrue();
 
-    Illuminate\Support\Facades\Notification::assertSentTo($user, Illuminate\Auth\Notifications\VerifyEmail::class);
+    // The verification link is sent with the EDP's approval, not now.
+    Illuminate\Support\Facades\Notification::assertNotSentTo($user, Illuminate\Auth\Notifications\VerifyEmail::class);
 
-    // Teacher pages wait until the email is verified.
-    $this->get(route('teacher.dashboard'))->assertRedirect(route('verification.notice'));
+    // Teacher pages wait for the EDP's approval (then email verification).
+    $this->get(route('teacher.dashboard'))->assertRedirect(route('student-application.status'));
 });
 
 test('registration requires choosing student or teacher', function () {

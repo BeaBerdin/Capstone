@@ -10,6 +10,8 @@
     $fileUrl = route('super-admin.student-applications.study-load', $application);
     $isImage = in_array($application->study_load_mime, ['image/jpeg', 'image/png'], true);
     $isPdf = $application->study_load_mime === 'application/pdf';
+    $isTeacher = $application->isTeacherApplication();
+    $who = $isTeacher ? 'teacher' : 'student';
 @endphp
 
     <div class="space-y-6 px-5 py-7 sm:px-6 lg:px-8 lg:py-9">
@@ -28,6 +30,19 @@
 
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
 
+            @if (! $application->hasStudyLoad())
+            {{-- Teacher registration: no Study Load --}}
+            <section class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white" data-test="teacher-registration">
+                <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Teacher registration · Submission #{{ $application->submission_no }}</p>
+                    <h1 class="mt-0.5 text-lg font-bold text-slate-900">{{ $student?->name ?? 'Unknown teacher' }}</h1>
+                </div>
+                <div class="space-y-3 px-5 py-6 text-sm leading-6 text-slate-600 sm:px-6">
+                    <p>This person registered as a <strong>Teacher</strong>. Teachers do not upload a Study Load.</p>
+                    <p>Please confirm with the department that <strong>{{ $student?->email }}</strong> belongs to a faculty member before approving. Until it is approved, the account cannot open any teacher page or create courses.</p>
+                </div>
+            </section>
+            @else
             {{-- Study Load preview --}}
             <section class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
@@ -55,6 +70,7 @@
                     {{ $application->study_load_original_name }} · {{ strtoupper(pathinfo($application->study_load_original_name, PATHINFO_EXTENSION)) ?: 'FILE' }} · {{ $application->sizeForHumans() }}
                 </p>
             </section>
+            @endif
 
             <div class="space-y-6">
 
@@ -66,6 +82,7 @@
                     </div>
 
                     <dl class="mt-4 space-y-3 text-sm">
+                        <div><dt class="text-xs text-slate-500">Registered as</dt><dd class="font-semibold text-slate-800" data-test="applicant-type">{{ $isTeacher ? 'Teacher' : 'Student' }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Name</dt><dd class="font-semibold text-slate-800">{{ $student?->name }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Email</dt><dd class="break-all font-semibold text-slate-800">{{ $student?->email }}</dd></div>
                         <div><dt class="text-xs text-slate-500">Registered</dt><dd class="text-slate-700">{{ $student?->created_at?->format('M d, Y g:i A') }}</dd></div>
@@ -82,7 +99,7 @@
                     @if ($application->isPending())
                         <div class="mt-6 space-y-4 border-t border-slate-100 pt-5">
                             <form method="POST" action="{{ route('super-admin.student-applications.approve', $application) }}"
-                                  onsubmit="if (!confirm('Approve this application? The student will be emailed a link to verify their email.')) { return false; } this.querySelector('button').disabled = true;">
+                                  onsubmit="if (!confirm('Approve this application? The {{ $who }} will be emailed a link to verify their email.')) { return false; } this.querySelector('button').disabled = true;">
                                 @csrf
                                 <button type="submit" class="sad-btn-primary inline-flex h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-700" data-test="approve-button">
                                     Approve application
@@ -94,7 +111,7 @@
                                 @csrf
                                 <label for="rejection_reason" class="block text-sm font-semibold text-slate-700">Reason for rejection</label>
                                 <textarea id="rejection_reason" name="rejection_reason" rows="4" required minlength="10" maxlength="2000"
-                                          placeholder="Tell the student what to correct (at least 10 characters)."
+                                          placeholder="Tell the {{ $who }} what to correct (at least 10 characters)."
                                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-violet-500 focus:ring-violet-500">{{ old('rejection_reason') }}</textarea>
                                 @error('rejection_reason')
                                     <p class="text-xs font-medium text-red-600">{{ $message }}</p>
@@ -124,7 +141,9 @@
                                 @if ($item->rejection_reason)
                                     <p class="mt-1 whitespace-pre-line text-xs text-red-700">{{ $item->rejection_reason }}</p>
                                 @endif
-                                <a href="{{ route('super-admin.student-applications.study-load', $item) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-violet-700 hover:underline">Open Study Load</a>
+                                @if ($item->hasStudyLoad())
+                                    <a href="{{ route('super-admin.student-applications.study-load', $item) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-violet-700 hover:underline">Open Study Load</a>
+                                @endif
                             </li>
                         @endforeach
                     </ol>
