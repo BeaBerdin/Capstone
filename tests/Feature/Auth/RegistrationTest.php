@@ -155,11 +155,11 @@ test('a curly apostrophe from a phone keyboard is accepted and saved as a straig
     expect(App\Models\User::where('email', 'juan@example.com')->value('name'))->toBe("D'Angelo O'Neil");
 });
 
-test('first and last name are required and the middle initial is one letter', function () {
+test('first and last name are required and the middle initial is one or two letters', function () {
     registerWith(['first_name' => '', 'last_name' => ''])
         ->assertSessionHasErrors(['first_name', 'last_name']);
 
-    registerWith(['first_name' => 'Juan', 'middle_initial' => 'Dc', 'last_name' => 'Cruz'])
+    registerWith(['first_name' => 'Juan', 'middle_initial' => 'D1', 'last_name' => 'Cruz'])
         ->assertSessionHasErrors('middle_initial');
 
     registerWith(['first_name' => 'Juan1', 'last_name' => 'Cruz'])

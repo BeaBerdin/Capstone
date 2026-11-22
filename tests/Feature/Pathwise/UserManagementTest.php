@@ -37,7 +37,8 @@ test('teacher account screens explain EDP review and link existing teachers to t
 test('the super admin can create an administrator account', function () {
     $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('users.store'), [
-            'name' => 'Department Head',
+            'first_name' => 'Department',
+            'last_name' => 'Head',
             'email' => 'head@uclm.edu.ph',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
@@ -56,7 +57,8 @@ test('the super admin can create an administrator account', function () {
 test('creating an account rejects an unknown role', function () {
     $this->actingAs(pathwiseUser('super_admin'))
         ->post(route('users.store'), [
-            'name' => 'Someone',
+            'first_name' => 'Someone',
+            'last_name' => 'Else',
             'email' => 'someone@uclm.edu.ph',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
@@ -70,7 +72,8 @@ test('creating an account rejects an unknown role', function () {
 test('only the super admin can create accounts', function () {
     $this->actingAs(pathwiseUser('admin'))
         ->post(route('users.store'), [
-            'name' => 'Sneaky',
+            'first_name' => 'Sneaky',
+            'last_name' => 'User',
             'email' => 'sneaky@uclm.edu.ph',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',

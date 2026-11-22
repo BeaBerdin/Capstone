@@ -40,6 +40,9 @@ use LogicException;
  */
 #[Fillable([
     'name',
+    'first_name',
+    'middle_initial',
+    'last_name',
     'email',
     'password',
     'profile_photo_path',
@@ -61,6 +64,15 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             if ($user->isDirty('email')) {
                 $user->email_verified_at = null;
             }
+
+            // The name was changed as one field (e.g. in profile settings):
+            // the separate parts no longer match, so they are cleared and the
+            // forms fall back to the full name until it is edited in parts.
+            if ($user->isDirty('name') && ! $user->isDirty(['first_name', 'middle_initial', 'last_name'])) {
+                $user->first_name = null;
+                $user->middle_initial = null;
+                $user->last_name = null;
+            }
         });
 
         static::deleting(function (self $user): void {
@@ -68,6 +80,38 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
                 'PATHWISE accounts are deactivated, not deleted, so their records are kept.'
             );
         });
+    }
+
+    /**
+     * "Juan", "d", "Dela Cruz" -> "Juan D. Dela Cruz"; no initial -> "Juan Dela Cruz".
+     * Extra spaces are collapsed; the initial is upper case with one period.
+     */
+    public static function composeName(string $first, ?string $middleInitial, string $last): string
+    {
+        $tidy = fn (string $part) => trim((string) preg_replace('/\s+/u', ' ', $part));
+
+        $initial = rtrim($tidy((string) $middleInitial), '.');
+        $initial = $initial === '' ? '' : mb_strtoupper($initial).'.';
+
+        return implode(' ', array_filter([$tidy($first), $initial, $tidy($last)], fn ($part) => $part !== ''));
+    }
+
+    /**
+     * The separate name parts (tidied) for storing, plus the combined name.
+     *
+     * @return array{name: string, first_name: string, middle_initial: string|null, last_name: string}
+     */
+    public static function nameAttributes(string $first, ?string $middleInitial, string $last): array
+    {
+        $tidy = fn (string $part) => trim((string) preg_replace('/\s+/u', ' ', $part));
+        $initial = mb_strtoupper(rtrim($tidy((string) $middleInitial), '.'));
+
+        return [
+            'name' => self::composeName($first, $middleInitial, $last),
+            'first_name' => $tidy($first),
+            'middle_initial' => $initial === '' ? null : $initial,
+            'last_name' => $tidy($last),
+        ];
     }
 
     /**

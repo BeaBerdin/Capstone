@@ -20,12 +20,31 @@
             </x-slot:icon>
 
             <div class="grid gap-5 sm:grid-cols-2">
-                <x-pw.field label="Full Name" for="name" required>
-                    <input id="name" type="text" name="name" required maxlength="255"
-                           value="{{ old('name') }}"
-                           placeholder="e.g. Juan Dela Cruz"
-                           class="sad-field">
-                </x-pw.field>
+<div class="grid gap-5 sm:grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)] sm:col-span-2" data-test="name-fields">
+                    <x-pw.field label="First Name" for="first_name" required>
+                        <input id="first_name" type="text" name="first_name" required maxlength="100"
+                               value="{{ old('first_name') }}"
+                               placeholder="e.g. Juan"
+                               autocomplete="given-name"
+                               class="sad-field">
+                    </x-pw.field>
+
+                    <x-pw.field label="Middle Initial" for="middle_initial" hint="Optional.">
+                        <input id="middle_initial" type="text" name="middle_initial" maxlength="2"
+                               value="{{ old('middle_initial') }}"
+                               placeholder="M.I."
+                               autocomplete="additional-name"
+                               class="sad-field uppercase">
+                    </x-pw.field>
+
+                    <x-pw.field label="Last Name" for="last_name" required>
+                        <input id="last_name" type="text" name="last_name" required maxlength="100"
+                               value="{{ old('last_name') }}"
+                               placeholder="e.g. Dela Cruz"
+                               autocomplete="family-name"
+                               class="sad-field">
+                    </x-pw.field>
+                </div>
 
                 <x-pw.field label="Email Address" for="email" required hint="Must be unique.">
                     <input id="email" type="email" name="email" required maxlength="255"

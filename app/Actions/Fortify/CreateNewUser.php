@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
+use App\Concerns\PersonNameRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Role;
 use App\Models\StudentApplication;
@@ -16,7 +17,7 @@ use Throwable;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules, ProfileValidationRules;
+    use PasswordValidationRules, PersonNameRules, ProfileValidationRules;
 
     /**
      * Validate and create a newly registered user.
@@ -29,22 +30,11 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        // Phone keyboards often type a curly apostrophe (’); it is accepted
-        // and saved as a straight one, so "O’Neil" and "O'Neil" are the same.
-        foreach (['first_name', 'last_name'] as $field) {
-            if (isset($input[$field]) && is_string($input[$field])) {
-                $input[$field] = str_replace(["\u{2019}", "\u{2018}"], "'", $input[$field]);
-            }
-        }
-
-        // Letters (any language), spaces, hyphens, apostrophes and periods,
-        // e.g. "Ma. Clara", "Dela Cruz", "O'Neil".
-        $namePattern = "/^[\pL\pM][\pL\pM .'\-]*$/u";
+        // Curly apostrophes become straight ones (see PersonNameRules).
+        $input = $this->normalizePersonName($input);
 
         Validator::make($input, [
-            'first_name' => ['required', 'string', 'max:100', 'regex:'.$namePattern],
-            'middle_initial' => ['nullable', 'string', 'regex:/^\pL\.?$/u'],
-            'last_name' => ['required', 'string', 'max:100', 'regex:'.$namePattern],
+            ...$this->personNameRules(),
             'email' => $this->emailRules(),
             'password' => $this->passwordRules(),
             // Only these two roles can be chosen; anything else is refused.
@@ -56,11 +46,9 @@ class CreateNewUser implements CreatesNewUsers
             // EDP to verify. For a student the field is excluded and ignored.
             'teacher_id' => ['exclude_unless:role,teacher', ...StudentApplication::teacherIdRules()],
         ], [
+            ...$this->personNameMessages(),
             'first_name.required' => 'Please enter your first name.',
-            'first_name.regex' => 'The first name may only contain letters, spaces, hyphens, apostrophes and periods.',
-            'middle_initial.regex' => 'The middle initial must be a single letter, for example "D" or "D.".',
             'last_name.required' => 'Please enter your last name.',
-            'last_name.regex' => 'The last name may only contain letters, spaces, hyphens, apostrophes and periods.',
             'role.required' => 'Please select whether you are registering as a student or a teacher.',
             'role.in' => 'The selected role is invalid.',
             ...StudentApplication::studyLoadMessages(),
@@ -87,7 +75,7 @@ class CreateNewUser implements CreatesNewUsers
         try {
             $user = DB::transaction(function () use ($input, $name, $isStudent, &$storedPath, &$application) {
                 $user = User::create([
-                    'name' => $name,
+                    ...User::nameAttributes($input['first_name'], $input['middle_initial'] ?? null, $input['last_name']),
                     'email' => $input['email'],
                     'password' => $input['password'],
                 ]);
@@ -131,11 +119,6 @@ class CreateNewUser implements CreatesNewUsers
      */
     public static function fullName(string $first, ?string $middleInitial, string $last): string
     {
-        $tidy = fn (string $part) => trim(preg_replace('/\s+/u', ' ', $part));
-
-        $initial = $tidy((string) $middleInitial);
-        $initial = $initial === '' ? '' : mb_strtoupper(mb_substr($initial, 0, 1)).'.';
-
-        return implode(' ', array_filter([$tidy($first), $initial, $tidy($last)], fn ($part) => $part !== ''));
+        return User::composeName($first, $middleInitial, $last);
     }
 }

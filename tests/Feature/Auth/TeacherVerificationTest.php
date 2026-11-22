@@ -343,9 +343,9 @@ test('admin email edits require new approval and invalidate a prior link even if
     expect($teacher->fresh()->hasVerifiedEmail())->toBeTrue();
 
     $edit = route('users.update', $teacher);
-    $this->actingAs($edp)->put($edit, ['name' => 'Tina Santos', 'email' => 'new-address@example.test']);
+    $this->actingAs($edp)->put($edit, ['first_name' => 'Tina', 'last_name' => 'Santos', 'email' => 'new-address@example.test']);
     $stale = withFacultyDocument($teacher->fresh()->currentTeacherApplication());
-    $this->put($edit, ['name' => 'Tina Santos', 'email' => $firstEmail]);
+    $this->put($edit, ['first_name' => 'Tina', 'last_name' => 'Santos', 'email' => $firstEmail]);
     $this->post(route('super-admin.student-applications.approve', $stale), ['faculty_confirmed' => '1'])
         ->assertSessionHas('error');
     $teacher = $teacher->fresh();
@@ -412,7 +412,8 @@ test('EDP-created teachers are pending and manual or bulk verification cannot ve
     Role::firstOrCreate(['name' => 'teacher']);
 
     $this->actingAs($edp)->post(route('users.store'), [
-        'name' => 'Tina Santos',
+        'first_name' => 'Tina',
+        'last_name' => 'Santos',
         'email' => 'edp-created@example.test',
         'password' => 'SafePass123!',
         'password_confirmation' => 'SafePass123!',

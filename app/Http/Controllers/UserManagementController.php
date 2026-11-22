@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\PasswordValidationRules;
+use App\Concerns\PersonNameRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\AuditLog;
 use App\Models\Department;
@@ -23,7 +24,7 @@ use Illuminate\Validation\Rule;
  */
 class UserManagementController extends Controller
 {
-    use PasswordValidationRules, ProfileValidationRules;
+    use PasswordValidationRules, PersonNameRules, ProfileValidationRules;
 
     public function index()
     {
@@ -56,19 +57,24 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge($this->normalizePersonName($request->only(['first_name', 'middle_initial', 'last_name'])));
+
         $validated = $request->validate([
-            'name' => $this->nameRules(),
+            ...$this->personNameRules(),
             // RFC format check only (no DNS lookup), so accounts can be
             // created even when the server has no internet access.
             'email' => ['required', 'string', 'email:rfc', 'max:255', Rule::unique(User::class)],
             'password' => $this->passwordRules(),
             'role' => ['required', 'string', Rule::exists('roles', 'name')],
             'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')],
-        ]);
+        ], $this->personNameMessages());
 
-        $review = DB::transaction(function () use ($validated) {
+        $nameAttributes = User::nameAttributes($validated['first_name'], $validated['middle_initial'] ?? null, $validated['last_name']);
+        $validated['name'] = $nameAttributes['name'];
+
+        $review = DB::transaction(function () use ($validated, $nameAttributes) {
             $user = User::create([
-                'name' => $validated['name'],
+                ...$nameAttributes,
                 'email' => $validated['email'],
                 'password' => $validated['password'],
                 'department_id' => $validated['department_id'] ?? null,
@@ -236,8 +242,17 @@ class UserManagementController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $request->merge($this->normalizePersonName($request->only(['first_name', 'middle_initial', 'last_name'])));
+
+        // An account from before the name was split (no parts yet) may be
+        // saved with the name fields left empty: its current name is kept.
+        $keepLegacyName = $user->first_name === null
+            && blank($request->input('first_name'))
+            && blank($request->input('last_name'))
+            && blank($request->input('middle_initial'));
+
         $validated = $request->validate([
-            'name' => $this->nameRules(),
+            ...$this->personNameRules(required: ! $keepLegacyName),
             // RFC format check only (no DNS lookup), like account creation.
             'email' => [
                 'required',
@@ -246,11 +261,17 @@ class UserManagementController extends Controller
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
-        ]);
+        ], $this->personNameMessages());
+
+        $attributes = ['email' => $validated['email']];
+
+        if (! $keepLegacyName) {
+            $attributes += User::nameAttributes($validated['first_name'], $validated['middle_initial'] ?? null, $validated['last_name']);
+        }
 
         $before = ['Name' => $user->name, 'Email' => $user->email];
 
-        $user->updateAccountIdentity($validated);
+        $user->updateAccountIdentity($attributes);
 
         $after = ['Name' => $user->name, 'Email' => $user->email];
         $changed = array_keys(array_diff_assoc($after, $before));

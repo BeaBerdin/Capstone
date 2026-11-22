@@ -44,7 +44,8 @@ test('the Super Admin email change queues a new teacher review and clears old ve
 
     $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('users.update', $teacher), [
-            'name' => 'Maria Santos',
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
             'email' => 'maria.santos@example.com',
         ])
         ->assertRedirect(route('users.index'))
@@ -66,7 +67,8 @@ test('changing only the name keeps the email verification as it was', function (
 
     $this->actingAs(pathwiseUser('super_admin'))
         ->put(route('users.update', $student), [
-            'name' => 'Renamed Student',
+            'first_name' => 'Renamed',
+            'last_name' => 'Student',
             'email' => 'same@example.com',
         ])
         ->assertSessionHasNoErrors();
@@ -81,16 +83,17 @@ test('the email must be valid and not used by another account', function () {
     $superAdmin = pathwiseUser('super_admin');
 
     $this->actingAs($superAdmin)
-        ->put(route('users.update', $student), ['name' => 'Keep Me', 'email' => 'taken@example.com'])
+        ->put(route('users.update', $student), ['first_name' => 'Keep', 'last_name' => 'Me', 'email' => 'taken@example.com'])
         ->assertSessionHasErrors('email');
 
     $this->actingAs($superAdmin)
-        ->put(route('users.update', $student), ['name' => 'Keep Me', 'email' => 'not-an-email'])
+        ->put(route('users.update', $student), ['first_name' => 'Keep', 'last_name' => 'Me', 'email' => 'not-an-email'])
         ->assertSessionHasErrors('email');
 
     $this->actingAs($superAdmin)
-        ->put(route('users.update', $student), ['name' => '', 'email' => 'mine@example.com'])
-        ->assertSessionHasErrors('name');
+        // A first name without a last name is refused.
+        ->put(route('users.update', $student), ['first_name' => 'Keep', 'last_name' => '', 'email' => 'mine@example.com'])
+        ->assertSessionHasErrors('last_name');
 
     expect($student->fresh()->email)->toBe('mine@example.com')
         ->and($student->fresh()->name)->toBe('Keep Me');
@@ -115,7 +118,7 @@ test('only the Super Admin can verify or edit accounts', function (string $role)
     $this->actingAs($user)->patch(route('users.verify-email', $student))->assertForbidden();
     $this->actingAs($user)->get(route('users.edit', $student))->assertForbidden();
     $this->actingAs($user)
-        ->put(route('users.update', $student), ['name' => 'Hacked', 'email' => 'hacked@example.com'])
+        ->put(route('users.update', $student), ['first_name' => 'Hacked', 'last_name' => 'User', 'email' => 'hacked@example.com'])
         ->assertForbidden();
 
     expect($student->fresh()->name)->toBe('Untouched')

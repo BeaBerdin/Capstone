@@ -225,7 +225,8 @@ test('a teacher whose pending review has no document uploads it from the status 
     $edp = pathwiseUser('super_admin');
 
     $this->actingAs($edp)->post(route('users.store'), [
-        'name' => 'Faculty Member',
+        'first_name' => 'Faculty',
+        'last_name' => 'Member',
         'email' => 'faculty@uclm.edu.ph',
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',

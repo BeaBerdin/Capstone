@@ -273,7 +273,7 @@ test('teachers and students cannot reach administrator or super admin actions', 
             ->and($this->put(route('users.update-role', $f['student']), ['role' => 'super_admin'])->getStatusCode())->toBe(403)
             ->and($this->patch(route('users.update-status', $f['owner']))->getStatusCode())->toBe(403)
             ->and($this->post(route('users.store'), [
-                'name' => 'Sneaky', 'email' => 'sneaky@example.com', 'role' => 'super_admin',
+                'first_name' => 'Sneaky', 'last_name' => 'User', 'email' => 'sneaky@example.com', 'role' => 'super_admin',
                 'password' => 'Password123!', 'password_confirmation' => 'Password123!',
             ])->getStatusCode())->toBe(403)
             ->and($this->delete(route('enrollments.destroy', $f['enrollment']))->getStatusCode())->toBe(403);
@@ -319,7 +319,8 @@ test('the super admin create account page opens and keeps input after a validati
     $this->actingAs($superAdmin)
         ->from(route('users.create'))
         ->post(route('users.store'), [
-            'name' => 'New Head',
+            'first_name' => 'New',
+            'last_name' => 'Head',
             'email' => 'not-an-email',
             'role' => 'admin',
             'password' => 'x',

@@ -17,7 +17,7 @@ test('Super Admin creates a Department Admin with a persisted department relatio
     $this->actingAs(pathwiseUser('super_admin'))
         ->get(route('users.create'))->assertOk()->assertSee('name="department_id"', false);
     $this->post(route('users.store'), [
-        'name' => 'Computing Head', 'email' => 'head@example.test',
+        'first_name' => 'Computing', 'last_name' => 'Head', 'email' => 'head@example.test',
         'password' => 'SafePassword123!', 'password_confirmation' => 'SafePassword123!',
         'role' => 'admin', 'department_id' => $department->id,
     ])->assertSessionHasNoErrors()->assertRedirect(route('users.index'));
@@ -83,7 +83,7 @@ test('invalid department IDs reject assignment and account creation without chan
         ->assertSessionHasErrors('department_id');
     expect((int) $admin->fresh()->department_id)->toBe($department->id);
     $this->post(route('users.store'), [
-        'name' => 'Invalid Head', 'email' => 'invalid@example.test',
+        'first_name' => 'Invalid', 'last_name' => 'Head', 'email' => 'invalid@example.test',
         'password' => 'SafePassword123!', 'password_confirmation' => 'SafePassword123!',
         'role' => 'admin', 'department_id' => 999999,
     ])->assertSessionHasErrors('department_id');
@@ -97,7 +97,7 @@ test('non Super Admin actors cannot assign departments or create Department Admi
     $this->actingAs(pathwiseRoleBoundaryUser($role))->get(route('departments.assign'))->assertForbidden();
     $this->post(route('departments.assign.store'), ['user_id' => $target->id, 'department_id' => $new->id])->assertForbidden();
     $this->post(route('users.store'), [
-        'name' => 'Unauthorized Head', 'email' => 'unauthorized@example.test',
+        'first_name' => 'Unauthorized', 'last_name' => 'Head', 'email' => 'unauthorized@example.test',
         'password' => 'SafePassword123!', 'password_confirmation' => 'SafePassword123!',
         'role' => 'admin', 'department_id' => $new->id,
     ])->assertForbidden();

@@ -284,7 +284,7 @@ test('mark verified, activate, deactivate and name/email edits are logged', func
     $this->actingAs($edp)->patch(route('users.verify-email', $admin))->assertSessionHas('success');
     $this->actingAs($edp)->patch(route('users.update-status', $admin), ['is_active' => 0])->assertSessionHas('success');
     $this->actingAs($edp)->patch(route('users.update-status', $admin), ['is_active' => 1])->assertSessionHas('success');
-    $this->actingAs($edp)->put(route('users.update', $admin), ['name' => 'New Name', 'email' => 'new@uclm.edu.ph'])->assertSessionHasNoErrors();
+    $this->actingAs($edp)->put(route('users.update', $admin), ['first_name' => 'New', 'last_name' => 'Name', 'email' => 'new@uclm.edu.ph'])->assertSessionHasNoErrors();
 
     expect(AuditLog::orderBy('id')->pluck('action')->all())->toBe([
         AuditLog::EMAIL_VERIFIED,
@@ -347,7 +347,8 @@ test('the audit log never stores passwords or file paths', function () {
         'current_password' => 'Edp-Password-123',
     ]);
     $this->actingAs($edp)->post(route('users.store'), [
-        'name' => 'New Admin',
+        'first_name' => 'New',
+        'last_name' => 'Admin',
         'email' => 'new.admin@uclm.edu.ph',
         'password' => 'Brand-New-Pass-456',
         'password_confirmation' => 'Brand-New-Pass-456',
