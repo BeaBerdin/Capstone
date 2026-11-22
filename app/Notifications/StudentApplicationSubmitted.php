@@ -4,8 +4,10 @@ namespace App\Notifications;
 
 use App\Models\StudentApplication;
 use App\Notifications\Channels\SafeMailChannel;
+use App\Support\EdpNotificationRecipients;
 use App\Support\MailSettings;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -28,9 +30,22 @@ class StudentApplicationSubmitted extends Notification
 
     public function via(object $notifiable): array
     {
+        // The configured EDP mailbox (PATHWISE_EDP_NOTIFICATION_EMAIL),
+        // notified on demand: email only.
+        if ($notifiable instanceof AnonymousNotifiable) {
+            return MailSettings::isConfigured() ? [SafeMailChannel::class] : [];
+        }
+
+        // A Super Admin account: always the in-app notification. Its login
+        // email is used only when no EDP mailbox is configured, and never
+        // when it cannot receive mail (e.g. superadmin@pathwise.test).
         $channels = ['database'];
 
-        if (MailSettings::isConfigured() && filled($notifiable->email ?? null)) {
+        if (
+            MailSettings::isConfigured()
+            && ! EdpNotificationRecipients::hasConfigured()
+            && EdpNotificationRecipients::isDeliverable($notifiable->email ?? null)
+        ) {
             $channels[] = SafeMailChannel::class;
         }
 

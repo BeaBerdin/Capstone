@@ -49,6 +49,14 @@ return [
         ),
     ],
 
+    'pathwise' => [
+        // Mailbox(es) of the EDP office for "new / resubmitted application"
+        // emails, comma separated. When set, only these receive the email;
+        // Super Admin accounts still get the in-app notification. See
+        // App\Support\EdpNotificationRecipients.
+        'edp_notification_email' => env('PATHWISE_EDP_NOTIFICATION_EMAIL'),
+    ],
+
     'paymongo' => [
         'secret_key' => env('PAYMONGO_SECRET_KEY'),
         'public_key' => env('PAYMONGO_PUBLIC_KEY'),
