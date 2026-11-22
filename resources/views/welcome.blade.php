@@ -6,9 +6,9 @@
 
         <title>{{ __('PATHWISE — AI-Powered E-Learning Platform') }}</title>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="icon" href="/favicon.ico?v=3" sizes="any">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+        <link rel="icon" href="/favicon.png?v=3" type="image/png">
 
         @fonts
         @vite(['resources/css/app.css'])
