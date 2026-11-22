@@ -379,3 +379,23 @@ test('only the Super Admin can open the certificate review report', function (st
 
     $this->actingAs($user)->get(route('super-admin.certificate-review.index'))->assertForbidden();
 })->with(['admin', 'teacher', 'student']);
+
+test('the activity page shows the resubmit form after a failing final grade, not after a passing one', function () {
+    [, $student, , , $activity] = certCourse();
+    $submission = certSubmission($student, $activity, 'graded', 60);
+
+    $this->actingAs($student)
+        ->get(route('student.assignments.show', $activity))
+        ->assertOk()
+        ->assertSee('data-test="resubmit-to-improve"', false)
+        ->assertSee('Resubmit Assignment')
+        ->assertSee('action="'.route('student.assignments.submit', $activity).'"', false);
+
+    $submission->update(['score' => 90]);
+
+    $this->actingAs($student)
+        ->get(route('student.assignments.show', $activity))
+        ->assertOk()
+        ->assertDontSee('data-test="resubmit-to-improve"', false)
+        ->assertDontSee('action="'.route('student.assignments.submit', $activity).'"', false);
+});

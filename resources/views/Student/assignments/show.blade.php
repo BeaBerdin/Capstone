@@ -181,8 +181,16 @@
             @endif
 
 
-            {{-- SUBMISSION FORM --}}
-            @if(! $submission || $submission->status !== 'graded')
+            {{-- SUBMISSION FORM (also after a final grade below passing: resubmit to improve) --}}
+            @php
+                $pwFailedGrade = $submission && \App\Support\CertificateEligibility::failedFinalGrade($submission, $assignment);
+            @endphp
+            @if ($pwFailedGrade)
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" data-test="resubmit-to-improve">
+                    Your score is below the passing score ({{ (int) round(\App\Support\CertificateEligibility::PASSING_RATIO * 100) }}% of the maximum). You can resubmit to improve it.
+                </div>
+            @endif
+            @if(! $submission || $submission->status !== 'graded' || $pwFailedGrade)
                 <form
                     method="POST"
                     action="{{ route('student.assignments.submit', $assignment) }}"
