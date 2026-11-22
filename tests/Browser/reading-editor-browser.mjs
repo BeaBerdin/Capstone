@@ -145,7 +145,7 @@ try {
 
     await login('student'); await goto(`/lesson/${first.id}`); await waitFor('document.querySelector("[data-reading-material]")');
     assert.ok(await ev('document.querySelector(".pw-reading-rich strong")?.textContent === "Bold"'));
-    assert.equal(await ev('[...document.querySelectorAll("a,button")].filter(e=>e.textContent.trim()==="Next Lesson").length'), 1);
+    assert.equal(await ev('document.querySelectorAll("a[data-next-lesson]").length'), 1);
     assert.ok(!await ev('/\u00e2\u20ac\u00ba|\u00e2\u0153\u201c|\u00e2\u2013/.test(document.body.textContent)'));
     const image = sections.find(s => s.type === 'image'), file = sections.find(s => s.type === 'file');
     assert.equal((await fetchPage(`/files/lesson-sections/${image.id}`)).status, 200);
@@ -158,7 +158,7 @@ try {
     await click(`form[action$="/lesson/${first.id}/complete"] button[type=submit]`);
     await waitFor('document.body.innerText.includes("Completed")');
     assert.equal(state().lesson_progress.find(p => p.lesson_id === first.id && p.student_id === fixtures.users.student.id).status, 'completed');
-    assert.equal(await ev('[...document.querySelectorAll("a,button")].filter(e=>e.textContent.trim()==="Next Lesson").length'), 1);
+    assert.equal(await ev('document.querySelectorAll("a[data-next-lesson]").length'), 1);
     pass('Student textbook display, corrected Unicode, private files, mobile layout and explicit completion');
 
     await goto(`/quiz/${fixtures.quiz.id}/take`); await waitFor(`document.querySelector('input[name=question_${fixtures.quiz.question}]')`);

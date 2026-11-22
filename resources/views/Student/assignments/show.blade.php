@@ -334,6 +334,13 @@
                 </form>
             @endif
 
+            {{-- Previous / next lesson (also shown right after a successful submission). --}}
+            @isset($lessonNav)
+                @if ($lessonNav)
+                    @include('Student.partials.lesson-nav', ['nav' => $lessonNav])
+                @endif
+            @endisset
+
         </div>
     </main>
 </div>

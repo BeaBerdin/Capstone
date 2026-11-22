@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LessonNavigation;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Lesson;
@@ -428,11 +429,18 @@ class AssignmentController extends Controller
             )
             ->first();
 
+        // An activity follows its lesson's position in the course; a
+        // standalone assignment only gets "Back to course".
+        $lessonNav = $assignment->course
+            ? LessonNavigation::build($assignment->course, (int) auth()->id(), $assignment->is_activity ? $assignment->lesson : null)
+            : null;
+
         return view(
             'Student.assignments.show',
             compact(
                 'assignment',
-                'submission'
+                'submission',
+                'lessonNav'
             )
         );
     }

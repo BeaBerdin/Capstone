@@ -70,7 +70,7 @@ test('template to rich Reading to approved Student display preserves guidance an
     $response = $this->actingAs($student)->get(route('student.lesson.view', $first))->assertOk()
         ->assertSee('<strong>Additional context</strong>', false)->assertSee('data-reading-material', false);
     $document = \Dom\HTMLDocument::createFromString($response->getContent(), LIBXML_NOERROR);
-    $next = array_filter(iterator_to_array($document->querySelectorAll('a')), fn ($link) => trim($link->textContent) === 'Next Lesson');
+    $next = array_filter(iterator_to_array($document->querySelectorAll('a')), fn ($link) => $link->hasAttribute('data-next-lesson'));
     expect($next)->toHaveCount(1)->and(LessonProgress::where('lesson_id', $first->id)->where('student_id', $student->id)->sole()->status)->toBe('in_progress');
     foreach ($lessons->skip(1) as $lesson) expect($lesson->fresh()->content)->toBe($lesson->content);
 });

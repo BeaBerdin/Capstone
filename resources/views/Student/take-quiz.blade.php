@@ -166,6 +166,11 @@
 
     @endif
 
+    {{-- Previous / next lesson --}}
+    @isset($lessonNav)
+        @include('Student.partials.lesson-nav', ['nav' => $lessonNav])
+    @endisset
+
 </div>
 </main>
 </div>

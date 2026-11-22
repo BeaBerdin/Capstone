@@ -29,7 +29,8 @@ function readingNextControls(string $html): array
     $dom = new DOMDocument;
     @$dom->loadHTML('<?xml encoding="UTF-8">'.$html);
 
-    return iterator_to_array((new DOMXPath($dom))->query('//a[normalize-space(.)="Next Lesson"]'));
+    // The "Next: {lesson title} →" control of the lesson navigation bar.
+    return iterator_to_array((new DOMXPath($dom))->query('//a[@data-next-lesson]'));
 }
 
 test('Reading textbook keeps escaped text media captions and private downloads in saved order', function () {
@@ -114,10 +115,10 @@ test('final Reading retains finish navigation and explicit completion action', f
     [$student, $course, $lesson] = readingPresentationFixture();
     $response = $this->actingAs($student)->get(route('student.lesson.view', $lesson))->assertOk();
     expect(readingNextControls($response->getContent()))->toHaveCount(0);
-    $response->assertSee('Finish Course View')->assertSee('Mark as Complete');
+    $response->assertSee('data-test="lesson-nav-finish"', false)->assertSee('Mark as Complete');
     $this->post(route('student.lesson.complete', $lesson))->assertRedirect();
     $response = $this->get(route('student.lesson.view', $lesson))->assertOk();
-    $response->assertSee('Lesson completed')->assertDontSee('Mark as Complete')->assertSee('Finish Course View');
+    $response->assertSee('Lesson completed')->assertDontSee('Mark as Complete')->assertSee('data-test="lesson-nav-finish"', false);
     expect(readingNextControls($response->getContent()))->toHaveCount(0)
         ->and(LessonProgress::where('lesson_id', $lesson->id)->sole()->status)->toBe('completed');
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LessonNavigation;
 use App\Support\CertificateEligibility;
 use App\Models\Lesson;
 use App\Models\Course;
@@ -462,13 +463,16 @@ class LessonController extends Controller
             )
             ->first();
 
+        $lessonNav = LessonNavigation::build($lesson->course, (int) auth()->id(), $lesson);
+
         return view(
             'Student.lesson-view',
             compact(
                 'lesson',
                 'progress',
                 'previousLesson',
-                'nextLesson'
+                'nextLesson',
+                'lessonNav'
             )
         );
     }

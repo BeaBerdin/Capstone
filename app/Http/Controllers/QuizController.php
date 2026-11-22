@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LessonNavigation;
 use App\Support\CertificateEligibility;
 use App\Models\Certificate;
 use App\Models\Course;
@@ -1199,9 +1200,16 @@ class QuizController extends Controller
             : null;
 
 
+        $lessonNav = LessonNavigation::build(
+            $quiz->course,
+            (int) auth()->id(),
+            $quiz->lesson,
+            $quiz->lesson_id ? null : $quiz,
+        );
+
         return view(
             'Student.take-quiz',
-            compact('quiz', 'secondsRemaining')
+            compact('quiz', 'secondsRemaining', 'lessonNav')
         );
     }
 
