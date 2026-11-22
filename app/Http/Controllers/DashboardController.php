@@ -190,7 +190,11 @@ class DashboardController extends Controller
 
         $quizzesTaken = $quizResults->count();
         $averageScore = round($quizResults->avg('percentage') ?? 0, 2);
-        $certificatesEarned = Certificate::where('student_id', $studentId)->count();
+        // Only issued certificates count (a revoked one is not earned).
+        $certificatesEarned = Certificate::where('student_id', $studentId)->where('status', 'issued')->count();
+
+        // Issued certificates by course, for the course cards' certificate button.
+        $issuedCertificates = \App\Support\StudentCertificateStatus::issuedByCourse($studentId);
 
         $completedCourses = Enrollment::where('student_id', $studentId)
             ->where('status', 'completed')
@@ -243,6 +247,7 @@ class DashboardController extends Controller
 
         return view('Student.dashboard', compact(
             'enrollments',
+            'issuedCertificates',
             'recommendedCourse',
             'quizzesTaken',
             'certificatesEarned',

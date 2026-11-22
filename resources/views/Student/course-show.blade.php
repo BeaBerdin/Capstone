@@ -1115,24 +1115,19 @@
 
                                 @if($isCompleted)
 
+                                    @php
+                                        $certificateStatus = \App\Support\StudentCertificateStatus::for($enrollment, $course, (int) auth()->id(), $certificate);
+                                        $hasCertificateButton = $certificateStatus['state'] !== \App\Support\StudentCertificateStatus::NONE;
+                                    @endphp
                                     <div class="mt-5 grid gap-2 sm:grid-cols-2">
-                                        @if($certificate)
-                                            <a
-                                                href="{{ route('student.certificate.view', $certificate) }}"
-                                                class="inline-flex h-11 w-full items-center justify-center gap-2
-                                                       rounded-xl bg-emerald-600 text-sm font-semibold text-white
-                                                       transition hover:bg-emerald-700"
-                                            >
-                                                View Certificate
-                                            </a>
-                                        @endif
+                                        @include('Student.partials.certificate-status', ['status' => $certificateStatus, 'size' => 'lg'])
 
                                         <a
                                             href="{{ route('student.learn.course', $course) }}"
                                             class="inline-flex h-11 w-full items-center justify-center gap-2
                                                    rounded-xl border border-violet-200 bg-white text-sm font-semibold
                                                    text-violet-700 transition hover:bg-violet-50
-                                                   {{ $certificate ? '' : 'sm:col-span-2' }}"
+                                                   {{ $hasCertificateButton ? '' : 'sm:col-span-2' }}"
                                         >
                                             Review Course
                                         </a>

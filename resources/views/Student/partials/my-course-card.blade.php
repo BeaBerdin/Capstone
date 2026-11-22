@@ -249,21 +249,12 @@
                     Review Course
                 </a>
 
-                @if($certificate)
+                @if($course->certificate_available)
 
-                    <a
-                        href="{{ route('student.certificate.view', $certificate) }}"
-                        class="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-700"
-                        data-certificate-link
-                    >
-                        View Certificate
-                    </a>
-
-                @elseif($course->certificate_available)
-
-                    <span class="inline-flex h-10 items-center justify-center rounded-xl bg-slate-100 px-3 text-center text-xs font-semibold text-slate-500">
-                        Certificate pending
-                    </span>
+                    {{-- Shared rule (StudentCertificateStatus), as on the dashboard. --}}
+                    @include('Student.partials.certificate-status', [
+                        'status' => \App\Support\StudentCertificateStatus::for($enrollment, $course, (int) auth()->id(), $certificate),
+                    ])
 
                 @else
 

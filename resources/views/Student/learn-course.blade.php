@@ -1867,30 +1867,15 @@
 
                         @elseif($course->certificate_available)
 
-                            <a
-                                href="{{ route('student.certificates') }}"
-                                class="inline-flex h-11
-                                       self-start items-center
-                                       justify-center gap-2
-                                       rounded-xl bg-emerald-600
-                                       px-5 text-sm font-semibold
-                                       text-white transition
-                                       hover:bg-emerald-700"
-                            >
-
-                                <svg
-                                    class="h-4 w-4"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <circle cx="12" cy="8" r="5"></circle>
-                                    <path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"></path>
-                                </svg>
-
-                                View Certificate
-                            </a>
+                            {{-- Same rule as the dashboard and My Courses: issued -> View Certificate; otherwise "Certificate pending". --}}
+                            <div class="self-start">
+                                @include('Student.partials.certificate-status', [
+                                    'status' => isset($certificate) && $certificate
+                                        ? ['state' => \App\Support\StudentCertificateStatus::ISSUED, 'certificate' => $certificate, 'reason' => null]
+                                        : ['state' => \App\Support\StudentCertificateStatus::PENDING, 'certificate' => null, 'reason' => 'Your certificate has not been issued yet.'],
+                                    'size' => 'md',
+                                ])
+                            </div>
 
                         @endif
 

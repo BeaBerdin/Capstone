@@ -69,7 +69,12 @@
         100
     );
 
-    $recentCourses = $studentEnrollments->take(4);
+    // Courses still in progress first, then completed ones (newest first
+    // within each group).
+    $recentCourses = $studentEnrollments
+        ->sortBy(fn ($enrollment) => strtolower((string) ($enrollment->status ?? 'active')) === 'completed' ? 1 : 0)
+        ->take(4)
+        ->values();
     $recentResults = $studentQuizResults->take(4);
 
     $recommended = null;
@@ -358,7 +363,7 @@
                                         </h3>
 
                                         <div class="mt-3 flex items-center justify-between text-xs">
-                                            <span class="font-medium text-slate-500">{{ $isCompleted ? 'Course completed' : 'In progress' }}</span>
+                                            <span class="font-medium {{ $isCompleted ? 'text-emerald-700' : 'text-slate-500' }}" data-test="course-progress-label">{{ $isCompleted ? 'Completed' : 'In progress' }}</span>
                                             <span class="font-bold {{ $isCompleted ? 'text-emerald-600' : 'text-violet-700' }}">{{ number_format($courseProgress, 0) }}%</span>
                                         </div>
                                         <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
@@ -374,9 +379,11 @@
                                                     <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"></path></svg>
                                                 </a>
                                             @elseif($isCompleted)
-                                                <a href="{{ route('student.certificates') }}" class="inline-flex h-9 items-center justify-center rounded-xl bg-emerald-50 px-3.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100">
-                                                    Certificate
-                                                </a>
+                                                {{-- Same rule as My Courses: issued -> View Certificate; otherwise "Certificate pending". --}}
+                                                @include('Student.partials.certificate-status', [
+                                                    'status' => \App\Support\StudentCertificateStatus::for($enrollment, $course, (int) auth()->id(), ($issuedCertificates ?? collect())->get($course?->id)),
+                                                    'size' => 'sm',
+                                                ])
                                             @endif
                                         </div>
                                     </div>
