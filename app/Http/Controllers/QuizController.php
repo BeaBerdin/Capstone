@@ -526,6 +526,33 @@ class QuizController extends Controller
         return redirect()->route('teacher.quiz.builder', $lesson);
     }
 
+    /**
+     * "Generate quiz questions" before the quiz was ever saved: save the
+     * current quiz settings as a draft first (exactly the Save Changes
+     * validation), then generate with the same limits and friendly AI
+     * messages as teacherGenerateQuestions().
+     */
+    public function teacherSaveAndGenerate(Request $request, Lesson $lesson, GeminiQuizService $geminiQuizService)
+    {
+        // Check the generation choices first, so nothing is saved when they
+        // are invalid.
+        $request->validate([
+            'question_count' => ['required', 'integer', 'min:1', 'max:10'],
+            'difficulty' => ['required', 'in:beginner,intermediate,advanced'],
+        ]);
+
+        // Saving as a draft: never publish from here.
+        $request->merge(['intent' => 'save']);
+        $this->teacherSaveQuiz($request, $lesson);
+
+        $quiz = Quiz::where('lesson_id', $lesson->id)->orderBy('id')->firstOrFail();
+        $quiz->load(['questions' => fn ($questions) => $questions->orderBy('id')]);
+
+        $request->merge(['revision' => $this->quizRevision($quiz)]);
+
+        return $this->teacherGenerateQuestions($request, $quiz, $geminiQuizService);
+    }
+
     private function hasNewQuestionInput(mixed $input): bool
     {
         if (! is_array($input)) {

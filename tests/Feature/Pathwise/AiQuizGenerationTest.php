@@ -435,3 +435,139 @@ test('PathWise\'s own per-minute and daily AI limits show the friendly message',
     'per minute' => ['pathwise:gemini:quiz:minute', 4],
     'per day' => [fn () => 'pathwise:gemini:quiz:daily:'.now()->toDateString(), 20],
 ]);
+
+/*
+|--------------------------------------------------------------------------
+| AI generation before the quiz was ever saved
+|--------------------------------------------------------------------------
+*/
+
+/** A quiz lesson whose quiz has not been saved yet. */
+function unsavedQuizLesson(): array
+{
+    [$teacher, $quiz] = generationQuiz();
+    $lesson = $quiz->lesson;
+    $quiz->delete();
+
+    return [$teacher, $lesson->fresh()];
+}
+
+function firstSavePayload(Illuminate\Testing\TestResponse $builder, array $overrides = []): array
+{
+    return array_merge([
+        'revision' => $builder->viewData('quizRevision'),
+        'title' => 'HTML Checkpoint',
+        'description' => 'Check what you learned.',
+        'passing_score' => 70,
+        'time_limit_minutes' => '',
+        'question_count' => 2,
+        'difficulty' => 'beginner',
+    ], $overrides);
+}
+
+test('the AI panel is shown before the quiz is first saved', function () {
+    [$teacher, $lesson] = unsavedQuizLesson();
+
+    $this->actingAs($teacher)
+        ->get(route('teacher.quiz.builder', $lesson))
+        ->assertOk()
+        ->assertSee('Generate quiz questions')
+        ->assertSee('data-test="ai-generate-panel"', false)
+        ->assertSee('data-test="ai-first-save-note"', false)
+        ->assertSee('form="quiz-edit-form"', false)
+        ->assertSee('formaction="'.route('teacher.quiz.save-and-generate', $lesson).'"', false);
+});
+
+test('generating before the first save saves the quiz as a draft, then adds the questions', function () {
+    [$teacher, $lesson] = unsavedQuizLesson();
+    // Two requested; the service asks Gemini for two extra candidates.
+    fakeGeneratedQuestions(['First generated question?', 'Second generated question?', 'Spare one?', 'Spare two?']);
+
+    $this->actingAs($teacher);
+    $builder = $this->get(route('teacher.quiz.builder', $lesson))->assertOk();
+
+    $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder))
+        ->assertRedirect(route('teacher.quiz.builder', $lesson))
+        ->assertSessionHas('success');
+
+    $quiz = Quiz::where('lesson_id', $lesson->id)->sole();
+
+    expect($quiz->title)->toBe('HTML Checkpoint')
+        ->and($quiz->description)->toBe('Check what you learned.')
+        ->and($quiz->passing_score)->toBe(70)
+        ->and((bool) $quiz->is_published)->toBeFalse()
+        ->and(QuizQuestion::where('quiz_id', $quiz->id)->pluck('question')->all())
+        ->toBe(['First generated question?', 'Second generated question?']);
+
+    // Once saved, the panel uses the normal generate form.
+    $this->get(route('teacher.quiz.builder', $lesson))
+        ->assertOk()
+        ->assertSee('action="'.route('teacher.quiz.questions.generate', $quiz).'"', false)
+        ->assertDontSee('data-test="ai-first-save-note"', false);
+});
+
+test('the first save uses the same validation as Save Changes and saves nothing when invalid', function (array $overrides, string $field) {
+    [$teacher, $lesson] = unsavedQuizLesson();
+    Http::fake();
+
+    $this->actingAs($teacher);
+    $builder = $this->get(route('teacher.quiz.builder', $lesson))->assertOk();
+
+    $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder, $overrides))
+        ->assertSessionHasErrors($field);
+
+    expect(Quiz::where('lesson_id', $lesson->id)->exists())->toBeFalse();
+    Http::assertNothingSent();
+})->with([
+    'missing title' => [['title' => ''], 'title'],
+    'passing score too high' => [['passing_score' => 101], 'passing_score'],
+    'bad question count' => [['question_count' => 50], 'question_count'],
+    'bad difficulty' => [['difficulty' => 'expert'], 'difficulty'],
+]);
+
+test('when AI is unavailable the quiz is still saved as a draft and the friendly message is shown', function () {
+    [$teacher, $lesson] = unsavedQuizLesson();
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED']], 429)]);
+
+    $this->actingAs($teacher);
+    $builder = $this->get(route('teacher.quiz.builder', $lesson))->assertOk();
+
+    $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder))
+        ->assertRedirect(route('teacher.quiz.builder', $lesson))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    $quiz = Quiz::where('lesson_id', $lesson->id)->sole();
+
+    expect((bool) $quiz->is_published)->toBeFalse()
+        ->and($quiz->questions()->count())->toBe(0);
+});
+
+test('PathWise\'s own AI limits still apply to the first-save generation', function () {
+    [$teacher, $lesson] = unsavedQuizLesson();
+    Http::fake();
+
+    foreach (range(1, 4) as $attempt) {
+        Illuminate\Support\Facades\RateLimiter::hit('pathwise:gemini:quiz:minute', 60);
+    }
+
+    $this->actingAs($teacher);
+    $builder = $this->get(route('teacher.quiz.builder', $lesson))->assertOk();
+
+    $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    Http::assertNothingSent();
+});
+
+test('only the course teacher can use the first-save generation', function () {
+    [, $lesson] = unsavedQuizLesson();
+
+    $this->actingAs(pathwiseApprovedTeacher())
+        ->post(route('teacher.quiz.save-and-generate', $lesson), [
+            'revision' => str_repeat('a', 64), 'title' => 'X', 'passing_score' => 70,
+            'question_count' => 2, 'difficulty' => 'beginner',
+        ])
+        ->assertForbidden();
+
+    expect(Quiz::where('lesson_id', $lesson->id)->exists())->toBeFalse();
+});

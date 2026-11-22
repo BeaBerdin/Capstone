@@ -417,6 +417,10 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
         Route::post('/teacher/lessons/{lesson}/quiz', [QuizController::class, 'teacherSaveQuiz'])
             ->name('teacher.quiz.save');
 
+        // First save + AI generation in one step (the quiz has not been saved yet).
+        Route::post('/teacher/lessons/{lesson}/quiz/save-and-generate', [QuizController::class, 'teacherSaveAndGenerate'])
+            ->name('teacher.quiz.save-and-generate');
+
         Route::post('/teacher/quizzes/{quiz}/generate-questions', [QuizController::class, 'teacherGenerateQuestions'])
             ->name('teacher.quiz.questions.generate');
 

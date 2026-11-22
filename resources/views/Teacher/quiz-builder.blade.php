@@ -544,8 +544,8 @@
 
 
 
-                    {{-- AI QUIZ GENERATOR --}}
-                    @if($quiz)
+                    {{-- AI QUIZ GENERATOR (shown before the first save too) --}}
+                    @if(true)
 
                         <section class="sad-card pw-card overflow-hidden">
 
@@ -630,14 +630,27 @@
 
                             @if($quizCanBeModified)
 
+                                {{--
+                                    Not saved yet: the button submits the quiz settings form
+                                    (form="quiz-edit-form") to "save as draft, then generate";
+                                    the two choices below belong to that form too.
+                                --}}
+                                @php $pwFirstSave = ! $quiz; @endphp
                                 <form
-                                    action="{{ route('teacher.quiz.questions.generate', $quiz) }}"
+                                    action="{{ $quiz ? route('teacher.quiz.questions.generate', $quiz) : route('teacher.quiz.save-and-generate', $lesson) }}"
                                     method="POST"
                                     class="p-5 sm:p-7"
-                                    data-quiz-operation="generate"
+                                    @unless ($pwFirstSave) data-quiz-operation="generate" @endunless
+                                    data-test="ai-generate-panel"
                                 >
                                     @csrf
-                                    <input type="hidden" name="revision" value="{{ $quizRevision }}">
+                                    @if ($quiz)
+                                        <input type="hidden" name="revision" value="{{ $quizRevision }}">
+                                    @else
+                                        <p class="mb-5 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 text-xs leading-5 text-violet-700" data-test="ai-first-save-note">
+                                            This quiz has not been saved yet. Generating will first save your quiz settings as a draft, then add the questions.
+                                        </p>
+                                    @endif
 
                                     <div
                                         class="grid grid-cols-1 gap-5
@@ -657,6 +670,7 @@
                                             <select
                                                 id="question_count"
                                                 name="question_count"
+                                                @if ($pwFirstSave) form="quiz-edit-form" @endif
                                                 required
                                                 class="pw-field mt-2.5
                                                        h-12 px-4"
@@ -734,6 +748,7 @@
                                             <select
                                                 id="difficulty"
                                                 name="difficulty"
+                                                @if ($pwFirstSave) form="quiz-edit-form" @endif
                                                 required
                                                 class="pw-field mt-2.5
                                                        h-12 px-4"
@@ -821,6 +836,11 @@
                                         <button
                                             type="submit"
                                             data-ai-generate-button
+                                            @if ($pwFirstSave)
+                                                form="quiz-edit-form"
+                                                formaction="{{ route('teacher.quiz.save-and-generate', $lesson) }}"
+                                                data-test="ai-save-and-generate"
+                                            @endif
                                             class="sad-btn-primary inline-flex h-11
                                                    items-center justify-center
                                                    rounded-xl bg-violet-600
