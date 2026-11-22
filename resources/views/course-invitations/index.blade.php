@@ -75,7 +75,7 @@
                                 <p class="mt-2 text-xs text-slate-600">
                                     <span class="font-semibold">{{ $status }}</span>
                                     · {{ $invitation->expires_at ? 'Expires '.$invitation->expires_at->timezone('Asia/Manila')->format('M d, Y g:i A').' PHT' : 'No expiry' }}
-                                    · {{ $invitation->redeemed_by_count }} free {{ Str::plural('redemption', $invitation->redeemed_by_count) }}
+                                    · <span data-test="invitation-usage">{{ $invitation->redeemed_by_count }} {{ Str::plural('student', $invitation->redeemed_by_count) }} joined</span>
                                 </p>
                             </div>
 
