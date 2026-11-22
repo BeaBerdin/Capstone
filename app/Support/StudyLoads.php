@@ -13,13 +13,15 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Study Load files and application rows.
+ * Study Load and Teacher ID files and application rows.
  *
  * Files are kept on the private disk (storage/app/private) under
- * study-loads/{user id}/ with random names. They have no public URL and are
- * served only to the Super Admin (EDP) by StudentApplicationController.
- * Files are never overwritten or deleted after a submission is saved, so
- * every earlier submission stays available for audit.
+ * study-loads/{user id}/ (students) or teacher-ids/{user id}/ (teachers)
+ * with random names. They have no public URL and are served only to the
+ * Super Admin (EDP) by StudentApplicationController.
+ * Study Loads are never overwritten or deleted after a submission is saved,
+ * so every earlier submission stays available for audit. A rejected
+ * teacher's old Teacher ID is deleted when the teacher uploads a new one.
  */
 class StudyLoads
 {
@@ -54,6 +56,49 @@ class StudyLoads
     }
 
     /**
+     * Store a teacher's Teacher ID (random name, private disk) and return
+     * the file columns for StudentApplication::submitForTeacher().
+     * $storedPath receives the path so the caller can delete the file if the
+     * surrounding transaction fails.
+     *
+     * @return array{study_load_path: string, study_load_original_name: string, study_load_mime: string, study_load_size: int}
+     */
+    public static function storeTeacherId(User $user, UploadedFile $file, ?string &$storedPath): array
+    {
+        $path = $file->store('teacher-ids/'.$user->id, self::DISK);
+
+        if (! is_string($path) || $path === '') {
+            throw new RuntimeException('The Teacher ID could not be saved.');
+        }
+
+        $storedPath = $path;
+
+        return [
+            'study_load_path' => $path,
+            'study_load_original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
+            'study_load_mime' => (string) $file->getMimeType(),
+            'study_load_size' => (int) $file->getSize(),
+        ];
+    }
+
+    /**
+     * Delete a replaced Teacher ID and clear its stored path (the file name,
+     * decision and rejection reason stay as history, so the EDP page can say
+     * the file was replaced). Only teacher rows are touched; a Study Load is
+     * never removed here.
+     */
+    public static function removeReplacedTeacherId(StudentApplication $application): void
+    {
+        if (! $application->isTeacherApplication() || ! $application->hasStudyLoad()) {
+            return;
+        }
+
+        self::discard($application->study_load_path);
+
+        $application->forceFill(['study_load_path' => ''])->save();
+    }
+
+    /**
      * Remove a file whose submission was not saved (rolled back).
      */
     public static function discard(?string $path): void
@@ -65,7 +110,7 @@ class StudyLoads
         try {
             Storage::disk(self::DISK)->delete($path);
         } catch (Throwable $e) {
-            Log::warning('PATHWISE could not remove an unsaved Study Load file.', [
+            Log::warning('PATHWISE could not remove an application file.', [
                 'path' => $path,
                 'error' => $e->getMessage(),
             ]);

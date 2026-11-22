@@ -31,12 +31,50 @@
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
 
             @if ($isTeacher)
-            {{-- Teacher registration: no Study Load --}}
+            {{-- Teacher registration: Teacher ID (private file, Super Admin only) --}}
+            @php
+                $edpStartedReview = in_array($application->review_origin, ['edp_created', 'role_change', 'email_change', 'edp_legacy_review'], true);
+            @endphp
             <section class="sad-card overflow-hidden rounded-2xl border border-slate-200 bg-white" data-test="teacher-registration">
-                <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Teacher registration · Submission #{{ $application->submission_no }}</p>
-                    <h1 class="mt-0.5 text-lg font-bold text-slate-900">{{ $student?->name ?? 'Unknown teacher' }}</h1>
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Teacher ID · Submission #{{ $application->submission_no }}</p>
+                        <h1 class="mt-0.5 text-lg font-bold text-slate-900">{{ $student?->name ?? 'Unknown teacher' }}</h1>
+                    </div>
+                    @if ($application->hasStudyLoad())
+                        <a href="{{ $fileUrl }}" target="_blank" rel="noopener"
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50">
+                            Open in new tab
+                        </a>
+                    @endif
                 </div>
+
+                @if ($application->hasStudyLoad())
+                    <div class="bg-slate-50 p-3 sm:p-4" data-test="teacher-id-preview">
+                        @if ($isPdf)
+                            <iframe src="{{ $fileUrl }}" title="Teacher ID of {{ $student?->name }}" class="h-[70vh] min-h-[420px] w-full rounded-xl border border-slate-200 bg-white"></iframe>
+                        @elseif ($isImage)
+                            <img src="{{ $fileUrl }}" alt="Teacher ID of {{ $student?->name }}" class="mx-auto max-h-[75vh] w-auto rounded-xl border border-slate-200 bg-white object-contain">
+                        @else
+                            <p class="px-2 py-10 text-center text-sm text-slate-500">This file cannot be previewed. Use "Open in new tab" to download it.</p>
+                        @endif
+                    </div>
+
+                    <p class="border-t border-slate-100 px-5 py-3 text-xs text-slate-500 sm:px-6">
+                        {{ $application->study_load_original_name }} · {{ strtoupper(pathinfo($application->study_load_original_name, PATHINFO_EXTENSION)) ?: 'FILE' }} · {{ $application->sizeForHumans() }}
+                    </p>
+                @else
+                    <p class="border-b border-slate-100 bg-slate-50 px-5 py-4 text-sm font-medium text-slate-600 sm:px-6" data-test="no-teacher-id">
+                        @if (filled($application->study_load_original_name))
+                            Teacher ID replaced by a newer upload; this older file was removed.
+                        @elseif ($edpStartedReview)
+                            No Teacher ID uploaded (this review was started by the EDP office, so no upload was required).
+                        @else
+                            No Teacher ID uploaded (registered before this requirement)
+                        @endif
+                    </p>
+                @endif
+
                 <div class="space-y-3 px-5 py-6 text-sm leading-6 text-slate-600 sm:px-6">
                     @if ($application->review_email)
                         <p>Confirm with the department that <strong>{{ $application->review_email }}</strong> belongs to this faculty member before approving.</p>
@@ -159,7 +197,7 @@
                                     <p class="mt-1 whitespace-pre-line text-xs text-red-700">{{ $item->rejection_reason }}</p>
                                 @endif
                                 @if ($item->hasStudyLoad())
-                                    <a href="{{ route('super-admin.student-applications.study-load', $item) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-violet-700 hover:underline">Open Study Load</a>
+                                    <a href="{{ route('super-admin.student-applications.study-load', $item) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-violet-700 hover:underline">Open {{ $item->documentLabel() }}</a>
                                 @endif
                             </li>
                         @endforeach

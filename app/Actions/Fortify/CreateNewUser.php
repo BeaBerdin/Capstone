@@ -52,6 +52,9 @@ class CreateNewUser implements CreatesNewUsers
             // Students only: a Study Load for the EDP to verify. For a
             // teacher the field is excluded, so a file sent anyway is ignored.
             'study_load' => ['exclude_unless:role,student', ...StudentApplication::studyLoadRules()],
+            // Teachers only: a Teacher ID (faculty or employee ID) for the
+            // EDP to verify. For a student the field is excluded and ignored.
+            'teacher_id' => ['exclude_unless:role,teacher', ...StudentApplication::teacherIdRules()],
         ], [
             'first_name.required' => 'Please enter your first name.',
             'first_name.regex' => 'The first name may only contain letters, spaces, hyphens, apostrophes and periods.',
@@ -61,6 +64,7 @@ class CreateNewUser implements CreatesNewUsers
             'role.required' => 'Please select whether you are registering as a student or a teacher.',
             'role.in' => 'The selected role is invalid.',
             ...StudentApplication::studyLoadMessages(),
+            ...StudentApplication::teacherIdMessages(),
         ])->validate();
 
         // Stored in the existing single "name" column as "First M. Last",
@@ -96,9 +100,13 @@ class CreateNewUser implements CreatesNewUsers
                 if ($isStudent) {
                     $application = StudyLoads::submit($user, $input['study_load'], 1, $storedPath);
                 } else {
-                    // A self-registered teacher also waits for the EDP's
-                    // approval (no Study Load), in the same queue.
-                    $application = StudentApplication::submitForTeacher($user, 'registration');
+                    // A self-registered teacher waits for the EDP's approval
+                    // in the same queue, with a Teacher ID instead.
+                    $application = StudentApplication::submitForTeacher(
+                        $user,
+                        'registration',
+                        StudyLoads::storeTeacherId($user, $input['teacher_id'], $storedPath),
+                    );
                 }
 
                 return $user;

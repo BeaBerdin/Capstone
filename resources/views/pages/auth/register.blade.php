@@ -172,6 +172,39 @@
                     </p>
                 </div>
 
+                <!-- Teacher ID: teachers only (shown and required when Teacher is selected) -->
+                @php $teacherSelected = old('role') === 'teacher'; @endphp
+                <div data-teacher-id-section @if (! $teacherSelected) hidden @endif>
+                    <label for="teacher_id" class="mb-2 block text-sm font-medium text-gray-700">
+                        {{ __('Teacher ID') }}
+                    </label>
+                    <p class="mb-2 text-xs text-gray-500">
+                        {{ __('Upload your faculty or employee ID so the EDP office can verify that you teach here. PDF, JPG or PNG, up to 10 MB.') }}
+                    </p>
+                    <input
+                        id="teacher_id"
+                        name="teacher_id"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                        @if ($teacherSelected) required @endif
+                        @unless ($teacherSelected) disabled @endunless
+                        data-teacher-id-input
+                        class="block w-full rounded-xl border border-dashed border-purple-300 bg-purple-50/40 p-3 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-purple-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-purple-700"
+                    >
+                    <p class="mt-2 hidden text-sm text-red-500" data-teacher-id-size-error>
+                        {{ \App\Models\StudentApplication::TOO_LARGE_MESSAGE }}
+                    </p>
+                    @error('teacher_id')
+                        <p class="mt-2 text-sm text-red-500">{{ $message }}</p>
+                    @enderror
+                    @if ($errors->any() && ! $errors->has('teacher_id') && $teacherSelected)
+                        <p class="mt-2 text-xs text-gray-500">{{ __('For your security, please choose your Teacher ID file again.') }}</p>
+                    @endif
+                    <p class="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-500" data-teacher-privacy-notice>
+                        {{ __('Data privacy: your Teacher ID contains personal information. It is used only to verify your faculty status, is accessed only by authorized EDP (Super Admin) personnel, and is stored securely and retained according to the institution\'s data-retention policy.') }}
+                    </p>
+                </div>
+
                 <!-- Password -->
                 <div>
                     <label for="password" class="mb-2 block text-sm font-medium text-gray-700">
@@ -280,6 +313,66 @@
             });
 
             sync();
+        })();
+    </script>
+
+    {{--
+        Teacher ID field follows the selected role the same way: Teacher shows
+        it and makes it required; Student hides it, clears any chosen file and
+        disables the input so nothing is sent. Files over 10 MB are stopped
+        before uploading. The server enforces all of this again.
+    --}}
+    <script>
+        (function () {
+            var form = document.querySelector('[data-registration-form]');
+            if (!form) { return; }
+
+            var section = form.querySelector('[data-teacher-id-section]');
+            var input = form.querySelector('[data-teacher-id-input]');
+            var sizeError = form.querySelector('[data-teacher-id-size-error]');
+            if (!section || !input) { return; }
+            var maxBytes = {{ \App\Models\StudentApplication::MAX_KILOBYTES }} * 1024;
+
+            function isTeacher() {
+                var checked = form.querySelector('input[name="role"]:checked');
+                return !!checked && checked.value === 'teacher';
+            }
+
+            function syncTeacherId() {
+                var teacher = isTeacher();
+
+                section.hidden = !teacher;
+                input.required = teacher;
+                input.disabled = !teacher;
+
+                if (!teacher) {
+                    input.value = '';
+                    sizeError.classList.add('hidden');
+                }
+            }
+
+            function teacherIdTooLarge() {
+                var file = input.files && input.files[0];
+                return !input.disabled && !!file && file.size > maxBytes;
+            }
+
+            form.querySelectorAll('input[name="role"]').forEach(function (radio) {
+                radio.addEventListener('change', syncTeacherId);
+            });
+
+            input.addEventListener('change', function () {
+                sizeError.classList.toggle('hidden', !teacherIdTooLarge());
+            });
+
+            form.addEventListener('submit', function (event) {
+                if (teacherIdTooLarge()) {
+                    event.preventDefault();
+                    sizeError.classList.remove('hidden');
+                    input.focus();
+                }
+            });
+
+            syncTeacherId();
         })();
     </script>
 

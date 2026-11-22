@@ -76,7 +76,7 @@ class StudentApplicationStatusController extends Controller
         $user = $request->user();
 
         if ($user->hasRole('teacher')) {
-            return $this->requestTeacherReview($user);
+            return $this->requestTeacherReview($request, $user);
         }
 
         $request->validate(
@@ -124,31 +124,78 @@ class StudentApplicationStatusController extends Controller
     }
 
     /**
-     * Request review for a teacher without a current application, or after rejection.
+     * Request review for a teacher without a current application, or after
+     * rejection. After a rejection the teacher uploads a new Teacher ID (like
+     * a student's corrected Study Load); the old one is deleted once the new
+     * one is saved. A review request without any earlier application needs
+     * no file.
      */
-    private function requestTeacherReview(User $user)
+    private function requestTeacherReview(Request $request, User $user)
     {
-        $application = DB::transaction(function () use ($user) {
-            $user = User::query()->lockForUpdate()->findOrFail($user->id);
-            $latest = $user->currentTeacherApplication();
+        $afterRejection = $user->currentTeacherApplication()?->status === StudentApplication::REJECTED;
 
-            if (! $user->hasRole('teacher') || ($latest && $latest->status !== StudentApplication::REJECTED)) {
-                return null;
-            }
+        if ($afterRejection) {
+            $request->validate(
+                ['teacher_id' => StudentApplication::teacherIdRules()],
+                StudentApplication::teacherIdMessages(),
+            );
+        }
 
-            return StudentApplication::submitForTeacher($user, $latest ? 'resubmission' : 'legacy_request');
-        });
+        $storedPath = null;
+        $replaced = null;
+
+        try {
+            $application = DB::transaction(function () use ($request, $user, &$storedPath, &$replaced) {
+                $user = User::query()->lockForUpdate()->findOrFail($user->id);
+                $latest = $user->currentTeacherApplication();
+
+                if (! $user->hasRole('teacher') || ($latest && $latest->status !== StudentApplication::REJECTED)) {
+                    return null;
+                }
+
+                if (! $latest) {
+                    return StudentApplication::submitForTeacher($user, 'legacy_request');
+                }
+
+                // A resubmission must carry the new Teacher ID (checked above
+                // for the same state; checked again here under the lock).
+                if (! $request->hasFile('teacher_id')) {
+                    return null;
+                }
+
+                $replaced = $latest;
+
+                return StudentApplication::submitForTeacher(
+                    $user,
+                    'resubmission',
+                    StudyLoads::storeTeacherId($user, $request->file('teacher_id'), $storedPath),
+                );
+            });
+        } catch (Throwable $e) {
+            StudyLoads::discard($storedPath);
+
+            throw $e;
+        }
 
         if (! $application) {
+            StudyLoads::discard($storedPath);
+
             return redirect()
                 ->route('student-application.status')
                 ->with('error', 'There is already a current teacher review for this email.');
+        }
+
+        // The old Teacher ID is no longer needed once the new one is saved.
+        if ($replaced) {
+            StudyLoads::removeReplacedTeacherId($replaced);
         }
 
         StudyLoads::notifyEdp($application, resubmission: $application->review_origin === 'resubmission');
 
         return redirect()
             ->route('student-application.status')
-            ->with('success', 'Your request was sent. The EDP office will review your teacher registration again.');
+            ->with('success', $replaced
+                ? 'Your new Teacher ID was submitted. The EDP office will review your teacher registration again.'
+                : 'Your request was sent. The EDP office will review your teacher registration again.');
     }
 }

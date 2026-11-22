@@ -138,13 +138,14 @@ test('a Study Load of exactly 10 MB is accepted', function () {
     expect(StudentApplication::count())->toBe(1);
 });
 
-test('a teacher registers without a Study Load and waits for EDP review before email verification', function () {
+test('a teacher registers with a Teacher ID instead of a Study Load and waits for EDP review before email verification', function () {
     Notification::fake();
 
     $this->post(route('register.store'), registrationPayload([
         'email' => 'teacher@example.com',
         'role' => 'teacher',
         'study_load' => null,
+        'teacher_id' => teacherIdUpload(),
     ]))->assertSessionHasNoErrors()
         ->assertRedirect(route('student-application.status'));
 
@@ -157,7 +158,8 @@ test('a teacher registers without a Study Load and waits for EDP review before e
         ->and($review->status)->toBe(StudentApplication::PENDING)
         ->and($review->review_origin)->toBe('registration')
         ->and($review->review_email)->toBe($teacher->email)
-        ->and($review->hasStudyLoad())->toBeFalse();
+        ->and($review->hasStudyLoad())->toBeTrue()
+        ->and($review->study_load_path)->toStartWith('teacher-ids/'.$teacher->id.'/');
 
     Notification::assertNotSentTo($teacher, VerifyEmail::class);
 
@@ -169,13 +171,17 @@ test('a Study Load sent with a teacher registration is ignored and not stored', 
         'email' => 'teacher@example.com',
         'role' => 'teacher',
         'study_load' => UploadedFile::fake()->create('sneaky.pdf', 100, 'application/pdf'),
+        'teacher_id' => teacherIdUpload(),
     ]))->assertSessionHasNoErrors();
 
     $review = StudentApplication::sole();
+    $files = Storage::disk('local')->allFiles();
 
+    // Only the Teacher ID is kept (privately); the Study Load is ignored.
     expect($review->isTeacherApplication())->toBeTrue()
-        ->and($review->hasStudyLoad())->toBeFalse()
-        ->and(Storage::disk('local')->allFiles())->toBe([])
+        ->and($files)->toHaveCount(1)
+        ->and($files[0])->toStartWith('teacher-ids/')
+        ->and($review->study_load_path)->toBe($files[0])
         ->and(Storage::disk('public')->allFiles())->toBe([]);
 });
 

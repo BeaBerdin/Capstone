@@ -118,3 +118,11 @@ function fakeFileDisks(): void
     Illuminate\Support\Facades\Storage::fake('local');
     Illuminate\Support\Facades\Storage::fake('public');
 }
+
+/**
+ * A Teacher ID upload for teacher registration (faculty or employee ID).
+ */
+function teacherIdUpload(string $name = 'faculty-id.jpg'): Illuminate\Http\UploadedFile
+{
+    return Illuminate\Http\UploadedFile::fake()->image($name, 600, 380);
+}

@@ -67,6 +67,7 @@ test('a teacher can register but needs EDP approval before email verification', 
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'teacher',
+        'teacher_id' => teacherIdUpload(),
     ])->assertSessionHasNoErrors()
         ->assertRedirect(route('student-application.status'));
 

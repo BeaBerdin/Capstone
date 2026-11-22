@@ -67,6 +67,33 @@ class StudentApplication extends Model
     /**
      * @return array<string, string>
      */
+    /**
+     * Validation rules for a teacher's Teacher ID upload: the same limits and
+     * checks as a Study Load (PDF, JPG or PNG, extension and real MIME type,
+     * up to 10 MB).
+     *
+     * @return array<int, string>
+     */
+    public static function teacherIdRules(): array
+    {
+        return self::studyLoadRules();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function teacherIdMessages(string $field = 'teacher_id'): array
+    {
+        return [
+            "{$field}.required" => 'Please upload your Teacher ID (faculty or employee ID): PDF, JPG or PNG.',
+            "{$field}.file" => 'The Teacher ID must be a PDF, JPG or PNG file.',
+            "{$field}.uploaded" => self::TOO_LARGE_MESSAGE,
+            "{$field}.max" => self::TOO_LARGE_MESSAGE,
+            "{$field}.mimes" => 'The Teacher ID must be a PDF, JPG or PNG file.',
+            "{$field}.mimetypes" => 'The Teacher ID must be a PDF, JPG or PNG file.',
+        ];
+    }
+
     public static function studyLoadMessages(string $field = 'study_load'): array
     {
         return [
@@ -151,10 +178,18 @@ class StudentApplication extends Model
 
     /**
      * Call inside a transaction that creates or locks the user row.
+     *
+     * $teacherId holds the stored Teacher ID's columns (see
+     * StudyLoads::storeTeacherId). A teacher's ID uses the same file columns
+     * as a student's Study Load; the row is told apart by applicant_role.
+     * Reviews started by the EDP (account creation, role or email change)
+     * have no file.
+     *
+     * @param  array{study_load_path?: string, study_load_original_name?: string, study_load_mime?: string, study_load_size?: int}  $teacherId
      */
-    public static function submitForTeacher(User $user, string $origin): self
+    public static function submitForTeacher(User $user, string $origin, array $teacherId = []): self
     {
-        return self::create([
+        return self::create(array_merge([
             'user_id' => $user->id,
             'submission_no' => ((int) self::where('user_id', $user->id)->max('submission_no')) + 1,
             'applicant_role' => self::TEACHER,
@@ -166,7 +201,18 @@ class StudentApplication extends Model
             'study_load_size' => 0,
             'status' => self::PENDING,
             'submitted_at' => now(),
-        ]);
+        ], array_intersect_key($teacherId, array_flip([
+            'study_load_path',
+            'study_load_original_name',
+            'study_load_mime',
+            'study_load_size',
+        ]))));
+    }
+
+    /** Label of the uploaded file: "Teacher ID" or "Study Load". */
+    public function documentLabel(): string
+    {
+        return $this->isTeacherApplication() ? 'Teacher ID' : 'Study Load';
     }
 
     /**

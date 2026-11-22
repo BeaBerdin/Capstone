@@ -118,7 +118,8 @@ class StudentApplicationController extends Controller
             : null;
 
         $name = sprintf(
-            'study-load-%d-submission-%d.%s',
+            '%s-%d-submission-%d.%s',
+            $studentApplication->isTeacherApplication() ? 'teacher-id' : 'study-load',
             $studentApplication->user_id,
             $studentApplication->submission_no,
             $type ? self::INLINE_TYPES[$type] : 'bin',

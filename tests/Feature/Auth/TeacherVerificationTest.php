@@ -17,6 +17,8 @@ use Livewire\Livewire;
 beforeEach(function () {
     $this->withoutVite();
     Notification::fake();
+    // Teacher IDs go to a fake private disk, never to real storage.
+    fakeFileDisks();
 });
 
 function teacherVerificationUser(string $role, array $attributes = []): User
@@ -53,6 +55,7 @@ test('teacher registration creates a pending review and blocks direct teacher to
         'password' => 'SafePass123!',
         'password_confirmation' => 'SafePass123!',
         'role' => 'teacher',
+        'teacher_id' => teacherIdUpload(),
     ])->assertRedirect(route('student-application.status'));
 
     $teacher = User::where('email', 'tina@example.test')->sole();
@@ -60,7 +63,7 @@ test('teacher registration creates a pending review and blocks direct teacher to
     expect($review->status)->toBe(StudentApplication::PENDING)
         ->and($review->review_email)->toBe($teacher->email)
         ->and($review->review_origin)->toBe('registration')
-        ->and($review->hasStudyLoad())->toBeFalse();
+        ->and($review->hasStudyLoad())->toBeTrue();
 
     Notification::assertNotSentTo($teacher, VerifyEmail::class);
     $this->assertAuthenticatedAs($teacher);
@@ -273,7 +276,7 @@ test('a historical approval with no recorded email does not grant access and the
         ->and($history->fresh()->status)->toBe(StudentApplication::APPROVED);
 });
 
-test('a rejected teacher cannot use a signed link and can ask EDP for another review', function () {
+test('a rejected teacher cannot use a signed link and can resubmit with a new Teacher ID', function () {
     $teacher = teacherVerificationUser('teacher', ['email_verified_at' => null]);
     $review = StudentApplication::submitForTeacher($teacher, 'registration');
     $edp = teacherVerificationUser('super_admin');
@@ -285,8 +288,8 @@ test('a rejected teacher cannot use a signed link and can ask EDP for another re
     $this->actingAs($teacher)->get(teacherVerificationLink($teacher, $review))->assertForbidden();
     $this->get(route('student-application.status'))->assertSee('Rejected')->assertSee('faculty address');
     $this->postJson(route('teacher.courses.store'), [])->assertForbidden();
-    $this->post(route('student-application.resubmit'))->assertSessionHas('success');
-    $this->post(route('student-application.resubmit'))->assertSessionHas('error');
+    $this->post(route('student-application.resubmit'), ['teacher_id' => teacherIdUpload()])->assertSessionHas('success');
+    $this->post(route('student-application.resubmit'), ['teacher_id' => teacherIdUpload()])->assertSessionHas('error');
     expect($review->fresh()->status)->toBe(StudentApplication::REJECTED)
         ->and($teacher->teacherApplications()->count())->toBe(2)
         ->and($teacher->currentTeacherApplication()->status)->toBe(StudentApplication::PENDING);

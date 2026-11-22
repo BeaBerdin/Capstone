@@ -55,10 +55,10 @@
                     @if ($isTeacher && ! $latest)
                         <p>The EDP office needs to confirm your faculty status for <strong>{{ $user->email }}</strong>. Request a review to continue. You can keep your existing account.</p>
                     @elseif ($isTeacher && $status === 'pending')
-                        <p>Thank you for registering as a teacher. The EDP office is reviewing your registration.</p>
+                        <p>Thank you for registering as a teacher. The EDP office is reviewing your registration{{ $latest?->hasStudyLoad() ? ' and the Teacher ID you uploaded' : '' }}.</p>
                         <p class="mt-2">You will receive an email at <strong>{{ $user->email }}</strong> once your registration is approved. The email contains a link to verify your email address; after that you can use your Teacher Dashboard and create courses.</p>
                     @elseif ($isTeacher && $status === 'rejected')
-                        <p>The EDP office could not approve your teacher registration yet. Please read the reason below. When the issue is resolved, you can ask the EDP office to review it again. You keep the same account.</p>
+                        <p>The EDP office could not approve your teacher registration yet. Please read the reason below, then upload a new Teacher ID. You keep the same account.</p>
                     @elseif ($status === 'pending')
                         <p>Thank you for registering. The EDP office is reviewing the Study Load you uploaded.</p>
                         <p class="mt-2">You will receive an email at <strong>{{ $user->email }}</strong> once your application is approved. The email contains a link to verify your email address; after that you can use your Student Dashboard.</p>
@@ -86,13 +86,20 @@
                     </div>
 
                     @if ($isTeacher)
-                    {{-- Teacher: ask for another review (no file) --}}
-                    <form method="POST" action="{{ route('student-application.resubmit') }}" class="mt-6"
-                          onsubmit="const b = this.querySelector('button[type=submit]'); if (b.disabled) { return false; } b.disabled = true; b.innerText = 'Sending...';"
-                          data-test="teacher-review-again-form">
+                    {{-- Teacher: upload a new Teacher ID (the old one is removed) --}}
+                    <form method="POST" action="{{ route('student-application.resubmit') }}" enctype="multipart/form-data" class="mt-6 space-y-3"
+                          onsubmit="const b = this.querySelector('button[type=submit]'); if (b.disabled) { return false; } b.disabled = true; b.innerText = 'Uploading...';"
+                          data-test="teacher-id-resubmit-form">
                         @csrf
+                        <label for="teacher_id" class="block text-sm font-semibold text-gray-700">New Teacher ID</label>
+                        <input id="teacher_id" name="teacher_id" type="file" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                               class="block w-full rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-3 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-violet-700">
+                        <p class="text-xs text-gray-500">Faculty or employee ID. PDF, JPG or PNG, up to 10 MB. Your previous Teacher ID is removed once the new one is saved.</p>
+                        @error('teacher_id')
+                            <p class="text-sm font-medium text-red-600">{{ $message }}</p>
+                        @enderror
                         <button type="submit" class="pw-btn-primary w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition">
-                            Ask the EDP office to review again
+                            Submit new Teacher ID
                         </button>
                     </form>
                     @else
