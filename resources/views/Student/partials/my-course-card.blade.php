@@ -17,6 +17,7 @@
 
     $isCompleted = $status === 'completed';
     $isCancelled = $status === 'cancelled';
+    $isUnderReview = strtolower(trim((string) $course->status)) === 'pending';
 
     if ($progress <= 0) {
         $progressGroup = 'not-started';
@@ -229,8 +230,15 @@
         </dl>
 
 
-        {{-- ACTION --}}
-        @if($isCompleted)
+        {{-- ACTION: publication is independent of enrollment/completion status. --}}
+        @if($isUnderReview)
+            <p class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900" data-course-under-review>
+                Course Under Review
+            </p>
+            @if($isCancelled)
+                <p class="mt-2 text-xs text-slate-500">Your enrollment was cancelled. Contact the course administrator.</p>
+            @endif
+        @elseif($isCompleted)
 
             <div class="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
 

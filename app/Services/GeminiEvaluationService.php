@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Exceptions\AiEvaluationException;
 use App\Exceptions\AiUnavailableException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class GeminiEvaluationService
 {
@@ -133,91 +132,47 @@ class GeminiEvaluationService
             ],
         ];
 
-        try {
-            $response = Http::timeout(90)
-                ->withHeaders([
-                    'x-goog-api-key' => $apiKey,
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($endpoint, $payload);
+        $response = Http::timeout(90)
+            ->withHeaders([
+                'x-goog-api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])
+            ->post($endpoint, $payload);
 
-            if ($response->failed()) {
-                Log::error(
-                    'Gemini evaluation API request failed.',
-                    [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
-                    ]
-                );
+        if ($response->failed()) {
 
-                // Quota, rate limit (429) or a Gemini server error: the AI
-                // is unavailable, not the answer unusable.
-                throw new AiUnavailableException(
-                    'Gemini API request failed: HTTP ' .
-                    $response->status()
-                );
-            }
-
-            $data = $response->json();
-
-            Log::info(
-                'Gemini evaluation response received.',
-                [
-                    'status' => $data['status'] ?? null,
-
-                    'model' => $data['model'] ?? null,
-
-                    'has_output_text' =>
-                        !empty($data['output_text']),
-
-                    'steps_count' =>
-                        isset($data['steps'])
-                            ? count($data['steps'])
-                            : 0,
-                ]
+            // Quota, rate limit (429) or a Gemini server error: the AI
+            // is unavailable, not the answer unusable.
+            throw new AiUnavailableException(
+                'Gemini HTTP request failed.', $response->status()
             );
-
-            $outputText = $this->extractOutputText(
-                $data
-            );
-
-            if (trim($outputText) === '') {
-                Log::error(
-                    'Gemini returned no text output for evaluation.',
-                    [
-                        'response' => $data,
-                    ]
-                );
-
-                throw new AiEvaluationException(
-                    'Gemini returned an empty evaluation response.'
-                );
-            }
-
-            $result = $this->parseJsonResponse(
-                $outputText
-            );
-
-            return $this->normalizeResult(
-                $result,
-                $maxScore
-            );
-
-        } catch (\Throwable $e) {
-
-            Log::error(
-                'Gemini evaluation failed.',
-                [
-                    'message' =>
-                        $e->getMessage(),
-
-                    'assignment_title' =>
-                        $assignmentTitle,
-                ]
-            );
-
-            throw $e;
         }
+
+        $data = $response->json();
+        if (! is_array($data)) {
+            throw new AiEvaluationException('Gemini returned an invalid evaluation format.');
+        }
+
+        $outputText = $this->extractOutputText(
+            $data
+        );
+
+        if (trim($outputText) === '') {
+
+            throw new AiEvaluationException(
+                'Gemini returned an empty evaluation response.'
+            );
+        }
+
+        $result = $this->parseJsonResponse(
+            $outputText
+        );
+
+        return $this->normalizeResult(
+            $result,
+            $maxScore
+        );
+
     }
 
     private function buildPrompt(
@@ -474,14 +429,6 @@ PROMPT;
 
         if (!is_array($decoded)) {
 
-            Log::error(
-                'Gemini evaluation returned invalid JSON.',
-                [
-                    'output' =>
-                        $outputText,
-                ]
-            );
-
             throw new AiEvaluationException(
                 'Gemini returned an invalid evaluation format.'
             );
@@ -505,12 +452,6 @@ PROMPT;
             || ! is_numeric($result['score'])
             || trim((string) ($result['feedback'] ?? '')) === ''
         ) {
-            Log::error(
-                'Gemini evaluation is missing a score or feedback.',
-                [
-                    'keys' => array_keys($result),
-                ]
-            );
 
             throw new AiEvaluationException(
                 'Gemini returned an incomplete evaluation (no score or feedback).'

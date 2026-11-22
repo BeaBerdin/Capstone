@@ -106,6 +106,8 @@ $fixtures=json_decode(file_get_contents($runtime.'/fixtures.json'),true,flags:JS
 if ($action === 'enroll') {
     $course=Course::where('teacher_id',$fixtures['users']['teacher']['id'])->findOrFail((int)($argv[2]??0));
     Enrollment::firstOrCreate(['student_id'=>$fixtures['users']['student']['id'],'course_id'=>$course->id],['status'=>'active','enrolled_at'=>now()]);
+} elseif ($action === 'review-fixtures') {
+    require __DIR__.'/course-under-review-fixtures.php';
 } elseif ($action !== 'snapshot') throw new RuntimeException('Unsupported browser fixture operation.');
 $state=[];
 foreach (['courses','lessons','lesson_sections','enrollments','lesson_progress','quizzes','quiz_questions','quiz_results','assignments','submissions'] as $table) $state[$table]=DB::table($table)->orderBy('id')->get();

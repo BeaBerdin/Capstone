@@ -151,6 +151,12 @@
                 SUCCESS
             ====================================================== --}}
 
+            @if(session('course_under_review'))
+                <div role="status" class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-900">
+                    Course Under Review
+                </div>
+            @endif
+
             @if(session('success'))
 
                 <div

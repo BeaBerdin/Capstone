@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\AiUnavailableException;
+use App\Exceptions\AiResponseException;
 use App\Models\Course;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -130,7 +131,7 @@ class GeminiQuizService
             );
 
         if (!is_array($decoded)) {
-            throw new RuntimeException(
+            throw new AiResponseException(
                 'Gemini returned an invalid quiz response.'
             );
         }
@@ -140,7 +141,7 @@ class GeminiQuizService
             ?? null;
 
         if (!is_array($questions)) {
-            throw new RuntimeException(
+            throw new AiResponseException(
                 'Gemini did not return quiz questions.'
             );
         }
@@ -496,18 +497,7 @@ PROMPT;
         $status =
             $lastResponse->status();
 
-        $message =
-            $this->extractApiErrorMessage(
-                $lastResponse
-            );
-
-        // Quota, rate limit (429) or a Gemini server error after the
-        // retries: the AI is unavailable (the details are only logged).
-        throw new AiUnavailableException(
-            $message !== ''
-                ? "Gemini API error ({$status}): {$message}"
-                : "Gemini API request failed ({$status})."
-        );
+        throw new AiUnavailableException('Gemini HTTP request failed.', $status);
     }
 
 
@@ -518,26 +508,6 @@ PROMPT;
     // One teacher action should equal one Gemini request.
     return $response->serverError();
 }
-
-
-    private function extractApiErrorMessage(
-        ?Response $response
-    ): string {
-        if (!$response) {
-            return '';
-        }
-
-        $message =
-            $response->json(
-                'error.message'
-            );
-
-        if (is_string($message)) {
-            return trim($message);
-        }
-
-        return '';
-    }
 
 
     /**
@@ -554,7 +524,7 @@ PROMPT;
             );
 
         if (!is_array($steps)) {
-            throw new RuntimeException(
+            throw new AiResponseException(
                 'Gemini returned an unexpected response format.'
             );
         }
@@ -615,7 +585,7 @@ PROMPT;
             );
 
         if ($output === '') {
-            throw new RuntimeException(
+            throw new AiResponseException(
                 'Gemini returned no quiz content.'
             );
         }
@@ -658,7 +628,7 @@ PROMPT;
             !==
             $expectedCount
         ) {
-            throw new RuntimeException(
+            throw new AiResponseException(
                 'Gemini returned an unexpected number of questions.'
             );
         }
@@ -668,7 +638,7 @@ PROMPT;
 
         foreach ($questions as $index => $question) {
             if (!is_array($question)) {
-                throw new RuntimeException(
+                throw new AiResponseException(
                     'Gemini returned an invalid question.'
                 );
             }
@@ -737,7 +707,7 @@ PROMPT;
                 );
 
             if ($questionText === '') {
-                throw new RuntimeException(
+                throw new AiResponseException(
                     'Gemini returned an empty question.'
                 );
             }
@@ -751,7 +721,7 @@ PROMPT;
 
             foreach ($options as $letter => $option) {
                 if ($option === '') {
-                    throw new RuntimeException(
+                    throw new AiResponseException(
                         "Gemini returned an empty Option {$letter}."
                     );
                 }
@@ -777,7 +747,7 @@ PROMPT;
                 !==
                 4
             ) {
-                throw new RuntimeException(
+                throw new AiResponseException(
                     'Gemini returned duplicate answer choices.'
                 );
             }
@@ -788,7 +758,7 @@ PROMPT;
                     $options
                 )
             ) {
-                throw new RuntimeException(
+                throw new AiResponseException(
                     'Gemini returned an invalid correct answer.'
                 );
             }
@@ -808,7 +778,7 @@ PROMPT;
                     $seenQuestions[$questionKey]
                 )
             ) {
-                throw new RuntimeException(
+                throw new AiResponseException(
                     'Gemini returned duplicate questions.'
                 );
             }

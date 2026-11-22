@@ -569,7 +569,7 @@ class SubmissionController extends Controller
             // Gemini unreachable, not configured, over quota or answering
             // with an HTTP/server error: the friendly message only; the
             // details go to the log.
-            if (AiAvailability::isUnavailable($e) || ! $e instanceof AiEvaluationException) {
+            if (AiAvailability::isUnavailable($e)) {
                 AiAvailability::logUnavailable('AI evaluation', $e, [
                     'submission_id' => $submission->id,
                     'teacher_id' => auth()->id(),
@@ -585,7 +585,8 @@ class SubmissionController extends Controller
 
             // The AI answered, but its evaluation could not be used (for
             // example unreadable or incomplete): that reason is shown.
-            report($e);
+            if (! $e instanceof AiEvaluationException) throw $e;
+            AiAvailability::logUnavailable('AI evaluation', $e, ['submission_id' => $submission->id]);
 
             return redirect()
                 ->route('teacher.submissions.show', $submission)

@@ -28,7 +28,11 @@ export async function createReadingBrowser() {
     const password = randomBytes(24).toString('base64url') + '!7aA';
     const php = process.env.PATHWISE_PHP_BINARY || 'php';
     const proxy = http.createServer((req, res) => { res.writeHead(403); res.end('Outbound blocked in browser tests'); });
-    proxy.on('connect', (req, socket) => socket.end('HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n'));
+    proxy.on('connect', (req, socket) => {
+        // Chromium may reset a denied background connection before reading the response.
+        socket.on('error', () => {});
+        socket.end('HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n');
+    });
     await new Promise((resolve, reject) => { proxy.once('error', reject); proxy.listen(0, '127.0.0.1', resolve); });
     const proxyUrl = `http://127.0.0.1:${proxy.address().port}`;
     assert.equal((await fetch(proxyUrl + '/local-safety-check')).status, 403);

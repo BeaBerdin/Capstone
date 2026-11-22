@@ -8,6 +8,7 @@ Build the frontend before running:
 npm run build
 node --test tests/JavaScript/reading-editor.test.mjs
 node tests/Browser/reading-editor-browser.mjs
+node tests/Browser/course-under-review-browser.mjs
 ```
 
 Set `PATHWISE_BROWSER_EXECUTABLE` to the installed browser executable. Optionally
