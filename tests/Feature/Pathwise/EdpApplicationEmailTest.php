@@ -154,3 +154,86 @@ test('a resubmitted student application also goes only to the configured mailbox
     Notification::assertSentOnDemandTimes(StudentApplicationSubmitted::class, 2);
     Notification::assertSentOnDemand(StudentApplicationSubmitted::class, fn ($n) => $n->resubmission === true);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Wording: teacher registrations vs student applications
+|--------------------------------------------------------------------------
+*/
+
+function edpMailText(StudentApplicationSubmitted $notification): array
+{
+    $mail = $notification->toMail(new AnonymousNotifiable);
+    $html = view($mail->view[0], $mail->viewData)->render();
+
+    return [$mail->subject, $html, $notification->toArray(new AnonymousNotifiable)];
+}
+
+test('a new teacher registration email uses Teacher ID wording', function () {
+    $teacher = edpRegisterTeacher();
+    $review = $teacher->teacherApplications()->sole();
+
+    [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($review));
+
+    expect($subject)->toBe('PathWise - New teacher registration: Maria Santos')
+        ->and($html)->toContain('Maria Santos registered as a teacher and uploaded a Teacher ID for verification.')
+        ->and($html)->toContain('Please review the Teacher ID and approve or reject the registration.')
+        ->and($html)->toContain('Review registration')
+        ->and($html)->not->toContain('Study Load')
+        // Only the review link's route path mentions "student-applications".
+        ->and($html)->not->toContain('registered as a student')
+        ->and($html)->not->toContain('student application')
+        ->and($html)->not->toContain('The student')
+        ->and($inApp['title'])->toBe('New teacher registration')
+        ->and($inApp['message'])->toBe('Maria Santos is waiting for Teacher ID verification.');
+});
+
+test('a resubmitted teacher registration email uses Teacher ID wording', function () {
+    $teacher = edpRegisterTeacher();
+    $review = $teacher->teacherApplications()->sole();
+    $review->forceFill(['status' => StudentApplication::REJECTED, 'rejection_reason' => 'The ID photo is blurry.', 'reviewed_at' => now()])->save();
+
+    $this->actingAs($teacher)
+        ->post(route('student-application.resubmit'), ['teacher_id' => teacherIdUpload('clear-id.png')])
+        ->assertSessionHas('success');
+
+    $new = $teacher->fresh()->currentTeacherApplication();
+
+    [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($new, resubmission: true));
+
+    expect($subject)->toBe('PathWise - Teacher registration resubmitted: Maria Santos')
+        ->and($html)->toContain('Maria Santos uploaded a new Teacher ID (submission #'.$new->submission_no.') after the previous one was rejected.')
+        ->and($html)->not->toContain('Study Load')
+        ->and($inApp['title'])->toBe('Teacher registration resubmitted')
+        ->and($inApp['message'])->toBe('Maria Santos uploaded a new Teacher ID for review.');
+});
+
+test('a teacher review started by the EDP office is worded without a Teacher ID', function () {
+    $teacher = pathwiseUser('teacher', ['name' => 'Ana Reyes', 'email_verified_at' => null]);
+    $review = StudentApplication::submitForTeacher($teacher, 'edp_created');
+
+    [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($review));
+
+    expect($subject)->toBe('PathWise - New teacher registration: Ana Reyes')
+        ->and($html)->toContain('Please confirm the faculty member with the department')
+        ->and($html)->not->toContain('Teacher ID')
+        ->and($html)->not->toContain('Study Load')
+        ->and($inApp['message'])->toBe('Ana Reyes is waiting for teacher registration review.');
+});
+
+test('student application emails keep the Study Load wording', function () {
+    $student = edpRegisterStudent();
+    $application = StudentApplication::where('user_id', $student->id)->sole();
+
+    [$subject, $html, $inApp] = edpMailText(new StudentApplicationSubmitted($application));
+    [$reSubject, $reHtml, $reInApp] = edpMailText(new StudentApplicationSubmitted($application, resubmission: true));
+
+    expect($subject)->toBe('PathWise - New student application: Juan Dela Cruz')
+        ->and($html)->toContain('Juan Dela Cruz registered as a student and uploaded a Study Load for verification.')
+        ->and($html)->toContain('Please review the Study Load and approve or reject the application.')
+        ->and($inApp['title'])->toBe('New student application')
+        ->and($inApp['message'])->toBe('Juan Dela Cruz is waiting for Study Load verification.')
+        ->and($reSubject)->toBe('PathWise - Student application resubmitted: Juan Dela Cruz')
+        ->and($reHtml)->toContain('uploaded a corrected Study Load (submission #1) after the previous one was rejected.')
+        ->and($reInApp['message'])->toBe('Juan Dela Cruz uploaded a corrected Study Load for review.');
+});
