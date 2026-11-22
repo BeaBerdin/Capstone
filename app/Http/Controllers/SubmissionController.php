@@ -7,8 +7,8 @@ use App\Models\Assignment;
 use App\Models\Submission;
 use App\Notifications\PathwiseNotification;
 use App\Services\GeminiEvaluationService;
+use App\Support\AiAvailability;
 use App\Support\PrivateFiles;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -566,22 +566,32 @@ class SubmissionController extends Controller
                 'ai_evaluation_status' => 'failed',
             ]);
 
-            report($e);
+            // Gemini unreachable, not configured, over quota or answering
+            // with an HTTP/server error: the friendly message only; the
+            // details go to the log.
+            if (AiAvailability::isUnavailable($e) || ! $e instanceof AiEvaluationException) {
+                AiAvailability::logUnavailable('AI evaluation', $e, [
+                    'submission_id' => $submission->id,
+                    'teacher_id' => auth()->id(),
+                ]);
 
-            $reason = match (true) {
-                $e instanceof ConnectionException =>
-                    'Gemini did not respond in time.',
-                $e instanceof AiEvaluationException =>
-                    $e->getMessage(),
-                default =>
-                    'An unexpected error occurred.',
-            };
+                return redirect()
+                    ->route('teacher.submissions.show', $submission)
+                    ->with(
+                        'error',
+                        AiAvailability::MESSAGE.' No AI score was saved. You can grade this submission manually.'
+                    );
+            }
+
+            // The AI answered, but its evaluation could not be used (for
+            // example unreadable or incomplete): that reason is shown.
+            report($e);
 
             return redirect()
                 ->route('teacher.submissions.show', $submission)
                 ->with(
                     'error',
-                    'AI evaluation failed: '.$reason
+                    'AI evaluation failed: '.$e->getMessage()
                         .' No AI score was saved. You can retry or grade this submission manually.'
                 );
         }

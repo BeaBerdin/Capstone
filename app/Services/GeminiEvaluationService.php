@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\AiEvaluationException;
+use App\Exceptions\AiUnavailableException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +32,7 @@ class GeminiEvaluationService
         );
 
         if (empty($apiKey)) {
-            throw new AiEvaluationException(
+            throw new AiUnavailableException(
                 'Gemini API key is not configured.'
             );
         }
@@ -149,7 +150,9 @@ class GeminiEvaluationService
                     ]
                 );
 
-                throw new AiEvaluationException(
+                // Quota, rate limit (429) or a Gemini server error: the AI
+                // is unavailable, not the answer unusable.
+                throw new AiUnavailableException(
                     'Gemini API request failed: HTTP ' .
                     $response->status()
                 );

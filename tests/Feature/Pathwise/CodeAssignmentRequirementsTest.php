@@ -478,8 +478,11 @@ test('a failed Gemini evaluation is not saved and the teacher can retry', functi
         ->assertSee('The last AI evaluation did not finish')
         ->assertSee('Retry AI Evaluation');
 })->with([
-    'HTTP error' => [fn () => Http::response(['error' => 'server error'], 500), 'HTTP 500'],
-    'timeout' => [fn () => Http::failedConnection('Operation timed out'), 'did not respond in time'],
+    // Gemini unavailable: only the friendly message (details are logged).
+    'HTTP error' => [fn () => Http::response(['error' => 'server error'], 500), 'AI features are currently unavailable. Please try again later.'],
+    'quota reached' => [fn () => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED']], 429), 'AI features are currently unavailable. Please try again later.'],
+    'timeout' => [fn () => Http::failedConnection('Operation timed out'), 'AI features are currently unavailable. Please try again later.'],
+    // The AI answered with content that cannot be used: the reason is kept.
     'empty output' => [fn () => Http::response(['output_text' => '']), 'empty evaluation response'],
     'invalid JSON' => [fn () => Http::response(['output_text' => 'Sure! Here is my evaluation.']), 'invalid evaluation format'],
     'missing score' => [fn () => Http::response(geminiOutput(['feedback' => 'Looks fine.'])), 'incomplete evaluation'],
@@ -523,4 +526,34 @@ test('an evaluation stuck in processing can be retried, a fresh one cannot be st
         ->get(route('teacher.submissions.show', $submission))
         ->assertSee('The last AI evaluation did not finish')
         ->assertSee('Retry AI Evaluation');
+});
+
+test('an unavailable AI evaluation logs the technical reason and never shows it', function () {
+    [$teacher, $submission] = submittedCodeSubmission();
+    Illuminate\Support\Facades\Log::spy();
+
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED']], 429)]);
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertSessionHas('error', fn (string $error) => str_starts_with($error, 'AI features are currently unavailable. Please try again later.')
+            && ! str_contains($error, '429')
+            && ! str_contains($error, 'Gemini'));
+
+    Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
+        ->withArgs(fn (string $message, array $context) => str_contains($message, 'AI evaluation')
+            && str_contains($context['reason'] ?? '', 'HTTP 429'))
+        ->once();
+});
+
+test('a missing Gemini API key shows the friendly message for AI evaluation', function () {
+    [$teacher, $submission] = submittedCodeSubmission();
+    config(['services.gemini.api_key' => '']);
+    Http::fake();
+
+    $this->actingAs($teacher)
+        ->post(route('teacher.submissions.ai-evaluate', $submission))
+        ->assertSessionHas('error', fn (string $error) => str_starts_with($error, 'AI features are currently unavailable. Please try again later.'));
+
+    Http::assertNothingSent();
 });

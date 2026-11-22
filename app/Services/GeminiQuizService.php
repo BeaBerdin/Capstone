@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AiUnavailableException;
 use App\Models\Course;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -48,7 +49,7 @@ class GeminiQuizService
         );
 
         if ($apiKey === '') {
-            throw new RuntimeException(
+            throw new AiUnavailableException(
                 'Gemini API key is not configured.'
             );
         }
@@ -500,7 +501,9 @@ PROMPT;
                 $lastResponse
             );
 
-        throw new RuntimeException(
+        // Quota, rate limit (429) or a Gemini server error after the
+        // retries: the AI is unavailable (the details are only logged).
+        throw new AiUnavailableException(
             $message !== ''
                 ? "Gemini API error ({$status}): {$message}"
                 : "Gemini API request failed ({$status})."

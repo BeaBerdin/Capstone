@@ -61,9 +61,32 @@ class AppServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         foreach (self::RATE_LIMITS as $name => $perMinute) {
+            // AI evaluation gets its own limiter below (friendly message).
+            if ($name === 'ai-evaluation') {
+                continue;
+            }
+
             RateLimiter::for($name, fn (Request $request) => Limit::perMinute($perMinute)
                 ->by($name.'|'.($request->user()?->getAuthIdentifier() ?: $request->ip())));
         }
+
+        // PathWise's own AI evaluation limit: the teacher sees the same
+        // friendly message as for any other AI outage (details are logged).
+        RateLimiter::for('ai-evaluation', fn (Request $request) => Limit::perMinute(self::RATE_LIMITS['ai-evaluation'])
+            ->by('ai-evaluation|'.($request->user()?->getAuthIdentifier() ?: $request->ip()))
+            ->response(function (Request $request) {
+                \App\Support\AiAvailability::logUnavailable('AI evaluation', null, [
+                    'limit' => 'PathWise per-minute AI evaluation limit',
+                    'teacher_id' => $request->user()?->getAuthIdentifier(),
+                ]);
+
+                $submission = $request->route('submission');
+
+                return ($submission
+                    ? redirect()->route('teacher.submissions.show', $submission)
+                    : back())
+                    ->with('error', \App\Support\AiAvailability::MESSAGE);
+            }));
 
         /*
          * Registration (layered). Students often register from one school

@@ -37,7 +37,7 @@ function rateLimitSubmission(): Submission
     ]);
 }
 
-test('AI evaluation is limited per teacher and then answers 429', function () {
+test('AI evaluation is limited per teacher and then shows the friendly message', function () {
     Http::fake();
     $submission = rateLimitSubmission();
     $teacher = $submission->assignment->course->teacher;
@@ -51,8 +51,8 @@ test('AI evaluation is limited per teacher and then answers 429', function () {
 
     $this->actingAs($teacher)
         ->post(route('teacher.submissions.ai-evaluate', $submission))
-        ->assertStatus(429)
-        ->assertSee('Please wait a moment');
+        ->assertRedirect(route('teacher.submissions.show', $submission))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
 
     // Another teacher has their own counter.
     $otherSubmission = rateLimitSubmission();

@@ -12,7 +12,7 @@ use App\Models\QuizQuestion;
 use App\Models\QuizResult;
 use App\Services\GeminiQuizService;
 use App\Services\RecommendationService;
-use Illuminate\Http\Client\ConnectionException;
+use App\Support\AiAvailability;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -705,11 +705,11 @@ class QuizController extends Controller
                 4
             )
         ) {
-            $seconds =
-                RateLimiter::availableIn(
-                    $minuteKey
-                );
-
+            AiAvailability::logUnavailable('quiz generation', null, [
+                'limit' => 'PathWise per-minute AI generation limit',
+                'retry_after_seconds' => RateLimiter::availableIn($minuteKey),
+                'teacher_id' => auth()->id(),
+            ]);
 
             return redirect()
                 ->route(
@@ -718,14 +718,7 @@ class QuizController extends Controller
                 )
                 ->with(
                     'error',
-                    'AI generation is temporarily limited to protect the Gemini quota. Please try again in '
-                    .
-                    max(
-                        1,
-                        $seconds
-                    )
-                    .
-                    ' seconds.'
+                    AiAvailability::MESSAGE
                 );
         }
 
@@ -736,6 +729,11 @@ class QuizController extends Controller
                 20
             )
         ) {
+            AiAvailability::logUnavailable('quiz generation', null, [
+                'limit' => 'PathWise daily AI generation limit',
+                'teacher_id' => auth()->id(),
+            ]);
+
             return redirect()
                 ->route(
                     'teacher.quiz.builder',
@@ -743,7 +741,7 @@ class QuizController extends Controller
                 )
                 ->with(
                     'error',
-                    'PathWise has reached its 20-request AI generation safety limit for today. Please try again tomorrow.'
+                    AiAvailability::MESSAGE
                 );
         }
 
@@ -843,56 +841,30 @@ class QuizController extends Controller
         } catch (ValidationException|HttpExceptionInterface $exception) {
             throw $exception;
         } catch (Throwable $exception) {
+            // Gemini unreachable, over quota or rate-limited, or answering
+            // with an HTTP error: the friendly message only; the details
+            // go to the log.
+            if (AiAvailability::isUnavailable($exception)) {
+                AiAvailability::logUnavailable('quiz generation', $exception, [
+                    'quiz_id' => $quiz->id,
+                    'teacher_id' => auth()->id(),
+                ]);
+
+                return redirect()
+                    ->route(
+                        'teacher.quiz.builder',
+                        $quiz->lesson_id
+                    )
+                    ->with(
+                        'error',
+                        AiAvailability::MESSAGE
+                    );
+            }
+
+            // The AI answered, but with content that cannot be used.
             report(
                 $exception
             );
-
-
-            if ($exception instanceof ConnectionException) {
-                return redirect()
-                    ->route(
-                        'teacher.quiz.builder',
-                        $quiz->lesson_id
-                    )
-                    ->with(
-                        'error',
-                        'Gemini did not respond in time. Your quiz was not changed. Please try again, or generate fewer questions.'
-                    );
-            }
-
-
-            $message =
-                mb_strtolower(
-                    $exception->getMessage()
-                );
-
-
-            if (
-                str_contains(
-                    $message,
-                    '429'
-                )
-                ||
-                str_contains(
-                    $message,
-                    'quota'
-                )
-                ||
-                str_contains(
-                    $message,
-                    'rate limit'
-                )
-            ) {
-                return redirect()
-                    ->route(
-                        'teacher.quiz.builder',
-                        $quiz->lesson_id
-                    )
-                    ->with(
-                        'error',
-                        'Gemini is temporarily rate-limited. Your quiz was not changed. Please wait before trying again.'
-                    );
-            }
 
 
             return redirect()

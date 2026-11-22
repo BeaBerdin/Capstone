@@ -256,7 +256,7 @@ test('questions with the choices under "options" are still saved', function () {
         ->and($saved->correct_answer)->toBe('D');
 });
 
-test('a Gemini timeout shows a clear message and leaves the quiz unchanged', function () {
+test('a Gemini timeout shows the friendly message and leaves the quiz unchanged', function () {
     [$teacher, $quiz] = generationQuiz();
 
     Http::fake(['*' => Http::failedConnection('Operation timed out')]);
@@ -264,7 +264,7 @@ test('a Gemini timeout shows a clear message and leaves the quiz unchanged', fun
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('error', 'Gemini did not respond in time. Your quiz was not changed. Please try again, or generate fewer questions.');
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
 });
@@ -349,3 +349,89 @@ test('generation discards its response when the quiz changes while Gemini is wor
     expect($quiz->fresh()->title)->toBe('A simultaneous edit')
         ->and($quiz->questions()->count())->toBe(0);
 });
+
+/*
+|--------------------------------------------------------------------------
+| AI unavailable: one friendly message, details only in the log
+|--------------------------------------------------------------------------
+*/
+
+test('a Gemini quota or rate-limit error shows the friendly message and logs the details', function () {
+    [$teacher, $quiz] = generationQuiz();
+    Illuminate\Support\Facades\Log::spy();
+
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED', 'message' => 'Quota exceeded for metric generate_content_requests']], 429)]);
+
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
+
+    Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
+        ->withArgs(fn (string $message, array $context) => str_contains($message, 'quiz generation')
+            && str_contains($context['reason'] ?? '', '429'))
+        ->once();
+});
+
+test('the quota details never reach the quiz builder page', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    Http::fake(['*' => Http::response(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED', 'message' => 'Quota exceeded for metric generate_content_requests']], 429)]);
+
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2);
+
+    $this->get(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertOk()
+        ->assertSee('AI features are currently unavailable. Please try again later.')
+        ->assertDontSee('RESOURCE_EXHAUSTED')
+        ->assertDontSee('Quota exceeded')
+        ->assertDontSee('Gemini quota');
+});
+
+test('a Gemini server error after the retries shows the friendly message', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Internal error']], 503)]);
+
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+});
+
+test('a missing Gemini API key shows the friendly message', function () {
+    [$teacher, $quiz] = generationQuiz();
+    config(['services.gemini.api_key' => '']);
+    Http::fake();
+
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    Http::assertNothingSent();
+});
+
+test('PathWise\'s own per-minute and daily AI limits show the friendly message', function (string $key, int $hits) {
+    [$teacher, $quiz] = generationQuiz();
+    Illuminate\Support\Facades\Log::spy();
+    Http::fake();
+
+    foreach (range(1, $hits) as $attempt) {
+        Illuminate\Support\Facades\RateLimiter::hit($key, 86400);
+    }
+
+    $this->actingAs($teacher);
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+
+    Http::assertNothingSent();
+    Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
+        ->withArgs(fn (string $message, array $context) => str_contains($context['limit'] ?? '', 'PathWise'))
+        ->once();
+})->with([
+    'per minute' => ['pathwise:gemini:quiz:minute', 4],
+    'per day' => [fn () => 'pathwise:gemini:quiz:daily:'.now()->toDateString(), 20],
+]);
