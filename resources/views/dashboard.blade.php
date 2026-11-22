@@ -86,6 +86,10 @@
                             {{ $greeting }}, Department Head!&nbsp;<span aria-hidden="true">👋</span>
                         </h1>
 
+                        <p class="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700" data-test="department-assignment">
+                            Department Assignment: {{ $departmentAssignment }}
+                        </p>
+
                         <p class="mt-2 max-w-xl text-sm leading-6 text-slate-600">
                             Manage courses, learning content, certificates, student progress,
                             and academic activities across the PATHWISE platform.
