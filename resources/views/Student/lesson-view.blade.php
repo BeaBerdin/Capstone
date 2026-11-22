@@ -1625,50 +1625,15 @@
                         LESSON CONTENT / READING
                     ============================================== --}}
 
-                    @if($lessonType === 'text' && $lesson->sections->isNotEmpty())
-                        <section class="sad-card pw-card overflow-hidden">
-                            <div class="divide-y divide-slate-100">
-                                @foreach($lesson->sections as $section)
-                                    <div class="p-5 sm:p-7">
-                                        @if($section->type === 'text')
-                                            @if(filled($section->caption))
-                                                <h3 class="mb-3 text-base font-bold text-slate-900">{{ $section->caption }}</h3>
-                                            @endif
-                                            @if(filled($section->body))
-                                                <div class="pw-content whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $section->body }}</div>
-                                            @endif
-                                        @elseif($section->type === 'image')
-                                            <figure>
-                                                <img src="{{ route('files.lesson-section', $section) }}" alt="{{ $section->caption ?: 'Lesson illustration' }}" loading="lazy" class="mx-auto max-h-[680px] w-full rounded-2xl border border-slate-200 bg-slate-50 object-contain">
-                                                @if(filled($section->caption))
-                                                    <figcaption class="mt-3 text-center text-sm text-slate-500">{{ $section->caption }}</figcaption>
-                                                @endif
-                                            </figure>
-                                        @elseif($section->type === 'file')
-                                            <a href="{{ route('files.lesson-section', $section) }}" class="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-violet-200 hover:bg-violet-50 sm:p-5">
-                                                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-lg text-violet-700 shadow-sm" aria-hidden="true">↧</span>
-                                                <span class="min-w-0 flex-1">
-                                                    <span class="block truncate text-sm font-bold text-slate-900">{{ $section->caption ?: $section->original_name ?: 'Download learning material' }}</span>
-                                                    @if($section->caption && $section->original_name)
-                                                        <span class="mt-1 block truncate text-xs text-slate-500">{{ $section->original_name }}</span>
-                                                    @else
-                                                        <span class="mt-1 block text-xs text-slate-500">Download learning material</span>
-                                                    @endif
-                                                </span>
-                                                <span class="shrink-0 text-xs font-semibold text-violet-700 group-hover:text-violet-900">Download</span>
-                                            </a>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        </section>
+                    @if($lessonType === 'text' && ($lesson->sections->isNotEmpty() || filled($lesson->content)))
+                        @include('Student.partials.reading-content')
                     @endif
 
                     @if(
                         $lessonType !== 'quiz'
                         &&
                         $lesson->content
-                        && ($lessonType !== 'text' || $lesson->sections->isEmpty())
+                        && $lessonType !== 'text'
                     )
 
                         <section
@@ -1850,39 +1815,7 @@
                                     </div>
 
 
-                                    @if($nextUrl)
 
-                                        <a
-                                            href="{{ $nextUrl }}"
-                                            class="sad-btn-primary inline-flex h-10
-                                                   self-start
-                                                   items-center
-                                                   justify-center
-                                                   gap-2 rounded-xl
-                                                   bg-violet-600
-                                                   px-4
-                                                   text-xs font-semibold
-                                                   text-white
-                                                   transition
-                                                   hover:bg-violet-700"
-                                        >
-                                            Next Lesson
-
-                                            <svg
-                                                class="h-3.5 w-3.5"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                            >
-                                                <path
-                                                    d="m9 18
-                                                       6-6-6-6"
-                                                ></path>
-                                            </svg>
-                                        </a>
-
-                                    @endif
 
                                 </div>
 
@@ -1970,7 +1903,7 @@
                         PREVIOUS / NEXT NAVIGATION
                     ============================================== --}}
 
-                    <section
+                    <nav aria-label="Lesson navigation"
                         class="flex flex-col
                                gap-3
                                sm:flex-row
@@ -2025,6 +1958,7 @@
 
                                 <a
                                     href="{{ $nextUrl }}"
+                                    data-next-lesson
                                     class="sad-btn-primary inline-flex h-11
                                            items-center
                                            justify-center
@@ -2088,7 +2022,7 @@
 
                         </div>
 
-                    </section>
+                    </nav>
 
                 </div>
 

@@ -243,7 +243,7 @@ test('legacy reading still renders and can be edited with the builder', function
     expect($course->lessons()->where('lesson_order', 2)->sole()->content)->toBe('Legacy client content');
 });
 
-test('the admin legacy textarea preserves sections on metadata changes and retains media on text edits', function () {
+test('the admin legacy textarea preserves metadata but rejects multi-section flattening', function () {
     fakeFileDisks();
     $course = pathwiseCourse(pathwiseApprovedTeacher());
     $content = "First heading\nFirst body\n\nSecond body";
@@ -260,9 +260,12 @@ test('the admin legacy textarea preserves sections on metadata changes and retai
     expect($lesson->sections()->pluck('id')->all())->toBe([$first->id, $file->id, $second->id]);
     expect($first->fresh()->caption)->toBe('First heading');
 
-    $this->put($url, array_replace($fields, ['content' => 'Replacement text']))->assertRedirect(route('lessons.index'));
-    expect($lesson->sections()->pluck('id')->all())->toBe([$first->id, $file->id])
-        ->and($first->fresh()->body)->toBe('Replacement text');
+    $this->put($url, array_replace($fields, ['content' => 'Replacement text']))->assertSessionHasErrors('content');
+    expect($lesson->sections()->pluck('id')->all())->toBe([$first->id, $file->id, $second->id])
+        ->and($first->fresh()->body)->toBe('First body')
+        ->and($first->fresh()->caption)->toBe('First heading')
+        ->and($second->fresh()->body)->toBe('Second body')
+        ->and($lesson->fresh()->content)->toBe($content);
     Storage::disk('local')->assertExists($path);
 
     $this->delete(route('lessons.destroy', $lesson))->assertRedirect(route('lessons.index'));

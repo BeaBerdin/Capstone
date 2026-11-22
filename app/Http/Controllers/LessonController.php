@@ -15,6 +15,7 @@ use App\Models\QuizResult;
 use App\Models\LessonSection;
 use App\Models\Assignment;
 use App\Support\PrivateFiles;
+use App\Support\ReadingContent;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -128,6 +129,7 @@ class LessonController extends Controller
                 );
             }
 
+            $this->guardReadingSectionConversion($lesson, (string) $request->lesson_type);
             $previousContent = $lesson->content;
             $lesson->update([
                 'course_id' => $destination,
@@ -145,7 +147,7 @@ class LessonController extends Controller
                 return $this->removeSections($lesson);
             }
 
-            if ((string) $lesson->content !== trim((string) $previousContent) && $lesson->sections()->exists()) {
+            if ((string) $lesson->content !== (string) $previousContent && $lesson->sections()->exists()) {
                 $this->syncLegacyReadingEdit($lesson, (string) $lesson->content);
             }
 
@@ -176,30 +178,40 @@ class LessonController extends Controller
             ->with('success', 'Lesson deleted successfully.');
     }
 
-    /** Synchronize edits from the legacy textarea while retaining media sections. */
+    private function guardReadingSectionConversion(Lesson $lesson, string $newType): void
+    {
+        if ($lesson->exists && $newType !== 'text' && $lesson->sections()->exists()) {
+            throw ValidationException::withMessages([
+                'lesson_type' => 'This Reading lesson contains saved sections. Keep its type or create a separate lesson to preserve its content.',
+            ]);
+        }
+    }
+
+    /** Legacy textareas may edit one plain text section, but cannot flatten a structured reading. */
     private function syncLegacyReadingEdit(Lesson $lesson, string $content): void
     {
         $textSections = $lesson->sections()->where('type', 'text')->get();
-        $first = $textSections->first();
+        if ($textSections->count() > 1 || $textSections->contains(fn ($section) => $section->body_format === 'html' || filled($section->caption))) {
+            throw ValidationException::withMessages([
+                'content' => 'This Reading lesson has multiple, headed, or formatted text sections. Use the section builder; the legacy textarea cannot safely replace its content.',
+            ]);
+        }
 
+        $first = $textSections->first();
+        if ($first && blank($content)) {
+            throw ValidationException::withMessages([
+                'content' => 'Remove this text section explicitly in the section builder instead of clearing the legacy textarea.',
+            ]);
+        }
         if (filled($content) && $first) {
             $first->update(['body' => $content, 'caption' => null]);
         } elseif (filled($content)) {
             $lesson->sections()->create([
-                'type' => 'text',
-                'body' => $content,
+                'type' => 'text', 'body_format' => 'plain', 'body' => $content,
                 'position' => ($lesson->sections()->max('position') ?? -1) + 1,
             ]);
-        } elseif ($first) {
-            $first->delete();
-        }
-
-        foreach ($textSections->skip(1) as $section) {
-            $section->delete();
         }
     }
-
-
 
     /*
     |--------------------------------------------------------------------------
@@ -915,6 +927,7 @@ class LessonController extends Controller
             'id' => $section->id,
             'type' => $section->type,
             'body' => $section->body,
+            'body_format' => $section->body_format,
             'caption' => $section->caption,
             'file_path' => $section->file_path,
             'original_name' => $section->original_name,
@@ -965,10 +978,11 @@ class LessonController extends Controller
             'is_published' => ['nullable', 'boolean'],
             'reading_builder' => ['exclude_unless:lesson_type,text', 'sometimes', 'boolean'],
             'sections' => ['exclude_unless:lesson_type,text', 'sometimes', 'array', 'list', 'max:50'],
-            'sections.*' => ['required', 'array:id,type,body,caption,file'],
+            'sections.*' => ['required', 'array:id,type,body,body_format,caption,file'],
             'sections.*.id' => ['nullable', 'integer', 'min:1', 'distinct'],
             'sections.*.type' => ['required', 'in:text,image,file'],
             'sections.*.body' => ['nullable', 'string'],
+            'sections.*.body_format' => ['sometimes', 'required', 'in:plain,html'],
             'sections.*.caption' => ['nullable', 'string', 'max:500'],
             'sections.*.file' => ['nullable', 'file', 'max:20480'],
         ], [
@@ -987,6 +1001,7 @@ class LessonController extends Controller
                     : new Lesson(['course_id' => $course->id]);
 
                 $type = $validated['lesson_type'];
+                $this->guardReadingSectionConversion($lesson, $type);
                 $activities = $this->lockActivityAssignments($lesson);
                 if ($type === 'activity' && $lesson->exists && $lesson->lesson_type !== 'activity'
                     && LessonProgress::where('lesson_id', $lesson->id)->lockForUpdate()->first(['id'])) {
@@ -1052,7 +1067,7 @@ class LessonController extends Controller
                     $content = $this->syncSections($lesson, $validated['sections'] ?? [], $newPaths, $obsoletePaths);
                 } elseif ($type !== 'text') {
                     array_push($obsoletePaths, ...$this->removeSections($lesson));
-                } elseif ((string) $content !== trim((string) $lesson->content) && $lesson->sections()->exists()) {
+                } elseif ((string) $content !== (string) $lesson->content && $lesson->sections()->exists()) {
                     $this->syncLegacyReadingEdit($lesson, (string) $content);
                 }
 
@@ -1122,7 +1137,7 @@ class LessonController extends Controller
 
         foreach ($rows as $position => $row) {
             $type = $row['type'] ?? '';
-            $body = trim((string) ($row['body'] ?? ''));
+            $body = (string) ($row['body'] ?? '');
             $caption = trim((string) ($row['caption'] ?? ''));
             $section = filled($row['id'] ?? null)
                 ? $existing->get((int) $row['id'])
@@ -1130,10 +1145,43 @@ class LessonController extends Controller
             $oldPath = $section->file_path;
             $upload = $row['file'] ?? null;
 
+            $format = $row['body_format'] ?? ($section->body_format ?? 'plain');
+            // HTML keeps its existing sanitizer/trim behavior; plain bodies retain user whitespace.
+            if ($format === 'html') {
+                $body = trim($body);
+            }
+            $originalBody = $type === 'text'
+                ? ($section->exists ? $section->body : ($existing->isEmpty() ? $lesson->content : null))
+                : null;
+            // Textareas and native multipart forms normalize line breaks. Compare only that
+            // transport representation; never trim it or persist a normalized original.
+            $samePlainBody = $type === 'text' && $format === 'plain' && $originalBody !== null
+                && str_replace(["\r\n", "\r"], "\n", $body)
+                    === str_replace(["\r\n", "\r"], "\n", (string) $originalBody);
+            if ($section->exists && $section->body_format === 'html'
+                && ($type !== 'text' || $format !== 'html'
+                    || (! array_key_exists('body_format', $row) && $body !== trim((string) $section->body)))) {
+                throw ValidationException::withMessages([
+                    "sections.$position.body_format" => 'Formatted content must retain its HTML format marker. Use a compatible editor or remove the section explicitly.',
+                ]);
+            }
+
+            $textBody = $body;
+            if ($type === 'text' && $format === 'html') {
+                try {
+                    $body = app(ReadingContent::class)->sanitize($body);
+                    $textBody = app(ReadingContent::class)->plainText($body);
+                } catch (\InvalidArgumentException $exception) {
+                    throw ValidationException::withMessages(["sections.$position.body" => $exception->getMessage()]);
+                }
+                if (mb_strlen($textBody) > 30000) {
+                    throw ValidationException::withMessages(["sections.$position.body" => 'Formatted text may contain up to 30,000 readable characters.']);
+                }
+            }
+
             if ($type === 'text') {
-                $originalBody = $section->exists ? $section->body : ($existing->isEmpty() ? $lesson->content : null);
-                $empty = $body === '' && $caption === '';
-                if ($empty || (mb_strlen($body) > 30000 && $body !== trim((string) $originalBody))) {
+                $empty = trim($textBody) === '' && $caption === '';
+                if ($empty || ($format === 'plain' && mb_strlen($body) > 30000 && ! $samePlainBody)) {
                     throw ValidationException::withMessages([
                         "sections.$position.body" => $empty
                             ? 'Add a heading or text to this section, or delete the empty section.'
@@ -1188,7 +1236,17 @@ class LessonController extends Controller
                 $obsoletePaths[] = $oldPath;
             }
 
+            if ($samePlainBody) {
+                // Restore original bytes, including mixed line endings and outer whitespace.
+                $body = $originalBody;
+                $textBody = $body;
+            }
+            if ($section->exists && $caption === trim((string) $section->caption)) {
+                $caption = (string) $section->caption;
+            }
+
             $section->fill([
+                'body_format' => $type === 'text' ? $format : 'plain',
                 'type' => $type,
                 'body' => $type === 'text' && $body !== '' ? $body : null,
                 'caption' => $caption !== '' ? $caption : null,
@@ -1202,7 +1260,7 @@ class LessonController extends Controller
             $retainedIds[] = $section->id;
 
             if ($type === 'text') {
-                $plainText[] = implode("\n", array_filter([$caption, $body], fn ($text) => $text !== ''));
+                $plainText[] = implode("\n", array_filter([$caption, $textBody], fn ($text) => $text !== ''));
             }
         }
 

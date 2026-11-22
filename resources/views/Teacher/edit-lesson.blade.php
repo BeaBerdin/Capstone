@@ -1513,6 +1513,9 @@
 
 <script>
     function initializeEditLessonPage() {
+        // Livewire keeps document listeners after this page has been replaced.
+        if (!document.getElementById('editLessonForm')) return;
+
 
         const typeRadios =
             document.querySelectorAll(
