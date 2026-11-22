@@ -571,3 +571,15 @@ test('only the course teacher can use the first-save generation', function () {
 
     expect(Quiz::where('lesson_id', $lesson->id)->exists())->toBeFalse();
 });
+
+test('the AI panel shows no quota notice or API request badge', function () {
+    [$teacher, $quiz] = generationQuiz();
+
+    $this->actingAs($teacher)
+        ->get(route('teacher.quiz.builder', $quiz->lesson_id))
+        ->assertOk()
+        ->assertSee('Generate quiz questions')
+        ->assertDontSee('Quota protection')
+        ->assertDontSee('AI generation requests per minute')
+        ->assertDontSee('1 generation = 1 API request');
+});

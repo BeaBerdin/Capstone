@@ -612,17 +612,6 @@
 
                                     </div>
 
-
-                                    <span
-                                        class="inline-flex self-start
-                                               rounded-full border
-                                               border-violet-100 bg-white
-                                               px-3 py-1.5 text-xs
-                                               font-semibold text-violet-600"
-                                    >
-                                        1 generation = 1 API request
-                                    </span>
-
                                 </div>
 
                             </div>
@@ -787,31 +776,6 @@
                                             </p>
 
                                         </div>
-
-                                    </div>
-
-
-                                    <div
-                                        class="mt-6 rounded-xl border
-                                               border-violet-100
-                                               bg-violet-50/60
-                                               px-4 py-3"
-                                    >
-
-                                        <p
-                                            class="text-xs leading-5
-                                                   text-violet-700"
-                                        >
-                                            <span class="font-bold">
-                                                Quota protection:
-                                            </span>
-
-                                            PathWise allows at most
-                                            4 AI generation requests per minute
-                                            and 20 per day across this app.
-                                            One request can generate up to
-                                            10 questions.
-                                        </p>
 
                                     </div>
 
