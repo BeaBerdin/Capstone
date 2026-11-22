@@ -231,6 +231,17 @@ class LessonController extends Controller
             !==
             'published'
         ) {
+            // Only disclose the review state to an enrolled student following an HTML link.
+            // Writes and JSON requests retain the existing publication denial.
+            if (strtolower(trim((string) $course->status)) === 'pending'
+                && request()->isMethod('GET') && request()->acceptsHtml() && ! request()->expectsJson()
+                && auth()->user()?->hasRole('student')
+                && Enrollment::where('student_id', auth()->id())->where('course_id', $course->id)->withAccess()->exists()) {
+                throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                    redirect()->route('student.my-courses')->with('course_under_review', true)
+                );
+            }
+
             abort(
                 404,
                 'Course not found.'

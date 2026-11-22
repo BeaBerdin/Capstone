@@ -34,9 +34,22 @@ class AiAvailability
      */
     public static function logUnavailable(string $feature, ?Throwable $exception = null, array $context = []): void
     {
-        Log::warning('PATHWISE AI feature unavailable: '.$feature, array_merge($context, array_filter([
-            'exception' => $exception ? get_class($exception) : null,
-            'reason' => $exception?->getMessage(),
-        ])));
+        // Provider messages, response bodies and connection exception text can contain secrets.
+        $safe = [];
+        foreach (['teacher_id', 'quiz_id', 'submission_id', 'retry_after_seconds'] as $key) {
+            if (isset($context[$key]) && is_int($context[$key]) && $context[$key] >= 0) {
+                $safe[$key] = $context[$key];
+            }
+        }
+        $limits = ['PathWise per-minute AI generation limit', 'PathWise daily AI generation limit', 'PathWise per-minute AI evaluation limit'];
+        if (in_array($context['limit'] ?? null, $limits, true)) $safe['limit'] = $context['limit'];
+        $code = $exception?->getCode();
+        $status = is_int($code) && $code >= 100 && $code <= 599 ? $code : null;
+        $safe['http_status'] = $status;
+        $safe['reason'] = $exception instanceof ConnectionException ? 'Connection failure'
+            : ($status ? 'HTTP '.$status : 'AI service or response failure');
+        if ($exception) $safe['exception'] = get_class($exception);
+        $feature = in_array($feature, ['quiz generation', 'AI evaluation'], true) ? $feature : 'AI';
+        Log::warning('PATHWISE AI feature unavailable: '.$feature, $safe);
     }
 }

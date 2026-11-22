@@ -13,6 +13,7 @@ use App\Models\QuizResult;
 use App\Services\GeminiQuizService;
 use App\Services\RecommendationService;
 use App\Support\AiAvailability;
+use App\Exceptions\AiResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -719,7 +720,7 @@ class QuizController extends Controller
                 ->with(
                     'error',
                     AiAvailability::MESSAGE
-                );
+                )->withInput($request->except('_token'));
         }
 
 
@@ -742,7 +743,7 @@ class QuizController extends Controller
                 ->with(
                     'error',
                     AiAvailability::MESSAGE
-                );
+                )->withInput($request->except('_token'));
         }
 
 
@@ -858,13 +859,12 @@ class QuizController extends Controller
                     ->with(
                         'error',
                         AiAvailability::MESSAGE
-                    );
+                    )->withInput($request->except('_token'));
             }
 
-            // The AI answered, but with content that cannot be used.
-            report(
-                $exception
-            );
+            // Do not turn programming or persistence failures into AI messages.
+            if (! $exception instanceof AiResponseException) throw $exception;
+            AiAvailability::logUnavailable('quiz generation', $exception, ['quiz_id' => $quiz->id]);
 
 
             return redirect()
@@ -875,7 +875,7 @@ class QuizController extends Controller
                 ->with(
                     'error',
                     'Gemini could not generate questions right now. Your quiz was not changed. Please try again later.'
-                );
+                )->withInput($request->except('_token'));
         }
     }
 

@@ -61,7 +61,8 @@ test('template to rich Reading to approved Student display preserves guidance an
     }
     $this->post(route('teacher.courses.submit', $course))->assertSessionHas('success');
     expect($course->fresh()->status)->toBe('pending');
-    $this->actingAs($student)->get(route('student.lesson.view', $first))->assertNotFound();
+    $this->actingAs($student)->get(route('student.lesson.view', $first))
+        ->assertRedirect(route('student.my-courses'))->assertSessionHas('course_under_review', true);
     $this->actingAs($reviewer)->post(route('courses.approve', $course))->assertSessionHas('success');
     expect($course->fresh()->status)->toBe('published')->and($course->fresh()->template_id)->toBe($template->id)
         ->and($first->fresh()->content)->toContain($guidance, 'Additional context')
