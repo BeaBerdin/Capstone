@@ -40,6 +40,26 @@ function seleniumApp(string $repo, string $runtime, string $db) {
                 return 'Fake Gemini explanation (Selenium test double).';
             }
         });
+        // Fake Gemini quiz generation: fixed multiple-choice questions, no network call.
+        app()->bind(App\Services\GeminiQuizService::class, fn () => new class extends App\Services\GeminiQuizService {
+            public function generateQuestions(App\Models\Course $course, int $count, string $difficulty): array
+            {
+                $bank = [
+                    ['Which Python structure stores key-value pairs?', 'Dictionary', 'List', 'Tuple', 'String'],
+                    ['Which Python structure keeps values in order and can change?', 'List', 'Set', 'Integer', 'Boolean'],
+                    ['Which function returns the number of items in a list?', 'len()', 'sum()', 'print()', 'type()'],
+                    ['Which keyword starts a loop over every item in a list?', 'for', 'if', 'def', 'return'],
+                    ['Which value type stores True or False?', 'Boolean', 'String', 'Float', 'List'],
+                ];
+                $questions = [];
+                for ($i = 0; $i < max(1, min($count, count($bank))); $i++) {
+                    [$q, $a, $b, $c, $d] = $bank[$i];
+                    $questions[] = ['question' => $q, 'option_a' => $a, 'option_b' => $b, 'option_c' => $c, 'option_d' => $d, 'correct_answer' => 'A', 'points' => 1];
+                }
+
+                return $questions;
+            }
+        });
         // Fake every other outbound HTTP call (Gemini quiz generation, PayMongo, ...).
         Illuminate\Support\Facades\Http::fake(['*' => Illuminate\Support\Facades\Http::response(['error' => ['message' => 'Fake external service (Selenium test)']], 503)]);
         Illuminate\Support\Facades\Http::preventStrayRequests();
@@ -252,6 +272,15 @@ $activityP->forceFill(['due_date' => now()->subMonth()])->save();
 $makeUser('stu_late', 'Yuri Bautista', 'student', $dept);
 Enrollment::create(['student_id' => $users['stu_late']->id, 'course_id' => $p->id, 'status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]);
 
+/* Integration tests: a draft course ready to submit, and a returned course whose quiz is built with (fake) Gemini. */
+$intSubmit = $course($users['teacher'], $networking, 'Cloud Computing Basics', 'draft');
+$textLesson($intSubmit, 'What Is the Cloud?', 1, true, '<p>Cloud computing delivers servers and storage over the internet.</p>');
+$intAi = $course($users['teacher'], $networking, 'Python for Data Analysis', 'rejected');
+$intAi->forceFill(['review_remarks' => 'Please add a quiz before resubmitting.'])->save();
+$textLesson($intAi, 'Lists and Dictionaries', 1, true, '<p>A list keeps values in order. A dictionary stores key-value pairs. len() counts the items in a list.</p>');
+$intAiQuiz = $quizLesson($intAi, 'Quiz: Data Basics', 2);
+$activityF = $activity;
+
 /* Reviews on course A. */
 $review = CourseReview::create(['course_id' => $a->id, 'student_id' => $users['stu_reviewer']->id, 'rating' => 2, 'comment' => 'Visit my site for free answers!!!']);
 $freshReview = CourseReview::create(['course_id' => $a->id, 'student_id' => $users['stu_lesson']->id, 'rating' => 3, 'comment' => 'Good start, but I need more examples.']);
@@ -266,14 +295,14 @@ $fixtures = [
     'id' => $suffix,
     'users' => array_map(fn (User $u) => ['id' => $u->id, 'email' => $u->email, 'name' => $u->name], $users),
     'categories' => ['programming' => $programming->id, 'business' => $business->id, 'unused' => $unused->id, 'networking' => $networking->id],
-    'courses' => ['a' => $a->id, 'b' => $b->id, 'c' => $c->id, 'd' => $d->id, 'd2' => $d2->id, 'e' => $e->id, 'f' => $f->id, 'g' => $g->id, 'h' => $h->id, 'p' => $p->id],
-    'lessons' => ['a1' => $a1->id, 'a2' => $a2->id, 'a3' => $a3->id, 'a4' => $a4->id, 'a5' => $a5->id, 'b1' => $b1->id, 'b2' => $b2->id, 'b3' => $b3->id, 'b4' => $b4->id, 'p1' => $p1->id],
+    'courses' => ['a' => $a->id, 'b' => $b->id, 'c' => $c->id, 'd' => $d->id, 'd2' => $d2->id, 'e' => $e->id, 'f' => $f->id, 'g' => $g->id, 'h' => $h->id, 'p' => $p->id, 'int_submit' => $intSubmit->id, 'int_ai' => $intAi->id],
+    'lessons' => ['a1' => $a1->id, 'a2' => $a2->id, 'a3' => $a3->id, 'a4' => $a4->id, 'a5' => $a5->id, 'b1' => $b1->id, 'b2' => $b2->id, 'b3' => $b3->id, 'b4' => $b4->id, 'p1' => $p1->id, 'int_ai_quiz' => $intAiQuiz->id],
     'quizzes' => ['a' => $quizA->id, 'draft' => $quizDraft->id, 'b4' => $quizB4->id],
     'questions' => $qs,
     'reviews' => ['spam' => $review->id, 'fresh' => $freshReview->id, 'hidden' => $hiddenReview->id],
     'removal' => ['rm2' => $rm2->id, 'rm3' => $rm3->id, 'rm4' => $rm4->id],
     'recommendations' => ['old' => $oldRec->id],
-    'activities' => ['p' => $activityP->id],
+    'activities' => ['p' => $activityP->id, 'f' => $activityF->id],
 ];
 file_put_contents($runtime.'/fixtures.json', json_encode($fixtures, JSON_PRETTY_PRINT));
 echo json_encode($fixtures);
