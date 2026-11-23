@@ -240,6 +240,18 @@ $textLesson($h, 'Writing Business Letters', 1, true, '<p>Formal letter structure
 $enroll('student2', $h, 'active', 40);
 CourseReview::create(['course_id' => $h->id, 'student_id' => $users['student2']->id, 'rating' => 4, 'comment' => 'Business review from another department.']);
 
+/* Course P: preview lessons and self-paced activities (no due dates). */
+$p = $course($users['teacher'], $networking, 'Networking Fundamentals', 'published');
+$p1 = $textLesson($p, 'Networking Overview', 1, true, '<p>A network connects devices so they can share data.</p>');
+$p1->forceFill(['is_preview' => true])->save();
+$textLesson($p, 'IP Addressing', 2, true, '<p>Every device on a network needs an address.</p>');
+$p3 = $p->lessons()->create(['title' => 'Network Diagram Activity', 'lesson_type' => 'activity', 'content' => 'Draw a small office network and explain it.', 'lesson_order' => 3, 'is_published' => true]);
+$activityP = Assignment::create(['course_id' => $p->id, 'lesson_id' => $p3->id, 'title' => 'Network Diagram Activity', 'description' => 'Draw a small office network and explain it.', 'submission_type' => 'essay', 'answer_format' => 'text', 'max_score' => 100, 'is_activity' => true, 'is_published' => true]);
+// Old data from before due dates were removed: the stored due date is a month in the past.
+$activityP->forceFill(['due_date' => now()->subMonth()])->save();
+$makeUser('stu_late', 'Yuri Bautista', 'student', $dept);
+Enrollment::create(['student_id' => $users['stu_late']->id, 'course_id' => $p->id, 'status' => 'active', 'enrolled_at' => now(), 'progress_percentage' => 0]);
+
 /* Reviews on course A. */
 $review = CourseReview::create(['course_id' => $a->id, 'student_id' => $users['stu_reviewer']->id, 'rating' => 2, 'comment' => 'Visit my site for free answers!!!']);
 $freshReview = CourseReview::create(['course_id' => $a->id, 'student_id' => $users['stu_lesson']->id, 'rating' => 3, 'comment' => 'Good start, but I need more examples.']);
@@ -254,13 +266,14 @@ $fixtures = [
     'id' => $suffix,
     'users' => array_map(fn (User $u) => ['id' => $u->id, 'email' => $u->email, 'name' => $u->name], $users),
     'categories' => ['programming' => $programming->id, 'business' => $business->id, 'unused' => $unused->id, 'networking' => $networking->id],
-    'courses' => ['a' => $a->id, 'b' => $b->id, 'c' => $c->id, 'd' => $d->id, 'd2' => $d2->id, 'e' => $e->id, 'f' => $f->id, 'g' => $g->id, 'h' => $h->id],
-    'lessons' => ['a1' => $a1->id, 'a2' => $a2->id, 'a3' => $a3->id, 'a4' => $a4->id, 'a5' => $a5->id, 'b1' => $b1->id, 'b2' => $b2->id, 'b3' => $b3->id, 'b4' => $b4->id],
+    'courses' => ['a' => $a->id, 'b' => $b->id, 'c' => $c->id, 'd' => $d->id, 'd2' => $d2->id, 'e' => $e->id, 'f' => $f->id, 'g' => $g->id, 'h' => $h->id, 'p' => $p->id],
+    'lessons' => ['a1' => $a1->id, 'a2' => $a2->id, 'a3' => $a3->id, 'a4' => $a4->id, 'a5' => $a5->id, 'b1' => $b1->id, 'b2' => $b2->id, 'b3' => $b3->id, 'b4' => $b4->id, 'p1' => $p1->id],
     'quizzes' => ['a' => $quizA->id, 'draft' => $quizDraft->id, 'b4' => $quizB4->id],
     'questions' => $qs,
     'reviews' => ['spam' => $review->id, 'fresh' => $freshReview->id, 'hidden' => $hiddenReview->id],
     'removal' => ['rm2' => $rm2->id, 'rm3' => $rm3->id, 'rm4' => $rm4->id],
     'recommendations' => ['old' => $oldRec->id],
+    'activities' => ['p' => $activityP->id],
 ];
 file_put_contents($runtime.'/fixtures.json', json_encode($fixtures, JSON_PRETTY_PRINT));
 echo json_encode($fixtures);

@@ -1,7 +1,7 @@
 """Berdin, Bea - Selenium unit tests (Appendix: Unit Testing).
 
 Learning and Assessment Modules and Administrator Modules of PATHWISE.
-Each test is one documented case (Case-001 ... Case-062). The data comes from
+Each test is one documented case (Case-001 ... Case-065). The data comes from
 tests/Selenium/support/runtime.php on a disposable SQLite database.
 """
 
@@ -116,9 +116,21 @@ def test_case_005_teacher_cannot_open_student_lesson(driver, wait, snap):
     snap("browser-result")
 
 
+def test_case_006_preview_lesson_before_enrolling(driver, wait, snap):
+    login(driver, wait, "stu_outsider")
+    driver.get(url(f"/marketplace/{F('courses', 'p')}"))
+    assert shows(driver, wait, "Preview Lesson")
+    click(driver, driver.find_element(By.CSS_SELECTOR, "[data-preview-lesson]"))
+    assert shows(driver, wait, "You are previewing this lesson. Enroll to access the full course.")
+    text = page_text(driver)
+    assert "A network connects devices so they can share data." in text
+    assert "Enroll for Free" in text and "Mark as Complete" not in text
+    snap("browser-result", driver.find_element(By.CSS_SELECTOR, "[data-preview-banner]"))
+
+
 # ---------------------------------------------- Create Quiz (Teacher)
 
-def test_case_006_teacher_creates_quiz_with_question(driver, wait, snap):
+def test_case_007_teacher_creates_quiz_with_question(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'b1')}/quiz"))
     fill(driver, "title", "HTML Basics Quiz")
@@ -135,7 +147,7 @@ def test_case_006_teacher_creates_quiz_with_question(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_007_publish_without_questions_refused(driver, wait, snap):
+def test_case_008_publish_without_questions_refused(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'b2')}/quiz"))
     fill(driver, "title", "CSS Basics Quiz")
@@ -145,7 +157,7 @@ def test_case_007_publish_without_questions_refused(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_008_correct_answer_must_have_option(driver, wait, snap):
+def test_case_009_correct_answer_must_have_option(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'b3')}/quiz"))
     fill(driver, "title", "JavaScript Basics Quiz")
@@ -160,7 +172,7 @@ def test_case_008_correct_answer_must_have_option(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_009_teacher_publishes_quiz(driver, wait, snap):
+def test_case_010_teacher_publishes_quiz(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'b4')}/quiz"))
     click(driver, driver.find_element(By.CSS_SELECTOR, "button[name=intent][value=publish]"))
@@ -169,7 +181,7 @@ def test_case_009_teacher_publishes_quiz(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_010_quiz_of_published_course_is_read_only(driver, wait, snap):
+def test_case_011_quiz_of_published_course_is_read_only(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'a4')}/quiz"))
     assert shows(driver, wait, "Read only")
@@ -177,7 +189,7 @@ def test_case_010_quiz_of_published_course_is_read_only(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_011_student_cannot_open_quiz_builder(driver, wait, snap):
+def test_case_012_student_cannot_open_quiz_builder(driver, wait, snap):
     login(driver, wait, "stu_lesson")
     driver.get(url(f"/teacher/lessons/{F('lessons', 'b1')}/quiz"))
     assert shows(driver, wait, "403")
@@ -187,7 +199,7 @@ def test_case_011_student_cannot_open_quiz_builder(driver, wait, snap):
 
 # ---------------------------------------------- Take Quiz (Student)
 
-def test_case_012_student_opens_published_quiz(driver, wait, snap):
+def test_case_013_student_opens_published_quiz(driver, wait, snap):
     login(driver, wait, "stu_take")
     driver.get(url(f"/learn/{F('courses', 'a')}"))
     click(driver, driver.find_element(By.XPATH, "//a[contains(., 'Take Quiz')]"))
@@ -198,21 +210,21 @@ def test_case_012_student_opens_published_quiz(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_013_unpublished_quiz_not_available(driver, wait, snap):
+def test_case_014_unpublished_quiz_not_available(driver, wait, snap):
     login(driver, wait, "stu_take")
     driver.get(url(f"/quiz/{F('quizzes', 'draft')}/take"))
     assert shows(driver, wait, "This quiz is not currently available to students.")
     snap("browser-result")
 
 
-def test_case_014_quiz_refused_without_enrollment(driver, wait, snap):
+def test_case_015_quiz_refused_without_enrollment(driver, wait, snap):
     login(driver, wait, "stu_outsider")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     assert shows(driver, wait, "You must have an active enrollment in this course to access this quiz.")
     snap("browser-result")
 
 
-def test_case_015_unanswered_question_warning(driver, wait, snap):
+def test_case_016_unanswered_question_warning(driver, wait, snap):
     login(driver, wait, "stu_take")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     for question_id, letter in zip(F("questions")[:3], "ABC"):
@@ -225,7 +237,7 @@ def test_case_015_unanswered_question_warning(driver, wait, snap):
 
 # ---------------------------------------------- Compute Quiz Score (Student)
 
-def test_case_016_all_correct_scores_100(driver, wait, snap):
+def test_case_017_all_correct_scores_100(driver, wait, snap):
     login(driver, wait, "stu_full")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "B", "C", "D"])
@@ -234,7 +246,7 @@ def test_case_016_all_correct_scores_100(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Latest score: 100.0%", "p"))
 
 
-def test_case_017_score_equal_to_passing_score_passes(driver, wait, snap):
+def test_case_018_score_equal_to_passing_score_passes(driver, wait, snap):
     login(driver, wait, "stu_pass75")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "B", "C", "A"])
@@ -243,7 +255,7 @@ def test_case_017_score_equal_to_passing_score_passes(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Latest score: 75.0%", "p"))
 
 
-def test_case_018_score_below_passing_score_fails(driver, wait, snap):
+def test_case_019_score_below_passing_score_fails(driver, wait, snap):
     login(driver, wait, "stu_fail50")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "B", "A", "A"])
@@ -252,7 +264,7 @@ def test_case_018_score_below_passing_score_fails(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Latest score: 50.0%", "p"))
 
 
-def test_case_019_each_question_counts_equally(driver, wait, snap):
+def test_case_020_each_question_counts_equally(driver, wait, snap):
     login(driver, wait, "stu_points")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "A", "A", "A"])  # only question 1 (5 points) is correct
@@ -260,7 +272,7 @@ def test_case_019_each_question_counts_equally(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Latest score: 25.0%", "p"))
 
 
-def test_case_020_unanswered_question_counts_as_wrong(driver, wait, snap):
+def test_case_021_unanswered_question_counts_as_wrong(driver, wait, snap):
     login(driver, wait, "stu_blank")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     warning = answer_quiz(driver, wait, ["A", "B", "C", None])
@@ -271,7 +283,7 @@ def test_case_020_unanswered_question_counts_as_wrong(driver, wait, snap):
 
 # ---------------------------------------------- Retake Quiz (Student)
 
-def test_case_021_failed_quiz_offers_retake(driver, wait, snap):
+def test_case_022_failed_quiz_offers_retake(driver, wait, snap):
     login(driver, wait, "stu_retake")
     driver.get(url(f"/learn/{F('courses', 'a')}"))
     assert shows(driver, wait, "Latest score: 50.0%")
@@ -282,7 +294,7 @@ def test_case_021_failed_quiz_offers_retake(driver, wait, snap):
     wait.until(EC.url_contains(f"/quiz/{F('quizzes', 'a')}/take"))
 
 
-def test_case_022_retake_and_pass(driver, wait, snap):
+def test_case_023_retake_and_pass(driver, wait, snap):
     login(driver, wait, "stu_retake")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "B", "C", "D"])
@@ -292,7 +304,7 @@ def test_case_022_retake_and_pass(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Latest score: 100.0%", "p"))
 
 
-def test_case_023_each_attempt_is_recorded(driver, wait, snap):
+def test_case_024_each_attempt_is_recorded(driver, wait, snap):
     login(driver, wait, "stu_retake2")
     driver.get(url(f"/quiz/{F('quizzes', 'a')}/take"))
     answer_quiz(driver, wait, ["A", "B", "A", "A"])
@@ -304,7 +316,7 @@ def test_case_023_each_attempt_is_recorded(driver, wait, snap):
     snap("browser-result", row(2)[0])
 
 
-def test_case_024_passed_quiz_link_still_opens(driver, wait, snap):
+def test_case_025_passed_quiz_link_still_opens(driver, wait, snap):
     login(driver, wait, "stu_passed")
     driver.get(url(f"/learn/{F('courses', 'a')}"))
     assert shows(driver, wait, "Quiz Passed")
@@ -316,7 +328,7 @@ def test_case_024_passed_quiz_link_still_opens(driver, wait, snap):
 
 # ---------------------------------------------- View Progress (Student and Teacher)
 
-def test_case_025_student_sees_course_progress(driver, wait, snap):
+def test_case_026_student_sees_course_progress(driver, wait, snap):
     login(driver, wait, "stu_prog")
     driver.get(url(f"/learn/{F('courses', 'a')}"))
     assert shows(driver, wait, "1 of 4 lessons")
@@ -324,7 +336,7 @@ def test_case_025_student_sees_course_progress(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Course Progress", "p"))
 
 
-def test_case_026_student_progress_updates_after_lesson(driver, wait, snap):
+def test_case_027_student_progress_updates_after_lesson(driver, wait, snap):
     login(driver, wait, "stu_prog")
     driver.get(url(f"/lesson/{F('lessons', 'a2')}"))
     click(driver, element_with_text(driver, "Mark as Complete", "button"))
@@ -335,7 +347,7 @@ def test_case_026_student_progress_updates_after_lesson(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Course Progress", "p"))
 
 
-def test_case_027_teacher_sees_own_students_progress(driver, wait, snap):
+def test_case_028_teacher_sees_own_students_progress(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url("/teacher/student-progress"))
     assert shows(driver, wait, "Mark Ocampo")
@@ -344,7 +356,7 @@ def test_case_027_teacher_sees_own_students_progress(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Mark Ocampo", "tr"))
 
 
-def test_case_028_teacher_opens_one_student_progress(driver, wait, snap):
+def test_case_029_teacher_opens_one_student_progress(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher/course/{F('courses', 'a')}/student/{F('users', 'stu_prog', 'id')}/progress"))
     assert shows(driver, wait, "Mark Ocampo")
@@ -353,7 +365,7 @@ def test_case_028_teacher_opens_one_student_progress(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Mark Ocampo", "tr"))
 
 
-def test_case_029_student_cannot_open_teacher_progress(driver, wait, snap):
+def test_case_030_student_cannot_open_teacher_progress(driver, wait, snap):
     login(driver, wait, "stu_prog")
     driver.get(url("/teacher/student-progress"))
     assert shows(driver, wait, "403")
@@ -361,10 +373,21 @@ def test_case_029_student_cannot_open_teacher_progress(driver, wait, snap):
     snap("browser-result")
 
 
+def test_case_031_late_enrollee_activity_counts_without_due_date(driver, wait, snap):
+    login(driver, wait, "stu_late")
+    driver.get(url(f"/student/assignments/{F('activities', 'p')}"))
+    fill(driver, "answer_text", "A router, a switch, three computers and a printer share one office network.")
+    click(driver, driver.find_element(By.CSS_SELECTOR, "form[action$='/submit'] button[type=submit]"))
+    assert shows(driver, wait, "Assignment submitted successfully.")
+    driver.get(url(f"/learn/{F('courses', 'p')}"))
+    assert shows(driver, wait, "1 of 3 lessons")
+    snap("browser-result", element_with_text(driver, "Course Progress", "p"))
+
+
 # ==================================================== ADMINISTRATOR MODULES
 # ---------------------------------------------- Manage Course Categories
 
-def test_case_030_add_category(driver, wait, snap):
+def test_case_032_add_category(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url("/course-categories/create"))
     fill(driver, "name", "Data Science")
@@ -375,7 +398,7 @@ def test_case_030_add_category(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_031_duplicate_category_refused(driver, wait, snap):
+def test_case_033_duplicate_category_refused(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url("/course-categories/create"))
     fill(driver, "name", "Programming")
@@ -384,7 +407,7 @@ def test_case_031_duplicate_category_refused(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_032_edit_category(driver, wait, snap):
+def test_case_034_edit_category(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url(f"/course-categories/{F('categories', 'networking')}/edit"))
     fill(driver, "name", "Computer Networking")
@@ -394,7 +417,7 @@ def test_case_032_edit_category(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_033_delete_unused_category(driver, wait, snap):
+def test_case_035_delete_unused_category(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url("/course-categories"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/course-categories/{F('categories', 'unused')}'] button"))
@@ -404,7 +427,7 @@ def test_case_033_delete_unused_category(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_034_category_in_use_cannot_be_deleted(driver, wait, snap):
+def test_case_036_category_in_use_cannot_be_deleted(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url("/course-categories"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/course-categories/{F('categories', 'programming')}'] button"))
@@ -413,7 +436,7 @@ def test_case_034_category_in_use_cannot_be_deleted(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_035_dean_cannot_manage_categories(driver, wait, snap):
+def test_case_037_dean_cannot_manage_categories(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/course-categories"))
     assert shows(driver, wait, "403")
@@ -423,7 +446,7 @@ def test_case_035_dean_cannot_manage_categories(driver, wait, snap):
 
 # ---------------------------------------------- Review/Approve/Reject Courses
 
-def test_case_036_approve_pending_course(driver, wait, snap):
+def test_case_038_approve_pending_course(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/courses"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/courses/{F('courses', 'c')}/approve'] button"))
@@ -432,7 +455,7 @@ def test_case_036_approve_pending_course(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_037_reject_course_with_feedback(driver, wait, snap):
+def test_case_039_reject_course_with_feedback(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/courses"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/courses/{F('courses', 'd')}/reject'] button"))
@@ -446,7 +469,7 @@ def test_case_037_reject_course_with_feedback(driver, wait, snap):
     snap("browser-result", feedback)
 
 
-def test_case_038_reject_needs_five_character_feedback(driver, wait, snap):
+def test_case_040_reject_needs_five_character_feedback(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/courses"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/courses/{F('courses', 'd2')}/reject'] button"))
@@ -460,7 +483,7 @@ def test_case_038_reject_needs_five_character_feedback(driver, wait, snap):
     snap("browser-result", driver.find_element(By.CSS_SELECTOR, f"form[action$='/courses/{F('courses', 'd2')}/approve']"))
 
 
-def test_case_039_dean_cannot_approve_other_department_course(driver, wait, snap):
+def test_case_041_dean_cannot_approve_other_department_course(driver, wait, snap):
     login(driver, wait, "dean2")
     driver.get(url("/courses"))
     assert shows(driver, wait, "Marketing Analytics")
@@ -482,7 +505,7 @@ def issue_certificate(driver, wait, student, number):
     click(driver, driver.find_element(By.CSS_SELECTOR, "form[action$='/certificates'] button[type=submit]"))
 
 
-def test_case_040_issue_certificate_after_passing_grades(driver, wait, snap):
+def test_case_042_issue_certificate_after_passing_grades(driver, wait, snap):
     login(driver, wait, "dean")
     issue_certificate(driver, wait, "Nina Pascual", "PW-2026-0001")
     assert shows(driver, wait, "Certificate created successfully.")
@@ -490,28 +513,28 @@ def test_case_040_issue_certificate_after_passing_grades(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_041_certificate_refused_for_failing_activity_grade(driver, wait, snap):
+def test_case_043_certificate_refused_for_failing_activity_grade(driver, wait, snap):
     login(driver, wait, "dean")
     issue_certificate(driver, wait, "Owen Quinto", "PW-2026-0002")
     assert shows(driver, wait, "The certificate cannot be issued yet: Final Project: score 60%, passing 75%")
     snap("browser-result")
 
 
-def test_case_042_certificate_refused_while_activity_ungraded(driver, wait, snap):
+def test_case_044_certificate_refused_while_activity_ungraded(driver, wait, snap):
     login(driver, wait, "dean")
     issue_certificate(driver, wait, "Pia Ramos", "PW-2026-0003")
     assert shows(driver, wait, "The certificate cannot be issued yet: Waiting for your teacher to grade: Final Project.")
     snap("browser-result")
 
 
-def test_case_043_certificate_refused_before_course_completion(driver, wait, snap):
+def test_case_045_certificate_refused_before_course_completion(driver, wait, snap):
     login(driver, wait, "edp")
     issue_certificate(driver, wait, "Quin Salazar", "PW-2026-0004")
     assert shows(driver, wait, "A certificate is only available after the course has been completed.")
     snap("browser-result")
 
 
-def test_case_044_student_cannot_manage_certificates(driver, wait, snap):
+def test_case_046_student_cannot_manage_certificates(driver, wait, snap):
     login(driver, wait, "stu_cert_ok")
     driver.get(url("/certificates"))
     assert shows(driver, wait, "403")
@@ -521,7 +544,7 @@ def test_case_044_student_cannot_manage_certificates(driver, wait, snap):
 
 # ---------------------------------------------- Moderate Course Reviews
 
-def test_case_045_hide_review_with_reason(driver, wait, snap):
+def test_case_047_hide_review_with_reason(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/course-reviews"))
     review = F("reviews", "spam")
@@ -532,7 +555,7 @@ def test_case_045_hide_review_with_reason(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_046_hide_review_requires_reason(driver, wait, snap):
+def test_case_048_hide_review_requires_reason(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/course-reviews"))
     review = F("reviews", "fresh")
@@ -543,7 +566,7 @@ def test_case_046_hide_review_requires_reason(driver, wait, snap):
     snap("browser-result", reason)
 
 
-def test_case_047_unhide_review(driver, wait, snap):
+def test_case_049_unhide_review(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/course-reviews"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/course-reviews/{F('reviews', 'hidden')}/unhide'] button"))
@@ -552,7 +575,7 @@ def test_case_047_unhide_review(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_048_dean_sees_only_own_department_reviews(driver, wait, snap):
+def test_case_050_dean_sees_only_own_department_reviews(driver, wait, snap):
     login(driver, wait, "dean2")
     driver.get(url("/course-reviews"))
     assert shows(driver, wait, "Business review from another department.")
@@ -569,7 +592,7 @@ def open_removal_form(driver, student_key):
     return reason
 
 
-def test_case_049_teacher_requests_student_removal(driver, wait, snap):
+def test_case_051_teacher_requests_student_removal(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher-courses/{F('courses', 'a')}/students"))
     reason = open_removal_form(driver, "stu_rm1")
@@ -582,7 +605,7 @@ def test_case_049_teacher_requests_student_removal(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_050_duplicate_pending_request_refused(driver, wait, snap):
+def test_case_052_duplicate_pending_request_refused(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher-courses/{F('courses', 'a')}/students"))
     reason = open_removal_form(driver, "stu_noquiz")
@@ -593,7 +616,7 @@ def test_case_050_duplicate_pending_request_refused(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_051_removal_reason_needs_ten_characters(driver, wait, snap):
+def test_case_053_removal_reason_needs_ten_characters(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url(f"/teacher-courses/{F('courses', 'a')}/students"))
     reason = open_removal_form(driver, "stu_rm3")
@@ -610,7 +633,7 @@ def review_form(driver, key):
     return f"form[action$='/admin/student-removal-requests/{F('removal', key)}/review']"
 
 
-def test_case_052_approve_removal_request(driver, wait, snap):
+def test_case_054_approve_removal_request(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/admin/student-removal-requests"))
     click(driver, driver.find_element(By.CSS_SELECTOR, review_form(driver, "rm2") + " button[value=approved]"))
@@ -622,7 +645,7 @@ def test_case_052_approve_removal_request(driver, wait, snap):
     assert shows(driver, wait, "403")
 
 
-def test_case_053_reject_removal_request_with_note(driver, wait, snap):
+def test_case_055_reject_removal_request_with_note(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/admin/student-removal-requests"))
     form = review_form(driver, "rm3")
@@ -634,7 +657,7 @@ def test_case_053_reject_removal_request_with_note(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_054_other_department_dean_cannot_see_request(driver, wait, snap):
+def test_case_056_other_department_dean_cannot_see_request(driver, wait, snap):
     login(driver, wait, "dean2")
     driver.get(url("/admin/student-removal-requests"))
     assert shows(driver, wait, "Instructor requests from your department will appear here.")
@@ -642,7 +665,7 @@ def test_case_054_other_department_dean_cannot_see_request(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_055_teacher_cannot_review_removal_requests(driver, wait, snap):
+def test_case_057_teacher_cannot_review_removal_requests(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url("/admin/student-removal-requests"))
     assert shows(driver, wait, "403")
@@ -658,7 +681,7 @@ def generate_recommendation(driver, student):
     click(driver, driver.find_element(By.CSS_SELECTOR, "form[action$='/ai-recommendations'] button[type=submit]"))
 
 
-def test_case_056_generate_ai_recommendation(driver, wait, snap):
+def test_case_058_generate_ai_recommendation(driver, wait, snap):
     login(driver, wait, "dean")
     generate_recommendation(driver, "Uma Wong")
     assert shows(driver, wait, "AI recommendation generated successfully.")
@@ -667,14 +690,14 @@ def test_case_056_generate_ai_recommendation(driver, wait, snap):
     snap("browser-result", row)
 
 
-def test_case_057_recommendation_needs_quiz_results(driver, wait, snap):
+def test_case_059_recommendation_needs_quiz_results(driver, wait, snap):
     login(driver, wait, "edp")
     generate_recommendation(driver, "Vic Yap")
     assert shows(driver, wait, "No eligible published quiz results were found for this student.")
     snap("browser-result")
 
 
-def test_case_058_delete_ai_recommendation(driver, wait, snap):
+def test_case_060_delete_ai_recommendation(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/ai-recommendations"))
     click(driver, driver.find_element(By.CSS_SELECTOR, f"form[action$='/ai-recommendations/{F('recommendations', 'old')}'] button"))
@@ -684,7 +707,7 @@ def test_case_058_delete_ai_recommendation(driver, wait, snap):
     snap("browser-result")
 
 
-def test_case_059_student_cannot_manage_ai_recommendations(driver, wait, snap):
+def test_case_061_student_cannot_manage_ai_recommendations(driver, wait, snap):
     login(driver, wait, "stu_ai")
     driver.get(url("/ai-recommendations"))
     assert shows(driver, wait, "403")
@@ -694,7 +717,7 @@ def test_case_059_student_cannot_manage_ai_recommendations(driver, wait, snap):
 
 # ---------------------------------------------- View Student Progress Reports
 
-def test_case_060_dean_views_student_progress(driver, wait, snap):
+def test_case_062_dean_views_student_progress(driver, wait, snap):
     login(driver, wait, "dean")
     driver.get(url("/student-progress"))
     assert shows(driver, wait, "Mark Ocampo")
@@ -702,7 +725,7 @@ def test_case_060_dean_views_student_progress(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Mark Ocampo", "tr"))
 
 
-def test_case_061_dean_sees_only_own_department_progress(driver, wait, snap):
+def test_case_063_dean_sees_only_own_department_progress(driver, wait, snap):
     login(driver, wait, "dean2")
     driver.get(url("/student-progress"))
     assert shows(driver, wait, "Xian Aquino")
@@ -710,14 +733,14 @@ def test_case_061_dean_sees_only_own_department_progress(driver, wait, snap):
     snap("browser-result", element_with_text(driver, "Xian Aquino", "tr"))
 
 
-def test_case_062_edp_views_reports(driver, wait, snap):
+def test_case_064_edp_views_reports(driver, wait, snap):
     login(driver, wait, "edp")
     driver.get(url("/super-admin/reports"))
     assert shows(driver, wait, "Reports & Analytics")
     snap("browser-result")
 
 
-def test_case_063_teacher_cannot_open_admin_progress_reports(driver, wait, snap):
+def test_case_065_teacher_cannot_open_admin_progress_reports(driver, wait, snap):
     login(driver, wait, "teacher")
     driver.get(url("/student-progress"))
     assert shows(driver, wait, "403")

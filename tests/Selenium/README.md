@@ -1,7 +1,7 @@
 # Berdin Selenium unit tests
 
 Selenium WebDriver (Python + pytest + Chrome) tests for the Learning and
-Assessment Modules and the Administrator Modules (Case-001 to Case-063 in
+Assessment Modules and the Administrator Modules (Case-001 to Case-065 in
 `test_berdin_appendix.py`).
 
 ## What a run does (isolation)
