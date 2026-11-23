@@ -264,7 +264,7 @@
                                         </h2>
 
                                         <p class="mt-3 text-sm leading-6 text-slate-500">
-                                            Generate your first AI-powered learning path to receive a structured course sequence based on your learning performance.
+                                            Generate your first personalized learning path to receive a structured course sequence based on your quiz performance.
                                         </p>
 
 
