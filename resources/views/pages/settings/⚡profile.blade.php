@@ -1,6 +1,8 @@
 <?php
 
+use App\Concerns\PersonNameRules;
 use App\Concerns\ProfileValidationRules;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -13,9 +15,11 @@ use Livewire\WithFileUploads;
 
 new #[Title('Profile settings')] class extends Component {
 
-    use ProfileValidationRules, WithFileUploads;
+    use PersonNameRules, ProfileValidationRules, WithFileUploads;
 
-    public string $name = '';
+    public string $first_name = '';
+    public string $middle_initial = '';
+    public string $last_name = '';
     public string $email = '';
 
     public $photo = null;
@@ -23,8 +27,18 @@ new #[Title('Profile settings')] class extends Component {
 
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+
+        // Accounts created before the separate name fields existed have
+        // empty parts: start from their full name instead.
+        $parts = filled($user->first_name)
+            ? ['first_name' => $user->first_name, 'middle_initial' => (string) $user->middle_initial, 'last_name' => (string) $user->last_name]
+            : User::splitLegacyName((string) $user->name);
+
+        $this->first_name = $parts['first_name'];
+        $this->middle_initial = $parts['middle_initial'];
+        $this->last_name = $parts['last_name'];
+        $this->email = $user->email;
     }
 
 
@@ -32,12 +46,25 @@ new #[Title('Profile settings')] class extends Component {
     {
         $user = Auth::user();
 
+        // Same name rules and storage as Registration and Create Account.
+        foreach ($this->normalizePersonName([
+            'first_name' => $this->first_name,
+            'middle_initial' => $this->middle_initial,
+            'last_name' => $this->last_name,
+        ]) as $field => $value) {
+            $this->{$field} = $value;
+        }
+
         $validated = $this->validate(
-            $this->profileRules($user->id)
+            $this->personNameRules() + ['email' => $this->emailRules($user->id)],
+            $this->personNameMessages()
         );
 
         $previousEmail = $user->email;
-        $user->updateAccountIdentity($validated);
+        $user->updateAccountIdentity(
+            User::nameAttributes($validated['first_name'], $validated['middle_initial'] ?? null, $validated['last_name'])
+            + ['email' => $validated['email']]
+        );
 
         if ($previousEmail !== $user->email && $user->hasRole('teacher')) {
             $this->redirect(route('student-application.status'));
@@ -465,13 +492,33 @@ new #[Title('Profile settings')] class extends Component {
                 <div class="space-y-5">
 
                     <flux:input
-                        wire:model="name"
-                        :label="__('Name')"
+                        wire:model="first_name"
+                        :label="__('First Name')"
                         type="text"
                         required
+                        maxlength="100"
                         autofocus
-                        autocomplete="name"
+                        autocomplete="given-name"
                     />
+
+                    <div class="grid gap-5 sm:grid-cols-[9rem_1fr]">
+                        <flux:input
+                            wire:model="middle_initial"
+                            :label="__('Middle Initial (optional)')"
+                            type="text"
+                            maxlength="2"
+                            autocomplete="additional-name"
+                        />
+
+                        <flux:input
+                            wire:model="last_name"
+                            :label="__('Last Name')"
+                            type="text"
+                            required
+                            maxlength="100"
+                            autocomplete="family-name"
+                        />
+                    </div>
 
 
                     <div>

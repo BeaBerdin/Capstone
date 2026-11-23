@@ -83,6 +83,41 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Best-effort split of a full name into first name, middle initial and
+     * last name, for accounts created before the separate fields existed.
+     * A middle initial is a single letter (with or without a period) or two
+     * letters followed by a period between the first and last names, so
+     * "Juan D. Dela Cruz" -> Juan / D / Dela Cruz, while "Juan De La Cruz"
+     * keeps "De" in the last name. The last word is the last name otherwise.
+     *
+     * @return array{first_name: string, middle_initial: string, last_name: string}
+     */
+    public static function splitLegacyName(string $name): array
+    {
+        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (count($words) <= 1) {
+            return ['first_name' => $words[0] ?? '', 'middle_initial' => '', 'last_name' => ''];
+        }
+
+        for ($i = 1; $i < count($words) - 1; $i++) {
+            if (preg_match('/^(\pL\.?|\pL{2}\.)$/u', $words[$i])) {
+                return [
+                    'first_name' => implode(' ', array_slice($words, 0, $i)),
+                    'middle_initial' => rtrim($words[$i], '.'),
+                    'last_name' => implode(' ', array_slice($words, $i + 1)),
+                ];
+            }
+        }
+
+        return [
+            'first_name' => implode(' ', array_slice($words, 0, -1)),
+            'middle_initial' => '',
+            'last_name' => end($words),
+        ];
+    }
+
+    /**
      * "Juan", "d", "Dela Cruz" -> "Juan D. Dela Cruz"; no initial -> "Juan Dela Cruz".
      * Extra spaces are collapsed; the initial is upper case with one period.
      */
