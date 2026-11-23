@@ -123,14 +123,6 @@
 
                     <p class="mt-1 text-xs text-slate-500">
                         Maximum score: {{ $assignment->max_score }}
-
-                        @if($assignment->due_date)
-                            <span class="mx-1">
-                                •
-                            </span>
-
-                            Due {{ $assignment->due_date->format('M d, Y · h:i A') }}
-                        @endif
                     </p>
                 </div>
 

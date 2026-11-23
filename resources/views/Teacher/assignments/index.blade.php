@@ -149,12 +149,6 @@
 
                                 <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
                                     <span>Max score: <strong class="text-slate-700">{{ $assignment->max_score }}</strong></span>
-                                    <span>
-                                        Due:
-                                        <strong class="text-slate-700">
-                                            {{ $assignment->due_date ? $assignment->due_date->format('M d, Y · h:i A') : 'No deadline' }}
-                                        </strong>
-                                    </span>
                                     @if($assignment->lesson)
                                         <span>Lesson: <strong class="text-slate-700">{{ $assignment->lesson->title }}</strong></span>
                                     @endif

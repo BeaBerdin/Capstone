@@ -381,7 +381,7 @@ test('a teacher can choose and change the answer format', function () {
         ->assertSessionHasErrors('answer_format');
 });
 
-test('due dates, resubmission and grading still work', function () {
+test('resubmission and grading still work', function () {
     fakeFileDisks();
     Notification::fake();
     [$teacher, $student, $assignment] = requirementsSetup(['answer_format' => 'file']);
@@ -412,10 +412,7 @@ test('due dates, resubmission and grading still work', function () {
     expect($submission->fresh()->score)->toBe(90)
         ->and($submission->fresh()->status)->toBe('graded');
 
-    // After the due date nothing can be submitted.
-    $assignment->update(['due_date' => now()->subDay()]);
-    $submission->update(['status' => 'submitted']);
-
+    // A passing final grade (75% or more) is final: no resubmission.
     $this->actingAs($student)->post(route('student.assignments.submit', $assignment), [
         'submission_file' => UploadedFile::fake()->createWithContent('Main.java', 'class C {}'),
     ])->assertSessionHasErrors('submission');

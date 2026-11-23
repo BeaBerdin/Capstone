@@ -45,7 +45,7 @@
                     :tips="[
                         'Write clear instructions: students see them on the assignment page.',
                         'Choose Essay or Code. For code, pick the language students will use.',
-                        'Set a due date, or leave it blank for no deadline.',
+                        'PathWise is self-paced: assignments have no due date.',
                         'AI evaluation only suggests a score. Students never see it; they see the grade you save.',
                         'Untick Publish to keep the assignment hidden while you prepare it.',
                     ]"

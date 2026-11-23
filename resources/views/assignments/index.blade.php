@@ -25,7 +25,6 @@
             <th class="pw-table-head px-5 py-3">Course</th>
             <th class="pw-table-head px-5 py-3">Lesson</th>
             <th class="pw-table-head px-5 py-3">Title</th>
-            <th class="pw-table-head px-5 py-3">Due Date</th>
             <th class="pw-table-head px-5 py-3">Max Score</th>
             <th class="pw-table-head px-5 py-3">Status</th>
             <th class="pw-table-head px-5 py-3">Actions</th>
@@ -45,13 +44,6 @@
 
             <td class="px-5 py-4 font-medium text-slate-900">
                 {{ $assignment->title }}
-            </td>
-
-            <td class="px-5 py-4 whitespace-nowrap text-slate-600">
-                {{ $assignment->due_date
-                    ? \Carbon\Carbon::parse($assignment->due_date)->format('M d, Y')
-                    : 'No due date'
-                }}
             </td>
 
             <td class="px-5 py-4 text-slate-700">
@@ -89,7 +81,7 @@
         </tr>
     @empty
         <tr>
-            <td colspan="7">
+            <td colspan="6">
                 <x-pw.empty-state title="No assignments found." />
             </td>
         </tr>

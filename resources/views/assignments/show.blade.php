@@ -24,10 +24,6 @@
                 <dd>{{ $assignment->lesson?->title ?? 'Whole course' }}</dd>
             </div>
             <div>
-                <dt class="font-medium text-slate-500">Due date</dt>
-                <dd>{{ $assignment->due_date ? \Illuminate\Support\Carbon::parse($assignment->due_date)->format('M d, Y h:i A') : 'No due date' }}</dd>
-            </div>
-            <div>
                 <dt class="font-medium text-slate-500">Maximum score</dt>
                 <dd>{{ $assignment->max_score }}</dd>
             </div>

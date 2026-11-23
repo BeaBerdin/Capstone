@@ -512,11 +512,6 @@ class AssignmentController extends Controller
                 'boolean',
             ],
 
-            'due_date' => [
-                'nullable',
-                'date',
-            ],
-
             'max_score' => [
                 'required',
                 'integer',
@@ -607,11 +602,6 @@ class AssignmentController extends Controller
             'ai_evaluation_enabled' => [
                 'nullable',
                 'boolean',
-            ],
-
-            'due_date' => [
-                'nullable',
-                'date',
             ],
 
             'max_score' => [

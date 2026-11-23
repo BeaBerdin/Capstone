@@ -419,7 +419,6 @@ class DemoDataSeeder extends Seeder
                 'programming_language' => $language,
                 'ai_evaluation_enabled' => true,
                 'evaluation_criteria' => 'Correctness, completeness and clarity.',
-                'due_date' => now()->addWeeks(2),
                 'max_score' => 100,
                 'is_published' => true,
             ]

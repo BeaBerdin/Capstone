@@ -224,22 +224,6 @@
                                 </span>
 
 
-                                @if($assignment->due_date)
-
-                                    <span>
-                                        Due:
-
-                                        <strong class="text-slate-700">
-                                            {{
-                                                $assignment->due_date
-                                                    ->format('M d, Y · h:i A')
-                                            }}
-                                        </strong>
-                                    </span>
-
-                                @endif
-
-
                                 <span>
                                     Type:
 

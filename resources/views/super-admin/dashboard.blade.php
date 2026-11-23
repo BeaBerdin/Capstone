@@ -137,7 +137,7 @@
             'initials' => $initialsOf($assignment->title),
             'title' => $assignment->title,
             'subtitle' => $assignment->course?->title ?? 'Course',
-            'meta' => $assignment->due_date ? 'Due '.\Illuminate\Support\Carbon::parse($assignment->due_date)->format('M d, Y') : 'No due date',
+            'meta' => 'Max score '.$assignment->max_score,
             'badge' => $assignment->is_published ? 'Published' : 'Draft',
             'badgeClass' => $assignment->is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600',
         ]);

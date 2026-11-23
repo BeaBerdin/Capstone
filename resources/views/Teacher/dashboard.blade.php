@@ -27,17 +27,6 @@
     );
 
 
-    $upcomingAssignments = \App\Models\Assignment::with('course')
-        ->whereHas(
-            'course',
-            fn ($q) => $q->where('teacher_id', $teacherId)
-        )
-        ->whereNotNull('due_date')
-        ->where('due_date', '>=', now())
-        ->orderBy('due_date')
-        ->take(4)
-        ->get();
-
     $recentQuizResults = \App\Models\QuizResult::with([
         'student',
         'quiz.course'
@@ -767,48 +756,6 @@
             ====================================================== --}}
 
             <aside class="min-w-0 space-y-6">
-
-                {{-- Upcoming deadlines --}}
-                <section class="sad-card overflow-hidden">
-                    <div class="flex items-center justify-between gap-3 px-5 pt-5">
-                        <div>
-                            <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
-                                <svg class="h-5 w-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"></path>
-                                </svg>
-                                Upcoming
-                            </h2>
-                            <p class="mt-1 text-xs text-slate-500">Scheduled deadlines</p>
-                        </div>
-                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {{ $upcomingAssignments->count() }} {{ \Illuminate\Support\Str::plural('item', $upcomingAssignments->count()) }}
-                        </span>
-                    </div>
-
-                    <ul class="mt-3 divide-y divide-slate-100 border-t border-slate-100">
-                        @forelse($upcomingAssignments as $assignment)
-                            @php $due = \Carbon\Carbon::parse($assignment->due_date); @endphp
-                            <li class="flex items-center gap-3 px-5 py-3">
-                                <span class="w-11 shrink-0 overflow-hidden rounded-xl border border-violet-100 bg-white text-center shadow-[0_6px_14px_-8px_rgba(124,58,237,0.5)]">
-                                    <span class="block bg-violet-50 py-0.5 text-[10px] font-bold uppercase text-violet-600">{{ $due->format('M') }}</span>
-                                    <span class="block py-1 text-sm font-bold text-slate-900">{{ $due->format('d') }}</span>
-                                </span>
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-semibold text-slate-800">{{ $assignment->title }}</p>
-                                    <p class="truncate text-xs text-slate-500">{{ $assignment->course->title ?? 'Course' }} · {{ $due->format('g:i A') }}</p>
-                                </div>
-                            </li>
-                        @empty
-                            <li class="px-5 py-8 text-center">
-                                <span class="sad-chip sad-violet mx-auto">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"></path></svg>
-                                </span>
-                                <p class="mt-3 text-sm font-semibold text-slate-800">Nothing scheduled</p>
-                                <p class="mt-1 text-xs text-slate-500">Upcoming assignments will appear here.</p>
-                            </li>
-                        @endforelse
-                    </ul>
-                </section>
 
                 {{-- Course status --}}
                 <section class="sad-card p-5">

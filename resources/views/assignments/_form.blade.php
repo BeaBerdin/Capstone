@@ -59,19 +59,13 @@
     @include('Teacher.assignments._type-fields', ['assignment' => $assignment])
 </x-pw.form-section>
 
-{{-- ---------- Schedule & scoring ---------- --}}
-<x-pw.form-section title="Schedule & Scoring">
+{{-- ---------- Scoring ---------- --}}
+<x-pw.form-section title="Scoring">
     <x-slot:icon>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg>
     </x-slot:icon>
 
     <div class="grid gap-5 sm:grid-cols-2">
-        <x-pw.field label="Due Date" for="due_date" hint="Leave blank if the assignment has no deadline.">
-            <input id="due_date" type="datetime-local" name="due_date"
-                   value="{{ old('due_date', $assignment?->due_date ? \Carbon\Carbon::parse($assignment->due_date)->format('Y-m-d\TH:i') : '') }}"
-                   class="sad-field">
-        </x-pw.field>
-
         <x-pw.field label="Maximum Score" for="max_score" required hint="Total points for this assignment (1–10,000).">
             <input id="max_score" type="number" name="max_score" min="1" max="10000" required
                    value="{{ old('max_score', $assignment?->max_score ?? 100) }}"

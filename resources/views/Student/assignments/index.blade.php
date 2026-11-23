@@ -4,18 +4,6 @@
 @php
     $totalAssignments = $assignments->count();
 
-    $upcomingAssignments = $assignments
-        ->filter(function ($assignment) {
-            return $assignment->due_date
-                && $assignment->due_date->isFuture();
-        })
-        ->count();
-
-    $noDeadlineAssignments = $assignments
-        ->filter(function ($assignment) {
-            return is_null($assignment->due_date);
-        })
-        ->count();
 @endphp
 
 
@@ -145,53 +133,6 @@
                 </div>
 
 
-                <div
-                    class="rounded-2xl border
-                           border-violet-100
-                           bg-violet-50 p-5"
-                >
-
-                    <p
-                        class="text-xs font-bold
-                               uppercase tracking-wider
-                               text-violet-600"
-                    >
-                        Upcoming
-                    </p>
-
-                    <p
-                        class="mt-2 text-2xl font-bold
-                               text-violet-700"
-                    >
-                        {{ $upcomingAssignments }}
-                    </p>
-
-                </div>
-
-
-                <div
-                    class="rounded-2xl border
-                           border-blue-100
-                           bg-blue-50 p-5"
-                >
-
-                    <p
-                        class="text-xs font-bold
-                               uppercase tracking-wider
-                               text-blue-600"
-                    >
-                        No Deadline
-                    </p>
-
-                    <p
-                        class="mt-2 text-2xl font-bold
-                               text-blue-700"
-                    >
-                        {{ $noDeadlineAssignments }}
-                    </p>
-
-                </div>
-
             </section>
 
 
@@ -219,18 +160,6 @@
 
 
                 @forelse($assignments as $assignment)
-
-                    @php
-                        $isLate =
-                            $assignment->due_date
-                            && $assignment->due_date->isPast();
-
-                        $dueClass =
-                            $isLate
-                            ? 'text-rose-600'
-                            : 'text-slate-500';
-                    @endphp
-
 
                     <div
                         class="border-b border-slate-100
@@ -271,47 +200,6 @@
                                         }}
                                     </span>
 
-
-                                    @if($isLate)
-
-                                        <span
-                                            class="rounded-full
-                                                   bg-rose-50
-                                                   px-2.5 py-1
-                                                   text-xs
-                                                   font-semibold
-                                                   text-rose-700"
-                                        >
-                                            Deadline Passed
-                                        </span>
-
-                                    @elseif($assignment->due_date)
-
-                                        <span
-                                            class="rounded-full
-                                                   bg-blue-50
-                                                   px-2.5 py-1
-                                                   text-xs
-                                                   font-semibold
-                                                   text-blue-700"
-                                        >
-                                            Upcoming
-                                        </span>
-
-                                    @else
-
-                                        <span
-                                            class="rounded-full
-                                                   bg-slate-100
-                                                   px-2.5 py-1
-                                                   text-xs
-                                                   font-semibold
-                                                   text-slate-600"
-                                        >
-                                            No Deadline
-                                        </span>
-
-                                    @endif
 
                                 </div>
 
@@ -354,25 +242,6 @@
                                         <strong class="text-slate-700">
                                             {{ $assignment->max_score }}
                                         </strong>
-                                    </span>
-
-
-                                    <span class="{{ $dueClass }}">
-
-                                        Due:
-
-                                        <strong>
-                                            {{
-                                                $assignment->due_date
-                                                    ? $assignment
-                                                        ->due_date
-                                                        ->format(
-                                                            'M d, Y · h:i A'
-                                                        )
-                                                    : 'No deadline'
-                                            }}
-                                        </strong>
-
                                     </span>
 
 

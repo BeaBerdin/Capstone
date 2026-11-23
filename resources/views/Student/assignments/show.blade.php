@@ -59,17 +59,10 @@
                         @endif
                     </div>
 
-                    <dl class="grid gap-3 sm:grid-cols-3">
+                    <dl class="grid gap-3 sm:grid-cols-2">
                         <div class="rounded-xl bg-slate-50 px-4 py-3">
                             <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Maximum Score</dt>
                             <dd class="mt-1 text-lg font-bold text-slate-800">{{ $assignment->max_score }}</dd>
-                        </div>
-
-                        <div class="rounded-xl bg-slate-50 px-4 py-3">
-                            <dt class="text-xs font-bold uppercase tracking-[.08em] text-slate-500">Due Date</dt>
-                            <dd class="mt-1 text-sm font-semibold text-slate-800">
-                                {{ $assignment->due_date?->format('M d, Y h:i A') ?? 'No deadline' }}
-                            </dd>
                         </div>
 
                         <div class="rounded-xl bg-slate-50 px-4 py-3">

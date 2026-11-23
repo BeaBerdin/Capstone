@@ -1,11 +1,5 @@
 @php
     $activityAssignment ??= null;
-    $activityDueDateValue = old(
-        'activity_due_date',
-        isset($activityAssignment) && $activityAssignment?->due_date
-            ? $activityAssignment->due_date->format('Y-m-d\\TH:i')
-            : ''
-    );
 @endphp
 
 <section id="activitySection" class="sad-card pw-card hidden p-5 sm:p-7">
@@ -37,10 +31,6 @@
         <div>
             <label for="activity_max_score" class="text-sm font-semibold text-slate-800">Maximum score</label>
             <input id="activity_max_score" type="number" name="activity_max_score" min="1" max="10000" value="{{ old('activity_max_score', $activityAssignment?->max_score ?? 100) }}" class="pw-field mt-2 h-11 px-3">
-        </div>
-        <div>
-            <label for="activity_due_date" class="text-sm font-semibold text-slate-800">Due date <span class="font-normal text-slate-500">(optional)</span></label>
-            <input id="activity_due_date" type="datetime-local" name="activity_due_date" value="{{ $activityDueDateValue }}" class="pw-field mt-2 h-11 px-3">
         </div>
         <div>
             <label class="flex h-full cursor-pointer items-start gap-3 rounded-xl border border-violet-100 bg-violet-50/70 p-4">

@@ -126,24 +126,6 @@
 
     </div>
 
-    {{-- Due Date --}}
-    <div>
-        <label for="due_date" class="block text-sm font-semibold text-slate-700">
-            Due Date
-        </label>
-
-        <input
-            id="due_date"
-            name="due_date"
-            type="datetime-local"
-            value="{{ old('due_date', $assignment?->due_date?->format('Y-m-d\TH:i')) }}"
-            class="mt-2 h-11 w-full rounded-xl border border-slate-200 px-4 text-sm
-                   outline-none focus:border-violet-300 focus:ring-4 focus:ring-violet-100 sm:max-w-sm"
-        >
-
-        <p class="mt-1.5 text-xs text-slate-500">Leave blank if the assignment has no deadline.</p>
-    </div>
-
     {{-- Publish --}}
     <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 px-4 py-3">
         <input

@@ -122,15 +122,8 @@ class SubmissionController extends Controller
         ?string &$newFilePath,
         ?string &$obsoleteFilePath
     ): Submission {
-        if (
-            $assignment->due_date
-            && now()->greaterThan($assignment->due_date)
-        ) {
-            throw ValidationException::withMessages([
-                'submission' => 'The deadline for this assignment has already passed.',
-            ]);
-        }
-
+        // PathWise is self-paced: there is no due date, so a date never
+        // blocks a submission (only a passing final grade does, below).
         $isCodeSubmission =
             $assignment->submission_type === 'code';
 

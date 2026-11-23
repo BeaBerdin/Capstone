@@ -41,7 +41,7 @@
                     title="Before You Save"
                     :tips="[
                         'Saving does not change work students have already submitted.',
-                        'Students see updated instructions and due dates right away.',
+                        'Students see updated instructions right away.',
                         'AI evaluation only suggests a score. Students never see it; they see the grade you save.',
                         'Untick Publish to hide the assignment from students.',
                     ]"

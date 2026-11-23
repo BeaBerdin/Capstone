@@ -86,7 +86,8 @@ class Assignment extends Model
     'evaluation_criteria',
     'programming_language',
     'ai_evaluation_enabled',
-    'due_date',
+    // due_date is intentionally not fillable: PathWise is self-paced, so the
+    // column is kept (nullable, unused) only so old data is not lost.
     'max_score',
     'is_published',
 ];
@@ -94,7 +95,6 @@ class Assignment extends Model
   protected function casts(): array
 {
     return [
-        'due_date' => 'datetime',
         'max_score' => 'integer',
         'is_published' => 'boolean',
         'ai_evaluation_enabled' => 'boolean',

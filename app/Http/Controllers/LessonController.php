@@ -976,7 +976,6 @@ class LessonController extends Controller
             'content' => ['nullable', 'string', 'required_if:lesson_type,activity'],
             'activity_answer_format' => ['exclude_unless:lesson_type,activity', 'nullable', 'in:text,file,either'],
             'activity_max_score' => ['exclude_unless:lesson_type,activity', 'nullable', 'integer', 'min:1', 'max:10000'],
-            'activity_due_date' => ['exclude_unless:lesson_type,activity', 'nullable', 'date_format:Y-m-d\TH:i'],
             'activity_ai_enabled' => ['exclude_unless:lesson_type,activity', 'nullable', 'boolean'],
             'activity_criteria' => ['exclude_unless:lesson_type,activity', 'nullable', 'string', 'max:10000'],
             'video_url' => ['nullable', 'url', 'max:500', 'required_if:lesson_type,video'],
@@ -1347,10 +1346,6 @@ class LessonController extends Controller
 
     private function syncActivityAssignment(Lesson $lesson, array $validated, Request $request): Assignment
     {
-        $dueDate = filled($validated['activity_due_date'] ?? null)
-            ? \Illuminate\Support\Carbon::createFromFormat('Y-m-d\\TH:i', $validated['activity_due_date'])
-            : null;
-
         return Assignment::updateOrCreate(
             [
                 'lesson_id' => $lesson->id,
@@ -1365,7 +1360,6 @@ class LessonController extends Controller
                 'evaluation_criteria' => $validated['activity_criteria'] ?? null,
                 'programming_language' => null,
                 'ai_evaluation_enabled' => $request->boolean('activity_ai_enabled'),
-                'due_date' => $dueDate,
                 'max_score' => $validated['activity_max_score'] ?? 100,
                 'is_published' => $request->boolean('is_published'),
             ]
