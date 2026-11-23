@@ -17,6 +17,9 @@ class AiAvailability
 {
     public const MESSAGE = 'AI features are unavailable at the moment. Please try again later.';
 
+    /** PathWise's hourly AI generation limit was reached. */
+    public const HOURLY_LIMIT_MESSAGE = 'AI features are unavailable at the moment. Please try again in about an hour.';
+
     /**
      * True when the failure means "the AI cannot be used right now" rather
      * than "the AI answered with unusable content".
@@ -41,7 +44,7 @@ class AiAvailability
                 $safe[$key] = $context[$key];
             }
         }
-        $limits = ['PathWise per-minute AI generation limit', 'PathWise daily AI generation limit', 'PathWise per-minute AI evaluation limit'];
+        $limits = ['PathWise per-minute AI generation limit', 'PathWise hourly AI generation limit', 'PathWise per-minute AI evaluation limit'];
         if (in_array($context['limit'] ?? null, $limits, true)) $safe['limit'] = $context['limit'];
         $code = $exception?->getCode();
         $status = is_int($code) && $code >= 100 && $code <= 599 ? $code : null;

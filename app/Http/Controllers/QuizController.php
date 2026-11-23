@@ -711,28 +711,28 @@ class QuizController extends Controller
 
 
         /*
-         * Project-wide safety limits.
-         *
-         * These limits protect the shared Gemini quota:
-         * - at most 4 AI generation requests per minute
-         * - at most 20 AI generation requests per day
+         * Project-wide safety limits (config/services.php, .env):
+         * - PATHWISE_AI_GENERATIONS_PER_MINUTE requests per minute (default 4);
+         * - PATHWISE_AI_GENERATIONS_PER_HOUR successful generations per hour
+         *   (default 20). The hour starts at the first counted generation and
+         *   resets 60 minutes later.
          *
          * One generation request may create up to 10 questions.
          */
         $minuteKey =
             'pathwise:gemini:quiz:minute';
 
+        $hourlyKey =
+            'pathwise:gemini:quiz:hourly';
 
-        $dailyKey =
-            'pathwise:gemini:quiz:daily:'
-            .
-            now()->toDateString();
+        $perMinute = max(1, (int) config('services.pathwise.ai_generations_per_minute', 4));
+        $perHour = max(1, (int) config('services.pathwise.ai_generations_per_hour', 20));
 
 
         if (
             RateLimiter::tooManyAttempts(
                 $minuteKey,
-                4
+                $perMinute
             )
         ) {
             AiAvailability::logUnavailable('quiz generation', null, [
@@ -755,12 +755,13 @@ class QuizController extends Controller
 
         if (
             RateLimiter::tooManyAttempts(
-                $dailyKey,
-                20
+                $hourlyKey,
+                $perHour
             )
         ) {
             AiAvailability::logUnavailable('quiz generation', null, [
-                'limit' => 'PathWise daily AI generation limit',
+                'limit' => 'PathWise hourly AI generation limit',
+                'retry_after_seconds' => RateLimiter::availableIn($hourlyKey),
                 'teacher_id' => auth()->id(),
             ]);
 
@@ -771,7 +772,7 @@ class QuizController extends Controller
                 )
                 ->with(
                     'error',
-                    AiAvailability::MESSAGE
+                    AiAvailability::HOURLY_LIMIT_MESSAGE
                 )->withInput($request->except('_token'));
         }
 
@@ -801,20 +802,11 @@ class QuizController extends Controller
 
             /*
              * Count only a successful Gemini generation
-             * against the PathWise daily safety limit.
+             * against the PathWise hourly safety limit.
              */
-            $secondsUntilEndOfDay =
-                max(
-                    60,
-                    (int) now()->diffInSeconds(
-                        now()->endOfDay()
-                    )
-                );
-
-
             RateLimiter::hit(
-                $dailyKey,
-                $secondsUntilEndOfDay
+                $hourlyKey,
+                3600
             );
 
 

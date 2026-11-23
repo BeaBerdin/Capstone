@@ -57,6 +57,14 @@ function generationQuiz(string $courseStatus = 'draft'): array
  */
 function fakeGeneratedQuestions(array $texts): void
 {
+    Http::fake(['*' => Http::response(generatedQuestionsBody($texts))]);
+}
+
+/**
+ * Gemini's Interactions API answer body with these question texts.
+ */
+function generatedQuestionsBody(array $texts): array
+{
     $questions = array_map(fn (string $text, int $index) => [
         'question' => $text,
         'option_a' => 'Answer A'.$index,
@@ -66,12 +74,12 @@ function fakeGeneratedQuestions(array $texts): void
         'correct_answer' => 'B',
     ], $texts, array_keys($texts));
 
-    Http::fake(['*' => Http::response([
+    return [
         'steps' => [[
             'type' => 'model_output',
             'content' => [['type' => 'text', 'text' => json_encode(['questions' => $questions])]],
         ]],
-    ])]);
+    ];
 }
 
 function generateWithQuizRevision($test, Quiz $quiz, int $count)
@@ -413,28 +421,101 @@ test('a missing Gemini API key shows the friendly message', function () {
     Http::assertNothingSent();
 });
 
-test('PathWise\'s own per-minute and daily AI limits show the friendly message', function (string $key, int $hits) {
+test('PathWise\'s own per-minute and hourly AI limits show the friendly message', function (string $key, int $hits, string $message) {
     [$teacher, $quiz] = generationQuiz();
     Illuminate\Support\Facades\Log::spy();
     Http::fake();
 
     foreach (range(1, $hits) as $attempt) {
-        Illuminate\Support\Facades\RateLimiter::hit($key, 86400);
+        Illuminate\Support\Facades\RateLimiter::hit($key, 3600);
     }
 
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
+        ->assertSessionHas('error', $message);
 
     Http::assertNothingSent();
     Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
         ->withArgs(fn (string $message, array $context) => str_contains($context['limit'] ?? '', 'PathWise'))
         ->once();
 })->with([
-    'per minute' => ['pathwise:gemini:quiz:minute', 4],
-    'per day' => [fn () => 'pathwise:gemini:quiz:daily:'.now()->toDateString(), 20],
+    'per minute' => ['pathwise:gemini:quiz:minute', 4, 'AI features are unavailable at the moment. Please try again later.'],
+    'per hour' => ['pathwise:gemini:quiz:hourly', 20, 'AI features are unavailable at the moment. Please try again in about an hour.'],
 ]);
+
+test('the hourly limit counts successful generations and resets after about an hour', function () {
+    [$teacher, $quiz] = generationQuiz();
+    config(['services.pathwise.ai_generations_per_hour' => 2]);
+    $this->actingAs($teacher);
+
+    Http::fake(['*' => Http::sequence()
+        ->push(generatedQuestionsBody(['Hourly A1?', 'Hourly A2?', 'Spare A1?', 'Spare A2?']))
+        ->push(generatedQuestionsBody(['Hourly B1?', 'Hourly B2?', 'Spare B1?', 'Spare B2?']))
+        ->push(generatedQuestionsBody(['Hourly C1?', 'Hourly C2?', 'Spare C1?', 'Spare C2?']))]);
+
+    // Two successful generations use up this hour (each also counts for the
+    // per-minute limit, so move past the minute between them).
+    foreach (range(1, 2) as $generation) {
+        generateWithQuizRevision($this, $quiz, 2)->assertSessionHas('success');
+        $this->travel(2)->minutes();
+    }
+
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again in about an hour.');
+    Http::assertSentCount(2);
+
+    // About an hour after the first counted generation, it works again.
+    $this->travel(60)->minutes();
+    generateWithQuizRevision($this, $quiz, 2)->assertSessionHas('success');
+    Http::assertSentCount(3);
+});
+
+test('a failed generation does not use up the hourly limit', function () {
+    [$teacher, $quiz] = generationQuiz();
+    config(['services.pathwise.ai_generations_per_hour' => 1]);
+    $this->actingAs($teacher);
+
+    Http::fake(['*' => Http::sequence()
+        ->push(['error' => ['code' => 429, 'status' => 'RESOURCE_EXHAUSTED']], 429)
+        ->push(generatedQuestionsBody(['After failure 1?', 'After failure 2?', 'Spare 1?', 'Spare 2?']))]);
+
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
+
+    // The failed request did not count: the single hourly generation is still free.
+    $this->travel(2)->minutes();
+    generateWithQuizRevision($this, $quiz, 2)->assertSessionHas('success');
+});
+
+test('the per-minute limit is still 4 by default and both limits are configurable', function () {
+    [$teacher, $quiz] = generationQuiz();
+    Http::fake();
+    $this->actingAs($teacher);
+
+    expect(config('services.pathwise.ai_generations_per_minute'))->toBe(4)
+        ->and(config('services.pathwise.ai_generations_per_hour'))->toBe(20);
+
+    foreach (range(1, 3) as $attempt) {
+        Illuminate\Support\Facades\RateLimiter::hit('pathwise:gemini:quiz:minute', 60);
+    }
+
+    // 3 of 4 used: not blocked yet by the minute limit (Gemini is reached).
+    generateWithQuizRevision($this, $quiz, 2);
+    Http::assertSentCount(1);
+
+    // The 4th request of the minute is now used: blocked.
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
+    Http::assertSentCount(1);
+
+    // A lower configured minute limit applies at once.
+    Illuminate\Support\Facades\RateLimiter::clear('pathwise:gemini:quiz:minute');
+    config(['services.pathwise.ai_generations_per_minute' => 1]);
+    Illuminate\Support\Facades\RateLimiter::hit('pathwise:gemini:quiz:minute', 60);
+    generateWithQuizRevision($this, $quiz, 2)
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
+});
 
 /*
 |--------------------------------------------------------------------------

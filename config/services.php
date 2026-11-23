@@ -55,6 +55,12 @@ return [
         // Super Admin accounts still get the in-app notification. See
         // App\Support\EdpNotificationRecipients.
         'edp_notification_email' => env('PATHWISE_EDP_NOTIFICATION_EMAIL'),
+
+        // AI quiz generation limits, shared by the whole app (one request
+        // can generate up to 10 questions). The hourly window starts at the
+        // first counted generation and resets 60 minutes later.
+        'ai_generations_per_minute' => (int) env('PATHWISE_AI_GENERATIONS_PER_MINUTE', 4),
+        'ai_generations_per_hour' => (int) env('PATHWISE_AI_GENERATIONS_PER_HOUR', 20),
     ],
 
     'paymongo' => [

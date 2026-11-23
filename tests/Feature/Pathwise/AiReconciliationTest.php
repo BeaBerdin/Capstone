@@ -76,13 +76,14 @@ test('unrelated application bugs are not labelled as Gemini availability failure
 test('local Gemini quotas keep their limits and preserve input with the same friendly message', function (string $scope) {
     $f = friendlyAiFixture('quiz');
     Http::fake();
-    $key = $scope === 'minute' ? 'pathwise:gemini:quiz:minute' : 'pathwise:gemini:quiz:daily:'.now()->toDateString();
+    $key = $scope === 'minute' ? 'pathwise:gemini:quiz:minute' : 'pathwise:gemini:quiz:hourly';
     foreach (range(1, $scope === 'minute' ? 4 : 20) as $n) Illuminate\Support\Facades\RateLimiter::hit($key, 60);
     $before = friendlyAiRows();
-    friendlyAiRequest($this, $f, 'quiz')->assertSessionHas('error', AiAvailability::MESSAGE)->assertSessionHasInput('question_count', 2);
+    $message = $scope === 'minute' ? AiAvailability::MESSAGE : AiAvailability::HOURLY_LIMIT_MESSAGE;
+    friendlyAiRequest($this, $f, 'quiz')->assertSessionHas('error', $message)->assertSessionHasInput('question_count', 2);
     expect(friendlyAiRows())->toBe($before);
     Http::assertNothingSent();
-})->with(['minute','daily']);
+})->with(['minute','hourly']);
 
 
 test('availability logging cannot retain provider bodies prompts or arbitrary contexts', function () {
