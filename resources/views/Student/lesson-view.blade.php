@@ -4,6 +4,10 @@
 @php
     $studentId = auth()->id();
 
+    // Preview mode: a student who is not enrolled opens a preview lesson
+    // (LessonController::studentPreview). The page is read-only.
+    $isPreviewMode = $isPreviewMode ?? false;
+
     /*
     |--------------------------------------------------------------------------
     | BASIC LESSON DATA
@@ -394,11 +398,11 @@
             >
 
                 <a
-                    href="{{ route('student.my-courses') }}"
+                    href="{{ $isPreviewMode ? route('student.marketplace') : route('student.my-courses') }}"
                     class="font-medium transition
                            hover:text-violet-600"
                 >
-                    My Courses
+                    {{ $isPreviewMode ? 'Marketplace' : 'My Courses' }}
                 </a>
 
                 <span>
@@ -406,7 +410,7 @@
                 </span>
 
                 <a
-                    href="{{ route('student.learn.course', $course) }}"
+                    href="{{ $isPreviewMode ? route('student.course.show', $course) : route('student.learn.course', $course) }}"
                     class="font-medium transition
                            hover:text-violet-600"
                 >
@@ -473,7 +477,20 @@
                         </span>
 
 
-                        @if($isCompleted)
+                        @if($isPreviewMode)
+
+                            <span
+                                class="rounded-full
+                                       bg-violet-50
+                                       px-2.5 py-1
+                                       text-xs
+                                       font-bold
+                                       text-violet-700"
+                            >
+                                Preview
+                            </span>
+
+                        @elseif($isCompleted)
 
                             <span
                                 class="inline-flex
@@ -542,7 +559,7 @@
 
 
                 <a
-                    href="{{ route('student.learn.course', $course) }}"
+                    href="{{ $isPreviewMode ? route('student.course.show', $course) : route('student.learn.course', $course) }}"
                     class="inline-flex h-11
                            self-start lg:self-auto
                            items-center
@@ -574,6 +591,16 @@
             </div>
                 </div>
             </section>
+
+
+
+            {{-- =====================================================
+                PREVIEW BANNER (not enrolled)
+            ====================================================== --}}
+
+            @if($isPreviewMode)
+                @include('Student.partials.lesson-preview-banner')
+            @endif
 
 
 
@@ -1757,7 +1784,7 @@
                         COMPLETION
                     ============================================== --}}
 
-                    @if($lessonType !== 'quiz')
+                    @if($lessonType !== 'quiz' && ! $isPreviewMode)
 
                         <section class="sad-card pw-card p-5 sm:p-6">
 
@@ -2115,7 +2142,20 @@
                                 </span>
 
 
-                                @if($isCompleted)
+                                @if($isPreviewMode)
+
+                                    <span
+                                        class="rounded-full
+                                               bg-violet-50
+                                               px-2.5 py-1
+                                               text-xs
+                                               font-bold
+                                               text-violet-700"
+                                    >
+                                        Preview
+                                    </span>
+
+                                @elseif($isCompleted)
 
                                     <span
                                         class="inline-flex
@@ -2241,7 +2281,7 @@
 
                         {{-- BACK --}}
                         <a
-                            href="{{ route('student.learn.course', $course) }}"
+                            href="{{ $isPreviewMode ? route('student.course.show', $course) : route('student.learn.course', $course) }}"
                             class="mt-5 inline-flex
                                    h-10 w-full
                                    items-center

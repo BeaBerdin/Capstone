@@ -1316,67 +1316,7 @@
 
 
 
-                                <form
-                                    action="{{ route('student.transactions.store', $course) }}"
-                                    method="POST"
-                                    class="mt-4"
-                                    onsubmit="
-                                        const button =
-                                            this.querySelector(
-                                                '[data-purchase-button]'
-                                            );
-
-                                        if (button) {
-                                            button.disabled = true;
-                                            button.innerText =
-                                                'Opening PayMongo...';
-                                        }
-                                    "
-                                >
-                                    @csrf
-
-                                    <button
-                                        type="submit"
-                                        data-purchase-button
-                                        class="sad-btn-primary inline-flex
-                                               h-11 w-full
-                                               items-center
-                                               justify-center gap-2
-                                               rounded-xl
-                                               bg-violet-600
-                                               text-sm font-semibold
-                                               text-white
-                                               transition
-                                               hover:bg-violet-700"
-                                    >
-
-                                        <svg
-                                            class="h-4 w-4"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                        >
-                                            <rect
-                                                x="3"
-                                                y="5"
-                                                width="18"
-                                                height="14"
-                                                rx="2"
-                                            ></rect>
-
-                                            <path d="M3 10h18"></path>
-                                        </svg>
-
-                                        Purchase Course
-                                    </button>
-
-                                    {{-- Enabled PayMongo methods (PAYMONGO_PAYMENT_METHODS). --}}
-                                    <p class="mt-2 text-center text-xs text-slate-500">
-                                        Pay securely with {{ implode(', ', array_values(\App\Support\PaymentMethods::labels())) }} via PayMongo.
-                                    </p>
-
-                                </form>
+                                @include('Student.partials.purchase-course-form', ['course' => $course])
 
 
 
@@ -1414,67 +1354,7 @@
 
 
 
-                                <form
-                                    action="{{ route('student.enroll', $course) }}"
-                                    method="POST"
-                                    class="mt-4"
-                                    onsubmit="
-                                        const button =
-                                            this.querySelector(
-                                                '[data-enroll-button]'
-                                            );
-
-                                        if (button) {
-                                            if (button.disabled) {
-                                                return false;
-                                            }
-
-                                            button.disabled = true;
-                                            button.innerText =
-                                                'Enrolling...';
-                                        }
-                                    "
-                                >
-                                    @csrf
-
-                                    <button
-                                        type="submit"
-                                        data-enroll-button
-                                        class="sad-btn-primary inline-flex
-                                               h-11 w-full
-                                               items-center
-                                               justify-center gap-2
-                                               rounded-xl
-                                               bg-violet-600
-                                               text-sm font-semibold
-                                               text-white
-                                               transition
-                                               hover:bg-violet-700"
-                                    >
-                                        <svg
-                                            class="h-4 w-4"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                        >
-                                            <path
-                                                d="M9 11l3 3
-                                                   L22 4"
-                                            ></path>
-
-                                            <path
-                                                d="M21 12v7
-                                                   a2 2 0 01-2 2
-                                                   H5a2 2 0 01-2-2
-                                                   V5a2 2 0 012-2h11"
-                                            ></path>
-                                        </svg>
-
-                                        Enroll for Free
-                                    </button>
-
-                                </form>
+                                @include('Student.partials.enroll-course-form', ['course' => $course])
 
                             @endif
 
@@ -1861,8 +1741,10 @@
                                     $typeLabels[$lessonType]
                                     ?? ucfirst($lessonType);
 
+                                // Only published Reading/Video preview lessons of a
+                                // published course open before enrolling.
                                 $isPreview =
-                                    (bool) $lesson->is_preview && $lessonType !== 'activity';
+                                    $lesson->setRelation('course', $course)->isPreviewable();
                             @endphp
 
 
@@ -2047,18 +1929,36 @@
 
                                     @elseif($isPreview)
 
-                                        <span
+                                        <a
+                                            href="{{ route('student.lesson.preview', [$course, $lesson]) }}"
+                                            data-preview-lesson
                                             class="inline-flex h-9
                                                    items-center
                                                    justify-center
+                                                   gap-1.5
                                                    rounded-lg
                                                    bg-violet-50
                                                    px-3
                                                    text-xs font-semibold
-                                                   text-violet-600"
+                                                   text-violet-600
+                                                   transition
+                                                   hover:bg-violet-100"
                                         >
-                                            Preview available
-                                        </span>
+                                            Preview Lesson
+
+                                            <svg
+                                                class="h-3.5 w-3.5"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path
+                                                    d="m9 18
+                                                       6-6-6-6"
+                                                ></path>
+                                            </svg>
+                                        </a>
 
                                     @else
 

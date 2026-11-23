@@ -46,4 +46,24 @@ class Lesson extends Model
     {
         return $this->hasMany(Assignment::class);
     }
+
+    /** Lesson types a student may preview before enrolling. */
+    public const PREVIEW_TYPES = ['text', 'video'];
+
+    /**
+     * True when any student may open this lesson before enrolling: a
+     * published Reading or Video lesson marked as a preview, in a published
+     * course (not a draft, under review or rejected). Activities, quizzes
+     * and documents are never previewable.
+     */
+    public function isPreviewable(): bool
+    {
+        $course = $this->course;
+
+        return $course !== null
+            && strtolower(trim((string) $course->status)) === 'published'
+            && (bool) $this->is_published
+            && (bool) $this->is_preview
+            && in_array(strtolower(trim((string) $this->lesson_type)), self::PREVIEW_TYPES, true);
+    }
 }

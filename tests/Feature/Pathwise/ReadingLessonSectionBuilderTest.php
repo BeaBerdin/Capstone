@@ -124,7 +124,9 @@ test('reading media shares lesson ownership publication and enrollment rules', f
     $department = Department::create(['name' => 'Reading Department']);
     $teacher = pathwiseApprovedTeacher(['department_id' => $department->id]);
     $course = pathwiseCourse($teacher, ['status' => 'published']);
-    $lesson = $course->lessons()->create(readingLessonFields(['is_preview' => 1]));
+    // Not a preview lesson: preview lesson files open before enrolling
+    // (see PreviewLessonTest), every other lesson needs an enrollment.
+    $lesson = $course->lessons()->create(readingLessonFields(['is_preview' => 0]));
     $path = 'lesson-files/'.$course->id.'/sections/handout.pdf';
     Storage::disk('local')->put($path, '%PDF-1.4');
     $section = $lesson->sections()->create(['type' => 'file', 'file_path' => $path]);

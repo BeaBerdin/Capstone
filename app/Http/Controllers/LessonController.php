@@ -478,6 +478,50 @@ class LessonController extends Controller
     }
 
 
+    /**
+     * Read-only preview of a preview lesson for a student who is not
+     * enrolled. Nothing is recorded: no lesson progress, no completion and
+     * no previous/next links into lessons that are still locked.
+     */
+    public function studentPreview(Course $course, Lesson $lesson)
+    {
+        abort_unless((int) $lesson->course_id === (int) $course->id, 404);
+
+        $lesson->setRelation('course', $course);
+
+        abort_unless($lesson->isPreviewable(), 404);
+
+        $enrollment = Enrollment::where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->first();
+
+        // Enrolled students use the normal lesson view.
+        if ($enrollment?->grantsAccess()) {
+            return redirect()->route('student.lesson.view', $lesson);
+        }
+
+        if ($lesson->lesson_type === 'text') {
+            $lesson->load('sections');
+        }
+
+        $pendingTransaction = \App\Models\Transaction::where('student_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        return view('Student.lesson-view', [
+            'lesson' => $lesson,
+            'progress' => null,
+            'previousLesson' => null,
+            'nextLesson' => null,
+            'isPreviewMode' => true,
+            'previewEnrollmentCancelled' => $enrollment !== null,
+            'pendingTransaction' => $pendingTransaction,
+        ]);
+    }
+
+
     public function markComplete(Lesson $lesson)
     {
         DB::transaction(function () use ($lesson) {

@@ -95,6 +95,8 @@ class PrivateFileController extends Controller
 
         return ($user->hasRole('teacher') && (int) $course->teacher_id === (int) $user->id)
             || $course->isManageableBy($user)
+            // Files of a preview lesson open before enrolling; nothing else does.
+            || ($user->hasRole('student') && $lesson->isPreviewable())
             || (
                 $user->hasRole('student')
                 && strtolower(trim((string) $course->status)) === 'published'

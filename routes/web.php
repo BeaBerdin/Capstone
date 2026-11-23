@@ -557,6 +557,11 @@ Route::middleware('role:student')->group(function () {
     Route::post('/lesson/{lesson}/complete', [LessonController::class, 'markComplete'])
         ->name('student.lesson.complete');
 
+    // Read-only preview of a published Reading/Video preview lesson,
+    // before enrolling (Lesson::isPreviewable()).
+    Route::get('/courses/{course}/preview/{lesson}', [LessonController::class, 'studentPreview'])
+        ->name('student.lesson.preview');
+
     // Assignments / output submissions
     Route::get('/student/assignments', [AssignmentController::class, 'studentIndex'])
         ->name('student.assignments.index');
