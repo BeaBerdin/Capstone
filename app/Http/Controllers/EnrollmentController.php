@@ -7,8 +7,10 @@ use App\Models\Course;
 use App\Models\User;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class EnrollmentController extends Controller
 {
@@ -72,7 +74,7 @@ class EnrollmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
+            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent(), $this->notAlreadyEnrolled($request)],
             'course_id' => 'required|integer|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
@@ -80,14 +82,14 @@ class EnrollmentController extends Controller
 
         Course::authorizeManagement($request->user(), $validated['course_id']);
 
-        Enrollment::create([
+        $this->saveWithoutDuplicate(fn () => Enrollment::create([
             'student_id' => $request->student_id,
             'course_id' => $validated['course_id'],
             'status' => $request->status,
             'enrolled_at' => now(),
             'completed_at' => $request->status === 'completed' ? now() : null,
             'progress_percentage' => $request->progress_percentage,
-        ]);
+        ]));
 
         return redirect()
             ->route('enrollments.index')
@@ -109,7 +111,7 @@ class EnrollmentController extends Controller
         Course::authorizeManagement($request->user(), $enrollment->course_id);
 
         $validated = $request->validate([
-            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent()],
+            'student_id' => ['required', Rule::exists('users', 'id'), $this->mustBeStudent(), $this->notAlreadyEnrolled($request, $enrollment)],
             'course_id' => 'required|integer|exists:courses,id',
             'status' => 'required|in:active,completed,cancelled',
             'progress_percentage' => 'required|numeric|min:0|max:100',
@@ -117,13 +119,13 @@ class EnrollmentController extends Controller
 
         Course::authorizeManagement($request->user(), $validated['course_id']);
 
-        $enrollment->update([
+        $this->saveWithoutDuplicate(fn () => $enrollment->update([
             'student_id' => $request->student_id,
             'course_id' => $validated['course_id'],
             'status' => $request->status,
             'completed_at' => $request->status === 'completed' ? now() : null,
             'progress_percentage' => $request->progress_percentage,
-        ]);
+        ]));
 
         return redirect()
             ->route('enrollments.index')
@@ -151,6 +153,40 @@ class EnrollmentController extends Controller
         return User::query()->whereHas('roles', function (Builder $query) {
             $query->where('name', 'student');
         });
+    }
+
+    public const DUPLICATE_MESSAGE = 'This student is already enrolled in this course.';
+
+    /**
+     * One enrollment per student and course (the enrollments table has a
+     * unique index on student_id + course_id). Checked before saving so the
+     * admin sees a message instead of a database error.
+     */
+    private function notAlreadyEnrolled(Request $request, ?Enrollment $ignore = null): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($request, $ignore) {
+            $exists = Enrollment::where('student_id', $value)
+                ->where('course_id', $request->input('course_id'))
+                ->when($ignore, fn ($query) => $query->whereKeyNot($ignore->getKey()))
+                ->exists();
+
+            if ($exists) {
+                $fail(self::DUPLICATE_MESSAGE);
+            }
+        };
+    }
+
+    /**
+     * Two saves at the same moment can both pass the check above; the unique
+     * index then refuses the second one, which is shown as the same message.
+     */
+    private function saveWithoutDuplicate(Closure $save): mixed
+    {
+        try {
+            return $save();
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['student_id' => self::DUPLICATE_MESSAGE]);
+        }
     }
 
     private function mustBeStudent(): Closure
