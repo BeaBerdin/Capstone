@@ -15,7 +15,7 @@ use Throwable;
  */
 class AiAvailability
 {
-    public const MESSAGE = 'AI features are currently unavailable. Please try again later.';
+    public const MESSAGE = 'AI features are unavailable at the moment. Please try again later.';
 
     /**
      * True when the failure means "the AI cannot be used right now" rather

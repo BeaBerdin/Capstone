@@ -264,7 +264,7 @@ test('a Gemini timeout shows the friendly message and leaves the quiz unchanged'
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
 });
@@ -365,7 +365,7 @@ test('a Gemini quota or rate-limit error shows the friendly message and logs the
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     expect(QuizQuestion::where('quiz_id', $quiz->id)->count())->toBe(0);
 
@@ -385,7 +385,7 @@ test('the quota details never reach the quiz builder page', function () {
 
     $this->get(route('teacher.quiz.builder', $quiz->lesson_id))
         ->assertOk()
-        ->assertSee('AI features are currently unavailable. Please try again later.')
+        ->assertSee('AI features are unavailable at the moment. Please try again later.')
         ->assertDontSee('RESOURCE_EXHAUSTED')
         ->assertDontSee('Quota exceeded')
         ->assertDontSee('Gemini quota');
@@ -398,7 +398,7 @@ test('a Gemini server error after the retries shows the friendly message', funct
 
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 });
 
 test('a missing Gemini API key shows the friendly message', function () {
@@ -408,7 +408,7 @@ test('a missing Gemini API key shows the friendly message', function () {
 
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     Http::assertNothingSent();
 });
@@ -425,7 +425,7 @@ test('PathWise\'s own per-minute and daily AI limits show the friendly message',
     $this->actingAs($teacher);
     generateWithQuizRevision($this, $quiz, 2)
         ->assertRedirect(route('teacher.quiz.builder', $quiz->lesson_id))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     Http::assertNothingSent();
     Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
@@ -534,7 +534,7 @@ test('when AI is unavailable the quiz is still saved as a draft and the friendly
 
     $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder))
         ->assertRedirect(route('teacher.quiz.builder', $lesson))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     $quiz = Quiz::where('lesson_id', $lesson->id)->sole();
 
@@ -554,7 +554,7 @@ test('PathWise\'s own AI limits still apply to the first-save generation', funct
     $builder = $this->get(route('teacher.quiz.builder', $lesson))->assertOk();
 
     $this->post(route('teacher.quiz.save-and-generate', $lesson), firstSavePayload($builder))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     Http::assertNothingSent();
 });

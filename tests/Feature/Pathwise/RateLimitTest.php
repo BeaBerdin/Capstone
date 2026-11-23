@@ -52,7 +52,7 @@ test('AI evaluation is limited per teacher and then shows the friendly message',
     $this->actingAs($teacher)
         ->post(route('teacher.submissions.ai-evaluate', $submission))
         ->assertRedirect(route('teacher.submissions.show', $submission))
-        ->assertSessionHas('error', 'AI features are currently unavailable. Please try again later.');
+        ->assertSessionHas('error', 'AI features are unavailable at the moment. Please try again later.');
 
     // Another teacher has their own counter.
     $otherSubmission = rateLimitSubmission();
