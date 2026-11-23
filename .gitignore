@@ -63,3 +63,6 @@ test-results*.txt
 
 # Recorded demo videos (kept locally, not in git).
 /demo-videos
+
+# Storyboard screenshots (kept locally, never committed).
+docs/audit/**/screenshots_*/

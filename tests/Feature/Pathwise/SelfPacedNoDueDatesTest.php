@@ -147,7 +147,9 @@ test('teacher activity and assignment forms have no due date input, and a posted
 
     $this->actingAs($teacher)->get(route('teacher.assignments.create', $course))
         ->assertOk()
-        ->assertDontSee('name="due_date"', false);
+        ->assertDontSee('name="due_date"', false)
+        ->assertSee('Scoring')
+        ->assertDontSee('Schedule');
 
     $this->actingAs($teacher)->post(route('teacher.lessons.store', $course), [
         'title' => 'New Activity', 'lesson_type' => 'activity', 'content' => 'Do this.',
