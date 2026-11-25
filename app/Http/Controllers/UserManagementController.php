@@ -10,6 +10,7 @@ use App\Models\Department;
 use App\Models\Role;
 use App\Models\StudentApplication;
 use App\Models\User;
+use App\Notifications\DepartmentAdministratorAssigned;
 use App\Support\StudyLoads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,17 +27,81 @@ class UserManagementController extends Controller
 {
     use PasswordValidationRules, PersonNameRules, ProfileValidationRules;
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['roles', 'department'])
-            ->latest()
-            ->get();
-
-        $roles = Role::orderBy('name')->get();
+        $search = mb_substr(trim((string) $request->query('search')), 0, 100);
 
         $departments = Department::orderBy('name')->get();
 
-        return view('users.index', compact('users', 'roles', 'departments'));
+        // Department filter: a department id, "none" (no department) or all.
+        $departmentFilter = (string) $request->query('department', '');
+        if ($departmentFilter !== 'none' && ! $departments->contains('id', (int) $departmentFilter)) {
+            $departmentFilter = '';
+        }
+
+        $users = User::with(['roles', 'department'])
+            ->tap(fn ($query) => $this->applyUserSearch($query, $search))
+            ->when($departmentFilter === 'none', fn ($query) => $query->whereNull('department_id'))
+            ->when($departmentFilter !== '' && $departmentFilter !== 'none', fn ($query) => $query->where('department_id', (int) $departmentFilter))
+            ->latest()
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        $roles = Role::orderBy('name')->get();
+
+        // Summary cards count every account, not only the current page.
+        $roleCounts = Role::withCount('users')->pluck('users_count', 'name');
+        $totalUsers = User::count();
+
+        return view('users.index', compact('users', 'roles', 'departments', 'search', 'departmentFilter', 'roleCounts', 'totalUsers'));
+    }
+
+    /**
+     * User Directory search. Every word must appear in the name or email, so
+     * "Esmerelda R. Inghoy", "Esmerelda Inghoy", "Inghoy, Esmerelda" and
+     * "inghoy" all match. A one-letter word (a middle initial) must start a
+     * word of the name. The whole text also matches an email, and a role name
+     * ("Teacher", "Super Admin") lists that role.
+     */
+    private function applyUserSearch($query, string $search): void
+    {
+        if ($search === '') {
+            return;
+        }
+
+        // "!" escapes LIKE wildcards the same way in MySQL and SQLite.
+        $like = fn (string $value) => str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
+        $words = array_values(array_filter(
+            array_map(fn ($word) => trim($word, '.'), preg_split('/[\s,]+/u', mb_strtolower($search), -1, PREG_SPLIT_NO_EMPTY)),
+            fn ($word) => $word !== ''
+        ));
+        $roleNames = ['super admin' => 'super_admin', 'admin' => 'admin', 'administrator' => 'admin', 'teacher' => 'teacher', 'student' => 'student'];
+        $role = $roleNames[mb_strtolower(preg_replace('/\s+/u', ' ', $search))] ?? null;
+
+        $query->where(function ($matches) use ($search, $words, $role, $like) {
+            $matches->whereRaw("LOWER(email) LIKE ? ESCAPE '!'", ['%'.$like(mb_strtolower($search)).'%']);
+
+            if ($words !== []) {
+                $matches->orWhere(function ($names) use ($words, $like) {
+                    foreach ($words as $word) {
+                        $names->where(function ($one) use ($word, $like) {
+                            if (mb_strlen($word) === 1) {
+                                $one->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$like($word).'%'])
+                                    ->orWhereRaw("LOWER(name) LIKE ? ESCAPE '!'", ['% '.$like($word).'%']);
+                            } else {
+                                $one->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", ['%'.$like($word).'%'])
+                                    ->orWhereRaw("LOWER(email) LIKE ? ESCAPE '!'", ['%'.$like($word).'%']);
+                            }
+                        });
+                    }
+                });
+            }
+
+            if ($role) {
+                $matches->orWhereHas('roles', fn ($roles) => $roles->where('name', $role));
+            }
+        });
     }
 
     /**
@@ -93,6 +158,14 @@ class UserManagementController extends Controller
                 ? StudentApplication::submitForTeacher($user, 'edp_created')
                 : null;
         });
+
+        // An Administrator created with a department is assigned to it: the
+        // same informational email as the Assign page (no teachers).
+        if ($validated['role'] === 'admin' && ! empty($validated['department_id'])) {
+            User::where('email', $validated['email'])->first()?->notify(new DepartmentAdministratorAssigned(
+                Department::findOrFail((int) $validated['department_id'])->name
+            ));
+        }
 
         return redirect()
             ->route('users.index')

@@ -432,11 +432,15 @@ class QuizController extends Controller
 
         $questionRules = $this->questionRules();
         $questionFields = implode(',', array_keys($questionRules));
-        $hasNewQuestion = $this->hasNewQuestionInput($request->input('new_question'));
+        // "Add Question" (below the Add a Question form) saves through this
+        // same action, but the new question is required. "Save Changes"
+        // still adds the question only when the teacher filled it in.
+        $addingQuestion = $request->input('intent') === 'add_question';
+        $hasNewQuestion = $addingQuestion || $this->hasNewQuestionInput($request->input('new_question'));
 
         $rules = [
             'revision' => ['required', 'string', 'size:64'],
-            'intent' => ['nullable', 'in:save,publish,unpublish'],
+            'intent' => ['nullable', 'in:save,publish,unpublish,add_question'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'passing_score' => ['required', 'integer', 'min:1', 'max:100'],
@@ -457,7 +461,16 @@ class QuizController extends Controller
             }
         }
 
-        $validated = $request->validate($rules, [], $attributes);
+        $messages = $addingQuestion ? [
+            'new_question.required' => 'Complete the question before adding it.',
+            'new_question.question.required' => 'Enter the question.',
+            'new_question.option_a.required' => 'Enter option A.',
+            'new_question.option_b.required' => 'Enter option B.',
+            'new_question.correct_answer.required' => 'Choose the correct answer.',
+            'new_question.points.required' => 'Enter the points for this question.',
+        ] : [];
+
+        $validated = $request->validate($rules, $messages, $attributes);
         $intent = $validated['intent'] ?? 'save';
 
         DB::transaction(function () use ($lesson, $validated, $intent) {
@@ -518,12 +531,19 @@ class QuizController extends Controller
         }, 3);
 
         $request->session()->flash('quiz_saved', true);
-        if ($intent !== 'save') {
+        if ($intent === 'add_question') {
+            $request->session()->flash('question_added', 'Question added.');
+        } elseif ($intent !== 'save') {
             $request->session()->flash('success', $intent === 'publish' ? 'Quiz published.' : 'Quiz returned to draft.');
         }
 
         if ($request->expectsJson()) {
             return response()->json(['saved' => true]);
+        }
+
+        if ($intent === 'add_question') {
+            // Land below the question list, next to the success message.
+            return redirect()->route('teacher.quiz.builder', $lesson)->withFragment('add-question-actions');
         }
 
         return redirect()->route('teacher.quiz.builder', $lesson);

@@ -15,10 +15,15 @@ use App\Models\Submission;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Notifications\CourseStatusNotification;
+use App\Notifications\CourseSubmittedForApproval;
 use App\Notifications\PathwiseNotification;
+use App\Support\EdpNotificationRecipients;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Throwable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -936,9 +941,17 @@ class CourseController extends Controller
                 );
         }
 
-        $course->update([
-            'status' => 'pending',
-        ]);
+        // Only the request that really moves the course to pending notifies
+        // the reviewers, so a double click sends one notification and email.
+        $previousStatus = $course->status;
+        $moved = Course::whereKey($course->id)
+            ->where('status', $previousStatus)
+            ->update(['status' => 'pending', 'updated_at' => now()]);
+        $course->refresh();
+
+        if ($moved === 1) {
+            $this->notifyCourseReviewers($course, auth()->user(), $previousStatus === 'rejected');
+        }
 
         $redirect = redirect()
             ->route(
@@ -958,6 +971,61 @@ class CourseController extends Controller
         }
 
         return $redirect;
+    }
+
+    /**
+     * Notify whoever reviews this course: the active Administrators of the
+     * teacher's department; if the teacher has no department or it has no
+     * Administrator, the Super Admin (EDP) instead. Never other departments.
+     */
+    private function notifyCourseReviewers(Course $course, User $teacher, bool $resubmission): void
+    {
+        $activeWithRole = fn (string $role) => User::query()
+            ->where('is_active', true)
+            ->whereHas('roles', fn ($roles) => $roles->where('name', $role));
+
+        $reviewers = $teacher->department_id
+            ? $activeWithRole('admin')->where('department_id', $teacher->department_id)->get()
+            : collect();
+
+        $toSuperAdmin = $reviewers->isEmpty();
+        if ($toSuperAdmin) {
+            $reviewers = $activeWithRole('super_admin')->get();
+        }
+
+        $notification = fn () => new CourseSubmittedForApproval(
+            $course->id,
+            $course->title,
+            $teacher->name,
+            $resubmission,
+            $toSuperAdmin,
+        );
+
+        // Like the Study Load notifications: a notification that cannot be
+        // saved is logged and never undoes or interrupts the submission.
+        foreach ($reviewers as $reviewer) {
+            try {
+                $reviewer->notify($notification());
+            } catch (Throwable $e) {
+                Log::warning('PATHWISE could not notify a reviewer about a submitted course.', [
+                    'course_id' => $course->id,
+                    'reviewer_id' => $reviewer->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Super Admin fallback with an EDP mailbox: one email to the mailbox.
+        if ($toSuperAdmin && EdpNotificationRecipients::hasConfigured()) {
+            try {
+                Notification::route('mail', EdpNotificationRecipients::configured())->notify($notification());
+            } catch (Throwable $e) {
+                Log::warning('PATHWISE could not email the EDP mailbox about a submitted course.', [
+                    'course_id' => $course->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /*

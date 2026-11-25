@@ -906,15 +906,57 @@
                         @endforelse
 
                         @if ($quizCanBeModified)
-                            <section aria-labelledby="new-question-heading" class="sad-card rounded-2xl border border-violet-100 bg-white p-5 shadow-sm sm:p-6">
+                            @php
+                                // Inline errors only after the Add Question button, so Save Changes looks exactly as before.
+                                $addQuestionErrors = old('intent') === 'add_question'
+                                    && ($errors->has('new_question') || $errors->has('new_question.*'));
+                                // The form is open when the quiz has no questions yet, or when the
+                                // teacher's unsaved new question came back (validation errors).
+                                $oldNewQuestion = collect(old('new_question', []))->except('points')->filter(fn ($value) => filled($value));
+                                $addQuestionOpen = ($quiz?->questions ?? collect())->isEmpty()
+                                    || $addQuestionErrors
+                                    || $errors->has('new_question.*')
+                                    || $oldNewQuestion->isNotEmpty();
+                            @endphp
+
+                            <div id="add-question-actions" class="flex flex-wrap items-center gap-3">
+                                <button type="button" data-add-question-open aria-controls="new-question-form" aria-expanded="{{ $addQuestionOpen ? 'true' : 'false' }}"
+                                        class="min-h-11 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
+                                        @if ($addQuestionOpen) hidden @endif>
+                                    + Add Question
+                                </button>
+                                @if (session('question_added'))
+                                    <p role="status" aria-live="polite" class="text-sm font-semibold text-emerald-700" data-question-added>
+                                        ✓ {{ session('question_added') }}
+                                    </p>
+                                @endif
+                            </div>
+
+                            <section id="new-question-form" aria-labelledby="new-question-heading" class="sad-card rounded-2xl border border-violet-100 bg-white p-5 shadow-sm sm:p-6"
+                                     data-add-question @if ($addQuestionErrors) data-add-question-errors @endif
+                                     @unless ($addQuestionOpen) hidden @endunless>
                                 <h3 id="new-question-heading" class="text-base font-semibold text-slate-900">Add a Question</h3>
-                                <p class="mt-1 text-sm text-slate-600">Complete the question and use Save Changes to add it.</p>
+                                <p class="mt-1 text-sm text-slate-600">Complete the question, then click Add Question or Save Changes.</p>
+                                @if ($addQuestionErrors && $errors->has('new_question'))
+                                    <p class="mt-3 text-sm font-medium text-red-700">{{ $errors->first('new_question') }}</p>
+                                @endif
                                 @include('Teacher.partials.quiz-question-fields', [
                                     'fieldPrefix' => 'new_question',
                                     'inputPrefix' => 'new_question',
                                     'newQuestion' => true,
                                     'question' => null,
+                                    'inlineErrors' => $addQuestionErrors,
                                 ])
+                                <div class="mt-5 flex flex-wrap items-center justify-end gap-3">
+                                    <button type="button" data-add-question-cancel
+                                            class="min-h-11 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" form="quiz-edit-form" name="intent" value="add_question"
+                                            class="min-h-11 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60">
+                                        Add Question
+                                    </button>
+                                </div>
                             </section>
                         @endif
                     </section>
@@ -1186,8 +1228,58 @@
                 }
 
                 submitting = true;
-                status.textContent = 'Saving...';
+                status.textContent = event.submitter && event.submitter.value === 'add_question'
+                    ? 'Adding question...'
+                    : 'Saving...';
             });
+
+            // Add a Question form: "+ Add Question" opens it, Cancel hides and clears it.
+            // While hidden its fields are disabled, so Save Changes never sends them.
+            const addQuestion = document.querySelector('[data-add-question]');
+            const openButton = document.querySelector('[data-add-question-open]');
+            const cancelButton = document.querySelector('[data-add-question-cancel]');
+
+            function setAddQuestionOpen(open) {
+                if (!addQuestion) return;
+                addQuestion.hidden = !open;
+                for (const field of addQuestion.querySelectorAll('input, textarea, select, button[type="submit"]')) {
+                    field.disabled = !open;
+                }
+                if (openButton) {
+                    openButton.hidden = open;
+                    openButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
+            }
+
+            function clearAddQuestion() {
+                for (const field of addQuestion.querySelectorAll('input, textarea, select')) {
+                    if (field.tagName === 'SELECT') field.value = '';
+                    else field.value = field.name === 'new_question[points]' ? '1' : '';
+                    field.removeAttribute('aria-invalid');
+                }
+                for (const error of addQuestion.querySelectorAll('[id$="-error"], .text-red-700')) error.remove();
+                addQuestion.removeAttribute('data-add-question-errors');
+            }
+
+            if (addQuestion) {
+                setAddQuestionOpen(!addQuestion.hidden);
+
+                openButton?.addEventListener('click', () => {
+                    setAddQuestionOpen(true);
+                    addQuestion.querySelector('textarea[name="new_question[question]"]')?.focus();
+                });
+
+                cancelButton?.addEventListener('click', () => {
+                    clearAddQuestion();
+                    setAddQuestionOpen(false);
+                    openButton?.focus();
+                });
+
+                if (addQuestion.hasAttribute('data-add-question-errors')) {
+                    addQuestion.scrollIntoView({ block: 'start' });
+                    addQuestion.querySelector('[aria-invalid="true"]')?.focus({ preventScroll: true });
+                }
+            }
 
             for (const operation of document.querySelectorAll('[data-quiz-operation]')) {
                 operation.addEventListener('submit', (event) => {

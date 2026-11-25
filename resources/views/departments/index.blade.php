@@ -227,9 +227,12 @@
 
                                         <div class="mt-3 flex flex-wrap items-center gap-2">
 
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                                            <a href="{{ route('departments.users', $department) }}"
+                                               class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-violet-50 hover:text-violet-700"
+                                               aria-label="View the {{ $department->users_count }} {{ Str::plural('user', $department->users_count) }} of {{ $department->name }}"
+                                               data-test="department-users-link">
 
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round"
                                                           stroke-linejoin="round"
                                                           stroke-width="2"
@@ -239,7 +242,7 @@
                                                 {{ $department->users_count }}
                                                 {{ Str::plural('user', $department->users_count) }}
 
-                                            </span>
+                                            </a>
 
                                         </div>
                                     </div>
@@ -248,7 +251,12 @@
 
 
                                 {{-- Actions --}}
-                                <div class="flex shrink-0 items-center gap-2">
+                                <div class="flex shrink-0 flex-wrap items-center gap-2">
+
+                                    <a href="{{ route('departments.users', $department) }}"
+                                       class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
+                                        View users
+                                    </a>
 
                                     <a href="{{ route('departments.assign') }}"
                                        class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">

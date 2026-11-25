@@ -42,6 +42,8 @@ class AuditLog extends Model
 
     public const APPLICATION_REJECTED = 'application.rejected';
 
+    public const DEPARTMENT_REMOVED = 'user.department_removed';
+
     /** Labels for the Audit Log page and its filter. */
     public const ACTIONS = [
         self::ROLE_CHANGED => 'Role changed',
@@ -52,6 +54,7 @@ class AuditLog extends Model
         self::DETAILS_UPDATED => 'Name / email edited',
         self::APPLICATION_APPROVED => 'Application approved',
         self::APPLICATION_REJECTED => 'Application rejected',
+        self::DEPARTMENT_REMOVED => 'Removed from department',
     ];
 
     protected $fillable = [

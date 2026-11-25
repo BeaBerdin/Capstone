@@ -1,23 +1,11 @@
 <x-layouts::app :title="__('Manage Users')">
 
     @php
-        $totalUsers = $users->count();
-
-        $superAdminCount = $users->filter(
-            fn ($user) => $user->roles->pluck('name')->contains('super_admin')
-        )->count();
-
-        $adminCount = $users->filter(
-            fn ($user) => $user->roles->pluck('name')->contains('admin')
-        )->count();
-
-        $teacherCount = $users->filter(
-            fn ($user) => $user->roles->pluck('name')->contains('teacher')
-        )->count();
-
-        $studentCount = $users->filter(
-            fn ($user) => $user->roles->pluck('name')->contains('student')
-        )->count();
+        // Counts over every account (the directory below is searched and paginated).
+        $superAdminCount = (int) ($roleCounts['super_admin'] ?? 0);
+        $adminCount = (int) ($roleCounts['admin'] ?? 0);
+        $teacherCount = (int) ($roleCounts['teacher'] ?? 0);
+        $studentCount = (int) ($roleCounts['student'] ?? 0);
     @endphp
 
     <style>
@@ -368,7 +356,27 @@
 
                             {{-- SEARCH --}}
 
-                            <div class="relative w-full lg:w-72">
+                            <form method="GET" action="{{ route('users.index') }}" role="search" class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto" data-user-search-form>
+
+                                <label for="userDepartmentFilter" class="sr-only">Filter by department</label>
+
+                                <select
+                                    id="userDepartmentFilter"
+                                    name="department"
+                                    class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 sm:w-56"
+                                >
+                                    <option value="" @selected($departmentFilter === '')>All departments</option>
+                                    <option value="none" @selected($departmentFilter === 'none')>No department</option>
+                                    @foreach ($departments as $filterDepartment)
+                                        <option value="{{ $filterDepartment->id }}" @selected($departmentFilter === (string) $filterDepartment->id)>
+                                            {{ $filterDepartment->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <div class="relative w-full lg:w-72">
+
+                                <label for="userSearch" class="sr-only">Search users by name or email</label>
 
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 
@@ -386,20 +394,45 @@
                                 </div>
 
                                 <input
-                                    type="text"
+                                    type="search"
                                     id="userSearch"
+                                    name="search"
+                                    value="{{ $search }}"
+                                    maxlength="100"
+                                    autocomplete="off"
                                     placeholder="Search users..."
                                     class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs text-slate-700 outline-none transition placeholder:text-slate-500 focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
                                 >
 
-                            </div>
+                                </div>
+
+                                <noscript>
+                                    <button type="submit" class="h-10 rounded-xl border border-slate-200 px-4 text-xs font-semibold text-slate-700">Search</button>
+                                </noscript>
+
+                            </form>
 
                         </div>
 
                     </div>
 
 
-                    {{-- TABLE --}}
+                    {{-- TABLE (searched and paginated on the server; live search swaps this block) --}}
+
+                    <div id="userDirectoryResults" aria-live="polite" data-user-results>
+
+                    @if ($search !== '' || $departmentFilter !== '')
+                        @php
+                            $filterLabel = match (true) {
+                                $departmentFilter === 'none' => 'with no department',
+                                $departmentFilter !== '' => 'in '.($departments->firstWhere('id', (int) $departmentFilter)?->name ?? ''),
+                                default => '',
+                            };
+                        @endphp
+                        <p class="border-b border-slate-100 px-5 py-3 text-xs text-slate-500 sm:px-6" data-test="user-search-summary">
+                            {{ $users->total() }} {{ \Illuminate\Support\Str::plural('user', $users->total()) }} found{!! $search !== '' ? ' for &ldquo;'.e($search).'&rdquo;' : '' !!}{{ $filterLabel !== '' ? ' '.$filterLabel : '' }}
+                        </p>
+                    @endif
 
                     <div class="overflow-x-auto">
 
@@ -415,6 +448,10 @@
 
                                     <th class="px-4 py-4">
                                         Email
+                                    </th>
+
+                                    <th class="px-4 py-4">
+                                        Department
                                     </th>
 
                                     <th class="px-4 py-4">
@@ -482,7 +519,6 @@
 
                                     <tr
                                         class="user-row transition hover:bg-slate-50/70"
-                                        data-search="{{ strtolower($user->name . ' ' . $user->email . ' ' . $roleLabel) }}"
                                     >
 
 
@@ -522,6 +558,21 @@
                                             <p class="text-xs font-medium text-slate-600">
                                                 {{ $user->email }}
                                             </p>
+
+                                        </td>
+
+
+                                        {{-- DEPARTMENT --}}
+
+                                        <td class="px-4 py-5" data-test="user-department">
+
+                                            @if ($user->department)
+                                                <p class="text-xs font-medium text-slate-700" title="{{ $user->department->name }}">
+                                                    {{ $user->department->shortLabel() }}
+                                                </p>
+                                            @else
+                                                <p class="text-xs text-slate-400">None</p>
+                                            @endif
 
                                         </td>
 
@@ -729,7 +780,7 @@
 
                                     <tr>
 
-                                        <td colspan="6" class="px-6 py-16 text-center">
+                                        <td colspan="7" class="px-6 py-16 text-center">
 
                                             <div class="sad-chip sad-violet mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
 
@@ -753,7 +804,13 @@
                                             </h3>
 
                                             <p class="mt-1 text-xs text-slate-500">
-                                                Registered users will appear here.
+                                                @if ($search !== '')
+                                                    No users match &ldquo;{{ $search }}&rdquo;. Try a different name or email.
+                                                @elseif ($departmentFilter !== '')
+                                                    No users match this department filter.
+                                                @else
+                                                    Registered users will appear here.
+                                                @endif
                                             </p>
 
                                         </td>
@@ -763,42 +820,18 @@
                                 @endforelse
 
 
-                                {{-- SEARCH EMPTY STATE --}}
-
-                                <tr id="noSearchResults" class="hidden">
-
-                                    <td colspan="6" class="px-6 py-14 text-center">
-
-                                        <div class="sad-chip sad-violet mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-
-                                            <svg
-                                                class="h-5 w-5"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                            >
-                                                <circle cx="11" cy="11" r="8"></circle>
-                                                <path d="m21 21-4.35-4.35"></path>
-                                            </svg>
-
-                                        </div>
-
-                                        <h3 class="mt-3 text-sm font-bold text-slate-800">
-                                            No matching users
-                                        </h3>
-
-                                        <p class="mt-1 text-xs text-slate-500">
-                                            Try searching with a different name, email, or role.
-                                        </p>
-
-                                    </td>
-
-                                </tr>
 
                             </tbody>
 
                         </table>
+
+                    </div>
+
+                    @if ($users->hasPages())
+                        <div class="border-t border-slate-100 px-5 py-3 sm:px-6" data-test="user-pagination">
+                            {{ $users->links() }}
+                        </div>
+                    @endif
 
                     </div>
 
@@ -814,64 +847,73 @@
 
     {{-- =====================================================
         SEARCH SCRIPT
+        The server does the search (name in any order, middle
+        initial optional, email) and the paging. As you type, the
+        results block is fetched and swapped in; Enter submits the
+        form normally. It runs on every visit, including wire:navigate
+        page changes (no DOMContentLoaded).
     ====================================================== --}}
 
     <script>
+        (function () {
+            var form = document.querySelector('[data-user-search-form]');
+            var input = document.getElementById('userSearch');
+            if (!form || !input || form.dataset.searchBound) { return; }
+            form.dataset.searchBound = 'true';
 
-        document.addEventListener('DOMContentLoaded', function () {
+            var timer = null;
+            var controller = null;
 
-            const searchInput = document.getElementById('userSearch');
-
-            const rows = document.querySelectorAll('.user-row');
-
-            const noResults = document.getElementById('noSearchResults');
-
-
-            if (!searchInput) {
-                return;
+            // Search text + department filter; a new search starts at page 1.
+            function searchUrl() {
+                var url = new URL(form.action, window.location.origin);
+                var params = new URLSearchParams();
+                new FormData(form).forEach(function (value, key) {
+                    value = String(value).trim();
+                    if (value !== '') { params.set(key, value); }
+                });
+                url.search = params.toString();
+                return url;
             }
 
+            function load(url) {
+                if (controller) { controller.abort(); }
+                controller = new AbortController();
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal, credentials: 'same-origin' })
+                    .then(function (response) {
+                        if (!response.ok) { throw new Error('search failed'); }
+                        return response.text();
+                    })
+                    .then(function (html) {
+                        var next = new DOMParser().parseFromString(html, 'text/html').querySelector('[data-user-results]');
+                        var current = document.querySelector('[data-user-results]');
+                        if (!next || !current) { window.location.assign(url); return; }
+                        current.replaceWith(next);
+                        window.history.replaceState(window.history.state, '', url);
+                    })
+                    .catch(function (error) {
+                        if (error.name !== 'AbortError') { window.location.assign(url); }
+                    });
+            }
 
-            searchInput.addEventListener('input', function () {
-
-                const searchValue = this.value.toLowerCase().trim();
-
-                let visibleRows = 0;
-
-
-                rows.forEach(function (row) {
-
-                    const searchableText =
-                        row.getAttribute('data-search') || '';
-
-                    const matches =
-                        searchableText.includes(searchValue);
-
-
-                    row.style.display =
-                        matches ? '' : 'none';
-
-
-                    if (matches) {
-                        visibleRows++;
-                    }
-
-                });
-
-
-                if (noResults) {
-
-                    noResults.classList.toggle(
-                        'hidden',
-                        visibleRows !== 0
-                    );
-
-                }
-
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () { load(searchUrl()); }, 300);
             });
 
-        });
+            var departmentFilter = document.getElementById('userDepartmentFilter');
+            if (departmentFilter) {
+                departmentFilter.addEventListener('change', function () {
+                    clearTimeout(timer);
+                    load(searchUrl());
+                });
+            }
 
+            form.addEventListener('submit', function () {
+                clearTimeout(timer);
+                if (controller) { controller.abort(); }
+            });
+        })();
     </script>
 
     {{-- =====================================================
@@ -919,8 +961,14 @@
                 dialog.close();
             });
 
-            document.querySelectorAll('[data-open-role-dialog]').forEach(function (button) {
-                button.addEventListener('click', function () {
+            // Delegated: the rows are replaced by the live search.
+            if (dialog.dataset.roleBound) { return; }
+            dialog.dataset.roleBound = 'true';
+
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-open-role-dialog]');
+                if (!button || !document.contains(dialog)) { return; }
+                {
                     activeForm = button.closest('[data-role-form]');
                     var role = activeForm.querySelector('select[name="role"]').value;
                     var promoting = role === 'super_admin' && activeForm.dataset.currentRole !== 'super_admin';
@@ -936,7 +984,7 @@
                     password.required = promoting;
 
                     dialog.showModal();
-                });
+                }
             });
 
             document.getElementById('role-dialog-form').addEventListener('submit', function (event) {

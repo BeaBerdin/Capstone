@@ -277,6 +277,13 @@ Route::middleware(['auth', 'student.application', 'verified'])->group(function (
 
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])
             ->name('departments.destroy');
+
+        // View a department's users and remove one (the user keeps all data).
+        Route::get('/departments/{department}/users', [DepartmentController::class, 'users'])
+            ->name('departments.users');
+
+        Route::delete('/departments/{department}/users/{user}', [DepartmentController::class, 'removeUser'])
+            ->name('departments.users.remove');
     });
 
 

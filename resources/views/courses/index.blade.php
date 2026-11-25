@@ -235,8 +235,14 @@
                      COURSE CARD
                 ====================================================== --}}
 
+                @php
+                    // Opened from a "submitted for approval" notification.
+                    $isReviewTarget = (string) request('review') === (string) $course->id;
+                @endphp
                 <div
-                    class="sad-card course-card group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                    id="course-{{ $course->id }}"
+                    class="sad-card course-card group scroll-mt-28 overflow-hidden rounded-xl border bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg {{ $isReviewTarget ? 'border-violet-400 ring-2 ring-violet-400 ring-offset-2' : 'border-slate-200' }}"
+                    @if ($isReviewTarget) data-review-target aria-current="true" @endif
                     data-title="{{ strtolower($course->title) }}"
                     data-category="{{ $course->category_id }}"
                     data-status="{{ strtolower($course->status) }}"

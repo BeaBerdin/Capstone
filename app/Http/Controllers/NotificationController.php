@@ -69,10 +69,13 @@ class NotificationController extends Controller
                 }
                 break;
 
-            case 'course_submitted':
-                if ($user->hasRole('admin')) {
-                    return redirect()
-                        ->route('courses.index');
+            case \App\Notifications\CourseSubmittedForApproval::TYPE:
+                // The reviewing Dean or the Super Admin: open that course's
+                // card (Approve / Return for Revision) on the Courses page.
+                if ($user->hasRole('admin') || $user->hasRole('super_admin')) {
+                    return $courseId
+                        ? redirect()->to(\App\Notifications\CourseSubmittedForApproval::reviewUrl((int) $courseId))
+                        : redirect()->route('courses.index');
                 }
                 break;
 

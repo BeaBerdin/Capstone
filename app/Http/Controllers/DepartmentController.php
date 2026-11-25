@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\User;
+use App\Notifications\DepartmentAdministratorAssigned;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentController extends Controller
 {
@@ -96,10 +99,14 @@ class DepartmentController extends Controller
      */
     public function destroy(Department $department)
     {
-        if ($department->users()->exists()) {
+        // Manuscript Case-053: a department with users is kept. Its users are
+        // removed one by one from View users first; then Case-052 applies.
+        $assigned = $department->users()->count();
+
+        if ($assigned > 0) {
             return redirect()
                 ->route('departments.index')
-                ->with('error', 'Cannot delete this department because users are assigned to it.');
+                ->with('error', "Cannot delete this department because {$assigned} user(s) are assigned to it. Remove them first using View users.");
         }
 
         $department->delete();
@@ -116,7 +123,9 @@ class DepartmentController extends Controller
     {
         $departments = Department::orderBy('name')->get();
 
-        $users = User::with('roles')
+        // Users already in a department stay listed but cannot be chosen
+        // ("Already assigned to ..."): a user belongs to one department.
+        $users = User::with(['roles', 'department'])
             ->whereHas('roles', function ($query) {
                 $query->whereIn('name', ['admin', 'teacher']);
             })
@@ -147,12 +156,88 @@ class DepartmentController extends Controller
                 ->with('error', 'Only admins and teachers can be assigned to a department.');
         }
 
-        $user->update([
-            'department_id' => $validated['department_id'],
-        ]);
+        // One department per user: to move a user, remove them first. The
+        // conditional update also stops two assignments made at the same time.
+        $assigned = User::whereKey($user->id)
+            ->whereNull('department_id')
+            ->update(['department_id' => $validated['department_id']]);
+
+        if ($assigned === 0) {
+            $current = $user->fresh()->department;
+
+            return back()
+                ->withInput()
+                ->with('error', 'Already assigned to '.($current?->name ?? 'a department').'. To move '.$user->name.', remove them from that department first using View users.');
+        }
+
+        // An informational email for Administrators only (not teachers).
+        // Only the request that made the assignment gets here, so one email.
+        if ($user->hasRole('admin')) {
+            $user->notify(new DepartmentAdministratorAssigned(
+                Department::findOrFail((int) $validated['department_id'])->name
+            ));
+        }
 
         return redirect()
             ->route('departments.assign')
             ->with('success', 'Department assigned successfully.');
+    }
+
+    /**
+     * The users of one department (View users).
+     */
+    public function users(Department $department)
+    {
+        $users = $department->users()
+            ->with('roles')
+            ->orderBy('name')
+            ->get();
+
+        $adminCount = $users->filter(fn (User $user) => $user->hasRole('admin'))->count();
+
+        return view('departments.users', compact('department', 'users', 'adminCount'));
+    }
+
+    /**
+     * Remove a user from a department. Only the link is cleared: the user's
+     * courses, enrollments, progress, quiz results and certificates stay.
+     */
+    public function removeUser(Department $department, User $user)
+    {
+        $result = DB::transaction(function () use ($department, $user) {
+            $current = User::lockForUpdate()->findOrFail($user->id);
+
+            if ((int) $current->department_id !== (int) $department->id) {
+                return null;
+            }
+
+            $wasOnlyAdmin = $current->hasRole('admin')
+                && ! $department->users()
+                    ->whereKeyNot($current->id)
+                    ->whereHas('roles', fn ($roles) => $roles->where('name', 'admin'))
+                    ->exists();
+
+            $current->forceFill(['department_id' => null])->save();
+
+            AuditLog::record(AuditLog::DEPARTMENT_REMOVED, $current, $department->name, 'No department');
+
+            return ['name' => $current->name, 'wasOnlyAdmin' => $wasOnlyAdmin];
+        });
+
+        if ($result === null) {
+            return redirect()
+                ->route('departments.users', $department)
+                ->with('error', $user->name.' is not assigned to '.$department->name.'.');
+        }
+
+        $redirect = redirect()
+            ->route('departments.users', $department)
+            ->with('success', $result['name'].' was removed from '.$department->name.'. They are now listed under Unassigned Users.');
+
+        if ($result['wasOnlyAdmin']) {
+            $redirect->with('warning', $department->name.' now has no Administrator, so no one can review its courses until another Administrator is assigned.');
+        }
+
+        return $redirect;
     }
 }

@@ -34,13 +34,19 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M16 11h6M19 8l3 3-3 3"></path></svg>
             </x-slot:icon>
 
-            <x-pw.field label="User" for="user_id" required hint="Only users with the admin or teacher role are listed.">
+            <x-pw.field label="User" for="user_id" required hint="Only users with the admin or teacher role are listed. Users already in a department cannot be chosen.">
                 <select id="user_id" name="user_id" required class="sad-field">
                     <option value="" disabled @selected(! old('user_id'))>Select a user</option>
                     @foreach($users as $user)
-                        <option value="{{ $user->id }}" @selected(old('user_id') == $user->id)>
-                            {{ $user->name }} — {{ $user->email }}
-                        </option>
+                        @if ($user->department)
+                            <option value="{{ $user->id }}" disabled data-assigned-to="{{ $user->department->name }}">
+                                {{ $user->name }} — {{ $user->email }} (Already assigned to {{ $user->department->name }})
+                            </option>
+                        @else
+                            <option value="{{ $user->id }}" @selected(old('user_id') == $user->id)>
+                                {{ $user->name }} — {{ $user->email }}
+                            </option>
+                        @endif
                     @endforeach
                 </select>
             </x-pw.field>
@@ -72,7 +78,7 @@
             title="Assignment Guidelines"
             :tips="[
                 'Each user belongs to one department.',
-                'Assigning a new department replaces the user\'s current one.',
+                'To move a user, first remove them from their department using View users.',
             ]"
         />
     </x-slot:aside>
